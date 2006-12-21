@@ -1,0 +1,47 @@
+
+Este documento é destinado à documentação das alterações significativas efetuadas nos agentes do CACIC:
+
+
+
+Link do FileSecurity: http://torry.net/vcl/security/userrights/filesec.zip
+
+AGENTE		VERSÃO RECEBIDA		DATA		ALTERAÇÕES
+=======		================		=====		============
+INI_COLS		2.0.2.8				08/02/2006	1) Passou a excluir versões menores que 2.0.2.17 do GER_COLS.EXE
+									IMPACTO: Garantia de atualização da versão do Gerente de Coletas.
+
+CHKCACIC	2.0.2.10				08/02/2006	1) Passou a excluir versões menores que 2.0.2.17 do GER_COLS.EXE e 2.0.2.30 do CACIC2.EXE
+									IMPACTO: Garantia de atualização das versões do Agente Principal e do Gerente de Coletas.
+
+CHKSIS		2.0.2.11				08/02/2006	1) Passou a excluir versões menores que 2.0.2.17 do GER_COLS.EXE e 2.0.2.30 do CACIC2.EXE
+									IMPACTO: Garantia de atualização das versões do Agente Principal e do Gerente de Coletas.
+
+CACIC2		2.0.2.30				08/02/2006	1) Passou a excluir versões menores que 2.0.2.17 do GER_COLS.EXE, forçando a atualização.
+									IMPACTO: Garantia de atualização de versão do Gerente de Coletas.
+
+COL_HARD	2.0.2.11				08/02/2006	1) Atualização de versão do componente MiTeC
+									IMPACTO: Correção de bugs do componente (www.mitec.cz)
+
+COL_SOFT	2.0.2.7				08/02/2006	1) Atualização de versão do componente MiTeC
+									IMPACTO: Correção de bugs do componente (www.mitec.cz)
+
+COL_UNDI	2.0.2.7				08/02/2006	1) Atualização de versão do componente MiTeC
+									IMPACTO: Correção de bugs do componente (www.mitec.cz)
+
+GER_COLS	2.0.2.17				08/02/2006	1) Atualização de versão do componente MiTeC
+									IMPACTO: Correção de bugs do componente (www.mitec.cz)
+
+GER_COLS	2.0.2.15				05/01/2006	1) Passou a receber o valor "cs_abre_janela_patr" através da chamada ao script "get_patrimonio.php";
+									IMPACTO: A abertura automática da janela de patrimônio em caso de detecção de alterações de IP da estação ou da rede passa a depender desse valor
+								2) Exclusão dos arquivos *.DAT do diretório temporário antes de iniciar as coletas;
+									IMPACTO: Redução de falsa indicação de coleta ao agente Inicializador de Coletas (INI_COLS.EXE)
+
+GER_COLS	2.0.2.16				05/01/2006	1) Passou a enviar o valor "te_versao_gercols" para o script "get_config.php";
+									IMPACTO: A informação de versão do Gerente de Coletas passa a constar do relatório de softwares básicos
+
+INI_COLS		2.0.2.7				05/01/2006	1) Foi aumentado o tempo de tolerância para coletas de 2 para 5 minutos
+									IMPACTO: Redução de "pseudo aborto de coleta", quando o coletor estourava o tempo e gravava o *.dat após o envio.
+									Exemplo: O COL_MONI.EXE, às vezes, precisa varrer várias unidades de disco em busca de perfís de sistemas, o que demanda muito tempo.
+
+COL_MONI	2.0.2.6				10/01/2006	1) Passou a buscar versão de arquivo executável, em função de parâmetro recebido do módulo Gerente WEB
+									IMPACTO: Possibilitará conhecer as versões dos executáveis existentes nas estações de trabalho.
