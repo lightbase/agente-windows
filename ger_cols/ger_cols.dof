@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=2
 MinorVer=2
 Release=0
-Build=3
+Build=8
 Debug=0
 PreRelease=0
 Special=0
@@ -126,7 +126,7 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Dataprev-ES
 FileDescription=Módulo Gerente de Coletas do Sistema CACIC
-FileVersion=2.2.0.3
+FileVersion=2.2.0.8
 InternalName=
 LegalCopyright=
 LegalTrademarks=

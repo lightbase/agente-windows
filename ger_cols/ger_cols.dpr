@@ -1270,7 +1270,7 @@ Begin
       Begin
         intHoje := StrToInt(FormatDateTime('yyyymmdd', Date));
         strIntervaloRenovacaoPatrimonio := GetValorDatMemoria('Configs.NU_INTERVALO_RENOVACAO_PATRIMONIO', v_tstrCipherOpened);
-        if ((strUltimaRedeObtida <> '') and (strIntervaloRenovacaoPatrimonio <> '') and ((intHoje - StrToInt(strDt_ultima_renovacao_patrim)) >= strtoint(strIntervaloRenovacaoPatrimonio))) or
+        if ((strUltimaRedeObtida <> '') and (strIntervaloRenovacaoPatrimonio <> '') and ((intHoje - StrToInt64(strDt_ultima_renovacao_patrim)) >= strtoint(strIntervaloRenovacaoPatrimonio))) or
            (GetValorDatMemoria('Configs.IN_COLETA_FORCADA_PATR', v_tstrCipherOpened) = 'S') Then
           Begin
             // E neste caso seto como "S" o valor de Renovação de Informações para ser lido pelo módulo de Coleta de Informações Patrimoniais.
@@ -2452,6 +2452,8 @@ Begin
 end;
 
 procedure Executa_Ger_Cols;
+var strDtHrColetaForcada,
+    strDtHrUltimaColeta : String;
 Begin
   Try
           // Parâmetros possíveis (aceitos)
@@ -2587,15 +2589,26 @@ Begin
                           (GetValorDatMemoria('Configs.CS_COLETA_UNID_DISC'        , v_tstrCipherOpened) = 'S')) and
                           not FileExists(p_path_cacic + 'Temp\ger_cols.exe')  then
                           begin
-
+                             v_acao_gercols := 'Montando script de coletas';
                              // Monto o batch de coletas de acordo com as configurações
                              log_diario('Verificando novas versões para Coletores de Informações.');
                              intMontaBatch := 0;
                              v_ModulosOpcoes := '';
+                             strDtHrUltimaColeta := '0';
+                             Try
+                               strDtHrUltimaColeta := GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened);
+                             Except
+                             End;
+                             if (strDtHrUltimaColeta = '') then
+                                strDtHrUltimaColeta := '0';
 
                              if (GetValorDatMemoria('Configs.CS_COLETA_PATRIMONIO', v_tstrCipherOpened) = 'S') then
                                 begin
-                                  if (StrToInt(GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_PATR', v_tstrCipherOpened)) > StrToInt(GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened))) then
+                                  strDtHrColetaForcada := GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_PATR', v_tstrCipherOpened);
+                                  log_DEBUG('Data/Hora Coleta Forçada PATR: '+strDtHrColetaForcada);
+                                  log_DEBUG('Data/Hora Última Coleta GERAL: '+strDtHrUltimaColeta);
+
+                                  if (strDtHrColetaForcada <> '') and (StrToInt64(strDtHrColetaForcada) > StrToInt64(strDtHrUltimaColeta)) then
                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_PATR','S', v_tstrCipherOpened)
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_PATR','N', v_tstrCipherOpened);
@@ -2621,9 +2634,11 @@ Begin
 
                              if (GetValorDatMemoria('Configs.CS_COLETA_OFFICESCAN'       , v_tstrCipherOpened) = 'S') then
                                 begin
-                                  log_DEBUG('GetValorDatMemoria(Configs.DT_HR_COLETA_FORCADA_ANVI,v_tstrCipherOpened)='+GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI', v_tstrCipherOpened));
-                                  log_DEBUG('GetValorDatMemoria(Configs.DT_HR_ULTIMA_COLETA, v_tstrCipherOpened)='+GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened));
-                                  if (StrToInt(GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI', v_tstrCipherOpened)) > StrToInt(GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened))) then
+                                  strDtHrColetaForcada := GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI', v_tstrCipherOpened);
+                                  log_DEBUG('Data/Hora Coleta Forçada ANVI: '+strDtHrColetaForcada);
+                                  log_DEBUG('Data/Hora Última Coleta GERAL: '+strDtHrUltimaColeta);
+
+                                  if (strDtHrColetaForcada <> '') and (StrToInt64(strDtHrColetaForcada) > StrToInt64(strDtHrUltimaColeta)) then
                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_ANVI','S', v_tstrCipherOpened)
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_ANVI','N', v_tstrCipherOpened);
@@ -2640,10 +2655,14 @@ Begin
 
                              if (GetValorDatMemoria('Configs.CS_COLETA_COMPARTILHAMENTOS', v_tstrCipherOpened) = 'S') then
                                 begin
-                                  if (StrToInt(GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_COMP', v_tstrCipherOpened)) > StrToInt(GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened))) then
+
+                                  strDtHrColetaForcada := GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_COMP', v_tstrCipherOpened);
+                                  log_DEBUG('Data/Hora Coleta Forçada COMP: '+strDtHrColetaForcada);
+                                  log_DEBUG('Data/Hora Última Coleta GERAL: '+strDtHrUltimaColeta);
+                                  if not(strDtHrColetaForcada = '') and (StrToInt64(strDtHrColetaForcada) > StrToInt64(strDtHrUltimaColeta)) then
                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_COMP','S', v_tstrCipherOpened)
                                   else
-                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_COMP','N', v_tstrCipherOpened);
+                                     SetValorDatMemoria('Configs.IN_COLETA_FORCADA_COMP','N', v_tstrCipherOpened);
 
                                    if (v_CS_AUTO_UPDATE) then Ver_UPD('col_comp','Coletor de Informações de Compartilhamentos',p_path_cacic + 'modulos\','',false);
                                    if (FileExists(p_path_cacic + 'Modulos\col_comp.exe'))  then
@@ -2658,7 +2677,11 @@ Begin
 
                              if (GetValorDatMemoria('Configs.CS_COLETA_HARDWARE', v_tstrCipherOpened) = 'S') then
                                 begin
-                                  if (StrToInt(GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_HARD', v_tstrCipherOpened)) > StrToInt(GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened))) then
+                                  strDtHrColetaForcada := GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_HARD', v_tstrCipherOpened);
+                                  log_DEBUG('Data/Hora Coleta Forçada HARD: '+strDtHrColetaForcada);
+                                  log_DEBUG('Data/Hora Última Coleta GERAL: '+strDtHrUltimaColeta);
+
+                                  if (strDtHrColetaForcada <> '') and (StrToInt64(strDtHrColetaForcada) > StrToInt64(strDtHrUltimaColeta)) then
                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_HARD','S', v_tstrCipherOpened)
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_HARD','N', v_tstrCipherOpened);
@@ -2677,7 +2700,11 @@ Begin
 
                              if (GetValorDatMemoria('Configs.CS_COLETA_MONITORADO', v_tstrCipherOpened) = 'S') then
                                 begin
-                                  if (StrToInt(GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_MONI', v_tstrCipherOpened)) > StrToInt(GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened))) then
+                                  strDtHrColetaForcada := GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_MONI', v_tstrCipherOpened);
+                                  log_DEBUG('Data/Hora Coleta Forçada MONI: '+strDtHrColetaForcada);
+                                  log_DEBUG('Data/Hora Última Coleta GERAL: '+strDtHrUltimaColeta);
+
+                                  if (strDtHrColetaForcada <> '') and (StrToInt64(strDtHrColetaForcada) > StrToInt64(strDtHrUltimaColeta)) then
                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_MONI','S', v_tstrCipherOpened)
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_MONI','N', v_tstrCipherOpened);
@@ -2695,7 +2722,11 @@ Begin
 
                              if (GetValorDatMemoria('Configs.CS_COLETA_SOFTWARE', v_tstrCipherOpened) = 'S') then
                                 begin
-                                  if (StrToInt(GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_SOFT', v_tstrCipherOpened)) > StrToInt(GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened))) then
+                                  strDtHrColetaForcada := GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_SOFT', v_tstrCipherOpened);
+                                  log_DEBUG('Data/Hora Coleta Forçada SOFT: '+strDtHrColetaForcada);
+                                  log_DEBUG('Data/Hora Última Coleta GERAL: '+strDtHrUltimaColeta);
+
+                                  if (strDtHrColetaForcada <> '') and (StrToInt64(strDtHrColetaForcada) > StrToInt64(strDtHrUltimaColeta)) then
                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_SOFT','S', v_tstrCipherOpened)
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_SOFT','N', v_tstrCipherOpened);
@@ -2713,7 +2744,11 @@ Begin
 
                              if (GetValorDatMemoria('Configs.CS_COLETA_UNID_DISC', v_tstrCipherOpened) = 'S') then
                                 begin
-                                  if (StrToInt(GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_UNDI', v_tstrCipherOpened)) > StrToInt(GetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA', v_tstrCipherOpened))) then
+                                  strDtHrColetaForcada := GetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_UNDI', v_tstrCipherOpened);
+                                  log_DEBUG('Data/Hora Coleta Forçada UNDI: '+strDtHrColetaForcada);
+                                  log_DEBUG('Data/Hora Última Coleta GERAL: '+strDtHrUltimaColeta);
+
+                                  if (strDtHrColetaForcada <> '') and (StrToInt64(strDtHrColetaForcada) > StrToInt64(strDtHrUltimaColeta)) then
                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_UNDI','S', v_tstrCipherOpened)
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_UNDI','N', v_tstrCipherOpened);
