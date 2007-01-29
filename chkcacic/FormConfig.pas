@@ -32,18 +32,16 @@ type
     Label_cacic_dir: TLabel;
     GroupBox2: TGroupBox;
     Label1: TLabel;
-    Label_te_instala_frase_sucesso: TLabel;
-    Edit_te_instala_frase_sucesso: TEdit;
-    Label_te_instala_frase_insucesso: TLabel;
-    Edit_te_instala_frase_insucesso: TEdit;
     Label_te_instala_informacoes_extras: TLabel;
     Button_Gravar: TButton;
     Memo_te_instala_informacoes_extras: TMemo;
     PJVersionInfo1: TPJVersionInfo;
     Label2: TLabel;
+    ckboxExibeInformacoes: TCheckBox;
+    btSair: TButton;
     procedure Button_GravarClick(Sender: TObject);
-    procedure Edit_ip_serv_cacicExit(Sender: TObject);
-    procedure Edit_cacic_dirExit(Sender: TObject);
+    procedure ckboxExibeInformacoesClick(Sender: TObject);
+    procedure btSairClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -59,17 +57,39 @@ implementation
 
 procedure TConfigs.Button_GravarClick(Sender: TObject);
 begin
-  main.GravaConfiguracoes;
-  Close;
-end;
-procedure TConfigs.Edit_ip_serv_cacicExit(Sender: TObject);
-begin
-if trim(Edit_ip_serv_cacic.Text) = '' then Edit_ip_serv_cacic.SetFocus;
+  if trim(Edit_cacic_dir.Text) = '' then
+    Edit_cacic_dir.Text := 'Cacic';
+
+  if trim(Edit_ip_serv_cacic.Text)  = '' then
+    Edit_ip_serv_cacic.SetFocus
+  else
+    Begin
+      main.GravaConfiguracoes;
+      Close;
+      Application.terminate;
+    End;
 end;
 
-procedure TConfigs.Edit_cacic_dirExit(Sender: TObject);
+procedure TConfigs.ckboxExibeInformacoesClick(Sender: TObject);
 begin
-if trim(Edit_cacic_dir.Text) = '' then Edit_cacic_dir.Text := 'Cacic';
+  if ckboxExibeInformacoes.Checked then
+    Begin
+      Memo_te_instala_informacoes_extras.Enabled := true;
+      Memo_te_instala_informacoes_extras.Color   := clWindow;
+      v_exibe_informacoes := 'S';
+    End
+  else
+    Begin
+      Memo_te_instala_informacoes_extras.Enabled := false;
+      Memo_te_instala_informacoes_extras.Color   := clInactiveBorder;
+      v_exibe_informacoes := 'N';
+    End;
+end;
+
+procedure TConfigs.btSairClick(Sender: TObject);
+begin
+  Close;
+  Application.Terminate;
 end;
 
 end.

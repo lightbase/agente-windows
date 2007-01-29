@@ -3115,7 +3115,7 @@ begin
 
     // Caso tenha sido invocado por um CACIC2.EXE versão antiga, assumo o valor abaixo...
     // Solução provisória até a convergência das versões do Agente Principal e do Gerente de Coletas
-    if (trim(v_CipherKey)='') then v_CipherKey := 'CacicES2005';
+    if (trim(v_CipherKey)='') then v_CipherKey := 'CacicBrasil';
 
     if (trim(v_CipherKey)<>'') then
       Begin

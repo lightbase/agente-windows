@@ -1,9 +1,11 @@
 object Configs: TConfigs
-  Left = 164
-  Top = 137
-  Width = 461
-  Height = 440
+  Left = 258
+  Top = 175
+  BorderIcons = []
+  BorderStyle = bsSingle
   Caption = 'Configura'#231#245'es do CHKCACIC'
+  ClientHeight = 331
+  ClientWidth = 453
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -16,7 +18,7 @@ object Configs: TConfigs
   TextHeight = 13
   object Label2: TLabel
     Left = 402
-    Top = 380
+    Top = 312
     Width = 27
     Height = 12
     Caption = 'Label1'
@@ -29,10 +31,10 @@ object Configs: TConfigs
   end
   object GroupBox2: TGroupBox
     Left = 5
-    Top = 114
+    Top = 83
     Width = 444
-    Height = 239
-    Caption = 'Par'#226'metros Opcionais'
+    Height = 202
+    Caption = 'Opcional'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -41,11 +43,11 @@ object Configs: TConfigs
     ParentFont = False
     TabOrder = 3
     object Label1: TLabel
-      Left = 132
-      Top = 0
-      Width = 231
+      Left = 63
+      Top = -1
+      Width = 200
       Height = 13
-      Caption = '(N'#227'o preencher para o CHKCACIC do NetLogon)'
+      Caption = '(N'#227'o aplic'#225'vel ao ChkCacic do NetLogon)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clRed
       Font.Height = -11
@@ -53,35 +55,9 @@ object Configs: TConfigs
       Font.Style = []
       ParentFont = False
     end
-    object Label_te_instala_frase_sucesso: TLabel
-      Left = 8
-      Top = 25
-      Width = 161
-      Height = 13
-      Caption = 'Frase para Sucesso na Instala'#231#227'o'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
-    end
-    object Label_te_instala_frase_insucesso: TLabel
-      Left = 8
-      Top = 74
-      Width = 168
-      Height = 13
-      Caption = 'Frase para Insucesso na Instala'#231#227'o'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
-    end
     object Label_te_instala_informacoes_extras: TLabel
-      Left = 8
-      Top = 121
+      Left = 9
+      Top = 50
       Width = 89
       Height = 13
       Caption = 'Informa'#231#245'es extras'
@@ -92,54 +68,53 @@ object Configs: TConfigs
       Font.Style = []
       ParentFont = False
     end
-    object Edit_te_instala_frase_sucesso: TEdit
-      Left = 8
-      Top = 41
-      Width = 427
-      Height = 21
+    object Memo_te_instala_informacoes_extras: TMemo
+      Left = 9
+      Top = 65
+      Width = 426
+      Height = 127
+      Color = clInactiveBorder
+      Enabled = False
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 100
-      ParentFont = False
-      TabOrder = 0
-    end
-    object Edit_te_instala_frase_insucesso: TEdit
-      Left = 8
-      Top = 89
-      Width = 427
-      Height = 21
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      MaxLength = 100
+      Lines.Strings = (
+        'Empresa-UF / Suporte T'#233'cnico'
+        ''
+        'Emails: email1_do_suporte@xxxxxx.yyy.zz, '
+        '            email2_do_suporte@xxxxxx.yyy.zz'
+        ''
+        'Fones: (xx) yyyy-zzzz  /  (xx) yyyy-zzzz'
+        ''
+        'Endere'#231'o: Rua Nome_da_Rua, N'#186' 99999'
+        '                 Cidade/UF')
       ParentFont = False
       TabOrder = 1
     end
-    object Memo_te_instala_informacoes_extras: TMemo
-      Left = 8
-      Top = 136
-      Width = 425
-      Height = 97
+    object ckboxExibeInformacoes: TCheckBox
+      Left = 9
+      Top = 23
+      Width = 424
+      Height = 17
+      Caption = 'Exibe informa'#231#245'es sobre o processo de instala'#231#227'o'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      TabOrder = 2
+      TabOrder = 0
+      OnClick = ckboxExibeInformacoesClick
     end
   end
   object GroupBox1: TGroupBox
     Left = 5
-    Top = 16
+    Top = 8
     Width = 444
-    Height = 81
-    Caption = 'Par'#226'metros Obrigat'#243'rios'
+    Height = 64
+    Caption = 'Obrigat'#243'rio'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
@@ -148,8 +123,8 @@ object Configs: TConfigs
     ParentFont = False
     TabOrder = 2
     object Label_ip_serv_cacic: TLabel
-      Left = 80
-      Top = 24
+      Left = 8
+      Top = 19
       Width = 143
       Height = 13
       Caption = 'Identificador do Servidor WEB'
@@ -161,8 +136,8 @@ object Configs: TConfigs
       ParentFont = False
     end
     object Label_cacic_dir: TLabel
-      Left = 245
-      Top = 24
+      Left = 236
+      Top = 19
       Width = 103
       Height = 13
       Caption = 'Pasta para Instala'#231#227'o'
@@ -175,35 +150,54 @@ object Configs: TConfigs
     end
   end
   object Edit_ip_serv_cacic: TEdit
-    Left = 85
-    Top = 56
-    Width = 145
+    Left = 13
+    Top = 42
+    Width = 200
     Height = 21
     MaxLength = 100
     TabOrder = 0
-    OnExit = Edit_ip_serv_cacicExit
   end
   object Edit_cacic_dir: TEdit
-    Left = 250
-    Top = 56
-    Width = 121
+    Left = 241
+    Top = 42
+    Width = 200
     Height = 21
-    MaxLength = 15
+    MaxLength = 100
     TabOrder = 1
     Text = 'Cacic'
-    OnExit = Edit_cacic_dirExit
   end
   object Button_Gravar: TButton
-    Left = 170
-    Top = 367
-    Width = 121
-    Height = 25
+    Left = 62
+    Top = 292
+    Width = 150
+    Height = 30
     Caption = 'Gravar Configura'#231#245'es'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
+    ParentFont = False
     TabOrder = 4
     OnClick = Button_GravarClick
   end
+  object btSair: TButton
+    Left = 242
+    Top = 292
+    Width = 150
+    Height = 30
+    Caption = 'Sair'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
+    ParentFont = False
+    TabOrder = 5
+    OnClick = btSairClick
+  end
   object PJVersionInfo1: TPJVersionInfo
-    Left = 360
-    Top = 360
+    Left = 5
+    Top = 293
   end
 end

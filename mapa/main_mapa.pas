@@ -62,7 +62,7 @@ const constSECURITY_NT_AUTHORITY: TSIDIdentifierAuthority = (Value: (0, 0, 0, 0,
       constSECURITY_BUILTIN_DOMAIN_RID = $00000020;
       constDOMAIN_ALIAS_RID_ADMINS = $00000220;
 
-const constCipherKey    = 'CacicES2005';
+const constCipherKey    = 'CacicBrasil';
       constIV           = 'abcdefghijklmnop';
       constSeparatorKey = '=CacicIsFree='; // Usada apenas para o cacic2.dat
 
@@ -1148,15 +1148,15 @@ begin
           Request_mapa.Values['te_workgroup']                  := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_WORKGROUP'                       , frmMapaCacic.tStringsCipherOpened));
           Request_mapa.Values['id_usuario']                    := frmMapaCacic.EnCrypt(frmMapaCacic.strId_usuario);
 
-          Request_mapa.Values['id_unid_organizacional_nivel1'] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1' , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['id_unid_organizacional_nivel2'] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2' , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_localizacao_complementar'  ] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.te_localizacao_complementar'   , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_info_patrimonio1'          ] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.te_info_patrimonio1'           , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_info_patrimonio2'          ] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.te_info_patrimonio2'           , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_info_patrimonio3'          ] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.te_info_patrimonio3'           , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_info_patrimonio4'          ] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.te_info_patrimonio4'           , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_info_patrimonio5'          ] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.te_info_patrimonio5'           , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_info_patrimonio6'          ] := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Patrimonio.te_info_patrimonio6'           , frmMapaCacic.tStringsCipherOpened));
+          Request_mapa.Values['id_unid_organizacional_nivel1'] := frmMapaCacic.EnCrypt(strAux1);
+          Request_mapa.Values['id_unid_organizacional_nivel2'] := frmMapaCacic.EnCrypt(strAux2);
+          Request_mapa.Values['te_localizacao_complementar'  ] := frmMapaCacic.EnCrypt(ed_te_localizacao_complementar.Text);
+          Request_mapa.Values['te_info_patrimonio1'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio1.Text);
+          Request_mapa.Values['te_info_patrimonio2'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio2.Text);
+          Request_mapa.Values['te_info_patrimonio3'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio3.Text);
+          Request_mapa.Values['te_info_patrimonio4'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio4.Text);
+          Request_mapa.Values['te_info_patrimonio5'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio5.Text);
+          Request_mapa.Values['te_info_patrimonio6'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio6.Text);
 
           strRetorno := frmMapaCacic.ComunicaServidor('mapa_set_patrimonio.php', Request_mapa, '');
           Request_mapa.Free;
