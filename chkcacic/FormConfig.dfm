@@ -1,11 +1,11 @@
 object Configs: TConfigs
-  Left = 258
-  Top = 175
+  Left = 260
+  Top = 102
   BorderIcons = []
   BorderStyle = bsSingle
   Caption = 'Configura'#231#245'es do CHKCACIC'
-  ClientHeight = 331
-  ClientWidth = 453
+  ClientHeight = 382
+  ClientWidth = 490
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -16,24 +16,11 @@ object Configs: TConfigs
   Position = poScreenCenter
   PixelsPerInch = 96
   TextHeight = 13
-  object Label2: TLabel
-    Left = 402
-    Top = 312
-    Width = 27
-    Height = 12
-    Caption = 'Label1'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -9
-    Font.Name = 'Arial'
-    Font.Style = []
-    ParentFont = False
-  end
-  object GroupBox2: TGroupBox
+  object gbOpcional: TGroupBox
     Left = 5
     Top = 83
-    Width = 444
-    Height = 202
+    Width = 480
+    Height = 219
     Caption = 'Opcional'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -43,8 +30,8 @@ object Configs: TConfigs
     ParentFont = False
     TabOrder = 3
     object Label1: TLabel
-      Left = 63
-      Top = -1
+      Left = 265
+      Top = 25
       Width = 200
       Height = 13
       Caption = '(N'#227'o aplic'#225'vel ao ChkCacic do NetLogon)'
@@ -71,8 +58,8 @@ object Configs: TConfigs
     object Memo_te_instala_informacoes_extras: TMemo
       Left = 9
       Top = 65
-      Width = 426
-      Height = 127
+      Width = 462
+      Height = 144
       Color = clInactiveBorder
       Enabled = False
       Font.Charset = DEFAULT_CHARSET
@@ -96,7 +83,7 @@ object Configs: TConfigs
     object ckboxExibeInformacoes: TCheckBox
       Left = 9
       Top = 23
-      Width = 424
+      Width = 256
       Height = 17
       Caption = 'Exibe informa'#231#245'es sobre o processo de instala'#231#227'o'
       Font.Charset = DEFAULT_CHARSET
@@ -109,10 +96,10 @@ object Configs: TConfigs
       OnClick = ckboxExibeInformacoesClick
     end
   end
-  object GroupBox1: TGroupBox
+  object gbObrigatorio: TGroupBox
     Left = 5
     Top = 8
-    Width = 444
+    Width = 480
     Height = 64
     Caption = 'Obrigat'#243'rio'
     Font.Charset = DEFAULT_CHARSET
@@ -136,7 +123,7 @@ object Configs: TConfigs
       ParentFont = False
     end
     object Label_cacic_dir: TLabel
-      Left = 236
+      Left = 271
       Top = 19
       Width = 103
       Height = 13
@@ -158,7 +145,7 @@ object Configs: TConfigs
     TabOrder = 0
   end
   object Edit_cacic_dir: TEdit
-    Left = 241
+    Left = 276
     Top = 42
     Width = 200
     Height = 21
@@ -167,10 +154,10 @@ object Configs: TConfigs
     Text = 'Cacic'
   end
   object Button_Gravar: TButton
-    Left = 62
-    Top = 292
+    Left = 74
+    Top = 325
     Width = 150
-    Height = 30
+    Height = 35
     Caption = 'Gravar Configura'#231#245'es'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -182,10 +169,10 @@ object Configs: TConfigs
     OnClick = Button_GravarClick
   end
   object btSair: TButton
-    Left = 242
-    Top = 292
+    Left = 265
+    Top = 325
     Width = 150
-    Height = 30
+    Height = 35
     Caption = 'Sair'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -196,8 +183,31 @@ object Configs: TConfigs
     TabOrder = 5
     OnClick = btSairClick
   end
+  object pnVersao: TPanel
+    Left = 426
+    Top = 302
+    Width = 58
+    Height = 14
+    BevelOuter = bvLowered
+    TabOrder = 6
+    object lbVersao: TLabel
+      Left = 4
+      Top = 1
+      Width = 53
+      Height = 12
+      Alignment = taCenter
+      AutoSize = False
+      Caption = 'V:2.00.00.00'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+  end
   object PJVersionInfo1: TPJVersionInfo
     Left = 5
-    Top = 293
+    Top = 323
   end
 end

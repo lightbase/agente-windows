@@ -14,7 +14,37 @@ Você deve ter recebido uma cópia da Licença Pública Geral GNU, sob o título "LIC
 Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+=====================================================================================================
+ChkCacic.exe : Verificador/Instalador dos agentes principais Cacic2.exe e Ger_Cols.exe
+=====================================================================================================
+
+v 2.2.0.17
++ Acrescentado o tratamento da passagem de opções em linha de comando
+  * chkcacic /serv=<ip_server> /dir=<local_path>c:\%windir%\cacic
+  Exemplo de uso: chkcacic /serv=UXbra001 /dir=Cacic
+
+v 2.2.0.16
+* Corrigido o fechamento do arquivo de configurações de ChkSis
+
+v 2.2.0.15
+* Substituída a mensagem "File System diferente de "NTFS" por 'File System: "<NomeFileSystem>" - Ok!'
+
+v 2.2.0.14
++ Críticas/mensagens:
+  "ATENÇÃO! Não foi possível estabelecer comunicação com o módulo Gerente WEB em <servidor>." e
+  "ATENÇÃO: Não foi possível efetuar FTP para <agente>. Verifique o Servidor de Updates."
++ Opção checkbox "Exibe informações sobre o processo de instalação" ao formulário de configuração;
++ Botão "Sair" ao formulário de configuração;
++ Execução automática do Agente Principal ao fim da instalação quando a unidade origem do ChkCacic não
+  for mapeamento de rede ou unidade inválida.
+
+- Retirados os campos "Frase para Sucesso na Instalação" e "Frase para Insucesso na Instalação"
+  do formulário de configuração, passando essas frases a serem fixas na aplicação.
+- Retirada a opção radiobutton "Remove Versão Anterior?";
+
+=====================================================================================================
 *)
+
 
 unit main;
 
@@ -31,7 +61,6 @@ uses  Windows,
       XML,
       LibXmlParser,
       IdHTTP,
-      dialogs,
       PJVersionInfo,
       Controls,
       StdCtrls,
@@ -44,14 +73,16 @@ uses  Windows,
       DCPrijndael,
       DCPbase64,
       NTFileSecurity, IdFTP,
-      Tlhelp32;
+      Tlhelp32,
+      dialogs;
 
 var   v_ip_serv_cacic,
       v_cacic_dir,
-      v_rem_cacic_v0x,
+//      v_rem_cacic_v0x,
       v_te_instala_frase_sucesso,
       v_te_instala_frase_insucesso,
       v_te_instala_informacoes_extras,
+      v_exibe_informacoes,
       v_versao_local,
       v_versao_remota_inteira,
       v_versao_remota_capada,
@@ -80,22 +111,24 @@ Procedure MostraFormConfigura;
 Procedure GravaConfiguracoes;
 Procedure DelValorReg(Chave: String);
 procedure log_diario(strMsg : String);
+procedure KillProcess(hWindowHandle: HWND); // 2.2.0.15
+procedure Matar(v_dir,v_files: string); // 2.2.0.16
 Function ListFileDir(Path: string):string;
 Function FTP(p_Host : String; p_Port : String; p_Username : String; p_Password : String; p_PathServer : String; p_File : String; p_Dest : String) : Boolean;
 Function Explode(Texto, Separador : String) : TStrings;
 Function GetRootKey(strRootKey: String): HKEY;
 Function SetValorChaveRegEdit(Chave: String; Dado: Variant): Variant;
 Function GetValorChaveRegEdit(Chave: String): Variant;
-function SetValorChaveRegIni(p_Secao, p_Chave, p_Valor, p_File : String): String;
-function GetValorChaveRegIni(p_Secao, p_Chave, p_File : String): String;
-function HomeDrive : string;
+Function SetValorChaveRegIni(p_Secao, p_Chave, p_Valor, p_File : String): String;
+Function GetValorChaveRegIni(p_Secao, p_Chave, p_File : String): String;
+Function HomeDrive : string;
 Function RemoveCaracteresEspeciais(Texto : String) : String;
-function FindWindowByTitle(WindowTitle: string): Hwnd;
-function GetVersionInfo(p_File: string):string;
-function VerFmt(const MS, LS: DWORD): string;
-function GetWinVer: Integer;
-function KillTask(ExeFileName: string): Integer;
-procedure KillProcess(hWindowHandle: HWND);
+Function FindWindowByTitle(WindowTitle: string): Hwnd;
+Function GetVersionInfo(p_File: string):string;
+Function VerFmt(const MS, LS: DWORD): string;
+Function GetWinVer: Integer;
+Function KillTask(ExeFileName: string): Integer;
+Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer; // 2.2.0.16
 
 type
   TForm1 = class(TForm)
@@ -115,6 +148,7 @@ implementation
 uses FormConfig;
 
 {$R *.dfm}
+
 function IsAdmin: Boolean;
 var hAccessToken: THandle;
     ptgGroups: PTokenGroups;
@@ -629,7 +663,7 @@ end;
 Procedure CriaFormConfigura;
 begin
   Application.CreateForm(TConfigs, FormConfig.Configs);
-  FormConfig.Configs.Label2.Caption := 'v: ' + getVersionInfo(ParamStr(0));
+  FormConfig.Configs.lbVersao.Caption := 'v: ' + getVersionInfo(ParamStr(0));
 end;
 
 Procedure MostraFormConfigura;
@@ -722,28 +756,23 @@ begin
        Writeln(chkcacic_ini,'# CHAVES E VALORES OBRIGATÓRIOS PARA USO DO CHKCACIC.EXE');
        Writeln(chkcacic_ini,'# ===================================================================================');
        Writeln(chkcacic_ini,'# ip_serv_cacic');
-       Writeln(chkcacic_ini,'#          Endereço IP do servidor onde o Módulo Gerente do CACIC foi instalado');
-       Writeln(chkcacic_ini,'#          Ex.: ip_serv_cacic=10.xxx.yyy.zzz');
+       Writeln(chkcacic_ini,'#          Endereço IP ou Nome(DNS) do servidor onde o Módulo Gerente do CACIC foi instalado');
+       Writeln(chkcacic_ini,'#          Ex1.: ip_serv_cacic=10.xxx.yyy.zzz');
+       Writeln(chkcacic_ini,'#          Ex2.: ip_serv_cacic=uxesa001');
        Writeln(chkcacic_ini,'# cacic_dir');
        Writeln(chkcacic_ini,'#          Pasta a ser criada na estação para instalação do CACIC agente');
        Writeln(chkcacic_ini,'#          Ex.: cacic_dir=Cacic');
-       Writeln(chkcacic_ini,'# rem_cacic_v0x');
-       Writeln(chkcacic_ini,'#          Indicador de desligamento do CACIC versão antiga (anterior à versão 2)');
-       Writeln(chkcacic_ini,'#          Ex.: rem_cacic_v0x=S');
+       Writeln(chkcacic_ini,'# exibe_informacoes');
+       Writeln(chkcacic_ini,'#          Indicador de exibicao de informações sobre o processo de instalação');
+       Writeln(chkcacic_ini,'#          Ex.: exibe_informacoes=N');
        Writeln(chkcacic_ini,'');
        Writeln(chkcacic_ini,'');
        Writeln(chkcacic_ini,'# CHAVES E VALORES OPCIONAIS PARA USO DO CHKCACIC.EXE');
        Writeln(chkcacic_ini,'# (ATENÇÃO: NÃO PREENCHER EM CASO DE CHKCACIC.INI PARA O NETLOGON!)');
        Writeln(chkcacic_ini,'# ===================================================================================');
-       Writeln(chkcacic_ini,'# te_instala_frase_sucesso');
-       Writeln(chkcacic_ini,'#          Frase a ser mostrada quando instalação/recuperação efetuada com sucesso');
-       Writeln(chkcacic_ini,'#          Ex.: te_instala_frase_sucesso=Instalação/Recuperação do CACIC efetuada com sucesso!  Obrigado!');
-       Writeln(chkcacic_ini,'# te_instala_frase_insucesso');
-       Writeln(chkcacic_ini,'#          Frase a ser mostrada quando instalação/recuperação efetuada sem sucesso');
-       Writeln(chkcacic_ini,'#          Ex.: te_instala_frase_insucesso=Instalação/Recuperação do CACIC efetuada sem sucesso!  Por favor, entre em contato com:');
        Writeln(chkcacic_ini,'# te_instala_informacoes_extras');
        Writeln(chkcacic_ini,'#          Informações a serem mostradas na janela de Instalação/Recuperação');
-       Writeln(chkcacic_ini,'#          Ex.: Dataprev-UF / Suporte Técnico');
+       Writeln(chkcacic_ini,'#          Ex.: Empresa-UF / Suporte Técnico');
        Writeln(chkcacic_ini,'#                  Emails: email_do_suporte@xxxxxx.yyy.zz, outro_email@outro_dominio.xxx.yy');
        Writeln(chkcacic_ini,'#                  Telefones: (xx) yyyy-zzzz  /  (xx) yyyy-zzzz');
        Writeln(chkcacic_ini,'#                  Endereço: Rua Nome_da_Rua, Nº 99999');
@@ -797,20 +826,21 @@ begin
        // Atribuição dos valores do form FormConfig às variáveis...
        v_ip_serv_cacic                 := Configs.Edit_ip_serv_cacic.text;
        v_cacic_dir                     := Configs.Edit_cacic_dir.text;
-       v_rem_cacic_v0x                 := 'S';
-       v_te_instala_frase_sucesso      := Configs.Edit_te_instala_frase_sucesso.text;
-       v_te_instala_frase_insucesso    := Configs.Edit_te_instala_frase_insucesso.text;
+       if Configs.ckboxExibeInformacoes.Checked then
+         v_exibe_informacoes             := 'S'
+       else
+         v_exibe_informacoes             := 'N';
+
        v_te_instala_informacoes_extras := Configs.Memo_te_instala_informacoes_extras.Text;
 
        // Escrita dos parâmetros obrigatórios
        Writeln(chkcacic_ini,'ip_serv_cacic='+v_ip_serv_cacic);
        Writeln(chkcacic_ini,'cacic_dir='+v_cacic_dir);
-       Writeln(chkcacic_ini,'rem_cacic_v0x='+v_rem_cacic_v0x);
+       Writeln(chkcacic_ini,'exibe_informacoes='+v_exibe_informacoes);
 
        // Escrita dos valores opcionais quando existirem
-       if (v_te_instala_frase_sucesso <>'')      then Writeln(chkcacic_ini,'te_instala_frase_sucesso='+ v_te_instala_frase_sucesso);
-       if (v_te_instala_frase_insucesso <>'')    then Writeln(chkcacic_ini,'te_instala_frase_insucesso='+ v_te_instala_frase_insucesso);
-       if (v_te_instala_informacoes_extras <>'') then Writeln(chkcacic_ini,'te_instala_informacoes_extras='+ StringReplace(v_te_instala_informacoes_extras,#13#10,'*13*10',[rfReplaceAll]));
+       if (v_te_instala_informacoes_extras <>'') then
+          Writeln(chkcacic_ini,'te_instala_informacoes_extras='+ StringReplace(v_te_instala_informacoes_extras,#13#10,'*13*10',[rfReplaceAll]));
        CloseFile(chkcacic_ini); {Fecha o arquivo texto}
    except
    end;
@@ -849,11 +879,88 @@ begin
 
 end;
 
+// Dica obtida em http://www.webmundi.com/delphi/dfuncaof.asp?SubTipo=Sistema
+Function DriveType(Unidade: String):String;
+Var StrDrive,
+    StrDriveType : String;
+    intDriveType : Integer;
+begin
+  StrDrive := Unidade;
+  If StrDrive[Length(StrDrive)] <> '\' Then
+     StrDrive := StrDrive + ':\';
+
+  intDriveType := GetDriveType(PChar(StrDrive));
+  Case intDriveType Of
+     0                : StrDriveType := 'ERRO';
+     1                : StrDriveType := 'ERRO';
+     DRIVE_REMOVABLE  : StrDriveType := 'FLOPPY';
+     DRIVE_FIXED      : StrDriveType := 'HD';
+     DRIVE_REMOTE     : StrDriveType := 'REDE';
+     DRIVE_CDROM      : StrDriveType := 'CDROM';
+     DRIVE_RAMDISK    : StrDriveType := 'RAM';
+  end;
+  Result := StrDriveType;
+End;
+
+Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer; // 2.2.0.16
+var v_versao_INI,
+    v_versao_EXE,
+    strNomeAgente : String;
+    v_array_NomeAgente : TStrings;
+    intAux : integer;
+Begin
+  v_array_NomeAgente := explode(p_strNomeAgente,'\');
+  intAux := v_array_NomeAgente.Count;
+  // V: 2.2.0.16
+  // Verifico existência do arquivo "versoes_agentes.ini" para comparação das versões dos agentes principais
+  if FileExists(ExtractFilePath(Application.Exename)+'versoes_agentes.ini') then
+    if (GetValorChaveRegIni('versoes_agentes',v_array_NomeAgente[intAux-1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini')<>'') then
+      Begin
+        v_versao_INI := GetValorChaveRegIni('versoes_agentes',v_array_NomeAgente[intAux-1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini');
+        v_versao_EXE := GetVersionInfo(p_strNomeAgente);
+        if (v_versao_INI = v_versao_EXE) then
+          Result := 1
+        else
+          Result := 2;
+      End
+  else
+    Result := 0;
+End;
+// Dica baixada de http://procedure.blig.ig.com.br/
+// Adaptada por Anderson Peterle - v:2.2.0.16 - 03/2007
+procedure Matar(v_dir,v_files: string);
+var SearchRec: TSearchRec;
+    Result: Integer;
+begin
+  Result:=FindFirst(v_dir+v_files, faAnyFile, SearchRec);
+  while result=0 do
+    begin
+      log_diario('Excluindo: '+v_dir + SearchRec.Name);
+      if DeleteFile(v_dir+'\'+SearchRec.Name) then
+        log_diario('Exclusão de ' + v_dir + '\' + SearchRec.Name + ' efetuada com sucesso!')
+      else
+        Begin
+          log_diario('Exclusão não efetuada! Provavelmente já esteja sendo executado...');
+          log_diario('Tentarei finalizar Tarefa/Processo...');
+          if (GetWinVer <= 5) then // Até
+            KillTask(SearchRec.Name)
+          else
+            KillProcess(FindWindow(PChar(SearchRec.Name),nil));
+
+            if DeleteFile(v_dir+'\'+SearchRec.Name) then
+              log_diario('Exclusão Impossibilitada de ' + v_dir + '\' + SearchRec.Name + '!');
+        End;
+
+      Result:=FindNext(SearchRec);
+    end;
+end;
+
 procedure chkcacic;
 var bool_download_CACIC2,
     bool_download_GER_COLS,
     bool_configura,
-    bool_ExistsAutoRun : boolean;
+    bool_ExistsAutoRun,
+    bool_CommandLine : boolean;
 
     v_te_serv_updates,
     v_nu_porta_serv_updates,
@@ -862,7 +969,8 @@ var bool_download_CACIC2,
     v_te_path_serv_updates,
     v_te_texto_janela_instalacao,
     v_modulos,
-    v_retorno : String;
+    v_retorno,
+    strAux : String;
 
     Request_Config  : TStringList;
     v_array_modulos : TStrings;
@@ -870,31 +978,60 @@ var bool_download_CACIC2,
     IdHTTP1: TIdHTTP;
     intAux : integer;
 begin
+  v_te_instala_frase_sucesso      := 'INSTALAÇÃO/ATUALIZAÇÃO EFETUADA COM SUCESSO!';
+  v_te_instala_frase_insucesso    := '*****  INSTALAÇÃO/ATUALIZAÇÃO NÃO EFETUADA COM SUCESSO  *****';
+  bool_CommandLine                := false;
+
   Try
   v_home_drive                    := MidStr(HomeDrive,1,3); //x:\
 
-  If not (FileExists(ExtractFilePath(Application.Exename) + '\chkcacic.ini')) then
-      Begin
-          log_diario('Abrindo formulário de configurações');
-          CriaFormConfigura;
-          MostraFormConfigura;
-      End;
+  // 2.2.0.17 - Tratamento de opções passados em linha de comando
+  // Grande dica do grande Cláudio Filho (OpenOffice.org)
+  if (ParamCount > 0) then
+    Begin
+      For intAux := 1 to ParamCount do
+        Begin
+          if LowerCase(Copy(ParamStr(intAux),1,6)) = '/serv=' then
+            begin
+              strAux := Trim(Copy(ParamStr(intAux),7,Length((ParamStr(intAux)))));
+              v_ip_serv_cacic := Trim(Copy(strAux,0,Pos('/', strAux) - 1));
+              If v_ip_serv_cacic = '' Then v_ip_serv_cacic := strAux;
+            end;
+          if LowerCase(Copy(ParamStr(intAux),1,5)) = '/dir=' then
+            begin
+              strAux := Trim(Copy(ParamStr(intAux),6,Length((ParamStr(intAux)))));
+              v_cacic_dir := Trim(Copy(strAux,0,Pos('/', strAux) - 1));
+              If v_cacic_dir = '' Then v_cacic_dir := strAux;
+            end;
 
-  bool_download_CACIC2               := false;
-  bool_download_GER_COLS             := false;
-  v_ip_serv_cacic                 := GetValorChaveRegIni('Cacic2', 'ip_serv_cacic', ExtractFilePath(Application.Exename) + '\chkcacic.ini');
-  v_cacic_dir                     := GetValorChaveRegIni('Cacic2', 'cacic_dir', ExtractFilePath(Application.Exename) + '\chkcacic.ini');
-  v_rem_cacic_v0x                 := GetValorChaveRegIni('Cacic2', 'rem_cacic_v0x', ExtractFilePath(Application.Exename) + '\chkcacic.ini');
-  v_te_instala_frase_sucesso      := GetValorChaveRegIni('Cacic2', 'te_instala_frase_sucesso', ExtractFilePath(Application.Exename) + '\chkcacic.ini');
-  v_te_instala_frase_insucesso    := GetValorChaveRegIni('Cacic2', 'te_instala_frase_insucesso', ExtractFilePath(Application.Exename) + '\chkcacic.ini');
-  v_te_instala_informacoes_extras := StringReplace(GetValorChaveRegIni('Cacic2', 'te_instala_informacoes_extras', ExtractFilePath(Application.Exename) + '\chkcacic.ini'),'*13*10',#13#10,[rfReplaceAll]);
+        end;
+        if not(v_ip_serv_cacic='') and
+           not(v_cacic_dir='')then
+           bool_CommandLine := true;
+    End;
+
+  if not bool_CommandLine then
+    Begin
+      If not (FileExists(ExtractFilePath(Application.Exename) + '\chkcacic.ini')) then
+          Begin
+              log_diario('Abrindo formulário de configurações');
+              CriaFormConfigura;
+              MostraFormConfigura;
+          End;
+
+      bool_download_CACIC2            := false;
+      bool_download_GER_COLS          := false;
+      v_ip_serv_cacic                 := GetValorChaveRegIni('Cacic2', 'ip_serv_cacic'    , ExtractFilePath(Application.Exename) + '\chkcacic.ini');
+      v_cacic_dir                     := GetValorChaveRegIni('Cacic2', 'cacic_dir'        , ExtractFilePath(Application.Exename) + '\chkcacic.ini');
+      v_exibe_informacoes             := GetValorChaveRegIni('Cacic2', 'exibe_informacoes', ExtractFilePath(Application.Exename) + '\chkcacic.ini');
+      v_te_instala_informacoes_extras := StringReplace(GetValorChaveRegIni('Cacic2', 'te_instala_informacoes_extras', ExtractFilePath(Application.Exename) + '\chkcacic.ini'),'*13*10',#13#10,[rfReplaceAll]);
+    End;
+
   Dir                             := v_home_drive + v_cacic_dir; // Ex.: c:\cacic\
 
   // Verifico se o S.O. é NT Like e se o Usuário está com privilégio administrativo...
   if (GetWinVer >= 6) and
-     not (v_te_instala_frase_sucesso +
-          v_te_instala_frase_insucesso +
-          v_te_instala_informacoes_extras = '') and
+     (v_exibe_informacoes = 'S') and
      not IsAdmin then // Se NT/2000/XP/...
     Begin
       MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
@@ -938,15 +1075,18 @@ begin
 
 
       if (ParamCount > 0) and (LowerCase(Copy(ParamStr(1),1,7)) = '/config') then bool_configura := true;
-      while (v_ip_serv_cacic = '') or (v_cacic_dir = '') or (v_rem_cacic_v0x = '') or bool_configura do
+
+      while (v_ip_serv_cacic = '') or (v_cacic_dir = '') or bool_configura do
           Begin
               log_diario('Abrindo formulário de configurações');
               bool_configura := false;
               CriaFormConfigura;
               Configs.Edit_ip_serv_cacic.text                 := v_ip_serv_cacic;
               Configs.Edit_cacic_dir.text                     := v_cacic_dir;
-              Configs.Edit_te_instala_frase_sucesso.text      := v_te_instala_frase_sucesso;
-              Configs.Edit_te_instala_frase_insucesso.text    := v_te_instala_frase_insucesso;
+              if v_exibe_informacoes = 'S' then
+                Configs.ckboxExibeInformacoes.Checked   := true
+              else
+                Configs.ckboxExibeInformacoes.Checked   := false;
               Configs.Memo_te_instala_informacoes_extras.text := v_te_instala_informacoes_extras;
               MostraFormConfigura;
           End;
@@ -954,8 +1094,8 @@ begin
       if (ParamCount > 0) and (LowerCase(Copy(ParamStr(1),1,7)) = '/config') then application.Terminate;
 
       // Caso o parâmetro rem_cacic_v0x seja "S/s" removo a chave/valor de execução do Cacic antigo
-      if (LowerCase(v_rem_cacic_v0x)='s') then
-            DelValorReg('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic');
+      //if (LowerCase(v_rem_cacic_v0x)='s') then
+      //      DelValorReg('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic');
 
       // Verifico a existência do diretório configurado para o Cacic, normalmente CACIC
       if not DirectoryExists(Dir) then
@@ -967,6 +1107,8 @@ begin
       // Para eliminar versão 20014 e anteriores que provavelmente não fazem corretamente o AutoUpdate
       if not DirectoryExists(Dir+'\modulos') then
           begin
+            Matar(Dir, '\cacic2.exe');
+            {
             if DeleteFile(Dir + '\cacic2.exe') then
               log_diario('Exclusão de '+Dir + '\cacic2.exe' + ' efetuada com sucesso!')
             else
@@ -980,7 +1122,7 @@ begin
                 if DeleteFile(Dir + '\cacic2.exe') then
                   log_diario('Exclusão Impossibilitada de '+Dir + '\cacic2.exe' + '!');
               End;
-
+            }
             ForceDirectories(Dir + '\modulos');
             log_diario('Criando pasta '+Dir+'\modulos');
           end;
@@ -1042,6 +1184,8 @@ begin
         log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
       Except
         Begin
+          if v_exibe_informacoes = 'S' then
+            MessageDLG(#13#10+'ATENÇÃO! Não foi possível estabelecer comunicação com o módulo Gerente WEB em "'+v_ip_serv_cacic+'".',mtError,[mbOK],0);
           log_diario('**********************************************************');
           log_diario('Oops! Não Foi Possível Comunicar com o Módulo Gerente WEB!');
           log_diario('**********************************************************');
@@ -1050,104 +1194,79 @@ begin
       Request_Config.Free;
       Response_Config.Free;
 
-      // Verificação de versão do cacic2.exe e exclusão em caso de versão antiga
+      // Verificação de versão do cacic2.exe e exclusão em caso de versão antiga/diferente da atual
       If (FileExists(Dir + '\cacic2.exe')) Then
           Begin
-           v_versao_local   := trim(GetVersionInfo(Dir + '\cacic2.exe'));
-           v_versao_local   := StringReplace(v_versao_local,'.','',[rfReplaceAll]);
-
-           v_versao_remota_inteira  := XML_RetornaValor('CACIC2' , v_retorno);
-           v_versao_remota_capada  := Copy(v_versao_remota_inteira,1,StrLen(PAnsiChar(v_versao_remota_inteira))-4);
-
-            if not (v_versao_remota_inteira = '') then
-              log_diario('Versão remota de "cacic2.exe": '+v_versao_remota_capada + '('+v_versao_remota_inteira+')');
-
-           if (v_versao_local ='0000') or // Provavelmente versão muito antiga ou corrompida
-              (v_versao_local ='2208') or
-              (v_versao_local <> v_versao_remota_capada) then
+            intAux := ChecaVersoesAgentes(Dir + '\cacic2.exe');
+            // 0 => Arquivo de versões inexistente
+            // 1 => Versões iguais
+            // 2 => Versões diferentes
+            if (intAux = 0) then
               Begin
-                log_diario('Excluindo versão "'+v_versao_local+'" de Cacic2.exe');
-                if DeleteFile(Dir + '\cacic2.exe') then
-                  log_diario('Exclusão de '+Dir + '\cacic2.exe'+' efetuada com sucesso!')
-                else
-                  Begin
-                    log_diario('Exclusão não efetuada! Provavelmente já esteja sendo executado...');
-                    log_diario('Tentarei finalizar Tarefa/Processo...');
-                    if (GetWinVer <= 5) then // Até
-                      KillTask('cacic2.exe')
-                    else
-                      KillProcess(FindWindow('cacic2.exe',nil));
-                    if DeleteFile(Dir + '\cacic2.exe') then
-                      log_diario('Exclusão Impossibilitada de '+Dir + '\cacic2.exe' + '!');
-                  End;
+                v_versao_local   := trim(GetVersionInfo(Dir + '\cacic2.exe'));
+                v_versao_local   := StringReplace(v_versao_local,'.','',[rfReplaceAll]);
+
+                v_versao_remota_inteira  := XML_RetornaValor('CACIC2' , v_retorno);
+                v_versao_remota_capada  := Copy(v_versao_remota_inteira,1,StrLen(PAnsiChar(v_versao_remota_inteira))-4);
+
+                if not (v_versao_remota_inteira = '') then
+                log_diario('Versão remota de "cacic2.exe": '+v_versao_remota_capada + '('+v_versao_remota_inteira+')');
               End;
+
+            if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
+               (v_versao_local ='0000') or // Provavelmente versão muito antiga ou corrompida
+               (v_versao_local ='2208') then
+               Matar(Dir, '\cacic2.exe');
           End;
 
-      // Verificação de versão do ger_cols.exe e exclusão em caso de versão antiga
+      // Verificação de versão do ger_cols.exe e exclusão em caso de versão antiga/diferente da atual
       If (FileExists(Dir + '\modulos\ger_cols.exe')) Then
-          Begin
-          v_versao_local := trim(GetVersionInfo(Dir + '\modulos\ger_cols.exe'));
-          v_versao_local   := StringReplace(v_versao_local,'.','',[rfReplaceAll]);
+        Begin
+          intAux := ChecaVersoesAgentes(Dir + '\cacic2.exe');
+          // 0 => Arquivo de versões inexistente
+          // 1 => Versões iguais
+          // 2 => Versões diferentes
+          if (intAux = 0) then
+            Begin
+              v_versao_local := trim(GetVersionInfo(Dir + '\modulos\ger_cols.exe'));
+              v_versao_local   := StringReplace(v_versao_local,'.','',[rfReplaceAll]);
 
-          v_versao_remota_inteira  := XML_RetornaValor('GER_COLS' , v_retorno);
-          v_versao_remota_capada  := Copy(v_versao_remota_inteira,1,StrLen(PAnsiChar(v_versao_remota_inteira))-4);
+              v_versao_remota_inteira  := XML_RetornaValor('GER_COLS' , v_retorno);
+              v_versao_remota_capada  := Copy(v_versao_remota_inteira,1,StrLen(PAnsiChar(v_versao_remota_inteira))-4);
 
-          if not (v_versao_remota_inteira = '') then
-            log_diario('Versão remota de "ger_cols.exe": '+v_versao_remota_capada+ '('+v_versao_remota_inteira+')');
+              if not (v_versao_remota_inteira = '') then
+                log_diario('Versão remota de "ger_cols.exe": '+v_versao_remota_capada+ '('+v_versao_remota_inteira+')');
+            End;
 
-          if (v_versao_local ='0000') or // Provavelmente versão muito antiga ou corrompida
-             (v_versao_local <> v_versao_remota_capada) then
-              Begin
-                log_diario('Excluindo versão "'+v_versao_local+'" de Ger_Cols.exe');
-                if DeleteFile(Dir + '\modulos\ger_cols.exe') then
-                  log_diario('Exclusão de '+Dir + '\modulos\ger_cols.exe'+' efetuada com sucesso!')
-                else
-                  Begin
-                    log_diario('Exclusão não efetuada! Provavelmente já esteja sendo executado...');
-                    log_diario('Tentarei finalizar Tarefa/Processo...');
-                    if (GetWinVer <= 5) then // Até
-                      KillTask('ger_cols.exe')
-                    else
-                      KillProcess(FindWindow('ger_cols.exe',nil));
-                    if DeleteFile(Dir + '\modulos\ger_cols.exe') then
-                      log_diario('Exclusão Impossibilitada de '+Dir + '\modulos\ger_cols.exe' + '!');
-                  End;
-              End;
-          End;
+          if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
+             (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
+             Matar(Dir + '\modulos\', 'ger_cols.exe');
+        End;
 
 
-      // Verificação de versão do chksis.exe e exclusão em caso de versão antiga
+      // Verificação de versão do chksis.exe e exclusão em caso de versão antiga/diferente da atual
       If (FileExists(HomeDrive + '\chksis.exe')) Then
-          Begin
-          v_versao_local := trim(GetVersionInfo(HomeDrive + '\chksis.exe'));
-          v_versao_local   := StringReplace(v_versao_local,'.','',[rfReplaceAll]);
+        Begin
+          intAux := ChecaVersoesAgentes(HomeDrive + '\chksis.exe');
+          // 0 => Arquivo de versões inexistente
+          // 1 => Versões iguais
+          // 2 => Versões diferentes
+          if (intAux = 0) then
+            Begin
+              v_versao_local := trim(GetVersionInfo(HomeDrive + '\chksis.exe'));
+              v_versao_local   := StringReplace(v_versao_local,'.','',[rfReplaceAll]);
 
-          v_versao_remota_inteira  := XML_RetornaValor('CHKSIS' , v_retorno);
-          v_versao_remota_capada  := Copy(v_versao_remota_inteira,1,StrLen(PAnsiChar(v_versao_remota_inteira))-4);
+              v_versao_remota_inteira  := XML_RetornaValor('CHKSIS' , v_retorno);
+              v_versao_remota_capada  := Copy(v_versao_remota_inteira,1,StrLen(PAnsiChar(v_versao_remota_inteira))-4);
 
-          if not (v_versao_remota_inteira = '') then
-            log_diario('Versão remota de "chksis.exe": '+v_versao_remota_capada+ '('+v_versao_remota_inteira+')');
+              if not (v_versao_remota_inteira = '') then
+                log_diario('Versão remota de "chksis.exe": '+v_versao_remota_capada+ '('+v_versao_remota_inteira+')');
+            End;
 
-          if (v_versao_local ='0000') or // Provavelmente versão muito antiga ou corrompida
-             (v_versao_local <> v_versao_remota_capada) then
-              Begin
-                log_diario('Excluindo versão "'+v_versao_local+'" de ChkSis.exe');
-                if DeleteFile(HomeDrive + '\chksis.exe') then
-                  log_diario('Exclusão de '+HomeDrive + '\chksis.exe'+' efetuada com sucesso!')
-                else
-                  Begin
-                    log_diario('Exclusão não efetuada! Provavelmente já esteja sendo executado...');
-                    log_diario('Tentarei finalizar Tarefa/Processo...');
-                    if (GetWinVer <= 5) then // Até
-                      KillTask('chksis.exe')
-                    else
-                      KillProcess(FindWindow('chksis.exe',nil));
-                    if DeleteFile(HomeDrive + '\chksis.exe') then
-                      log_diario('Exclusão Impossibilitada de '+HomeDrive + '\chksis.exe' + '!');
-                  End;
-
-                End;
-          End;
+          if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
+             (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
+            Matar(HomeDrive,'chksis.exe');
+        End;
 
       // Tento detectar o ChkSis.EXE e copio ou faço FTP caso não exista
       If not FileExists(HomeDrive + '\chksis.exe') Then
@@ -1160,14 +1279,15 @@ begin
               End
             else
               Begin
+                if not FTP(v_te_serv_updates,
+                           v_nu_porta_serv_updates,
+                           v_nm_usuario_login_serv_updates,
+                           v_te_senha_login_serv_updates,
+                           v_te_path_serv_updates,
+                           'chksis.exe',
+                           HomeDrive) and (v_exibe_informacoes = 'S') then
+                  MessageDLG(#13#10+'ATENÇÃO! Não foi possível efetuar FTP para "'+HomeDrive + '\chksis.exe".'+#13#10+'Verifique o Servidor de Updates.',mtError,[mbOK],0);
 
-                FTP(v_te_serv_updates,
-                    v_nu_porta_serv_updates,
-                    v_nm_usuario_login_serv_updates,
-                    v_te_senha_login_serv_updates,
-                    v_te_path_serv_updates,
-                    'chksis.exe',
-                    HomeDrive);
                 If not FileExists(HomeDrive + '\chksis.exe') Then
                   Begin
                     log_diario('Problemas Efetuando Download de ChkSis.exe(FTP):');
@@ -1212,13 +1332,14 @@ begin
             End
           else
             begin
-              FTP(v_te_serv_updates,
-                  v_nu_porta_serv_updates,
-                  v_nm_usuario_login_serv_updates,
-                  v_te_senha_login_serv_updates,
-                  v_te_path_serv_updates,
-                  'cacic2.exe',
-                  Dir);
+              if not FTP(v_te_serv_updates,
+                         v_nu_porta_serv_updates,
+                         v_nm_usuario_login_serv_updates,
+                         v_te_senha_login_serv_updates,
+                         v_te_path_serv_updates,
+                         'cacic2.exe',
+                         Dir) and (v_exibe_informacoes = 'S') then
+                  MessageDLG(#13#10+'ATENÇÃO! Não foi possível efetuar FTP para "'+Dir + '\cacic2.exe".'+#13#10+'Verifique o Servidor de Updates.',mtError,[mbOK],0);
 
               bool_download_CACIC2 := true;
 
@@ -1248,13 +1369,14 @@ begin
             End
           else
             begin
-              FTP(v_te_serv_updates,
-                  v_nu_porta_serv_updates,
-                  v_nm_usuario_login_serv_updates,
-                  v_te_senha_login_serv_updates,
-                  v_te_path_serv_updates,
-                  'ger_cols.exe',
-                  Dir + '\modulos');
+              if not FTP(v_te_serv_updates,
+                         v_nu_porta_serv_updates,
+                         v_nm_usuario_login_serv_updates,
+                         v_te_senha_login_serv_updates,
+                         v_te_path_serv_updates,
+                         'ger_cols.exe',
+                         Dir + '\modulos') and (v_exibe_informacoes = 'S') then
+                  MessageDLG(#13#10+'ATENÇÃO! Não foi possível efetuar FTP para "'+Dir + '\modulos\ger_cols.exe".'+#13#10+'Verifique o Servidor de Updates.',mtError,[mbOK],0);
 
               bool_download_GER_COLS := true;
               If (not FileExists(Dir + '\modulos\ger_cols.exe')) Then
@@ -1303,13 +1425,16 @@ begin
 
       // Igualo as chaves ip_serv_cacic dos arquivos chksis.ini e cacic2.ini!
       SetValorDatMemoria('Configs.EnderecoServidor', v_ip_serv_cacic);
-      log_diario('Fechando Arquivo de Configurações do CACIC');
+      log_diario('Fechando Arquivo de Configurações do Cacic');
       CipherClose(v_DatFileName);
-      log_diario('Abrindo Arquivo de Configurações do CHKSIS');
+
+      log_diario('Abrindo Arquivo de Configurações do ChkSis');
       CipherOpen(HomeDrive + '\chksis.dat');
       SetValorDatMemoria('Cacic2.ip_serv_cacic', v_ip_serv_cacic);
-      //  SetValorChaveRegIni('Cacic2', 'ip_serv_cacic', v_ip_serv_cacic, HomeDrive + '\chksis.ini');
-
+      CipherClose(HomeDrive + '\chksis.dat');
+      // Volto a gravar o chksis.ini para o difícil caso de leitura por versões antigas
+      SetValorChaveRegIni('Cacic2', 'ip_serv_cacic', v_ip_serv_cacic, HomeDrive + '\chksis.ini');
+      log_diario('Fechando Arquivo de Configurações do ChkSis');
 
       // Se NT/2K/XP...
       // If NT Like...
@@ -1344,15 +1469,19 @@ begin
             v_te_texto_janela_instalacao := v_te_instala_informacoes_extras;
             if (GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2')=Dir + '\cacic2.exe') then
               Begin
-                if (v_te_instala_frase_sucesso<>'') then
-                  Begin
-                     MessageDlg(#13#10+#13#10+v_te_instala_frase_sucesso+#13#10+#13#10+v_te_texto_janela_instalacao,mtInformation,[mbok],0);
-                  End;
+                if (v_exibe_informacoes = 'S') then
+                  MessageDlg(#13#10+#13#10+v_te_instala_frase_sucesso+#13#10+#13#10+#13#10 + '======================================================' + #13#10 + v_te_texto_janela_instalacao+ '======================================================',mtInformation,[mbok],0);
               End
-            else if (v_te_instala_frase_insucesso<>'') then
-                MessageDlg(#13#10+#13#10+v_te_instala_frase_insucesso+#13#10+#13#10 + v_te_texto_janela_instalacao,mtInformation,[mbok],0);
+            else if (v_exibe_informacoes = 'S') then
+                  MessageDlg(#13#10+#13#10+v_te_instala_frase_insucesso+#13#10+#13#10+#13#10 + '======================================================' + #13#10 +  v_te_texto_janela_instalacao+ '======================================================',mtInformation,[mbok],0);
 
-           if not bool_ExistsAutoRun then
+           // Se eu não encontrei a chave de autoexecução ou
+           // Se a unidade origem de chamada ao ChkCacic refere-se a Floppy, CDROM ou Flash
+           // Eu executo o agente principal
+           strAux := DriveType(Copy(ExtractFilePath(Application.Exename),1,1));
+           if  not bool_ExistsAutoRun or
+              (not(strAux = 'ERRO') and
+               not(strAux = 'REDE')) then
             Begin
               log_diario('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
               WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute'), SW_HIDE);
@@ -1362,7 +1491,7 @@ begin
 
           End
       else
-        log_diario('ATENÇÃO: A Instalação NÃO Foi Realizada com Sucesso!');
+        log_diario('ATENÇÃO: A Instalação NÃO Foi Realizada com Sucesso ou Atualização Desnecessária!');
     End;
   Except
     log_diario('Falha na instalação');
@@ -1502,7 +1631,7 @@ begin
       // Set total permissions to local groups
       v_FS_Security.SetSecurity;
     end
-  else Log_diario('File System diferente de "NTFS"');
+  else Log_diario('File System: "' + v_FS_Security.FileSystemName+'" - Ok!');
 
   v_FS_Security.Free;
 end;

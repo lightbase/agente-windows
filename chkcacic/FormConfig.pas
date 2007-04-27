@@ -21,24 +21,25 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls,main, PJVersionInfo, NTFileSecurity;
+  Dialogs, StdCtrls,main, PJVersionInfo, NTFileSecurity, Buttons, ExtCtrls;
 
 type
   TConfigs = class(TForm)
     Edit_ip_serv_cacic: TEdit;
     Edit_cacic_dir: TEdit;
-    GroupBox1: TGroupBox;
+    gbObrigatorio: TGroupBox;
     Label_ip_serv_cacic: TLabel;
     Label_cacic_dir: TLabel;
-    GroupBox2: TGroupBox;
+    gbOpcional: TGroupBox;
     Label1: TLabel;
     Label_te_instala_informacoes_extras: TLabel;
     Button_Gravar: TButton;
     Memo_te_instala_informacoes_extras: TMemo;
     PJVersionInfo1: TPJVersionInfo;
-    Label2: TLabel;
     ckboxExibeInformacoes: TCheckBox;
     btSair: TButton;
+    pnVersao: TPanel;
+    lbVersao: TLabel;
     procedure Button_GravarClick(Sender: TObject);
     procedure ckboxExibeInformacoesClick(Sender: TObject);
     procedure btSairClick(Sender: TObject);
