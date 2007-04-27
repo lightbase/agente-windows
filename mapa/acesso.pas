@@ -1,3 +1,20 @@
+(**
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+Copyright 2000, 2001, 2002, 2003, 2004, 2005 Dataprev - Empresa de Tecnologia e Informações da Previdência Social, Brasil
+
+Este arquivo é parte do programa CACIC - Configurador Automático e Coletor de Informações Computacionais
+
+O CACIC é um software livre; você pode redistribui-lo e/ou modifica-lo dentro dos termos da Licença Pública Geral GNU como
+publicada pela Fundação do Software Livre (FSF); na versão 2 da Licença, ou (na sua opinião) qualquer versão.
+
+Este programa é distribuido na esperança que possa ser  util, mas SEM NENHUMA GARANTIA; sem uma garantia implicita de ADEQUAÇÂO a qualquer
+MERCADO ou APLICAÇÃO EM PARTICULAR. Veja a Licença Pública Geral GNU para maiores detalhes.
+
+Você deve ter recebido uma cópia da Licença Pública Geral GNU, sob o título "LICENCA.txt", junto com este programa, se não, escreva para a Fundação do Software
+Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+*)
+
 unit acesso;
 
 interface
@@ -21,6 +38,8 @@ type
     pnVersao: TPanel;
     lbVersao: TLabel;
     tm_Mensagem: TTimer;
+    pnNomeServidorWEB: TPanel;
+    lbNomeServidorWEB: TLabel;
     procedure btAcessoClick(Sender: TObject);
     procedure btCancelaClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -30,6 +49,7 @@ type
     procedure edSenhaAcessoKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure tm_MensagemTimer(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -120,7 +140,17 @@ procedure TfrmAcesso.FormCreate(Sender: TObject);
 begin
   frmAcesso.lbVersao.Caption        := 'v: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
   frmMapaCacic.tStringsCipherOpened := frmMapaCacic.CipherOpen(frmMapaCacic.strDatFileName);
+  frmMapaCacic.lbNomeServidorWEB.Caption := frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsCipherOpened);
   frmMapaCacic.lbMensagens.Caption  := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';
+  if (frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS' , frmMapaCacic.tStringsCipherOpened)='') then
+    Begin
+      frmMapaCacic.boolAcessoOK := false;
+      MessageDLG(#13#10+'Atenção! É necessário executar as coletas do Sistema Cacic.' + #13#10     + #13#10 +
+                            'Caso o Sistema Cacic já esteja instalado, clique com botão direito'   + #13#10 +
+                            'sobre o ícone da bandeja, escolha a opção "Executar Agora" e aguarde' + #13#10 +
+                            'o fim do processo.',mtError,[mbOK],0);
+      frmMapaCacic.Finalizar(false);
+    End;
 end;
 
 procedure TfrmAcesso.edNomeUsuarioAcessoKeyUp(Sender: TObject;
@@ -153,6 +183,21 @@ begin
   tm_Mensagem.Enabled := false;
   lbMsg_Erro_Senha.Caption := '';
   lbMsg_Erro_Senha.Font.Color := clBlack;
+end;
+
+procedure TfrmAcesso.FormActivate(Sender: TObject);
+var strAux : String;
+begin
+  strAux := frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsCipherOpened);
+  if not (strAux = '') then
+    Begin
+      frmAcesso.lbNomeServidorWEB.Caption := strAux;
+    End
+  else
+    Begin
+      frmMapaCacic.Mensagem('Favor verificar a instalação do Cacic.' +#13#10 + 'Não Existe Servidor de Aplicação configurado!',true);
+      frmMapaCacic.Finalizar(true);
+    End;
 end;
 
 end.

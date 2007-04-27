@@ -10,7 +10,7 @@ uses
   DCPrijndael,
   DCPbase64,
   StdCtrls,
-  Controls, Classes, Dialogs;
+  Controls, Classes, Dialogs, ExtCtrls, PJVersionInfo;
 
 type
   TFormVACON = class(TForm)
@@ -26,6 +26,11 @@ type
     Bt_Trocar_Chave: TButton;
     Lb_Chave_Separadora: TLabel;
     Ed_Chave_Separadora: TEdit;
+    lbDefaultChaveLeArq: TLabel;
+    lbChaveSeparadora: TLabel;
+    chkboxExibeChaves: TCheckBox;
+    Panel1: TPanel;
+    PJVersionInfo1: TPJVersionInfo;
     procedure FormCreate(Sender: TObject);
     procedure Bt_SairClick(Sender: TObject);
     function  DeCrypt(p_Data : String) : String;
@@ -39,7 +44,9 @@ type
     procedure PegaChave(Sender: TObject);
     procedure Ed_ChaveKeyPress(Sender: TObject; var Key: Char);
     procedure Ed_Chave_SeparadoraKeyPress(Sender: TObject; var Key: Char);
-    procedure Ed_Chave_SeparadoraEnter(Sender: TObject);
+    procedure chkboxExibeChavesClick(Sender: TObject);
+    function  GetVersionInfo(p_File: string):string;
+    function  VerFmt(const MS, LS: DWORD): string;    
   private
     { Private declarations }
   public
@@ -159,6 +166,7 @@ end;
 procedure TFormVACON.FormCreate(Sender: TObject);
 begin
   FormVACON.Visible := true;
+  FormVACON.Panel1.Caption := GetVersionInfo(ParamStr(0));
   Abrir;
 end;
 
@@ -180,10 +188,23 @@ procedure TFormVACON.PegaChave(Sender: TObject);
 begin
   GB_Chave.Visible := true;
   Ed_Chave.SetFocus;
-  Ed_Chave.PasswordChar := #42;
-  Ed_Chave_Separadora.PasswordChar := #42;
+  chkboxExibeChavesClick(nil);
+end;
+function TFormVACON.VerFmt(const MS, LS: DWORD): string;
+  // Format the version number from the given DWORDs containing the info
+begin
+  Result := Format('%d.%d.%d.%d',
+    [HiWord(MS), LoWord(MS), HiWord(LS), LoWord(LS)])
 end;
 
+function TFormVACON.GetVersionInfo(p_File: string):string;
+var PJVersionInfo1: TPJVersionInfo;
+begin
+  PJVersionInfo1 := TPJVersionInfo.Create(nil);
+  PJVersionInfo1.FileName := PChar(p_File);
+  Result := VerFmt(PJVersionInfo1.FixedFileInfo.dwFileVersionMS, PJVersionInfo1.FixedFileInfo.dwFileVersionLS);
+  PJVersionInfo1.Free;
+end;
 
 procedure TFormVACON.Bt_SairClick(Sender: TObject);
 begin
@@ -250,9 +271,18 @@ begin
   if Key = #13 then Bt_OK_ChaveClick(nil);
 end;
 
-procedure TFormVACON.Ed_Chave_SeparadoraEnter(Sender: TObject);
+procedure TFormVACON.chkboxExibeChavesClick(Sender: TObject);
 begin
-  Ed_Chave_Separadora.Text := Ed_Chave.Text;
+  if chkboxExibeChaves.Checked then
+    Begin
+      Ed_Chave.PasswordChar := #0;
+      Ed_Chave_Separadora.PasswordChar := #0;
+    End
+  else
+    Begin
+      Ed_Chave.PasswordChar := #42;
+      Ed_Chave_Separadora.PasswordChar   := #42;
+    End;
 end;
 
 end.

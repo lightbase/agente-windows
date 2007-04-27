@@ -38,18 +38,19 @@ uses  IniFiles,
       Classes,
       Forms,
       PJVersionInfo,
-      DIALOGS,
       DCPcrypt2,
       DCPrijndael,
       DCPbase64,
       ExtCtrls,
-      Graphics;
+      Graphics,
+      dialogs;
 
 var  strCipherClosed,
      strCipherOpened,
      strPathCacic                 : string;
 
-var  boolDebugs                 : boolean;
+var  boolDebugs,
+     boolUON2                 : boolean;
 
 
 // Some constants that are dependant on the cipher being used
@@ -95,6 +96,8 @@ type
     lbVersao: TLabel;
     pnMensagens: TPanel;
     lbMensagens: TLabel;
+    pnNomeServidorWEB: TPanel;
+    lbNomeServidorWEB: TLabel;
 
     procedure mapa;
     procedure Grava_Debugs(strMsg : String);
@@ -575,7 +578,7 @@ Begin
        idHTTP1.Free;
        log_DEBUG('Retorno: "'+Response_CS.DataString+'"');
     Except
-       Mensagem('ERRO! Comunicação impossível com o endereço ' + strEndereco + Response_CS.DataString,true);
+       Mensagem('ERRO! Comunicação impossível com o endereço ' + strEndereco + ': '+Response_CS.DataString,true);
        result := '0';
        Exit;
     end;
@@ -687,29 +690,29 @@ var
   l_Data, l_Key, l_IV : string;
 begin
   Try
-        // Pad Key, IV and Data with zeros as appropriate
-        l_Key   := PadWithZeros(constCipherKey,constKeySize);
-        l_IV    := PadWithZeros(constIV,constBlockSize);
-        l_Data  := PadWithZeros(p_Data,constBlockSize);
+    // Pad Key, IV and Data with zeros as appropriate
+    l_Key   := PadWithZeros(constCipherKey,constKeySize);
+    l_IV    := PadWithZeros(constIV,constBlockSize);
+    l_Data  := PadWithZeros(p_Data,constBlockSize);
 
-        // Create the cipher and initialise according to the key length
-        l_Cipher := TDCP_rijndael.Create(nil);
-        if Length(constCipherKey) <= 16 then
-          l_Cipher.Init(l_Key[1],128,@l_IV[1])
-        else if Length(constCipherKey) <= 24 then
-          l_Cipher.Init(l_Key[1],192,@l_IV[1])
-        else
-          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+    // Create the cipher and initialise according to the key length
+    l_Cipher := TDCP_rijndael.Create(nil);
+    if Length(constCipherKey) <= 16 then
+      l_Cipher.Init(l_Key[1],128,@l_IV[1])
+    else if Length(constCipherKey) <= 24 then
+      l_Cipher.Init(l_Key[1],192,@l_IV[1])
+    else
+      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
 
-        // Encrypt the data
-        l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+    // Encrypt the data
+    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
 
-        // Free the cipher and clear sensitive information
-        l_Cipher.Free;
-        FillChar(l_Key[1],Length(l_Key),0);
+    // Free the cipher and clear sensitive information
+    l_Cipher.Free;
+    FillChar(l_Key[1],Length(l_Key),0);
 
-        // Return the Base64 encoded result
-        Result := Base64EncodeStr(l_Data);
+    // Return the Base64 encoded result
+    Result := Base64EncodeStr(l_Data);
   Except
     log_diario('Erro no Processo de Criptografia');
   End;
@@ -721,31 +724,31 @@ var
   l_Data, l_Key, l_IV : string;
 begin
   Try
-        // Pad Key and IV with zeros as appropriate
-        l_Key := PadWithZeros(constCipherKey,constKeySize);
-        l_IV := PadWithZeros(constIV,constBlockSize);
+    // Pad Key and IV with zeros as appropriate
+    l_Key := PadWithZeros(constCipherKey,constKeySize);
+    l_IV := PadWithZeros(constIV,constBlockSize);
 
-        // Decode the Base64 encoded string
-        l_Data := Base64DecodeStr(p_Data);
+    // Decode the Base64 encoded string
+    l_Data := Base64DecodeStr(p_Data);
 
-        // Create the cipher and initialise according to the key length
-        l_Cipher := TDCP_rijndael.Create(nil);
-        if Length(constCipherKey) <= 16 then
-          l_Cipher.Init(l_Key[1],128,@l_IV[1])
-        else if Length(constCipherKey) <= 24 then
-          l_Cipher.Init(l_Key[1],192,@l_IV[1])
-        else
-          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+    // Create the cipher and initialise according to the key length
+    l_Cipher := TDCP_rijndael.Create(nil);
+    if Length(constCipherKey) <= 16 then
+      l_Cipher.Init(l_Key[1],128,@l_IV[1])
+    else if Length(constCipherKey) <= 24 then
+      l_Cipher.Init(l_Key[1],192,@l_IV[1])
+    else
+      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
 
-        // Decrypt the data
-        l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+    // Decrypt the data
+    l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
 
-        // Free the cipher and clear sensitive information
-        l_Cipher.Free;
-        FillChar(l_Key[1],Length(l_Key),0);
-        log_DEBUG('DeCriptografia(ATIVADA) de "'+p_Data+'" => "'+l_Data+'"');
-        // Return the result
-        Result := trim(l_Data);
+    // Free the cipher and clear sensitive information
+    l_Cipher.Free;
+    FillChar(l_Key[1],Length(l_Key),0);
+    log_DEBUG('DeCriptografia(ATIVADA) de "'+p_Data+'" => "'+l_Data+'"');
+    // Return the result
+    Result := trim(l_Data);
   Except
     log_diario('Erro no Processo de Decriptografia');
   End;
@@ -755,45 +758,45 @@ function TfrmMapaCacic.HomeDrive : string;
 var
 WinDir : array [0..144] of char;
 begin
-GetWindowsDirectory (WinDir, 144);
-Result := StrPas (WinDir);
+  GetWindowsDirectory (WinDir, 144);
+  Result := StrPas (WinDir);
 end;
 
 Function TfrmMapaCacic.Implode(p_Array : TStrings ; p_Separador : String) : String;
 var intAux : integer;
     strAux : string;
 Begin
-    strAux := '';
-    For intAux := 0 To p_Array.Count -1 do
-      Begin
-        if (strAux<>'') then strAux := strAux + p_Separador;
-        strAux := strAux + p_Array[intAux];
-      End;
-    Implode := strAux;
+  strAux := '';
+  For intAux := 0 To p_Array.Count -1 do
+    Begin
+      if (strAux<>'') then strAux := strAux + p_Separador;
+      strAux := strAux + p_Array[intAux];
+    End;
+  Implode := strAux;
 end;
 
 Function TfrmMapaCacic.CipherClose(p_DatFileName : string; p_tstrCipherOpened : TStrings) : String;
 var strCipherOpenImploded : string;
     txtFileDatFile               : TextFile;
 begin
-   try
-       FileSetAttr (p_DatFileName,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-       AssignFile(txtFileDatFile,p_DatFileName); {Associa o arquivo a uma variável do tipo TextFile}
+ try
+   FileSetAttr (p_DatFileName,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+   AssignFile(txtFileDatFile,p_DatFileName); {Associa o arquivo a uma variável do tipo TextFile}
 
-       // Criação do arquivo .DAT
-       Rewrite (txtFileDatFile);
-       Append(txtFileDatFile);
+   // Criação do arquivo .DAT
+   Rewrite (txtFileDatFile);
+   Append(txtFileDatFile);
 
-       strCipherOpenImploded := Implode(p_tstrCipherOpened,'=CacicIsFree=');
-       log_DEBUG('Rotina de Fechamento do cacic2.dat ATIVANDO criptografia.');
-       strCipherClosed := EnCrypt(strCipherOpenImploded);
-       log_DEBUG('Rotina de Fechamento do cacic2.dat RESTAURANDO estado da criptografia.');
+   strCipherOpenImploded := Implode(p_tstrCipherOpened,'=CacicIsFree=');
+   log_DEBUG('Rotina de Fechamento do cacic2.dat ATIVANDO criptografia.');
+   strCipherClosed := EnCrypt(strCipherOpenImploded);
+   log_DEBUG('Rotina de Fechamento do cacic2.dat RESTAURANDO estado da criptografia.');
 
-       Writeln(txtFileDatFile,strCipherClosed); {Grava a string Texto no arquivo texto}
+   Writeln(txtFileDatFile,strCipherClosed); {Grava a string Texto no arquivo texto}
 
-       CloseFile(txtFileDatFile);
-   except
-   end;
+   CloseFile(txtFileDatFile);
+ except
+ end;
 end;
 function TfrmMapaCacic.GetWinVer: Integer;
 const
@@ -1067,7 +1070,6 @@ begin
 
   // Código para montar o combo 2
   Parser.StartScan;
-
   v_Tag := false;
   i := -1;
   While Parser.Scan DO
@@ -1079,9 +1081,15 @@ begin
          SetLength(VetorUON2, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
        end
      else if (Parser.CurPartType in [ptContent, ptCData]) and v_Tag Then
-        if      (UpperCase(Parser.CurName) = 'ID1') then VetorUON2[i].id1 := DeCrypt(Parser.CurContent)
-        else if (UpperCase(Parser.CurName) = 'ID2') then VetorUON2[i].id2 := DeCrypt(Parser.CurContent)
-        else if (UpperCase(Parser.CurName) = 'NM2') then VetorUON2[i].nm2 := DeCrypt(Parser.CurContent);
+      Begin
+        boolUON2 := true;
+        if      (UpperCase(Parser.CurName) = 'ID1') then
+            VetorUON2[i].id1 := DeCrypt(Parser.CurContent)
+        else if (UpperCase(Parser.CurName) = 'ID2') then
+            VetorUON2[i].id2 := DeCrypt(Parser.CurContent)
+        else if (UpperCase(Parser.CurName) = 'NM2') then
+            VetorUON2[i].nm2 := DeCrypt(Parser.CurContent);
+      End;
   end;
   Parser.Free;
   // Como os itens do combo1 nunca mudam durante a execução do programa (ao contrario do combo2), posso colocar o seu preenchimento aqui mesmo.
@@ -1095,21 +1103,29 @@ procedure TfrmMapaCacic.cb_id_unid_organizacional_nivel1Change(Sender: TObject);
 var i, j: Word;
     strAux : String;
 begin
-  // Filtro os itens do combo2, de acordo com o item selecionado no combo1
-  strAux := VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].id1;
+  if boolUON2 then
+    Begin
+      // Filtro os itens do combo2, de acordo com o item selecionado no combo1
+      strAux := VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].id1;
+      cb_id_unid_organizacional_nivel2.Items.Clear;
+      SetLength(VetorUON2Filtrado, 0);
 
-  cb_id_unid_organizacional_nivel2.Items.Clear;
-  SetLength(VetorUON2Filtrado, 0);
-  For i := 0 to Length(VetorUON2) - 1 Do
-  Begin
-     if VetorUON2[i].id1 = strAux then
-     Begin
-        cb_id_unid_organizacional_nivel2.Items.Add(VetorUON2[i].nm2);
-        j := Length(VetorUON2Filtrado);
-        SetLength(VetorUON2Filtrado, j + 1);
-        VetorUON2Filtrado[j] := VetorUON2[i].id2;
-     end;
-  end;
+      For i := 0 to Length(VetorUON2) - 1 Do
+      Begin
+          Try
+            if VetorUON2[i].id1 = strAux then
+              Begin
+                cb_id_unid_organizacional_nivel2.Items.Add(VetorUON2[i].nm2);
+                j := Length(VetorUON2Filtrado);
+                SetLength(VetorUON2Filtrado, j + 1);
+                VetorUON2Filtrado[j] := VetorUON2[i].id2;
+              end;
+          Except
+          End;
+      end;
+    End
+  else
+    Mensagem('ATENÇÃO! Não Existe '+frmMapaCacic.lbEtiqueta2.Caption+' Associado a '+VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].nm1+'. Procure um supervisor do sistema.',true);
 end;
 
 
@@ -1263,7 +1279,7 @@ end;
 
 procedure TfrmMapaCacic.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-Sair;
+  Finalizar(true);
 end;
 // Função adaptada de http://www.latiumsoftware.com/en/delphi/00004.php
 //Para buscar do RegEdit...
@@ -1450,6 +1466,7 @@ begin
     strConfigs                           := GetValorDatMemoria('Patrimonio.Configs', frmMapaCacic.tStringsCipherOpened);
     gbLeiaComAtencao.Visible             := true;
     gbInformacoesSobreComputador.Visible := true;
+    boolUON2                             := false; // Inicializo com false e torno true quando da montagem da combo de UON2...
     MontaCombos(strConfigs);
     RecuperaValoresAnteriores(strConfigs);
     MontaInterface(strConfigs);
@@ -1464,7 +1481,7 @@ var intAux            : integer;
     strRetorno        : String;
     Request_mapa      : TStringList;
 begin
-  frmMapaCacic.lbVersao.Caption := 'v: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
+  frmMapaCacic.lbVersao.Caption          := 'v: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
   if (GetWinVer > 5) and not IsAdmin then
     Begin
       MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
@@ -1477,7 +1494,7 @@ begin
       strPathCacic    := '';
       for intAux := 1 to length(strLetrasDrives) do
         Begin
-          lbMensagens.Caption := 'Procurando Estrutura CACIC em "'+strLetrasDrives[intAux] + ':\"';
+          lbMensagens.Caption := 'Procurando Estrutura do Sistema CACIC em "'+strLetrasDrives[intAux] + ':\"';
 
           Log_Debug('Testando "'+strLetrasDrives[intAux] + ':\Cacic\cacic2.dat'+'"');
           if (strPathCacic='') and (SearchFile(strLetrasDrives[intAux] + ':','\Cacic\cacic2.dat')) then
@@ -1514,7 +1531,7 @@ begin
           else
             Begin
               pnMensagens.Visible := true;
-              Mensagem('Efetuando Comunicação com o Módulo Gerente WEB...',false);
+              Mensagem('Efetuando Comunicação com o Módulo Gerente WEB em "'+GetValorDatMemoria('Configs.EnderecoServidor', tStringsCipherOpened)+'"...',false);
               frmAcesso.Free;
 
               // Povoamento com dados de configurações da interface patrimonial
@@ -1528,9 +1545,10 @@ begin
               Request_mapa.Values['te_workgroup']      := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , frmMapaCacic.tStringsCipherOpened));
 
               strRetorno := frmMapaCacic.ComunicaServidor('mapa_get_patrimonio.php', Request_mapa, '.');
+
               if (frmMapaCacic.XML_RetornaValor('STATUS', strRetorno)='OK') then
                 Begin
-                  Mensagem('Comunicação Efetuada com Sucesso! Salvando Configurações Obtidas...',true);
+                  Mensagem('Comunicação Efetuada com Sucesso! Salvando Configurações Obtidas...',false);
                   frmMapaCacic.SetValorDatMemoria('Patrimonio.Configs', strRetorno, frmMapaCacic.tStringsCipherOpened)
                 End
               else
@@ -1548,8 +1566,8 @@ begin
       else
         Begin
           lbMensagens.Caption := 'Estrutura CACIC não Encontrada!';
-          application.ProcessMessages;        
-          MessageDLG(#13#10+'Não Encontrei a Estrutura do Sistema CACIC!'+#13#10+
+          application.ProcessMessages;
+          MessageDLG(#13#10+'Não Encontrei a Estrutura do Sistema CACIC!'+#13#10#13#10+
                      'Operação Abortada!',mtError,[mbOK],0);
           Sair;
         End;

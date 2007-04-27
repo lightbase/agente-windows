@@ -477,15 +477,15 @@ object frmMapaCacic: TfrmMapaCacic
     end
   end
   object btGravarInformacoes: TButton
-    Left = 166
+    Left = 164
     Top = 240
     Width = 275
     Height = 30
     Caption = 'Grava e Envia Informa'#231#245'es Patrimoniais'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Height = -13
+    Font.Name = 'Arial'
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 2
@@ -493,17 +493,19 @@ object frmMapaCacic: TfrmMapaCacic
     OnClick = AtualizaPatrimonio
   end
   object pnVersao: TPanel
-    Left = 547
+    Left = 513
     Top = 267
-    Width = 56
+    Width = 90
     Height = 14
     BevelOuter = bvLowered
     TabOrder = 3
     object lbVersao: TLabel
-      Left = 7
+      Left = 4
       Top = 1
-      Width = 41
+      Width = 82
       Height = 12
+      Alignment = taCenter
+      AutoSize = False
       Caption = 'v: X.X.X.X'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -514,16 +516,17 @@ object frmMapaCacic: TfrmMapaCacic
     end
   end
   object pnMensagens: TPanel
-    Left = 5
-    Top = 205
-    Width = 595
+    Left = 4
+    Top = 204
+    Width = 596
     Height = 22
+    BevelInner = bvLowered
     TabOrder = 4
     object lbMensagens: TLabel
-      Left = 1
-      Top = 1
-      Width = 593
-      Height = 20
+      Left = 2
+      Top = 2
+      Width = 592
+      Height = 18
       Align = alClient
       Alignment = taCenter
       AutoSize = False
@@ -532,6 +535,28 @@ object frmMapaCacic: TfrmMapaCacic
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
+      ParentFont = False
+    end
+  end
+  object pnNomeServidorWEB: TPanel
+    Left = 1
+    Top = 267
+    Width = 90
+    Height = 14
+    BevelOuter = bvLowered
+    TabOrder = 5
+    object lbNomeServidorWEB: TLabel
+      Left = 3
+      Top = 1
+      Width = 83
+      Height = 12
+      Alignment = taCenter
+      AutoSize = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
       ParentFont = False
     end
   end

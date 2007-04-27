@@ -1,13 +1,13 @@
 object frmAcesso: TfrmAcesso
-  Left = 355
+  Left = 301
   Top = 147
   BorderIcons = []
   BorderStyle = bsSingle
   Caption = 
     'MapaCacic - M'#243'dulo Avulso para Coleta de Informa'#231#245'es Patrimoniai' +
     's'
-  ClientHeight = 158
-  ClientWidth = 516
+  ClientHeight = 284
+  ClientWidth = 605
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -145,50 +145,53 @@ object frmAcesso: TfrmAcesso
     0000000FC000FC000000000FC000FDAD8035B5BFC000}
   OldCreateOrder = False
   Position = poDesktopCenter
+  OnActivate = FormActivate
   OnCreate = FormCreate
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object btAcesso: TButton
-    Left = 132
-    Top = 120
+    Left = 174
+    Top = 241
     Width = 100
-    Height = 25
+    Height = 30
     Caption = 'Acessar'
     Enabled = False
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
-    Font.Name = 'MS Sans Serif'
+    Font.Name = 'Arial'
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 0
     OnClick = btAcessoClick
   end
   object btCancela: TButton
-    Left = 282
-    Top = 120
+    Left = 324
+    Top = 241
     Width = 100
-    Height = 25
+    Height = 30
     Caption = 'Cancelar'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
-    Font.Name = 'MS Sans Serif'
+    Font.Name = 'Arial'
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 1
     OnClick = btCancelaClick
   end
   object pnAcesso: TPanel
-    Left = 15
-    Top = 13
-    Width = 485
-    Height = 72
+    Left = 5
+    Top = 10
+    Width = 596
+    Height = 196
+    BevelInner = bvRaised
+    BevelOuter = bvLowered
     TabOrder = 2
     object lbNomeUsuarioAcesso: TLabel
-      Left = 27
-      Top = 9
+      Left = 56
+      Top = 39
       Width = 109
       Height = 16
       Caption = 'Nome de Usu'#225'rio:'
@@ -200,8 +203,8 @@ object frmAcesso: TfrmAcesso
       ParentFont = False
     end
     object lbSenhaAcesso: TLabel
-      Left = 306
-      Top = 9
+      Left = 389
+      Top = 39
       Width = 110
       Height = 16
       Caption = 'Senha de Acesso:'
@@ -214,14 +217,14 @@ object frmAcesso: TfrmAcesso
     end
     object lbAviso: TLabel
       Left = 4
-      Top = 53
-      Width = 477
+      Top = 121
+      Width = 587
       Height = 13
       Alignment = taCenter
       AutoSize = False
       Caption = 
-        'ATEN'#199#195'O: O usu'#225'rio deve estar cadastrado no Gerente WEB CACIC co' +
-        'm n'#237'vel "T'#233'cnico"'
+        'ATEN'#199#195'O: O usu'#225'rio deve estar cadastrado no Gerente WEB com n'#237've' +
+        'l "T'#233'cnico"'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clNavy
       Font.Height = -11
@@ -230,8 +233,8 @@ object frmAcesso: TfrmAcesso
       ParentFont = False
     end
     object edNomeUsuarioAcesso: TEdit
-      Left = 27
-      Top = 25
+      Left = 56
+      Top = 55
       Width = 150
       Height = 21
       MaxLength = 20
@@ -239,8 +242,8 @@ object frmAcesso: TfrmAcesso
       OnKeyUp = edNomeUsuarioAcessoKeyUp
     end
     object edSenhaAcesso: TEdit
-      Left = 306
-      Top = 25
+      Left = 389
+      Top = 55
       Width = 150
       Height = 21
       PasswordChar = #1
@@ -249,32 +252,35 @@ object frmAcesso: TfrmAcesso
     end
   end
   object pnMensagens: TPanel
-    Left = 15
-    Top = 85
-    Width = 485
-    Height = 23
+    Left = 4
+    Top = 205
+    Width = 596
+    Height = 24
+    BevelInner = bvLowered
     TabOrder = 3
     object lbMsg_Erro_Senha: TLabel
       Left = 3
       Top = 4
-      Width = 479
-      Height = 15
+      Width = 589
+      Height = 17
       Alignment = taCenter
       AutoSize = False
     end
   end
   object pnVersao: TPanel
-    Left = 458
-    Top = 142
-    Width = 56
+    Left = 513
+    Top = 267
+    Width = 90
     Height = 14
     BevelOuter = bvLowered
     TabOrder = 4
     object lbVersao: TLabel
-      Left = 7
+      Left = 4
       Top = 1
-      Width = 41
+      Width = 85
       Height = 12
+      Alignment = taCenter
+      AutoSize = False
       Caption = 'v: X.X.X.X'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -284,11 +290,33 @@ object frmAcesso: TfrmAcesso
       ParentFont = False
     end
   end
+  object pnNomeServidorWEB: TPanel
+    Left = 1
+    Top = 267
+    Width = 90
+    Height = 14
+    BevelOuter = bvLowered
+    TabOrder = 5
+    object lbNomeServidorWEB: TLabel
+      Left = 3
+      Top = 1
+      Width = 83
+      Height = 12
+      Alignment = taCenter
+      AutoSize = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+  end
   object tm_Mensagem: TTimer
     Enabled = False
     Interval = 5000
     OnTimer = tm_MensagemTimer
-    Left = 240
-    Top = 120
+    Left = 282
+    Top = 241
   end
 end
