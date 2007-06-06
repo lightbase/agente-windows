@@ -62,16 +62,17 @@ var p_path_cacic,
     v_IV,
     v_DatFileName,
     v_ResultCompress,
-    v_ResultUnCompress        : string;
+    v_ResultUnCompress,
+    v_te_so        : string;
 
 var v_Aguarde                 : TextFile;
 
 var CountUPD,
     intAux,
     intMontaBatch,
-    intLoop,
-    v_majorVer,
-    v_minorVer                : integer;
+    intLoop : integer;
+
+
 
 var tstrTripa1,
     v_tstrCipherOpened,
@@ -416,15 +417,21 @@ const
   cOsWinServer2003 = 13;
 var
   osVerInfo: TOSVersionInfo;
-  majorVer, minorVer: Integer;
+  platformID,
+  majorVer,
+  minorVer : Integer;
+  CSDVersion : String;
 begin
   Result := cOsUnknown;
   { set operating system type flag }
   osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
   if GetVersionEx(osVerInfo) then
   begin
-    majorVer := osVerInfo.dwMajorVersion;
-    minorVer := osVerInfo.dwMinorVersion;
+    platformId        :=      osVerInfo.dwPlatformId;
+    majorVer          :=      osVerInfo.dwMajorVersion;
+    minorVer          :=      osVerInfo.dwMinorVersion;
+    CSDVersion        := trim(osVerInfo.szCSDVersion);
+
     case osVerInfo.dwPlatformId of
       VER_PLATFORM_WIN32_NT: {Windows NT Like}
         begin
@@ -465,8 +472,10 @@ begin
   else
     Result := cOsUnknown;
 
-  v_minorVer := minorVer;
-  v_majorVer := majorVer;
+  v_te_so := IntToStr(platformId) + '.' +
+             IntToStr(majorVer)   + '.' +
+             IntToStr(minorVer)   +
+             IfThen(CSDVersion='','','.'+CSDVersion);
 end;
 
 procedure Matar(v_dir,v_files: string);
@@ -1759,6 +1768,7 @@ Begin
     Request_SVG.Values['in_teste']          := EnCrypt('OK',l_cs_compress);
     Request_SVG.Values['te_node_address']   := EnCrypt(v_mac_address,l_cs_compress);
     Request_SVG.Values['id_so']             := EnCrypt(inttostr(GetWinVer),l_cs_compress);
+    Request_SVG.Values['te_so']             := EnCrypt(v_te_so,l_cs_compress);
     Request_SVG.Values['id_ip_rede']        := EnCrypt(GetIPRede(te_ip, te_mascara),l_cs_compress);
     Request_SVG.Values['te_workgroup']      := EnCrypt(GetWorkgroup,l_cs_compress);
     Request_SVG.Values['te_nome_computador']:= EnCrypt(te_nome_host,l_cs_compress);
@@ -1807,7 +1817,7 @@ Begin
         Request_SVG := TStringList.Create;
         Request_SVG.Values['te_node_address']   := EnCrypt(v_mac_address,l_cs_compress);
         Request_SVG.Values['id_so']             := EnCrypt(inttostr(GetWinVer),l_cs_compress);
-        Request_SVG.Values['te_so']             := EnCrypt(inttostr(v_majorVer) + '.' + inttostr(v_minorVer),l_cs_compress);
+        Request_SVG.Values['te_so']             := EnCrypt(v_te_so,l_cs_compress);
         Request_SVG.Values['id_ip_rede']        := EnCrypt(GetIPRede(te_ip, te_mascara),l_cs_compress);
         Request_SVG.Values['te_workgroup']      := EnCrypt(GetWorkgroup,l_cs_compress);
         Request_SVG.Values['te_nome_computador']:= EnCrypt(te_nome_host,l_cs_compress);
@@ -1873,13 +1883,14 @@ Begin
 
 
     // Verifica existência dos dados de configurações principais e estado de CountUPD. Caso verdadeiro, simula uma instalação pelo chkCACIC...
-    if  (GetValorDatMemoria('Configs.TE_SERV_UPDATES'              , v_tstrCipherOpened) = '') or
+    if  ((GetValorDatMemoria('Configs.TE_SERV_UPDATES'              , v_tstrCipherOpened) = '') or
         (GetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES', v_tstrCipherOpened) = '') or
         (GetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'  , v_tstrCipherOpened) = '') or
         (GetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'         , v_tstrCipherOpened) = '') or
         (GetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'        , v_tstrCipherOpened) = '') or
         (GetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'     , v_tstrCipherOpened) = '') or
-        (CountUPD > 0) then
+        (CountUPD > 0)) and
+        (GetValorDatMemoria('Configs.ID_FTP', v_tstrCipherOpened) = '') then
         Begin
           log_DEBUG('Preparando contato com módulo Gerente WEB para Downloads.');
           v_acao_gercols := 'Contactando o módulo Gerente WEB: get_config.php...';
@@ -1902,6 +1913,7 @@ Begin
               SetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'         ,DeCrypt(XML_RetornaValor('te_path_serv_updates'              , strRetorno),true), v_tstrCipherOpened);
               SetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'        ,DeCrypt(XML_RetornaValor('nu_porta_serv_updates'             , strRetorno),true), v_tstrCipherOpened);
               SetValorDatMemoria('Configs.TE_FILA_FTP'                  ,DeCrypt(XML_RetornaValor('te_fila_ftp'                       , strRetorno),true), v_tstrCipherOpened);
+              SetValorDatMemoria('Configs.ID_FTP'                       ,DeCrypt(XML_RetornaValor('id_ftp'                            , strRetorno),true), v_tstrCipherOpened);
               SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'     ,DeCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno),true), v_tstrCipherOpened);
             End;
         End;
@@ -2224,7 +2236,7 @@ Begin
             Request_SVG := TStringList.Create;
             Request_SVG.Values['te_node_address']    := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress);
             Request_SVG.Values['id_so']              := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           , v_tstrCipherOpened),l_cs_compress);
-            Request_SVG.Values['te_so']              := EnCrypt(inttostr(v_majorVer) + '.' + inttostr(v_minorVer),l_cs_compress);
+            Request_SVG.Values['te_so']              := EnCrypt(v_te_so,l_cs_compress);
             Request_SVG.Values['id_ip_rede']         := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress);
             Request_SVG.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened),l_cs_compress);
             Request_SVG.Values['te_ip']              := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             , v_tstrCipherOpened),l_cs_compress);
@@ -2285,7 +2297,7 @@ Begin
                   Request_SVG := TStringList.Create;
                   Request_SVG.Values['te_node_address']    := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress);
                   Request_SVG.Values['id_so']              := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           , v_tstrCipherOpened),l_cs_compress);
-                  Request_SVG.Values['te_so']              := EnCrypt(inttostr(v_majorVer) + '.' + inttostr(v_minorVer),l_cs_compress);
+                  Request_SVG.Values['te_so']              := EnCrypt(v_te_so,l_cs_compress);
                   Request_SVG.Values['id_ip_rede']         := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress);
                   Request_SVG.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened),l_cs_compress);
                   Request_SVG.Values['te_ip']              := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             , v_tstrCipherOpened),l_cs_compress);
@@ -2515,7 +2527,7 @@ Begin
                   // Identifico a versão do Windows
                   If (GetWinVer <= 5) then
                     begin
-                    //Se for 95/95OSR2/98/98SE/ME faço aqui...  (Em like NT isto é feito no LoginScript)
+                    //Se for 95/95OSR2/98/98SE/ME faço aqui...  (Em NT Like isto é feito no LoginScript)
                     SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Trim(Copy(ParamStr(intAux),12,Length((ParamStr(intAux))))) + '\cacic2.exe');
                     log_DEBUG('Setando Chave de AutoExecução...');
                     end;
@@ -2763,17 +2775,18 @@ Begin
                                    Else
                                       log_diario('Executável Col_Undi Inexistente!');
                                 end;
-                             if (countUPD > 0) then
+                             if (countUPD > 0) or
+                                (GetValorDatMemoria('Configs.ID_FTP',v_tstrCipherOpened)<>'') then
                                 Begin
                                   Request_Ger_Cols := TStringList.Create;
                                   Request_Ger_Cols.Values['in_chkcacic']   := EnCrypt('chkcacic',l_cs_compress);
                                   Request_Ger_Cols.Values['te_fila_ftp']   := EnCrypt('2',l_cs_compress); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
+                                  Request_Ger_Cols.Values['id_ftp']        := EnCrypt(GetValorDatMemoria('Configs.ID_FTP',v_tstrCipherOpened),l_cs_compress); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
                                   Request_Ger_Cols.Values['id_ip_estacao'] := EnCrypt(GetIP,l_cs_compress); // Informará o IP para registro na tabela redes_grupos_FTP
                                   ComunicaServidor('get_config.php', Request_Ger_Cols, '>> Liberando Grupo FTP!...');
                                   Request_Ger_Cols.Free;
-                                  log_DEBUG('intMontaBatch='+inttostr(intMontaBatch));
+                                  SetValorDatMemoria('Configs.ID_FTP','', v_tstrCipherOpened)
                                 End;
-
                              if (intMontaBatch > 0) then
                                 Begin
                                      Ver_UPD('ini_cols','Inicializador de Coletas',p_path_cacic + 'modulos\','',false);
