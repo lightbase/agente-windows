@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=2
 MinorVer=2
 Release=0
-Build=17
+Build=24
 Debug=0
 PreRelease=0
 Special=0
@@ -124,16 +124,16 @@ DLL=0
 Locale=2070
 CodePage=1252
 [Version Info Keys]
-CompanyName=Dataprev-ES
-FileDescription=
-FileVersion=2.2.0.17
+CompanyName=Dataprev - Unidade Regional Espírito Santo (URES)
+FileDescription=Módulo Verificador/Instalador dos Agentes Principais para o Sistema CACIC
+FileVersion=2.2.0.24
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
-ProductName=
-ProductVersion=1.0.0.0
-Comments=Verificador/Instalador dos Agentes Principais para o Sistema CACIC
+ProductName=ChkCACIC
+ProductVersion=2.2.0.24
+Comments=Baseado na licença GPL (General Public License)
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;

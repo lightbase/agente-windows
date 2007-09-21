@@ -47,7 +47,8 @@ uses  IniFiles,
 
 var  strCipherClosed,
      strCipherOpened,
-     strPathCacic                 : string;
+     strPathCacic,
+     str_te_so                 : string;
 
 var  boolDebugs,
      boolUON2                 : boolean;
@@ -810,17 +811,24 @@ const
   cOsWinNT = 6;
   cOsWin2000 = 7;
   cOsXP = 8;
+
 var
   osVerInfo: TOSVersionInfo;
-  majorVer, minorVer: Integer;
+  platformID,
+  majorVer,
+  minorVer: Integer;
+  CSDVersion : String;
 begin
   Result := cOsUnknown;
   { set operating system type flag }
   osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
   if GetVersionEx(osVerInfo) then
   begin
-    majorVer := osVerInfo.dwMajorVersion;
-    minorVer := osVerInfo.dwMinorVersion;
+    platformId        :=      osVerInfo.dwPlatformId;
+    majorVer          :=      osVerInfo.dwMajorVersion;
+    minorVer          :=      osVerInfo.dwMinorVersion;
+    CSDVersion        := trim(osVerInfo.szCSDVersion);
+
     case osVerInfo.dwPlatformId of
       VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
         begin
@@ -855,6 +863,13 @@ begin
   end
   else
     Result := cOsUnknown;
+
+  // Defino o valor da ID Interna
+  str_te_so := IntToStr(platformId) + '.' +
+               IntToStr(majorVer)   + '.' +
+               IntToStr(minorVer)   +
+               IfThen(CSDVersion='','','.'+CSDVersion);
+
 end;
 
 
@@ -1158,6 +1173,7 @@ begin
           Request_mapa  :=  TStringList.Create;
           Request_mapa.Values['te_node_address']               := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'                    , frmMapaCacic.tStringsCipherOpened));
           Request_mapa.Values['id_so']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Configs.ID_SO'                            , frmMapaCacic.tStringsCipherOpened));
+          Request_mapa.Values['te_so']                         := frmMapaCacic.EnCrypt(str_te_so);
           Request_mapa.Values['id_ip_rede']                    := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.ID_IP_REDE'                         , frmMapaCacic.tStringsCipherOpened));
           Request_mapa.Values['te_ip']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_IP'                              , frmMapaCacic.tStringsCipherOpened));
           Request_mapa.Values['te_nome_computador']            := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR'                 , frmMapaCacic.tStringsCipherOpened));
@@ -1539,6 +1555,7 @@ begin
               Request_mapa  :=  TStringList.Create;
               Request_mapa.Values['te_node_address']   := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , frmMapaCacic.tStringsCipherOpened));
               Request_mapa.Values['id_so']             := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Configs.ID_SO'           , frmMapaCacic.tStringsCipherOpened));
+              Request_mapa.Values['te_so']             := frmMapaCacic.EnCrypt(str_te_so);
               Request_mapa.Values['id_ip_rede']        := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.ID_IP_REDE'        , frmMapaCacic.tStringsCipherOpened));
               Request_mapa.Values['te_ip']             := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_IP'             , frmMapaCacic.tStringsCipherOpened));
               Request_mapa.Values['te_nome_computador']:= frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', frmMapaCacic.tStringsCipherOpened));

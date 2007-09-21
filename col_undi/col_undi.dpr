@@ -492,7 +492,8 @@ var strXML,  strAux, id_tipo_unid_disco, ValorChaveRegistro : String;
     v_DISK : TMiTeC_Disk;
     v_Report : TstringList;
 Begin
-    log_diario('Coletando informações de Unidades de Disco.');
+  SetValorDatMemoria('Col_Undi.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+  log_diario('Coletando informações de Unidades de Disco.');
   Try
     strXML := '<?xml version="1.0" encoding="ISO-8859-1"?><unidades>';
     v_DISK := TMiTeC_Disk.Create(nil);
@@ -540,6 +541,8 @@ Begin
     // Obtenho do registro o valor que foi previamente armazenado
     ValorChaveRegistro := Trim(GetValorDatMemoria('Coletas.UnidadesDisco',v_tstrCipherOpened));
 
+    SetValorDatMemoria('Col_Undi.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+
     // Se essas informações forem diferentes significa que houve alguma alteração
     // na configuração. Nesse caso, gravo as informações no BD Central e, se não houver
     // problemas durante esse procedimento, atualizo as informações no registro.
@@ -566,6 +569,7 @@ Begin
       End;
   Except
     SetValorDatMemoria('Col_Undi.nada', 'nada', v_tstrCipherOpened1);
+    SetValorDatMemoria('Col_Undi.Fim', '99999999', v_tstrCipherOpened1);
     CipherClose(p_path_cacic + 'temp\col_undi.dat', v_tstrCipherOpened1);
     log_diario('Problema na coleta de informações de discos.');
   End;

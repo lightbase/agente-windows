@@ -664,6 +664,7 @@ var v_te_cpu_freq, v_te_cpu_fabricante, v_te_cpu_desc, v_te_cpu_serial, v_te_pla
     v_Report      : TStringList;
 begin
   Try
+     SetValorDatMemoria('Col_Hard.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
      v_Report := TStringList.Create;
      log_diario('Coletando informações de Hardware.');
 
@@ -936,6 +937,8 @@ begin
      // Obtenho do registro o valor que foi previamente armazenado
      ValorChaveRegistro := Trim(GetValorDatMemoria('Coletas.Hardware',v_tstrCipherOpened));
 
+     SetValorDatMemoria('Col_Hard.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+
      // Se essas informações forem diferentes significa que houve alguma alteração
      // na configuração de hardware. Nesse caso, gravo as informações no BD Central
      // e, se não houver problemas durante esse procedimento, atualizo as
@@ -973,11 +976,13 @@ begin
    else
     Begin
       SetValorDatMemoria('Col_Hard.nada','nada', v_tstrCipherOpened1);
+      SetValorDatMemoria('Col_Hard.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
       CipherClose(p_path_cacic + 'temp\col_hard.dat', v_tstrCipherOpened1);
     End;
   Except
     Begin
       SetValorDatMemoria('Col_Hard.nada','nada', v_tstrCipherOpened1);
+      SetValorDatMemoria('Col_Hard.Fim'               , '99999999', v_tstrCipherOpened1);
       CipherClose(p_path_cacic + 'temp\col_hard.dat', v_tstrCipherOpened1);
       log_diario('Problema na execução => ' + v_mensagem);
     End;

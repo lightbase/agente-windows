@@ -633,7 +633,7 @@ var te_versao_mozilla, te_versao_ie, te_versao_jre, te_versao_acrobat_reader,
 begin
  Try
    log_diario('Coletando informações de Softwares Básicos.');
-
+   SetValorDatMemoria('Col_Soft.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
    te_versao_mozilla        := GetVersaoMozilla;
    te_versao_ie             := GetVersaoIE;
    te_versao_jre            := GetVersaoJRE;
@@ -719,6 +719,8 @@ begin
    // Obtenho do registro o valor que foi previamente armazenado
    ValorChaveRegistro := Trim(GetValorDatMemoria('Coletas.Software',v_tstrCipherOpened));
 
+   SetValorDatMemoria('Col_Soft.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+
    // Se essas informações forem diferentes significa que houve alguma alteração
    // na configuração. Nesse caso, gravo as informações no BD Central
    // e, se não houver problemas durante esse procedimento, atualizo as
@@ -761,6 +763,7 @@ begin
  Except
   Begin
    SetValorDatMemoria('Col_Soft.nada', 'nada', v_tstrCipherOpened1);
+   SetValorDatMemoria('Col_Soft.Fim' , '99999999', v_tstrCipherOpened1);
    CipherClose(p_path_cacic + 'temp\col_soft.dat', v_tstrCipherOpened1);
   End;
  End;

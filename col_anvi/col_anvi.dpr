@@ -493,6 +493,7 @@ var Lista1_RCO : TStringList;
     searchResult : TSearchRec;  // Necessário apenas para Win9x
 begin
   Try
+       SetValorDatMemoria('Col_Anvi.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
        nu_versao_engine   := '';
        nu_versao_pattern  := '';
        log_diario('Coletando informações de Antivírus OfficeScan.');
@@ -552,6 +553,9 @@ begin
                    in_ativo);
        // Obtenho do registro o valor que foi previamente armazenado
        ValorChaveRegistro := Trim(GetValorDatMemoria('Coletas.OfficeScan',v_tstrCipherOpened));
+
+       SetValorDatMemoria('Col_Anvi.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+
        log_DEBUG('Registro Anterior: ' + ValorChaveRegistro);
        log_DEBUG('Registro Atual...: ' + UVC);
        // Se essas informações forem diferentes significa que houve alguma alteração
@@ -576,6 +580,7 @@ begin
   Except
     Begin
       SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
+      SetValorDatMemoria('Col_Anvi.Fim', '99999999', v_tstrCipherOpened1);
       CipherClose(p_path_cacic + 'temp\col_anvi.dat', v_tstrCipherOpened1);
     End;
   End;

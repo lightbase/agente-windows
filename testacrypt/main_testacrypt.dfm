@@ -57,7 +57,7 @@ object Form1: TForm1
       MaxLength = 100
       ParentFont = False
       TabOrder = 0
-      Text = 'http://10.0.135.167/cacic2/ws/testacrypt.php'
+      Text = 'http://192.168.0.1/cacic2/ws/testacrypt.php'
     end
   end
   object GroupBox_TestesCliente: TGroupBox

@@ -438,6 +438,7 @@ var Reg_RCC : TRegistry;
     Lista_RCC : TStringList;
 Begin
   Try
+    SetValorDatMemoria('Col_Comp.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
     nm_compartilhamento := '';
     nm_dir_compart := '';
     cs_tipo_compart := ' ';
@@ -530,6 +531,8 @@ Begin
     // Obtenho do registro o valor que foi previamente armazenado
     ValorChaveRegistro := Trim(GetValorDatMemoria('Coletas.Compartilhamentos'));
 
+    SetValorDatMemoria('Col_Comp.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+
     // Se essas informações forem diferentes significa que houve alguma alteração
     // na configuração. Nesse caso, gravo as informações no BD Central e, se não houver
     // problemas durante esse procedimento, atualizo as informações no registro.
@@ -548,6 +551,7 @@ Begin
   Except
     Begin
       SetValorDatMemoria('Col_Comp.nada', 'nada', v_tstrCipherOpened1);
+      SetValorDatMemoria('Col_Comp.Fim', '99999999', v_tstrCipherOpened1);      
       CipherClose(p_path_cacic + 'temp\col_comp.dat', v_tstrCipherOpened1);
     End;
   End;

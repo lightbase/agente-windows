@@ -38,7 +38,8 @@ uses  Windows,
       Winsock,
       DCPcrypt2,
       DCPrijndael,
-      DCPbase64;
+      DCPbase64,
+      Tlhelp32;
 
 var PJVersionInfo1: TPJVersionInfo;
     Dir,
@@ -48,8 +49,7 @@ var PJVersionInfo1: TPJVersionInfo;
     v_strCipherClosed,
     v_DatFileName,
     v_versao_local,
-    v_versao_remota_inteira,
-    v_versao_remota_capada,    
+    v_versao_remota,
     v_retorno             : String;
 
 var v_tstrCipherOpened        : TStrings;
@@ -632,6 +632,156 @@ begin
   Result := 0;
 end;
 
+// Rotina obtida em http://www.swissdelphicenter.ch/torry/showcode.php?id=266
+{For Windows 9x/ME/2000/XP }
+function KillTask(ExeFileName: string): Integer;
+const
+  PROCESS_TERMINATE = $0001;
+var
+  ContinueLoop: BOOL;
+  FSnapshotHandle: THandle;
+  FProcessEntry32: TProcessEntry32;
+begin
+  Result := 0;
+  FSnapshotHandle := CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  FProcessEntry32.dwSize := SizeOf(FProcessEntry32);
+  ContinueLoop := Process32First(FSnapshotHandle, FProcessEntry32);
+
+  while Integer(ContinueLoop) <> 0 do
+  begin
+    if ((UpperCase(ExtractFileName(FProcessEntry32.szExeFile)) =
+      UpperCase(ExeFileName)) or (UpperCase(FProcessEntry32.szExeFile) =
+      UpperCase(ExeFileName))) then
+      Result := Integer(TerminateProcess(
+                        OpenProcess(PROCESS_TERMINATE,
+                                    BOOL(0),
+                                    FProcessEntry32.th32ProcessID),
+                                    0));
+     ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
+  end;
+  CloseHandle(FSnapshotHandle);
+end;
+
+// Rotina obtida em http://www.swissdelphicenter.ch/torry/showcode.php?id=266
+{ For Windows NT/2000/XP }
+procedure KillProcess(hWindowHandle: HWND);
+var
+  hprocessID: INTEGER;
+  processHandle: THandle;
+  DWResult: DWORD;
+begin
+  SendMessageTimeout(hWindowHandle, WM_DDE_TERMINATE, 0, 0,
+    SMTO_ABORTIFHUNG or SMTO_NORMAL, 5000, DWResult);
+
+  if isWindow(hWindowHandle) then
+  begin
+    // PostMessage(hWindowHandle, WM_QUIT, 0, 0);
+
+    { Get the process identifier for the window}
+    GetWindowThreadProcessID(hWindowHandle, @hprocessID);
+    if hprocessID <> 0 then
+    begin
+      { Get the process handle }
+      processHandle := OpenProcess(PROCESS_TERMINATE or PROCESS_QUERY_INFORMATION,
+        False, hprocessID);
+      if processHandle <> 0 then
+      begin
+        { Terminate the process }
+        TerminateProcess(processHandle, 0);
+        CloseHandle(ProcessHandle);
+      end;
+    end;
+  end;
+end;
+
+
+// Dica baixada de http://procedure.blig.ig.com.br/
+// Adaptada por Anderson Peterle - v:2.2.0.16 - 03/2007
+procedure Matar(v_dir,v_files: string);
+var SearchRec: TSearchRec;
+    Result: Integer;
+    strFileName : String;
+begin
+  strFileName := StringReplace(v_dir + '\' + v_files,'\\','\',[rfReplaceAll]);
+  Result:=FindFirst(strFileName, faAnyFile, SearchRec);
+  while result=0 do
+    begin
+      strFileName := StringReplace(v_dir + '\' + SearchRec.Name,'\\','\',[rfReplaceAll]);
+      log_diario('Tentando Excluir: '+strFileName,ExtractFilePath(ParamStr(0)));
+      if DeleteFile(strFileName) then
+        log_diario('Exclusão de ' + strFileName + ' efetuada com sucesso!',ExtractFilePath(ParamStr(0)))
+      else
+        Begin
+          log_diario('Exclusão não efetuada! Provavelmente já esteja sendo executado...',ExtractFilePath(ParamStr(0)));
+          log_diario('Tentarei finalizar Tarefa/Processo...',ExtractFilePath(ParamStr(0)));
+          if (GetWinVer <= 5) then // Até
+            KillTask(SearchRec.Name)
+          else
+            KillProcess(FindWindow(PChar(SearchRec.Name),nil));
+
+            if DeleteFile(strFileName) then
+              log_diario('Exclusão Impossibilitada de ' + strFileName + '!',ExtractFilePath(ParamStr(0)));
+        End;
+
+      Result:=FindNext(SearchRec);
+    end;
+end;
+
+function Posso_Rodar_CACIC : boolean;
+Begin
+  result := false;
+
+  // Se o aguarde_CACIC.txt existir é porque refere-se a uma versão mais atual: 2.2.0.20 ou maior
+  if  (FileExists(Dir + 'aguarde_CACIC.txt')) then
+    Begin
+      // Se eu conseguir matar o arquivo abaixo é porque não há outra sessão deste agente aberta... (POG? Nããão!  :) )
+      Matar(Dir,'aguarde_CACIC.txt');
+      if  (not (FileExists(Dir + 'aguarde_CACIC.txt'))) then
+        result := true;
+    End;
+End;
+
+Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer;
+var v_versao_REM,
+    v_versao_LOC,
+    strNomeAgente : String;
+    v_array_NomeAgente : TStrings;
+    intAux : integer;
+Begin
+  v_array_NomeAgente := explode(p_strNomeAgente,'\');
+
+  v_versao_REM := XML_RetornaValor(StringReplace(StrUpper(PChar(v_array_NomeAgente[v_array_NomeAgente.count-1])),'.EXE','',[rfReplaceAll]), v_retorno);
+  v_versao_LOC := GetVersionInfo(p_strNomeAgente);
+
+  log_diario('Checando versão de "'+p_strNomeAgente+'"',ExtractFilePath(ParamStr(0)));
+
+  intAux := v_array_NomeAgente.Count;
+
+  // V: 2.2.0.16
+  // Verifico existência do arquivo "versoes_agentes.ini" para comparação das versões dos agentes principais
+  if (v_versao_REM = '') AND FileExists(ExtractFilePath(Application.Exename)+'versoes_agentes.ini') then
+    Begin
+      if (GetValorChaveRegIni('versoes_agentes',v_array_NomeAgente[intAux-1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini')<>'') then
+        Begin
+          log_diario('Encontrado arquivo "'+(ExtractFilePath(Application.Exename)+'versoes_agentes.ini')+'"',ExtractFilePath(ParamStr(0)));
+          v_versao_REM := GetValorChaveRegIni('versoes_agentes',v_array_NomeAgente[intAux-1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini');
+        End;
+    End;
+
+  log_diario('Versão Remota: "'+v_versao_REM+'" - Versão Local: "'+v_versao_LOC+'"',ExtractFilePath(ParamStr(0)));
+
+  if (v_versao_REM + v_versao_LOC <> '') and
+     (v_versao_LOC <> '0000') then
+    Begin
+      if (v_versao_REM = v_versao_LOC) then
+        Result := 1
+      else
+        Result := 2;
+    End
+  else
+    Result := 0;
+End;
+
 procedure executa_chksis;
 var
   bool_download_CACIC2,
@@ -642,6 +792,7 @@ var
   Request_Config : TStringList;
   Response_Config : TStringStream;
   IdHTTP1: TIdHTTP;
+  intAux : integer;
 begin
   bool_download_CACIC2  := false;
   v_home_drive       := MidStr(HomeDrive,1,3); //x:\
@@ -670,7 +821,7 @@ begin
   if not DirectoryExists(Dir+'\modulos') then
       begin
         log_diario('Excluindo '+ Dir + '\cacic2.exe',ExtractFilePath(ParamStr(0)));
-        DeleteFile(Dir + '\cacic2.exe');
+        Matar(Dir,'\cacic2.exe');
         log_diario('Criando diretório ' + Dir + '\modulos',ExtractFilePath(ParamStr(0)));
         ForceDirectories(Dir + '\modulos');
       end;
@@ -688,7 +839,7 @@ begin
 //  SetValorChaveRegIni('Configs', 'EnderecoServidor', v_ip_serv_cacic, Dir + '\cacic2.ini');
 
   //chave AES. Recomenda-se que cada empresa altere a sua chave.
-  v_CipherKey    := 'CacicES2005';
+  v_CipherKey    := 'CacicBrasil';
   v_IV           := 'abcdefghijklmnop';
   v_SeparatorKey := '=CacicIsFree=';
   v_DatFileName  := Dir + '\cacic2.dat';
@@ -722,11 +873,19 @@ begin
           v_te_senha_login_serv_updates   := XML_RetornaValor('te_senha_login_serv_updates'  , Response_Config.DataString);
           v_te_path_serv_updates          := XML_RetornaValor('te_path_serv_updates'         , Response_Config.DataString);
 
-          log_diario(':::::::::::::: PARÂMETROS OBTIDOS NO Gerente WEB ::::::::::::::',ExtractFilePath(ParamStr(0)));
+          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',ExtractFilePath(ParamStr(0)));
+          log_diario(':::::::::::::::: VALORES OBTIDOS NO Gerente WEB :::::::::::::::',ExtractFilePath(ParamStr(0)));
+          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',ExtractFilePath(ParamStr(0)));
           log_diario('Servidor de updates......................: '+v_te_serv_updates,ExtractFilePath(ParamStr(0)));
           log_diario('Porta do servidor de updates.............: '+v_nu_porta_serv_updates,ExtractFilePath(ParamStr(0)));
           log_diario('Usuário para login no servidor de updates: '+v_nm_usuario_login_serv_updates,ExtractFilePath(ParamStr(0)));
           log_diario('Pasta no servidor de updates.............: '+v_te_path_serv_updates,ExtractFilePath(ParamStr(0)));
+          log_diario(' ',ExtractFilePath(ParamStr(0)));
+          log_diario('Versões dos Agentes Principais:',ExtractFilePath(ParamStr(0)));
+          log_diario('------------------------------',ExtractFilePath(ParamStr(0)));
+          log_diario('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno),ExtractFilePath(ParamStr(0)));
+          log_diario('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno),ExtractFilePath(ParamStr(0)));
+          log_diario('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno),ExtractFilePath(ParamStr(0)));
           log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',ExtractFilePath(ParamStr(0)));
 
         Except log_diario('Falha no contato com ' + 'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php',ExtractFilePath(ParamStr(0)));
@@ -738,37 +897,39 @@ begin
   // Verificação de versão do cacic2.exe e exclusão em caso de versão antiga
   If (FileExists(Dir + '\cacic2.exe')) Then
       Begin
-       v_versao_local   := trim(GetVersionInfo(Dir + '\cacic2.exe'));
-       v_versao_local   := StringReplace(v_versao_local,'.','',[rfReplaceAll]);
-
-       v_versao_remota_inteira  := XML_RetornaValor('CACIC2' , v_retorno);
-       v_versao_remota_capada  := Copy(v_versao_remota_inteira,1,StrLen(PAnsiChar(v_versao_remota_inteira))-4);
-
-       if (v_versao_local ='0000') or // Provavelmente versão muito antiga ou corrompida
-          (v_versao_local <> v_versao_remota_capada) then
+        intAux := ChecaVersoesAgentes(Dir + '\cacic2.exe');
+        // 0 => Arquivo de versões ou informação inexistente
+        // 1 => Versões iguais
+        // 2 => Versões diferentes
+        if (intAux = 0) then
           Begin
-            //log_diario('Excluindo versão "'+v_versao_local+'" de Cacic2.exe',ExtractFilePath(ParamStr(0)));
-            DeleteFile(Dir + '\cacic2.exe');
+            v_versao_local  := StringReplace(trim(GetVersionInfo(Dir + '\cacic2.exe')),'.','',[rfReplaceAll]);
+            v_versao_remota := StringReplace(XML_RetornaValor('CACIC2' , v_retorno),'0103','',[rfReplaceAll]);
           End;
+
+        if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
+           (v_versao_local ='0000') or // Provavelmente versão muito antiga ou corrompida
+           (v_versao_local ='2208') then
+           Matar(Dir, '\cacic2.exe');
       End;
 
     // Verificação de versão do ger_cols.exe e exclusão em caso de versão antiga
     If (FileExists(Dir + '\modulos\ger_cols.exe')) Then
         Begin
-        v_versao_local := trim(GetVersionInfo(Dir + '\modulos\ger_cols.exe'));
-        v_versao_local   := StringReplace(v_versao_local,'.','',[rfReplaceAll]);
-
-        v_versao_remota_inteira  := XML_RetornaValor('GER_COLS' , v_retorno);
-        v_versao_remota_capada  := Copy(v_versao_remota_inteira,1,StrLen(PAnsiChar(v_versao_remota_inteira))-4);
-
-        //log_diario('Versão remota de "ger_cols.exe": '+v_versao_remota_capada + ' ('+v_versao_remota_inteira+')',ExtractFilePath(ParamStr(0)));
-
-        if (v_versao_local ='0000') or // Provavelmente versão muito antiga ou corrompida
-           (v_versao_local <> v_versao_remota_capada) then
+          intAux := ChecaVersoesAgentes(Dir + '\modulos\ger_cols.exe');
+          // 0 => Arquivo de versões ou informação inexistente
+          // 1 => Versões iguais
+          // 2 => Versões diferentes
+          if (intAux = 0) then
             Begin
-              //log_diario('Excluindo versão "'+v_versao_local+'" de Ger_Cols.exe',ExtractFilePath(ParamStr(0)));
-              DeleteFile(Dir + '\modulos\ger_cols.exe');
+              v_versao_local  := StringReplace(trim(GetVersionInfo(Dir + '\modulos\ger_cols.exe')),'.','',[rfReplaceAll]);
+              v_versao_remota := StringReplace(XML_RetornaValor('GER_COLS' , v_retorno),'0103','',[rfReplaceAll]);
             End;
+
+          if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
+             (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
+             Matar(Dir + '\modulos\', 'ger_cols.exe');
+
         End;
 
         // Tento detectar o Agente Principal e faço FTP caso não exista
@@ -822,18 +983,25 @@ begin
     SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Dir + '\cacic2.exe');
 
   // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
-  if (bool_download_CACIC2) then
-      Begin
-         if not bool_ExistsAutoRun then
-          Begin
-            log_diario('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic,ExtractFilePath(ParamStr(0)));
-            WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute'), SW_HIDE);
-          End
-         else
-          log_diario('Não Executei. Chave de AutoExecução já existente...',ExtractFilePath(ParamStr(0)));
-      End
-end;
+  //if (bool_download_CACIC2) then
+      //Begin
+         //if not bool_ExistsAutoRun then
+         // Begin
+      if Posso_Rodar_CACIC or not bool_ExistsAutoRun then
+        Begin
+          log_diario('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic,ExtractFilePath(ParamStr(0)));
 
+          // Caso tenha havido download de agentes principais, executar coletas imediatamente...
+          if (bool_download_CACIC2) then
+            WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute'), SW_HIDE)
+          else
+            WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             ), SW_HIDE);
+        End;
+        //  End
+        // else
+        //  log_diario('Não Executei. Chave de AutoExecução já existente...',ExtractFilePath(ParamStr(0)));
+      //End
+end;
 
 begin
 //  Application.ShowMainForm:=false;

@@ -76,7 +76,8 @@ var CountUPD,
 
 var tstrTripa1,
     v_tstrCipherOpened,
-    v_tstrCipherOpened1       : TStrings;
+    v_tstrCipherOpened1,
+    tstringsAux               : TStrings;
 
 var v_Debugs,
     l_cs_cipher,
@@ -139,7 +140,6 @@ begin
    except
    end;
 end;
-
 
 function VerFmt(const MS, LS: DWORD): string;
   // Format the version number from the given DWORDs containing the info
@@ -284,6 +284,12 @@ Begin
       End;
     Implode := strAux;
 end;
+function abstraiCSD(p_te_so : String) : integer;
+  var tstrTe_so : tstrings;
+  Begin
+    tstrTe_so := Explode(p_te_so, '.');
+    Result := StrToInt(tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
+  End;
 
 Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String; p_tstrCipherOpened : TStrings);
 var v_Aux     : string;
@@ -472,10 +478,13 @@ begin
   else
     Result := cOsUnknown;
 
+  // A partir da versão 2.2.0.24, defino o valor da ID Interna e atribuo-a sem o CSDVersion à versão externa
   v_te_so := IntToStr(platformId) + '.' +
              IntToStr(majorVer)   + '.' +
              IntToStr(minorVer)   +
              IfThen(CSDVersion='','','.'+CSDVersion);
+  if (Result = 0) then
+    Result := abstraiCSD(v_te_so);
 end;
 
 procedure Matar(v_dir,v_files: string);
@@ -1250,6 +1259,7 @@ Begin
     Request_Ger_Cols:=TStringList.Create;
     Request_Ger_Cols.Values['te_node_address']   := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress);
     Request_Ger_Cols.Values['id_so']             := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           , v_tstrCipherOpened),l_cs_compress);
+    Request_Ger_Cols.Values['te_so']             := EnCrypt(v_te_so,l_cs_compress);
     Request_Ger_Cols.Values['te_ip']             := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             , v_tstrCipherOpened),l_cs_compress);
     Request_Ger_Cols.Values['id_ip_rede']        := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress);
     Request_Ger_Cols.Values['te_workgroup']      := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened),l_cs_compress);
@@ -1472,7 +1482,8 @@ Begin
           Begin
            if (v_Tamanho_Arquivo = '0') or (v_Tamanho_Arquivo = '-1') or (trim(GetVersionInfo(p_Dir_Inst + p_File + '.exe'))='0.0.0.0') then
               Begin
-                if (p_Medir_FTP) then Result := 1
+                if (p_Medir_FTP) then
+                  Result := 1
                 else
                   Begin
                     log_diario(p_Nome_Modulo + ' corrompido');
@@ -2000,6 +2011,8 @@ Begin
          Batchfile.SaveToFile(p_path_cacic + 'Temp\ipconfig.vbs');
          BatchFile.Free;
          v_acao_gercols := 'Invocando execução de VBS para obtenção de IPCONFIG...';
+         log_DEBUG('Executando "'+p_path_cacic + 'modulos\' + v_scripter + ' //b ' + p_path_cacic + 'temp\ipconfig.vbs"');
+
          WinExec(PChar(p_path_cacic + 'modulos\' + v_scripter + ' //b ' + p_path_cacic + 'temp\ipconfig.vbs'), SW_HIDE);
       Except
         Begin
@@ -2130,7 +2143,8 @@ Begin
            if (te_wins_primario='')   then Try te_wins_primario   := PegaDadosIPConfig(v_array_campos,v_array_valores,'servidor,wins,prim;wins,server,primary','')              Except te_wins_primario   := ''; end;
            if (te_wins_secundario='') then Try te_wins_secundario := PegaDadosIPConfig(v_array_campos,v_array_valores,'servidor,wins,secund;wins,server,secondary','')          Except te_wins_secundario := ''; end;
 
-           if (GetWinVer > 5) then //Se NT/2K/XP
+           if ((GetWinVer <> 0) and (GetWinVer > 5)) or
+              (abstraiCSD(v_te_so) >= 250) then //Se NT/2K/XP
              Try te_dominio_windows := PegaDadosIPConfig(v_array_campos,v_array_valores,'usu,rio,logado;usu,rio,logado','')                                                                                Except te_dominio_windows := 'Não Identificado'; end
            else
              Try te_dominio_windows := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MSNP32\NetworkProvider\AuthenticatingAgent') + '\' + GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Network\Logon\username') Except te_dominio_windows := 'Não Identificado'; end
@@ -2411,7 +2425,8 @@ Begin
             if (te_dominio_windows = '') then
               Begin
                 Try
-                  if (GetWinVer > 5) then //Se NT/2K/XP
+                  if ((GetWinVer <> 0) and (GetWinVer > 5)) or
+                     (abstraiCSD(v_te_so) >= 250) then //Se NT/2K/XP
                      te_dominio_windows := GetDomainName + '\' + GetNetworkUserName
                   else
                      te_dominio_windows := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MSNP32\NetworkProvider\AuthenticatingAgent') + '\' + GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Network\Logon\username');
@@ -2422,6 +2437,7 @@ Begin
             Request_SVG := TStringList.Create;
             Request_SVG.Values['te_node_address']    := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress);
             Request_SVG.Values['id_so']              := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           , v_tstrCipherOpened),l_cs_compress);
+            Request_SVG.Values['te_so']              := EnCrypt(v_te_so,l_cs_compress);
             Request_SVG.Values['id_ip_rede']         := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress);
             Request_SVG.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened),l_cs_compress);
             Request_SVG.Values['te_ip']              := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             , v_tstrCipherOpened),l_cs_compress);
@@ -2525,7 +2541,8 @@ Begin
                 Begin
                   v_acao_gercols := 'Configurando diretório para o CACIC. (Registry para w95/95OSR2/98/98SE/ME)';
                   // Identifico a versão do Windows
-                  If (GetWinVer <= 5) then
+                  If ((GetWinVer <> 0) and (GetWinVer <= 5)) or
+                     (abstraiCSD(v_te_so) < 250) then
                     begin
                     //Se for 95/95OSR2/98/98SE/ME faço aqui...  (Em NT Like isto é feito no LoginScript)
                     SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Trim(Copy(ParamStr(intAux),12,Length((ParamStr(intAux))))) + '\cacic2.exe');
@@ -2567,6 +2584,12 @@ Begin
             begin
               log_DEBUG('Parâmetro(opção) /coletas recebido...');
               v_acao_gercols := 'Ger_Cols invocado para coletas...';
+
+              // Verificando o registro de coletas do dia e eliminando datas diferentes...
+              strAux := GetValorDatMemoria('Coletas.HOJE', v_tstrCipherOpened);
+              if (strAux = '') or
+                 (copy(strAux,0,8) <> FormatDateTime('yyyymmdd', Date)) then
+                 SetValorDatMemoria('Coletas.HOJE', FormatDateTime('yyyymmdd', Date),v_tstrCipherOpened);
 
               BuscaConfigs(true);
 
@@ -2782,6 +2805,7 @@ Begin
                                   Request_Ger_Cols.Values['in_chkcacic']   := EnCrypt('chkcacic',l_cs_compress);
                                   Request_Ger_Cols.Values['te_fila_ftp']   := EnCrypt('2',l_cs_compress); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
                                   Request_Ger_Cols.Values['id_ftp']        := EnCrypt(GetValorDatMemoria('Configs.ID_FTP',v_tstrCipherOpened),l_cs_compress); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
+                                  Request_Ger_Cols.Values['te_so']         := EnCrypt(v_te_so,l_cs_compress);
                                   Request_Ger_Cols.Values['id_ip_estacao'] := EnCrypt(GetIP,l_cs_compress); // Informará o IP para registro na tabela redes_grupos_FTP
                                   ComunicaServidor('get_config.php', Request_Ger_Cols, '>> Liberando Grupo FTP!...');
                                   Request_Ger_Cols.Free;
@@ -2804,7 +2828,7 @@ Begin
                              if not FileExists(p_path_cacic + 'Temp\ger_cols.exe') and
                                 not FileExists(p_path_cacic + 'modulos\ger_cols.exe')  then
                                   log_diario('Módulo Gerente de Coletas inexistente.')
-                             else log_diario('Nenhuma coleta configurada para essa subrede.');
+                             else log_diario('Nenhuma coleta configurada para essa subrede / estação / S.O.');
                           end;
                   End;
             end;
@@ -2824,11 +2848,21 @@ Begin
                     log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_anvi.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Anti-Vírus.';
                     v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_anvi.dat');
+
+                    // Armazeno dados para informações de coletas na data, via menu popup do Systray
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Anti-Vírus OfficeScan', v_tstrCipherOpened);
+
+                    // Armazeno as horas de início e fim das coletas
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Anvi.Inicio',v_tstrCipherOpened1), v_tstrCipherOpened);
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Anvi.Fim',v_tstrCipherOpened1), v_tstrCipherOpened);
+
                     if (GetValorDatMemoria('Col_Anvi.nada',v_tstrCipherOpened1)='') then
                       Begin
+
                         // Dados para uso do Gerente WEB...
                         Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
+                        Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
                         Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
@@ -2847,13 +2881,24 @@ Begin
 
                         if (ComunicaServidor('set_officescan.php', Request_Ger_Cols, '>> Enviando informações de Antivírus OfficeScan para o Gerente WEB.') <> '0') Then
                           Begin
+                            // Armazeno o Status Positivo de Envio
+                            SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',1', v_tstrCipherOpened);
+
                             // Somente atualizo o registro caso não tenha havido nenhum erro durante o envio das informações para o BD
                             //Sobreponho a informação no registro para posterior comparação, na próxima execução.
                             strAux := GetValorDatMemoria('Col_Anvi.UVC',v_tstrCipherOpened1);
                             SetValorDatMemoria('Coletas.OfficeScan',strAux, v_tstrCipherOpened) ;
                             intAux := 1;
-                          End;
-                      End;
+                          End
+                        else
+                            // Armazeno o Status Negativo de Envio
+                            SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',-1', v_tstrCipherOpened);
+
+                      End
+                    Else
+                      // Armazeno o Status Nulo de Envio
+                      SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
+
                     Request_Ger_Cols.Clear;
                     Matar(p_path_cacic+'Temp\','col_anvi.dat');
                   End;
@@ -2863,11 +2908,20 @@ Begin
                     log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_comp.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Compartilhamentos.';
                     v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_comp.dat');
+
+                    // Armazeno dados para informações de coletas na data, via menu popup do Systray
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Compartilhamentos', v_tstrCipherOpened);
+
+                    // Armazeno as horas de início e fim das coletas
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Comp.Inicio',v_tstrCipherOpened1), v_tstrCipherOpened);
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Comp.Fim',v_tstrCipherOpened1), v_tstrCipherOpened);
+
                     if (GetValorDatMemoria('Col_Comp.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Dados para uso do Gerente WEB...
                         Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
+                        Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
                         Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
@@ -2881,13 +2935,23 @@ Begin
 
                         if (ComunicaServidor('set_compart.php', Request_Ger_Cols, '>> Enviando informações de Compartilhamentos para o Gerente WEB.') <> '0') Then
                           Begin
+                            // Armazeno o Status Positivo de Envio
+                            SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',1', v_tstrCipherOpened);
+
                             // Somente atualizo o registro caso não tenha havido nenhum erro durante o envio das informações para o BD
                             //Sobreponho a informação no registro para posterior comparação, na próxima execução.
                             strAux := GetValorDatMemoria('Col_Comp.UVC',v_tstrCipherOpened1);
                             SetValorDatMemoria('Coletas.Compartilhamentos', strAux, v_tstrCipherOpened);
                             intAux := 1;
-                          End;
-                      End;
+                          End
+                        Else
+                          // Armazeno o Status Negativo de Envio
+                          SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',-1', v_tstrCipherOpened);
+                      End
+                    else
+                      // Armazeno o Status Nulo de Envio
+                      SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
+
                     Request_Ger_Cols.Clear;
                     Matar(p_path_cacic+'Temp\','col_comp.dat');
                   End;
@@ -2897,11 +2961,20 @@ Begin
                     log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_hard.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Hardware.';
                     v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_hard.dat');
+
+                    // Armazeno dados para informações de coletas na data, via menu popup do Systray
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Hardware', v_tstrCipherOpened);
+
+                    // Armazeno as horas de início e fim das coletas
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Hard.Inicio',v_tstrCipherOpened1), v_tstrCipherOpened);
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Hard.Fim',v_tstrCipherOpened1), v_tstrCipherOpened);
+
                     if (GetValorDatMemoria('Col_Hard.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Dados para uso do Gerente WEB...
                         Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
+                        Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
                         Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
@@ -2935,13 +3008,23 @@ Begin
 
                         if (ComunicaServidor('set_hardware.php', Request_Ger_Cols, '>> Enviando informações de Hardware para o Gerente WEB.') <> '0') Then
                           Begin
+                            // Armazeno o Status Positivo de Envio
+                            SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',1', v_tstrCipherOpened);
+
                             // Somente atualizo o registro caso não tenha havido nenhum erro durante o envio das informações para o BD
                             //Sobreponho a informação no registro para posterior comparação, na próxima execução.
                             strAux :=GetValorDatMemoria('Col_Hard.UVC',v_tstrCipherOpened1);
                             SetValorDatMemoria('Coletas.Hardware', strAux, v_tstrCipherOpened);
                             intAux := 1;
-                          End;
-                      End;
+                          End
+                        else
+                          // Armazeno o Status Negativo de Envio
+                          SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',-1', v_tstrCipherOpened);
+                      End
+                    else
+                      // Armazeno o Status Nulo de Envio
+                      SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
+
                     Request_Ger_Cols.Clear;
                     Matar(p_path_cacic+'Temp\','col_hard.dat');
                   End;
@@ -2951,11 +3034,20 @@ Begin
                     log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_patr.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Patrimônio.';
                     v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_patr.dat');
+
+                    // Armazeno dados para informações de coletas na data, via menu popup do Systray
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações Patrimoniais', v_tstrCipherOpened);
+
+                    // Armazeno as horas de início e fim das coletas
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Patr.Inicio',v_tstrCipherOpened1), v_tstrCipherOpened);
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Patr.Fim',v_tstrCipherOpened1), v_tstrCipherOpened);
+
                     if (GetValorDatMemoria('Col_Patr.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Dados para uso do Gerente WEB...
                         Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
+                        Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
                         Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
@@ -2978,6 +3070,9 @@ Begin
 
                         if (ComunicaServidor('set_patrimonio.php', Request_Ger_Cols, '>> Enviando informações de Patrimônio para o Gerente WEB.') <> '0') Then
                             Begin
+                              // Armazeno o Status Positivo de Envio
+                              SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',1', v_tstrCipherOpened);
+
                               // Somente atualizo o registro caso não tenha havido nenhum erro durante o envio das informações para o BD
                               //Sobreponho a informação no registro para posterior comparação, na próxima execução.
                               SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1', GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1',v_tstrCipherOpened1), v_tstrCipherOpened);
@@ -2991,9 +3086,15 @@ Begin
                               SetValorDatMemoria('Patrimonio.te_info_patrimonio6'          , GetValorDatMemoria('Col_Patr.te_info_patrimonio6'          ,v_tstrCipherOpened1), v_tstrCipherOpened);
                               SetValorDatMemoria('Patrimonio.ultima_rede_obtida'           , GetValorDatMemoria('TcpIp.ID_IP_REDE'                      ,v_tstrCipherOpened) , v_tstrCipherOpened);
                               intAux := 1;
-                            End;
+                            End
+                        else
+                          // Armazeno o Status Negativo de Envio
+                          SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',-1', v_tstrCipherOpened);
+                      End
+                    else
+                      // Armazeno o Status Nulo de Envio
+                      SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
-                      End;
                     Request_Ger_Cols.Clear;
                     Matar(p_path_cacic+'Temp\','col_patr.dat');
                   End;
@@ -3003,11 +3104,20 @@ Begin
                     log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_moni.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Sistemas Monitorados.';
                     v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_moni.dat');
+
+                    // Armazeno dados para informações de coletas na data, via menu popup do Systray
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Sistemas Monitorados', v_tstrCipherOpened);
+
+                    // Armazeno as horas de início e fim das coletas
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Moni.Inicio',v_tstrCipherOpened1), v_tstrCipherOpened);
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Moni.Fim',v_tstrCipherOpened1), v_tstrCipherOpened);
+
                     if (GetValorDatMemoria('Col_Moni.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Dados para uso do Gerente WEB...
                         Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
+                        Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
                         Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
@@ -3022,13 +3132,23 @@ Begin
 
                         if (ComunicaServidor('set_monitorado.php', Request_Ger_Cols, '>> Enviando informações de Sistemas Monitorados para o Gerente WEB.') <> '0') Then
                           Begin
+                            // Armazeno o Status Positivo de Envio
+                            SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',1', v_tstrCipherOpened);
+
                             // Somente atualizo o registro caso não tenha havido nenhum erro durante o envio das informações para o BD
                             //Sobreponho a informação no registro para posterior comparação, na próxima execução.
                             strAux := GetValorDatMemoria('Col_Moni.UVC',v_tstrCipherOpened1);
                             SetValorDatMemoria('Coletas.Sistemas_Monitorados', strAux, v_tstrCipherOpened);
                             intAux := 1;
-                          End;
-                      End;
+                          End
+                        else
+                          // Armazeno o Status Negativo de Envio
+                          SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',-1', v_tstrCipherOpened);
+                      End
+                    else
+                      // Armazeno o Status Nulo de Envio
+                      SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
+
                     Request_Ger_Cols.Clear;
                     Matar(p_path_cacic+'Temp\','col_moni.dat');
                   End;
@@ -3038,11 +3158,20 @@ Begin
                     log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_soft.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Softwares.';
                     v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_soft.dat');
+
+                    // Armazeno dados para informações de coletas na data, via menu popup do Systray
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Softwares', v_tstrCipherOpened);
+
+                    // Armazeno as horas de início e fim das coletas
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Soft.Inicio',v_tstrCipherOpened1), v_tstrCipherOpened);
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Soft.Fim',v_tstrCipherOpened1), v_tstrCipherOpened);
+
                     if (GetValorDatMemoria('Col_Soft.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Dados para uso do Gerente WEB...
                         Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
+                        Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
                         Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
@@ -3069,13 +3198,23 @@ Begin
 
                         if (ComunicaServidor('set_software.php', Request_Ger_Cols, '>> Enviando informações de Softwares Básicos para o Gerente WEB.') <> '0') Then
                           Begin
+                            // Armazeno o Status Positivo de Envio
+                            SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',1', v_tstrCipherOpened);
+
                             // Somente atualizo o registro caso não tenha havido nenhum erro durante o envio das informações para o BD
                             // Sobreponho a informação no registro para posterior comparação, na próxima execução.
                             strAux := GetValorDatMemoria('Col_Soft.UVC',v_tstrCipherOpened1);
                             SetValorDatMemoria('Coletas.Software', strAux, v_tstrCipherOpened);
                             intAux := 1;
-                          End;
-                      End;
+                          End
+                        else
+                          // Armazeno o Status Negativo de Envio
+                          SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',-1', v_tstrCipherOpened);
+                      End
+                    else
+                      // Armazeno o Status Nulo de Envio
+                      SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
+
                     Request_Ger_Cols.Clear;
                     Matar(p_path_cacic+'Temp\','col_soft.dat');
                   End;
@@ -3085,11 +3224,20 @@ Begin
                     log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_undi.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Unidades de Disco.';
                     v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_undi.dat');
+
+                    // Armazeno dados para informações de coletas na data, via menu popup do Systray
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Unidades de Disco', v_tstrCipherOpened);
+
+                    // Armazeno as horas de início e fim das coletas
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Undi.Inicio',v_tstrCipherOpened1), v_tstrCipherOpened);
+                    SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Undi.Fim',v_tstrCipherOpened1), v_tstrCipherOpened);
+
                     if (GetValorDatMemoria('Col_Undi.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Dados para uso do Gerente WEB...
                         Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
+                        Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);                        
                         Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
                         Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
@@ -3104,13 +3252,23 @@ Begin
 
                         if (ComunicaServidor('set_unid_discos.php', Request_Ger_Cols, '>> Enviando informações de Unidades de Disco para o Gerente WEB.') <> '0') Then
                           Begin
+                            // Armazeno o Status Positivo de Envio
+                            SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',1', v_tstrCipherOpened);
+
                             // Somente atualizo o registro caso não tenha havido nenhum erro durante o envio das informações para o BD
                             //Sobreponho a informação no registro para posterior comparação, na próxima execução.
                             strAux := GetValorDatMemoria('Col_Undi.UVC',v_tstrCipherOpened1);
                             SetValorDatMemoria('Coletas.UnidadesDisco', strAux, v_tstrCipherOpened);
                             intAux := 1;
-                          End;
-                      End;
+                          End
+                        else
+                          // Armazeno o Status Negativo de Envio
+                          SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',-1', v_tstrCipherOpened);
+                      End
+                    else
+                      // Armazeno o Status Nulo de Envio
+                      SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
+
                     Request_Ger_Cols.Clear;
                     Matar(p_path_cacic+'Temp\','col_undi.dat');
                   End;
@@ -3171,7 +3329,8 @@ begin
 
         // De acordo com a versão do OS, determino o ShellCommand para chamadas externas.
         p_Shell_Command := 'command.com /c ';
-        if (GetWinVer > 5) then p_Shell_Command := 'cmd.exe /c '; //NT/2K/XP
+        if ((GetWinVer <> 0) and (GetWinVer > 5)) or
+           (abstraiCSD(v_te_so) >= 250) then p_Shell_Command := 'cmd.exe /c '; //NT/2K/XP
 
         if not DirectoryExists(p_path_cacic + 'Temp') then
           ForceDirectories(p_path_cacic + 'Temp');
@@ -3199,6 +3358,9 @@ begin
 
         ChecaCipher;
         ChecaCompress;
+
+        // Provoco a alimentação da variável v_te_so, para uso nas comunicações com o Gerente WEB.
+        GetWinVer;
 
         Executa_Ger_Cols;
         Finalizar(true);

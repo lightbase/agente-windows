@@ -739,6 +739,7 @@ begin
         strAux2 := VetorUON2Filtrado[id_unid_organizacional_nivel2.ItemIndex];
      Except
      end;
+     SetValorDatMemoria('Col_Patr.Fim', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
      if (strAux1 <> var_id_unid_organizacional_nivel1) or
         (strAux2 <> var_id_unid_organizacional_nivel2) or
          (te_localizacao_complementar.Text <> var_te_localizacao_complementar) or
@@ -997,15 +998,19 @@ Begin
 
               if boolColeta then
                   Begin
+                    SetValorDatMemoria('Col_Patr.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
                     log_diario('Coletando informações de Patrimônio e Localização Física.');
                     v_configs := GetValorDatMemoria('Patrimonio.Configs',v_tstrCipherOpened);
                     log_DEBUG('Configurações obtidas: '+v_configs);
+
                     MontaInterface;
                     MontaCombos;
                     RecuperaValoresAnteriores;
+                    
                   End;
             Except
               SetValorDatMemoria('Col_Patr.nada','nada', v_tstrCipherOpened1);
+              SetValorDatMemoria('Col_Patr.Fim', '99999999', v_tstrCipherOpened1);
               CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
               Application.Terminate;
             End;

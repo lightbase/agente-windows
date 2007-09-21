@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=2
 MinorVer=2
 Release=0
-Build=9
+Build=26
 Debug=0
 PreRelease=0
 Special=0
@@ -124,16 +124,16 @@ DLL=0
 Locale=1046
 CodePage=1252
 [Version Info Keys]
-CompanyName=Dataprev - Escritório do ES
+CompanyName=Dataprev - Unidade Regional Espírito Santo
 FileDescription=Configurador Automático e Coletor de Informações Computacionais
-FileVersion=2.2.0.9
+FileVersion=2.2.0.26
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
-ProductName=
-ProductVersion=2.0.0.0
-Comments=
+ProductName=Cacic - Agente Principal
+ProductVersion=2.2.0.26
+Comments=Baseado na licença GPL (General Public License)
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;

@@ -34,7 +34,7 @@ uses  Windows,
       PJVersionInfo,
       DCPcrypt2,
       DCPrijndael,
-      DCPbase64;
+      DCPbase64, ComCtrls;
 
 
 const WM_MYMESSAGE = WM_USER+100;
@@ -52,7 +52,8 @@ var p_path_cacic,
     v_IV,
     v_DatFileName,
     v_DataCacic2DAT,
-    v_Tamanho_Arquivo         : string;
+    v_Tamanho_Arquivo,
+    v_te_so                   : string;
     v_tstrCipherOpened        : TStrings;
     v_Debugs                  : Boolean;
 
@@ -62,52 +63,6 @@ type
     Bt_Fechar_InfosGerais: TButton;
     Pn_SisMoni: TPanel;
     Lb_SisMoni: TLabel;
-    GB_SisMoni: TGroupBox;
-    Pn_Coluna2_SisMoni: TPanel;
-    Pn_Coluna1_SisMoni: TPanel;
-    ST_VL_Sistema1: TStaticText;
-    ST_VL_Licenca10: TStaticText;
-    ST_VL_Licenca9: TStaticText;
-    ST_VL_Licenca8: TStaticText;
-    ST_VL_Licenca7: TStaticText;
-    ST_VL_Licenca6: TStaticText;
-    ST_VL_Licenca5: TStaticText;
-    ST_VL_Licenca4: TStaticText;
-    ST_VL_Licenca3: TStaticText;
-    ST_VL_Licenca2: TStaticText;
-    ST_VL_Licenca1: TStaticText;
-    ST_VL_Sistema10: TStaticText;
-    ST_VL_Sistema9: TStaticText;
-    ST_VL_Sistema8: TStaticText;
-    ST_VL_Sistema7: TStaticText;
-    ST_VL_Sistema6: TStaticText;
-    ST_VL_Sistema5: TStaticText;
-    ST_VL_Sistema4: TStaticText;
-    ST_VL_Sistema3: TStaticText;
-    ST_VL_Sistema2: TStaticText;
-    St_LB_Versao: TStaticText;
-    ST_LB_NomeSistema: TStaticText;
-    St_LB_NumeroLicenca: TStaticText;
-    ST_VL_Versao1: TStaticText;
-    ST_VL_Versao4: TStaticText;
-    ST_VL_Versao5: TStaticText;
-    ST_VL_Versao6: TStaticText;
-    ST_VL_Versao7: TStaticText;
-    ST_VL_Versao8: TStaticText;
-    ST_VL_Versao9: TStaticText;
-    ST_VL_Versao10: TStaticText;
-    ST_VL_Versao3: TStaticText;
-    ST_VL_Versao2: TStaticText;
-    Pn_Linha1_SisMoni: TPanel;
-    Pn_Linha2_SisMoni: TPanel;
-    Pn_Linha3_SisMoni: TPanel;
-    Pn_Linha4_SisMoni: TPanel;
-    Pn_Linha6_SisMoni: TPanel;
-    Pn_Linha7_SisMoni: TPanel;
-    Pn_Linha8_SisMoni: TPanel;
-    Pn_Linha9_SisMoni: TPanel;
-    Pn_Linha5_SisMoni: TPanel;
-    Pn_Linha10_SisMoni: TPanel;
     Pn_TCPIP: TPanel;
     Lb_TCPIP: TLabel;
     GB_InfosTCPIP: TGroupBox;
@@ -150,6 +105,13 @@ type
     Mnu_InfosTCP: TMenuItem;
     Mnu_InfosPatrimoniais: TMenuItem;
     Mnu_FinalizarCacic: TMenuItem;
+    listSistemasMonitorados: TListView;
+    Panel1: TPanel;
+    Label1: TLabel;
+    listaColetas: TListView;
+    lbDataColeta: TLabel;
+    Panel2: TPanel;
+    Panel3: TPanel;
     procedure RemoveIconesMortos;
     procedure ChecaCONFIGS;
     procedure CriaFormSenha(Sender: TObject);
@@ -178,6 +140,8 @@ type
     procedure Mnu_InfosTCPClick(Sender: TObject);
     procedure Bt_Fechar_InfosGeraisClick(Sender: TObject);
     function  Get_File_Size(sFileToExamine: string; bInKBytes: Boolean): string;
+    function  Posso_Rodar : boolean;
+    function  abstraiCSD(p_te_so : String) : integer;    
   private
     ShutdownEmExecucao : Boolean;
     IsMenuOpen : Boolean;
@@ -705,6 +669,7 @@ Begin
       strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
       if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
         strFraseVersao := strFraseVersao + #13#10 + 'IP: '+getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
+
       InicializaTray(strFraseVersao);
       log_diario('Acionando recuperador de Módulo Gerente de Coletas.');
       WinExec(PChar(HomeDrive + '\chksis.exe'),SW_HIDE);
@@ -713,7 +678,7 @@ Begin
       if (FileExists(p_path_cacic + 'modulos\ger_cols.exe')) then
         Begin
           log_diario('Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
-          InicializaTray('Aguarde...');
+          InicializaTray('');
         End
       else
           log_diario('Módulo Gerente de Coletas NÃO RECUPERADO!');
@@ -781,7 +746,7 @@ begin
   Result:=FindFirst(v_dir+v_files, faAnyFile, SearchRec);
   while result=0 do
     begin
-      log_DEBUG('Excluindo: '+v_dir + SearchRec.Name);
+      log_DEBUG('Tentativa de Exclusão de "'+v_dir + SearchRec.Name+'"');
       DeleteFile(v_dir+SearchRec.Name);
       Result:=FindNext(SearchRec);
     end;
@@ -910,15 +875,20 @@ const
   cOsXP = 8;
 var
   osVerInfo: TOSVersionInfo;
-  majorVer, minorVer: Integer;
+  platformID,
+  majorVer,
+  minorVer : Integer;
+  CSDVersion : String;
 begin
   Result := cOsUnknown;
   { set operating system type flag }
   osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
   if GetVersionEx(osVerInfo) then
   begin
-    majorVer := osVerInfo.dwMajorVersion;
-    minorVer := osVerInfo.dwMinorVersion;
+    platformId        :=      osVerInfo.dwPlatformId;
+    majorVer          :=      osVerInfo.dwMajorVersion;
+    minorVer          :=      osVerInfo.dwMinorVersion;
+    CSDVersion        := trim(osVerInfo.szCSDVersion);
     case osVerInfo.dwPlatformId of
       VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
         begin
@@ -953,22 +923,57 @@ begin
   end
   else
     Result := cOsUnknown;
+  // A partir da versão 2.2.0.24, defino o valor da ID Interna e atribuo-a sem o CSDVersion à versão externa
+  v_te_so := IntToStr(platformId) + '.' +
+             IntToStr(majorVer)   + '.' +
+             IntToStr(minorVer)   +
+             IfThen(CSDVersion='','','.'+CSDVersion);
+  if (Result = 0) then
+    Result := abstraiCSD(v_te_so);
+
 end;
+function TFormularioGeral.abstraiCSD(p_te_so : String) : integer;
+  var tstrTe_so : tstrings;
+  Begin
+    tstrTe_so := Explode(p_te_so, '.');
+    Result := StrToInt(tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
+  End;
+
+procedure TFormularioGeral.log_DEBUG(p_msg:string);
+Begin
+  if v_Debugs then log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
+End;
+
+function TFormularioGeral.Posso_Rodar : boolean;
+Begin
+  result := false;
+
+  log_debug('Verificando concomitância de sessões');
+  // Se eu conseguir matar o arquivo abaixo é porque não há outra sessão deste agente aberta... (POG? Nããão!  :) )
+  FormularioGeral.Matar(p_path_cacic,'aguarde_CACIC.txt');
+  if  (not (FileExists(p_path_cacic + 'aguarde_CACIC.txt'))) then
+    result := true;
+End;
 
 procedure TFormularioGeral.FormCreate(Sender: TObject);
 var strAux,
     v_ip_serv_cacic,
+    v_cacic_dir,
     v_windir,
     strFraseVersao : string;
     intAux : integer;
+    v_Aguarde : TextFile;
+    v_SystemDrive : TStrings;
 begin
       Try
          // De acordo com a versão do OS, determino o ShellCommand para chamadas externas.
-         if (GetWinVer > 5) then
+         if ((GetWinVer <> 0) and (GetWinVer > 5)) or
+              (abstraiCSD(v_te_so) >= 250) then //Se NT/2K/XP... then
           Begin
             //p_Shell_Command := GetEnvironmentVariable('SYSTEMROOT') + '\system32\cmd.exe /c '; //NT/2K/XP
             p_Shell_Path    := HomeDrive + '\system32\'; //NT/2K/XP
             p_Shell_Command := 'cmd.exe'; //NT/2K/XP
+            strAux := HomeDrive + '\';  //Ex.: c:\windows\
           End
          else
           Begin
@@ -977,10 +982,17 @@ begin
             //p_Shell_Command := v_windir + 'command.com /c ';
             p_Shell_Path    := v_windir;
             p_Shell_Command := 'command.com';
+            strAux := GetEnvironmentVariable('windir') + '\';  //Ex.: c:\windows\
           End;
 
+         v_SystemDrive := explode(strAux,'\');
+         v_cacic_dir := v_SystemDrive[0] + '\' + getValorChaveRegIni('Cacic2','cacic_dir',strAux + 'chksis.ini') + '\';
+
          // Caminho do aplicativo
-         p_path_cacic := ExtractFilePath(Application.Exename) ;
+         if (v_cacic_dir <> '') then
+           p_path_cacic := v_cacic_dir
+         else
+           p_path_cacic := ExtractFilePath(Application.Exename) ;
 
          v_Debugs := false;
          if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
@@ -992,98 +1004,122 @@ begin
                End;
             End;
 
-         // Chave AES. Recomenda-se que cada empresa altere a sua chave.
-         // Esta chave é passada como parâmetro para o Gerente de Coletas que, por sua vez,
-         // passa para o Inicializador de Coletas e este passa para os coletores...
-         v_CipherKey          := 'CacicBrasil';
-         v_IV                 := 'abcdefghijklmnop';
-         v_SeparatorKey       := '=CacicIsFree='; // Usada apenas para o cacic2.dat
-         v_DatFileName        := p_path_cacic + 'cacic2.dat';
-         v_DataCacic2DAT      := '';
-         v_tstrCipherOpened   := TStrings.Create;
-         v_tstrCipherOpened   := CipherOpen;
+         log_DEBUG('Pasta do Sistema: "' + p_path_cacic + '"');
 
-         if FileExists(p_path_cacic + 'cacic2.ini') then
+         if Posso_Rodar then
             Begin
-              log_DEBUG('O arquivo "'+p_path_cacic + 'cacic2.ini" ainda existe. Vou resgatar algumas chaves/valores');
-              SetValorDatMemoria('Configs.EnderecoServidor'               ,getValorChaveRegIni('Configs'    ,'EnderecoServidor'                 ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.IN_EXIBE_BANDEJA'               ,getValorChaveRegIni('Configs'    ,'IN_EXIBE_BANDEJA'                 ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'             ,getValorChaveRegIni('Configs'    ,'TE_JANELAS_EXCECAO'               ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.NU_EXEC_APOS'                   ,getValorChaveRegIni('Configs'    ,'NU_EXEC_APOS'                     ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.NU_INTERVALO_EXEC'              ,getValorChaveRegIni('Configs'    ,'NU_INTERVALO_EXEC'                ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.Endereco_WS'                    ,getValorChaveRegIni('Configs'    ,'Endereco_WS'                      ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE'            ,getValorChaveRegIni('Configs'    ,'TE_SENHA_ADM_AGENTE'              ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.NU_INTERVALO_RENOVACAO_PATRIM'  ,getValorChaveRegIni('Configs'    ,'NU_INTERVALO_RENOVACAO_PATRIM'    ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA'            ,getValorChaveRegIni('Configs'    ,'DT_HR_ULTIMA_COLETA'              ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'       ,getValorChaveRegIni('TcpIp'      ,'TE_ENDERECOS_MAC_INVALIDOS'       ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('TcpIp.ID_IP_REDE'                       ,getValorChaveRegIni('TcpIp'      ,'ID_IP_REDE'                       ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('TcpIp.TE_IP'                            ,getValorChaveRegIni('TcpIp'      ,'TE_IP'                            ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('TcpIp.TE_MASCARA'                       ,getValorChaveRegIni('TcpIp'      ,'TE_MASCARA'                       ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Patrimonio.ultima_rede_obtida'          ,getValorChaveRegIni('Patrimonio' ,'ultima_rede_obtida'               ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              SetValorDatMemoria('Patrimonio.dt_ultima_renovacao'         ,getValorChaveRegIni('Patrimonio' ,'dt_ultima_renovacao'              ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
-              Matar(p_path_cacic,'cacic2.ini');
-            End;
+              // Uma forma fácil de evitar que outra sessão deste agente seja iniciada! (POG? Nããããooo!) :))))
+              AssignFile(v_Aguarde,p_path_cacic + 'aguarde_CACIC.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+              {$IOChecks off}
+              Reset(v_Aguarde); {Abre o arquivo texto}
+              {$IOChecks on}
+              if (IOResult <> 0) then // Arquivo não existe, será recriado.
+                Rewrite (v_Aguarde);
 
-         if (ParamCount > 0) then //Caso o Cacic2 seja chamado com passagem de parâmetros...
-            Begin
-              // Parâmetros possíveis (aceitos)
-              //   /ip_serv_cacic =>  Endereço IP do Módulo Gerente. Ex.: 10.71.0.212
-              //   /atualizacao   =>  O CACIC foi chamado pelo batch de AutoUpdate e deve ir direto para o ExecutaCacic.
+              Append(v_Aguarde);
+              Writeln(v_Aguarde,'Apenas um pseudo-cookie para evitar sessões concomitantes...');
+              Append(v_Aguarde);
+              Writeln(v_Aguarde,'Futuramente penso em colocar aqui o pID, para possibilitar finalização via software externo...');
+              Append(v_Aguarde);
 
-              // Chamada com parâmetros pelo chkcacic.exe ou linha de comando
-              For intAux := 1 to ParamCount do
+              // Chave AES. Recomenda-se que cada empresa altere a sua chave.
+              // Esta chave é passada como parâmetro para o Gerente de Coletas que, por sua vez,
+              // passa para o Inicializador de Coletas e este passa para os coletores...
+              v_CipherKey          := 'CacicBrasil';
+              v_IV                 := 'abcdefghijklmnop';
+              v_SeparatorKey       := '=CacicIsFree='; // Usada apenas para o cacic2.dat
+              v_DatFileName        := p_path_cacic + 'cacic2.dat';
+              v_DataCacic2DAT      := '';
+              v_tstrCipherOpened   := TStrings.Create;
+              v_tstrCipherOpened   := CipherOpen;
+
+              if FileExists(p_path_cacic + 'cacic2.ini') then
                 Begin
-                  if LowerCase(Copy(ParamStr(intAux),1,15)) = '/ip_serv_cacic=' then
-                    begin
-                      log_DEBUG('Parâmetro /ip_serv_cacic recebido...');
-                      strAux := Trim(Copy(ParamStr(intAux),16,Length((ParamStr(intAux)))));
-                      v_ip_serv_cacic := Trim(Copy(strAux,0,Pos('/', strAux) - 1));
-                      If (v_ip_serv_cacic = '') Then v_ip_serv_cacic := strAux;
-                      SetValorDatMemoria('Configs.EnderecoServidor',v_ip_serv_cacic,v_tstrCipherOpened);
-                    end;
-                end;
+                  log_DEBUG('O arquivo "'+p_path_cacic + 'cacic2.ini" ainda existe. Vou resgatar algumas chaves/valores');
+                  SetValorDatMemoria('Configs.EnderecoServidor'               ,getValorChaveRegIni('Configs'    ,'EnderecoServidor'                 ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Configs.IN_EXIBE_BANDEJA'               ,getValorChaveRegIni('Configs'    ,'IN_EXIBE_BANDEJA'                 ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'             ,getValorChaveRegIni('Configs'    ,'TE_JANELAS_EXCECAO'               ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Configs.NU_EXEC_APOS'                   ,getValorChaveRegIni('Configs'    ,'NU_EXEC_APOS'                     ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Configs.NU_INTERVALO_EXEC'              ,getValorChaveRegIni('Configs'    ,'NU_INTERVALO_EXEC'                ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Configs.Endereco_WS'                    ,getValorChaveRegIni('Configs'    ,'Endereco_WS'                      ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE'            ,getValorChaveRegIni('Configs'    ,'TE_SENHA_ADM_AGENTE'              ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Configs.NU_INTERVALO_RENOVACAO_PATRIM'  ,getValorChaveRegIni('Configs'    ,'NU_INTERVALO_RENOVACAO_PATRIM'    ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA'            ,getValorChaveRegIni('Configs'    ,'DT_HR_ULTIMA_COLETA'              ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'       ,getValorChaveRegIni('TcpIp'      ,'TE_ENDERECOS_MAC_INVALIDOS'       ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('TcpIp.ID_IP_REDE'                       ,getValorChaveRegIni('TcpIp'      ,'ID_IP_REDE'                       ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('TcpIp.TE_IP'                            ,getValorChaveRegIni('TcpIp'      ,'TE_IP'                            ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('TcpIp.TE_MASCARA'                       ,getValorChaveRegIni('TcpIp'      ,'TE_MASCARA'                       ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Patrimonio.ultima_rede_obtida'          ,getValorChaveRegIni('Patrimonio' ,'ultima_rede_obtida'               ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  SetValorDatMemoria('Patrimonio.dt_ultima_renovacao'         ,getValorChaveRegIni('Patrimonio' ,'dt_ultima_renovacao'              ,p_path_cacic + 'cacic2.ini'),v_tstrCipherOpened);
+                  Matar(p_path_cacic,'cacic2.ini');
+                End;
 
-                If  FindCmdLineSwitch('execute', True) or
-                    FindCmdLineSwitch('atualizacao', True) Then
-                    begin
-                      if FindCmdLineSwitch('atualizacao', True) then
+              if (ParamCount > 0) then //Caso o Cacic2 seja chamado com passagem de parâmetros...
+                Begin
+                  // Parâmetros possíveis (aceitos)
+                  //   /ip_serv_cacic =>  Endereço IP do Módulo Gerente. Ex.: 10.71.0.212
+                  //   /atualizacao   =>  O CACIC foi chamado pelo batch de AutoUpdate e deve ir direto para o ExecutaCacic.
+
+                  // Chamada com parâmetros pelo chkcacic.exe ou linha de comando
+                  For intAux := 1 to ParamCount do
+                    Begin
+                      if LowerCase(Copy(ParamStr(intAux),1,15)) = '/ip_serv_cacic=' then
                         begin
-                          log_DEBUG('Opção /atualizacao recebida...');
-                          Log_Diario('Reinicializando com versão '+getVersionInfo(ParamStr(0)));
-                        end
-                      else
-                        begin
-                          log_DEBUG('Opção /execute recebida...');
-                          log_diario('Opção para execução imediata encontrada...');
+                          log_DEBUG('Parâmetro /ip_serv_cacic recebido...');
+                          strAux := Trim(Copy(ParamStr(intAux),16,Length((ParamStr(intAux)))));
+                          v_ip_serv_cacic := Trim(Copy(strAux,0,Pos('/', strAux) - 1));
+                          If (v_ip_serv_cacic = '') Then v_ip_serv_cacic := strAux;
+                          SetValorDatMemoria('Configs.EnderecoServidor',v_ip_serv_cacic,v_tstrCipherOpened);
                         end;
-                      ExecutaCacic(nil);
                     end;
+
+                    If  FindCmdLineSwitch('execute', True) or
+                        FindCmdLineSwitch('atualizacao', True) Then
+                        begin
+                          if FindCmdLineSwitch('atualizacao', True) then
+                            begin
+                              log_DEBUG('Opção /atualizacao recebida...');
+                              Log_Diario('Reinicializando com versão '+getVersionInfo(ParamStr(0)));
+                            end
+                          else
+                            begin
+                              log_DEBUG('Opção /execute recebida...');
+                              log_diario('Opção para execução imediata encontrada...');
+                            end;
+                          ExecutaCacic(nil);
+                        end;
+                End;
+
+              // Os timers iniciam-se desabilitados... Mais à frente receberão parâmetros de tempo para execução.
+              Timer_Nu_Exec_Apos.Enabled  := False;
+              Timer_Nu_Intervalo.Enabled  := False;
+
+              // Derruba o cacic durante o shutdown do windows.
+              ShutdownEmExecucao := False;
+
+              // Não mostrar o formulário...
+              Application.ShowMainForm:=false;
+
+              Try
+                // A chamada abaixo define os valores usados pelo agente principal.
+                SetaVariaveisGlobais;
+              Except
+                log_diario('PROBLEMAS SETANDO VARIÁVEIS GLOBAIS!');
+              End;
+
+              // Envia o ícone para a bandeja com HINT mostrando Versão...
+              strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
+              if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
+                strFraseVersao := strFraseVersao + #13#10 + 'IP: '+ getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
+
+              InicializaTray(strFraseVersao);
+              CipherClose;
+            End
+         else
+            Begin
+              log_DEBUG('Agente finalizado devido a concomitância de sessões...');
+              Finaliza;
             End;
-
-         // Os timers iniciam-se desabilitados... Mais à frente receberão parâmetros de tempo para execução.
-         Timer_Nu_Exec_Apos.Enabled  := False;
-         Timer_Nu_Intervalo.Enabled  := False;
-
-         // Derruba o cacic durante o shutdown do windows.
-         ShutdownEmExecucao := False;
-
-         // Não mostrar o formulário...
-         Application.ShowMainForm:=false;
-
-         Try
-           // A chamada abaixo define os valores usados pelo agente principal.
-           SetaVariaveisGlobais;
-         Except
-            log_diario('PROBLEMAS SETANDO VARIÁVEIS GLOBAIS!');
-         End;
-
-         // Envia o ícone para a bandeja com HINT mostrando Versão...
-         strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
-         if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
-           strFraseVersao := strFraseVersao + #13#10 + 'IP: '+ getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
-         InicializaTray(strFraseVersao);
-         CipherClose;
-
       Except
         log_diario('PROBLEMAS NA INICIALIZAÇÃO (2)');
       End;
@@ -1186,11 +1222,6 @@ Begin
   FreeMemory(0);
   Halt(0);
   Application.Terminate;
-End;
-
-procedure TFormularioGeral.log_DEBUG(p_msg:string);
-Begin
-  if v_Debugs then log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
 End;
 
 procedure TFormularioGeral.Sair(Sender: TObject);
@@ -1299,7 +1330,7 @@ begin
               intContaExec := 2;
 
           // Muda HINT
-          InicializaTray('Aguarde...');
+          InicializaTray('');
 
           // Loop para possível necessidade de updates de Agente Principal e/ou Gerente de Coletas
           For intAux := intContaExec to 2 do
@@ -1500,6 +1531,7 @@ begin
         strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
         if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
           strFraseVersao := strFraseVersao + #13#10 + 'IP: '+getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
+
         InicializaTray(strFraseVersao);
 
     except
@@ -1573,7 +1605,7 @@ end;
 //=======================================================================
 procedure TFormularioGeral.InicializaTray(v_Hint:string);
 begin
-     log_DEBUG('Setando o HINT do Systray para: "'+v_Hint+'"');
+
      {Estrutura do tray icon sendo criada.}
      NotifyStruc.cbSize := SizeOf(NotifyStruc);
      NotifyStruc.Wnd := Handle;
@@ -1582,7 +1614,12 @@ begin
      NotifyStruc.uCallbackMessage := WM_MYMESSAGE; {User defined message}
      NotifyStruc.hIcon :=  Application.Icon.Handle;
 
-     // Coloca as informações de versão na barra de título e no tip da bandeja
+     if (v_Hint = '') then
+        v_Hint := 'Aguarde...';
+
+     log_DEBUG('Setando o HINT do Systray para: "'+v_Hint+'"');
+
+     // Atualiza o conteúdo do tip da bandeja
      StrPCopy(NotifyStruc.szTip, v_Hint);
 
      if (getValorDatMemoria('Configs.IN_EXIBE_BANDEJA',v_tstrCipherOpened) <> 'N') Then
@@ -1656,13 +1693,13 @@ begin
 end;
 
 procedure TFormularioGeral.Mnu_InfosTCPClick(Sender: TObject);
-var v_tripa_perfis, v_tripa_infos_coletadas, v_nome_campo_sistema, v_nome_campo_licenca, v_nome_campo_versao : string;
-    v_array_perfis, v_array_tripa_infos_coletadas, v_array_infos_coletadas : tstrings;
+var v_tripa_perfis, v_tripa_infos_coletadas,strAux : string;
+    v_array_perfis, v_array_tripa_infos_coletadas, v_array_infos_coletadas,tstringsAux : tstrings;
     v_conta_perfis, v_conta_infos_coletadas, intAux, intAux1 : integer;
     v_achei : boolean;
 begin
-    FormularioGeral.Enabled                       := true;
-    FormularioGeral.Visible                       := true;
+    FormularioGeral.Enabled       := true;
+    FormularioGeral.Visible       := true;
 
     ST_VL_NomeHost.Caption        := getValorDatMemoria('TcpIp.TE_NOME_HOST'       ,v_tstrCipherOpened);
     ST_VL_IPEstacao.Caption       := getValorDatMemoria('TcpIp.TE_IP'              ,v_tstrCipherOpened);
@@ -1677,18 +1714,9 @@ begin
     ST_VL_WinsPrimario.Caption    := getValorDatMemoria('TcpIp.TE_WINS_PRIMARIO'   ,v_tstrCipherOpened);
     ST_VL_WinsSecundario.Caption  := getValorDatMemoria('TcpIp.TE_WINS_SECUNDARIO' ,v_tstrCipherOpened);
 
-    // Inicialização dos valores das INFORMAÇÕES GERAIS
-    for intAux1 := 0 to (ComponentCount - 1) do
-      if (Components[intAux1].ClassName = 'TStaticText') and
-         ((Copy(Components[intAux1].Name,1,13)='ST_VL_Sistema') or
-          (Copy(Components[intAux1].Name,1,13)='ST_VL_Licenca') or
-          (Copy(Components[intAux1].Name,1,12)='ST_VL_Versao')) then
-        Begin
-          (Components[intAux1] as TStaticText).Caption := '';
-        End;
-
+    // Exibição das informações de Sistemas Monitorados...
     v_conta_perfis := 1;
-    v_conta_infos_coletadas := 1;
+    v_conta_infos_coletadas := 0;
     v_tripa_perfis := '*';
     while v_tripa_perfis <> '' do
       begin
@@ -1711,42 +1739,19 @@ begin
                     for intAux := 0 to v_array_tripa_infos_coletadas.Count-1 Do
                       Begin
                         v_array_infos_coletadas := explode(v_array_tripa_infos_coletadas[intAux],',');
+
                         if (v_array_infos_coletadas[0]=v_array_perfis[0]) then
                           Begin
                             if  ((trim(v_array_infos_coletadas[1])<>'') and (trim(v_array_infos_coletadas[1])<>'?')) or
                                 ((trim(v_array_infos_coletadas[3])<>'') and (trim(v_array_infos_coletadas[3])<>'?')) then
                               Begin
                                 v_achei := false;
-                                for intAux1 := 0 to (ComponentCount - 1) do
-                                  Begin
-                                    if (Components[intAux1].ClassName = 'TStaticText') and
-                                       ((copy(Components[intAux1].Name,1,13)='ST_VL_Sistema') or
-                                        (copy(Components[intAux1].Name,1,13)='ST_VL_Licenca') or
-                                        (copy(Components[intAux1].Name,1,12)='ST_VL_Versao')) then
-                                      Begin
-                                        v_nome_campo_sistema := 'ST_VL_Sistema' + inttostr(v_conta_infos_coletadas);
-                                        v_nome_campo_licenca := 'ST_VL_Licenca' + inttostr(v_conta_infos_coletadas);
-                                        v_nome_campo_versao  := 'ST_VL_Versao'  + inttostr(v_conta_infos_coletadas);
-                                        if (Components[intAux1].Name=v_nome_campo_sistema) then
-                                          Begin
-                                            (Components[intAux1] as TStaticText).Caption := v_array_perfis[12];
-                                            v_achei := true;
-                                          End;
+                                listSistemasMonitorados.Items.Add;
+                                listSistemasMonitorados.Items[v_conta_infos_coletadas].Caption := Format('%2d', [v_conta_infos_coletadas+1])+') '+v_array_perfis[12];
+                                listSistemasMonitorados.Items[v_conta_infos_coletadas].SubItems.Add(v_array_infos_coletadas[1]);
+                                listSistemasMonitorados.Items[v_conta_infos_coletadas].SubItems.Add(v_array_infos_coletadas[3]);
+                                v_conta_infos_coletadas := v_conta_infos_coletadas + 1;
 
-                                        if (Components[intAux1].Name=v_nome_campo_licenca) then
-                                          Begin
-                                            (Components[intAux1] as TStaticText).Caption := v_array_infos_coletadas[1];
-                                            v_achei := true;
-                                          End;
-
-                                        if (Components[intAux1].Name=v_nome_campo_versao) then
-                                          Begin
-                                            (Components[intAux1] as TStaticText).Caption := v_array_infos_coletadas[3];
-                                            v_achei := true;
-                                          End;
-                                      End;
-                                  End;
-                                if v_achei then v_conta_infos_coletadas := v_conta_infos_coletadas + 1;
                               End;
                           End;
                       End;
@@ -1754,6 +1759,49 @@ begin
               End;
           End;
       end;
+
+    lbDataColeta.Caption := '('+FormatDateTime('dd/mm/yyyy', now)+')';
+
+    strAux := GetValorDatMemoria('Coletas.HOJE', v_tstrCipherOpened);
+    if (strAux <> '') then
+      Begin
+        if (copy(strAux,0,8) = FormatDateTime('yyyymmdd', Date)) then
+          Begin
+            // Vamos reaproveitar algumas variáveis!...
+
+            v_array_perfis := explode(strAux,'#');
+            for intAux := 1 to v_array_perfis.Count-1 Do
+              Begin
+                v_array_infos_coletadas := explode(v_array_perfis[intAux],',');
+                listaColetas.Items.Add;
+                listaColetas.Items[intAux-1].Caption := v_array_infos_coletadas[0];
+                listaColetas.Items[intAux-1].SubItems.Add(v_array_infos_coletadas[1]);
+
+                // Verifico se houve problema na coleta...
+                if (v_array_infos_coletadas[2]<>'99999999') then
+                  listaColetas.Items[intAux-1].SubItems.Add(v_array_infos_coletadas[2])
+                else
+                  Begin
+                    listaColetas.Items[intAux-1].SubItems.Add('--------');
+                    v_array_infos_coletadas[3] := v_array_infos_coletadas[2];
+                  End;
+
+                // Códigos Possíveis: -1 : Problema no Envio da Coleta
+                //                     1 : Coleta Enviada
+                //                     0 : Sem Coleta para Envio
+                strAux := IfThen(v_array_infos_coletadas[3]='1','Coleta Enviada ao Gerente WEB!',
+                          IfThen(v_array_infos_coletadas[3]='-1','Problema Enviando Coleta ao Gerente WEB!',
+                          IfThen(v_array_infos_coletadas[3]='0','Sem Coleta para Envio ao Gerente WEB!',
+                          IfThen(v_array_infos_coletadas[3]='99999999','Problema no Processo de Coleta!','Status Desconhecido!'))));
+                listaColetas.Items[intAux-1].SubItems.Add(strAux);
+              End;
+          End
+      End
+    else
+      Begin
+        listSistemasMonitorados.Items.Add;
+        listSistemasMonitorados.Items[0].Caption := 'Não Há Coletas Registradas Nesta Data';
+      End;
   end;
 
 procedure TFormularioGeral.Bt_Fechar_InfosGeraisClick(Sender: TObject);

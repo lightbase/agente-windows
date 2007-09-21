@@ -575,6 +575,7 @@ var tstrTripa2, tstrTripa3, v_array1, v_array2, v_array3, v_array4 : TStrings;
 
 begin
   Try
+   SetValorDatMemoria('Col_Moni.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
    // Verifica se deverá ser realizada a coleta de informações de sistemas monitorados neste
    // computador, perguntando ao agente gerente.
    log_diario('Coletando informações de Sistemas Monitorados.');
@@ -727,8 +728,8 @@ begin
                  Begin
                   strAux1 := '';
                   Try
-                    log_debug('Buscando informação de INSTALAÇÃO em '+tstrTripa2[5]);
-                    strAux1 := Trim(GetValorChaveRegEdit(trim(tstrTripa2[5])));
+                    log_debug('Buscando informação de INSTALAÇÃO em '+tstrTripa2[6]);
+                    strAux1 := Trim(GetValorChaveRegEdit(trim(tstrTripa2[6])));
                   Except
                   End;
                   if (strAux1 <> '') then strAux  := strAux + 'S,';
@@ -1006,6 +1007,8 @@ begin
 
       UVC := Trim(GetValorDatMemoria('Coletas.Sistemas_Monitorados',v_tstrCipherOpened));
 
+      SetValorDatMemoria('Col_Moni.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+
       If (GetValorDatMemoria('Configs.IN_COLETA_FORCADA_MONI',v_tstrCipherOpened)='S') or (trim(strAux) <> trim(UVC)) Then
         Begin
           if (trim(UVC) <> '') then
@@ -1044,6 +1047,7 @@ begin
   Except
     Begin
       SetValorDatMemoria('Col_Moni.nada', 'nada', v_tstrCipherOpened1);
+      SetValorDatMemoria('Col_Moni.Fim', '99999999', v_tstrCipherOpened1);
       CipherClose(p_path_cacic + 'temp\col_moni.dat', v_tstrCipherOpened1);
     End;
   End;
