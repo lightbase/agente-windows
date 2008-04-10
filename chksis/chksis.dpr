@@ -50,8 +50,10 @@ var PJVersionInfo1: TPJVersionInfo;
     v_DatFileName,
     v_versao_local,
     v_versao_remota,
-    v_retorno             : String;
-
+    v_retorno,
+    v_te_so             : String;
+    intWinVer    : integer;
+    v_Debugs                  : Boolean;
 var v_tstrCipherOpened        : TStrings;
 
 // Some constants that are dependant on the cipher being used
@@ -111,14 +113,17 @@ Begin
     Implode := strAux;
 end;
 
-procedure log_diario(strMsg,p_path : String);
+procedure log_diario(strMsg : String);
 var
     HistoricoLog : TextFile;
-    strDataArqLocal, strDataAtual : string;
+    strDataArqLocal,
+    strDataAtual,
+    p_path : string;
 begin
    try
-       FileSetAttr (Dir + '\cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-       AssignFile(HistoricoLog,Dir + '\cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
+       p_path := Dir + '\chksis.log';
+       FileSetAttr (p_path,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+       AssignFile(HistoricoLog,p_path); {Associa o arquivo a uma variável do tipo TextFile}
        {$IOChecks off}
        Reset(HistoricoLog); {Abre o arquivo texto}
        {$IOChecks on}
@@ -128,7 +133,7 @@ begin
             Append(HistoricoLog);
             Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now) + '======================> Iniciando o Log <=======================');
           end;
-       DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(Dir + '\cacic2.log')));
+       DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(p_path)));
        DateTimeToString(strDataAtual   , 'yyyymmdd', Date);
        if (strDataAtual <> strDataArqLocal) then // Se o arquivo INI não é da data atual...
           begin
@@ -140,9 +145,20 @@ begin
        Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now)+ '[Verif.Integr.Sistema] '+strMsg); {Grava a string Texto no arquivo texto}
        CloseFile(HistoricoLog); {Fecha o arquivo texto}
    except
-     log_diario('Erro na gravação do log!',ExtractFilePath(ParamStr(0)));
+     log_diario('Erro na gravação do log!');
    end;
 end;
+function GetVersionInfo(p_File: string):string;
+begin
+  PJVersionInfo1 := TPJVersionInfo.Create(PJVersionInfo1);
+  PJVersionInfo1.FileName := PChar(p_File);
+  Result := VerFmt(PJVersionInfo1.FixedFileInfo.dwFileVersionMS, PJVersionInfo1.FixedFileInfo.dwFileVersionLS);
+end;
+
+procedure log_DEBUG(p_msg:string);
+Begin
+  if v_Debugs then log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
+End;
 
 // Pad a string with zeros so that it is a multiple of size
 function PadWithZeros(const str : string; size : integer) : string;
@@ -191,7 +207,7 @@ begin
     // Return the Base64 encoded result
     Result := Base64EncodeStr(l_Data);
   Except
-    log_diario('Erro no Processo de Criptografia',ExtractFilePath(ParamStr(0)));
+    log_diario('Erro no Processo de Criptografia');
   End;
 end;
 
@@ -227,7 +243,7 @@ begin
     // Return the result
     Result := l_Data;
   Except
-    log_diario('Erro no Processo de Decriptografia',ExtractFilePath(ParamStr(0)));
+    log_diario('Erro no Processo de Decriptografia');
   End;
 end;
 
@@ -264,32 +280,47 @@ begin
 
        CloseFile(v_DatFile);
    except
-        log_diario('Problema na gravação do arquivo de configurações.',ExtractFilePath(ParamStr(0)));
+        log_diario('Problema na gravação do arquivo de configurações.');
    end;
 end;
+
+function abstraiCSD(p_te_so : String) : integer;
+  var tstrTe_so : tstrings;
+  Begin
+    tstrTe_so := Explode(p_te_so, '.');
+    Result := StrToInt(tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
+  End;
+
 function GetWinVer: Integer;
 const
   { operating system (OS)constants }
-  cOsUnknown = 0;
-  cOsWin95 = 1;
-  cOsWin95OSR2 = 2;  // Não implementado.
-  cOsWin98 = 3;
-  cOsWin98SE = 4;
-  cOsWinME = 5;
-  cOsWinNT = 6;
-  cOsWin2000 = 7;
-  cOsXP = 8;
+  cOsUnknown    = 0;
+  cOsWin95      = 1;
+  cOsWin95OSR2  = 2;  // Não implementado.
+  cOsWin98      = 3;
+  cOsWin98SE    = 4;
+  cOsWinME      = 5;
+  cOsWinNT      = 6;
+  cOsWin2000    = 7;
+  cOsXP         = 8;
+  cOsServer2003 = 13;
 var
   osVerInfo: TOSVersionInfo;
-  majorVer, minorVer: Integer;
+  platformID,
+  majorVer,
+  minorVer: Integer;
+  CSDVersion : String;
 begin
   Result := cOsUnknown;
   { set operating system type flag }
   osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
   if GetVersionEx(osVerInfo) then
   begin
-    majorVer := osVerInfo.dwMajorVersion;
-    minorVer := osVerInfo.dwMinorVersion;
+    platformId        :=      osVerInfo.dwPlatformId;
+    majorVer          :=      osVerInfo.dwMajorVersion;
+    minorVer          :=      osVerInfo.dwMinorVersion;
+    CSDVersion        := trim(osVerInfo.szCSDVersion);
+
     case osVerInfo.dwPlatformId of
       VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
         begin
@@ -299,6 +330,8 @@ begin
             Result := cOsWin2000
           else if (majorVer = 5) and (minorVer = 1) then
             Result := cOsXP
+          else if (majorVer = 5) and (minorVer = 2) then
+            Result := cOsServer2003
           else
             Result := cOsUnknown;
         end;
@@ -324,6 +357,15 @@ begin
   end
   else
     Result := cOsUnknown;
+
+  // A partir da versão 2.2.0.24, defino o valor da ID Interna e atribuo-a sem o CSDVersion à versão externa
+  v_te_so := IntToStr(platformId) + '.' +
+             IntToStr(majorVer)   + '.' +
+             IntToStr(minorVer)   +
+             IfThen(CSDVersion='','','.'+CSDVersion);
+  if (Result = 0) then
+    Result := abstraiCSD(v_te_so);
+
 end;
 
 Function CipherOpen(p_DatFileName : string) : TStrings;
@@ -352,7 +394,7 @@ begin
     if (trim(v_strCipherOpened)<>'') then
       Result := explode(v_strCipherOpened,v_SeparatorKey)
     else
-      Result := explode('Configs.ID_SO' + v_SeparatorKey + inttostr(GetWinVer)+v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
+      Result := explode('Configs.ID_SO' + v_SeparatorKey + inttostr(intWinVer)+v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
 
     if Result.Count mod 2 <> 0 then
         Result.Add('');
@@ -371,12 +413,6 @@ begin
       End;
 end;
 
-function GetVersionInfo(p_File: string):string;
-begin
-  PJVersionInfo1 := TPJVersionInfo.Create(PJVersionInfo1);
-  PJVersionInfo1.FileName := PChar(p_File);
-  Result := VerFmt(PJVersionInfo1.FixedFileInfo.dwFileVersionMS, PJVersionInfo1.FixedFileInfo.dwFileVersionLS);
-end;
 
 function GetRootKey(strRootKey: String): HKEY;
 begin
@@ -554,6 +590,24 @@ begin
     RegDelValorReg.Free;
     ListaAuxDel.Free;
 end;
+function Get_File_Size(sFileToExamine: string; bInKBytes: Boolean): string;
+var
+  SearchRec: TSearchRec;
+  sgPath: string;
+  inRetval, I1: Integer;
+begin
+  sgPath := ExpandFileName(sFileToExamine);
+  try
+    inRetval := FindFirst(ExpandFileName(sFileToExamine), faAnyFile, SearchRec);
+    if inRetval = 0 then
+      I1 := SearchRec.Size
+    else
+      I1 := -1;
+  finally
+    SysUtils.FindClose(SearchRec);
+  end;
+  Result := IntToStr(I1);
+end;
 
 
 
@@ -567,6 +621,7 @@ begin
     IdFTP.Password      := p_Password;
     IdFTP.Port          := strtoint(p_Port);
     IdFTP.TransferType  := ftBinary;
+    IdFTP.Passive       := true;
     Try
       if IdFTP.Connected = true then
         begin
@@ -575,10 +630,14 @@ begin
       IdFTP.Connect(true);
       IdFTP.ChangeDir(p_PathServer);
       Try
+        log_DEBUG('Size de "'+p_File+'" Antes do FTP => '+IntToSTR(IdFTP.Size(p_File)));
         IdFTP.Get(p_File, p_Dest + '\' + p_File, True);
+        log_DEBUG('Size de "'+p_Dest + '\' + p_File +'" Após o FTP   => '+Get_File_Size(p_Dest + '\' + p_File,true));
+      Finally
+        log_DEBUG('Size de "'+p_Dest + '\' + p_File +'" Após o FTP em Finally   => '+Get_File_Size(p_Dest + '\' + p_File,true));
+        idFTP.Disconnect;
+        idFTP.Free;
         result := true;
-      Except
-        result := false;
       End;
     Except
         result := false;
@@ -704,23 +763,20 @@ var SearchRec: TSearchRec;
 begin
   strFileName := StringReplace(v_dir + '\' + v_files,'\\','\',[rfReplaceAll]);
   Result:=FindFirst(strFileName, faAnyFile, SearchRec);
+
   while result=0 do
     begin
       strFileName := StringReplace(v_dir + '\' + SearchRec.Name,'\\','\',[rfReplaceAll]);
-      log_diario('Tentando Excluir: '+strFileName,ExtractFilePath(ParamStr(0)));
-      if DeleteFile(strFileName) then
-        log_diario('Exclusão de ' + strFileName + ' efetuada com sucesso!',ExtractFilePath(ParamStr(0)))
-      else
+
+      if not DeleteFile(strFileName) then
         Begin
-          log_diario('Exclusão não efetuada! Provavelmente já esteja sendo executado...',ExtractFilePath(ParamStr(0)));
-          log_diario('Tentarei finalizar Tarefa/Processo...',ExtractFilePath(ParamStr(0)));
-          if (GetWinVer <= 5) then // Até
+          if ((intWinVer <> 0) and (intWinVer <= 5))  or
+             (abstraiCSD(v_te_so) < 250) then // Menor que NT Like
             KillTask(SearchRec.Name)
           else
             KillProcess(FindWindow(PChar(SearchRec.Name),nil));
 
-            if DeleteFile(strFileName) then
-              log_diario('Exclusão Impossibilitada de ' + strFileName + '!',ExtractFilePath(ParamStr(0)));
+            DeleteFile(strFileName);
         End;
 
       Result:=FindNext(SearchRec);
@@ -732,11 +788,11 @@ Begin
   result := false;
 
   // Se o aguarde_CACIC.txt existir é porque refere-se a uma versão mais atual: 2.2.0.20 ou maior
-  if  (FileExists(Dir + 'aguarde_CACIC.txt')) then
+  if  (FileExists(Dir + '\aguarde_CACIC.txt')) then
     Begin
       // Se eu conseguir matar o arquivo abaixo é porque não há outra sessão deste agente aberta... (POG? Nããão!  :) )
       Matar(Dir,'aguarde_CACIC.txt');
-      if  (not (FileExists(Dir + 'aguarde_CACIC.txt'))) then
+      if  (not (FileExists(Dir + '\aguarde_CACIC.txt'))) then
         result := true;
     End;
 End;
@@ -753,7 +809,7 @@ Begin
   v_versao_REM := XML_RetornaValor(StringReplace(StrUpper(PChar(v_array_NomeAgente[v_array_NomeAgente.count-1])),'.EXE','',[rfReplaceAll]), v_retorno);
   v_versao_LOC := GetVersionInfo(p_strNomeAgente);
 
-  log_diario('Checando versão de "'+p_strNomeAgente+'"',ExtractFilePath(ParamStr(0)));
+  log_diario('Checando versão de "'+p_strNomeAgente+'"');
 
   intAux := v_array_NomeAgente.Count;
 
@@ -763,12 +819,12 @@ Begin
     Begin
       if (GetValorChaveRegIni('versoes_agentes',v_array_NomeAgente[intAux-1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini')<>'') then
         Begin
-          log_diario('Encontrado arquivo "'+(ExtractFilePath(Application.Exename)+'versoes_agentes.ini')+'"',ExtractFilePath(ParamStr(0)));
+          log_diario('Encontrado arquivo "'+(ExtractFilePath(Application.Exename)+'versoes_agentes.ini')+'"');
           v_versao_REM := GetValorChaveRegIni('versoes_agentes',v_array_NomeAgente[intAux-1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini');
         End;
     End;
 
-  log_diario('Versão Remota: "'+v_versao_REM+'" - Versão Local: "'+v_versao_LOC+'"',ExtractFilePath(ParamStr(0)));
+  log_diario('Versão Remota: "'+v_versao_REM+'" - Versão Local: "'+v_versao_LOC+'"');
 
   if (v_versao_REM + v_versao_LOC <> '') and
      (v_versao_LOC <> '0000') then
@@ -782,6 +838,27 @@ Begin
     Result := 0;
 End;
 
+function GetFolderDate(Folder: string): TDateTime;
+var
+  Rec: TSearchRec;
+  Found: Integer;
+  Date: TDateTime;
+begin
+  if Folder[Length(folder)] = '\' then
+    Delete(Folder, Length(folder), 1);
+  Result := 0;
+  Found  := FindFirst(Folder, faDirectory, Rec);
+  try
+    if Found = 0 then
+    begin
+      Date   := FileDateToDateTime(Rec.Time);
+      Result := Date;
+    end;
+  finally
+    FindClose(Rec);
+  end;
+end;
+
 procedure executa_chksis;
 var
   bool_download_CACIC2,
@@ -794,6 +871,7 @@ var
   IdHTTP1: TIdHTTP;
   intAux : integer;
 begin
+
   bool_download_CACIC2  := false;
   v_home_drive       := MidStr(HomeDrive,1,3); //x:\
   v_ip_serv_cacic    := GetValorChaveRegIni('Cacic2', 'ip_serv_cacic', ExtractFilePath(ParamStr(0)) + 'chksis.ini');
@@ -801,7 +879,17 @@ begin
   v_rem_cacic_v0x    := GetValorChaveRegIni('Cacic2', 'rem_cacic_v0x', ExtractFilePath(ParamStr(0)) + 'chksis.ini');
   Dir                := v_home_drive + v_cacic_dir;
 
+  v_Debugs := false;
+  if DirectoryExists(v_cacic_dir + '\Temp\Debugs') then
+      Begin
+       if (FormatDateTime('ddmmyyyy', GetFolderDate(v_cacic_dir + '\Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+         Begin
+           v_Debugs := true;
+           log_DEBUG('Pasta "' + v_cacic_dir + '\Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(v_cacic_dir + '\Temp\Debugs'))+' encontrada. DEBUG ativado.');
+         End;
+      End;
 
+  intWinVer := GetWinVer;
 
   // Caso o parâmetro rem_cacic_v0x seja "S/s" removo a chave/valor de execução do Cacic antigo
   if (LowerCase(v_rem_cacic_v0x)='s') then
@@ -820,16 +908,16 @@ begin
   // Para eliminar versão 20014 e anteriores que provavelmente não fazem corretamente o AutoUpdate
   if not DirectoryExists(Dir+'\modulos') then
       begin
-        log_diario('Excluindo '+ Dir + '\cacic2.exe',ExtractFilePath(ParamStr(0)));
+        log_diario('Excluindo '+ Dir + '\cacic2.exe');
         Matar(Dir,'\cacic2.exe');
-        log_diario('Criando diretório ' + Dir + '\modulos',ExtractFilePath(ParamStr(0)));
+        log_diario('Criando diretório ' + Dir + '\modulos');
         ForceDirectories(Dir + '\modulos');
       end;
 
   // Crio o SubDiretório TEMP, caso não exista
   if not DirectoryExists(Dir+'\temp') then
       begin
-        log_diario('Criando diretório ' + Dir + '\temp',ExtractFilePath(ParamStr(0)));
+        log_diario('Criando diretório ' + Dir + '\temp');
         ForceDirectories(Dir + '\temp');
       end;
 
@@ -843,15 +931,15 @@ begin
   v_IV           := 'abcdefghijklmnop';
   v_SeparatorKey := '=CacicIsFree=';
   v_DatFileName  := Dir + '\cacic2.dat';
-  v_tstrCipherOpened := CipherOpen(v_DatFileName);
+  //v_tstrCipherOpened := CipherOpen(v_DatFileName);
 
-  SetValorDatMemoria('Configs.EnderecoServidor', v_ip_serv_cacic);
+  //SetValorDatMemoria('Configs.EnderecoServidor', v_ip_serv_cacic);
 
 //  log_diario('Setando chave Configs/cacic_dir=' + v_cacic_dir + ' em '+Dir + '\cacic2.ini',ExtractFilePath(ParamStr(0)));
 //  SetValorChaveRegIni('Configs', 'cacic_dir', v_cacic_dir, Dir + '\cacic2.ini');
-  SetValorDatMemoria('Configs.cacic_dir', v_cacic_dir);
+  //SetValorDatMemoria('Configs.cacic_dir', v_cacic_dir);
 
-  CipherClose(v_DatFileName);
+  //CipherClose(v_DatFileName);
   // Verifico existência dos dois principais objetos
   If (not FileExists(Dir + '\cacic2.exe')) or (not FileExists(Dir + '\modulos\ger_cols.exe')) Then
       Begin
@@ -863,9 +951,11 @@ begin
         Response_Config                       := TStringStream.Create('');
 
         Try
+          log_diario('Tentando contato com ' + 'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php');
           IdHTTP1 := TIdHTTP.Create(nil);
-          log_diario('Tentando contato com ' + 'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php',ExtractFilePath(ParamStr(0)));
           IdHTTP1.Post('http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php', Request_Config, Response_Config);
+          IdHTTP1.Disconnect;
+          IdHTTP1.Free;
           v_retorno := Response_Config.DataString;
           v_te_serv_updates               := XML_RetornaValor('te_serv_updates'              , Response_Config.DataString);
           v_nu_porta_serv_updates         := XML_RetornaValor('nu_porta_serv_updates'        , Response_Config.DataString);
@@ -873,22 +963,22 @@ begin
           v_te_senha_login_serv_updates   := XML_RetornaValor('te_senha_login_serv_updates'  , Response_Config.DataString);
           v_te_path_serv_updates          := XML_RetornaValor('te_path_serv_updates'         , Response_Config.DataString);
 
-          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',ExtractFilePath(ParamStr(0)));
-          log_diario(':::::::::::::::: VALORES OBTIDOS NO Gerente WEB :::::::::::::::',ExtractFilePath(ParamStr(0)));
-          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',ExtractFilePath(ParamStr(0)));
-          log_diario('Servidor de updates......................: '+v_te_serv_updates,ExtractFilePath(ParamStr(0)));
-          log_diario('Porta do servidor de updates.............: '+v_nu_porta_serv_updates,ExtractFilePath(ParamStr(0)));
-          log_diario('Usuário para login no servidor de updates: '+v_nm_usuario_login_serv_updates,ExtractFilePath(ParamStr(0)));
-          log_diario('Pasta no servidor de updates.............: '+v_te_path_serv_updates,ExtractFilePath(ParamStr(0)));
-          log_diario(' ',ExtractFilePath(ParamStr(0)));
-          log_diario('Versões dos Agentes Principais:',ExtractFilePath(ParamStr(0)));
-          log_diario('------------------------------',ExtractFilePath(ParamStr(0)));
-          log_diario('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno),ExtractFilePath(ParamStr(0)));
-          log_diario('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno),ExtractFilePath(ParamStr(0)));
-          log_diario('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno),ExtractFilePath(ParamStr(0)));
-          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::',ExtractFilePath(ParamStr(0)));
+          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+          log_diario(':::::::::::::::: VALORES OBTIDOS NO Gerente WEB :::::::::::::::');
+          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+          log_diario('Servidor de updates......................: '+v_te_serv_updates);
+          log_diario('Porta do servidor de updates.............: '+v_nu_porta_serv_updates);
+          log_diario('Usuário para login no servidor de updates: '+v_nm_usuario_login_serv_updates);
+          log_diario('Pasta no servidor de updates.............: '+v_te_path_serv_updates);
+          log_diario(' ');
+          log_diario('Versões dos Agentes Principais:');
+          log_diario('------------------------------');
+          log_diario('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno));
+          log_diario('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno));
+          log_diario('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno));
+          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
 
-        Except log_diario('Falha no contato com ' + 'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php',ExtractFilePath(ParamStr(0)));
+        Except log_diario('Falha no contato com ' + 'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php');
         End;
 
         Request_Config.Free;
@@ -938,7 +1028,7 @@ begin
               log_diario('Fazendo FTP de cacic2.exe a partir de ' + v_te_serv_updates + '/' +
                                                                     v_nu_porta_serv_updates+'/'+
                                                                     v_nm_usuario_login_serv_updates + '/' +
-                                                                    v_te_path_serv_updates + ' para a pasta ' + Dir,ExtractFilePath(ParamStr(0)));
+                                                                    v_te_path_serv_updates + ' para a pasta ' + Dir);
               FTP(v_te_serv_updates,
                   v_nu_porta_serv_updates,
                   v_nm_usuario_login_serv_updates,
@@ -955,7 +1045,7 @@ begin
               log_diario('Fazendo FTP de ger_cols.exe a partir de ' + v_te_serv_updates + '/' +
                                                                       v_nu_porta_serv_updates+'/'+
                                                                       v_nm_usuario_login_serv_updates + '/' +
-                                                                      v_te_path_serv_updates + ' para a pasta ' + Dir + '\modulos',ExtractFilePath(ParamStr(0)));
+                                                                      v_te_path_serv_updates + ' para a pasta ' + Dir + '\modulos');
 
               FTP(v_te_serv_updates,
                   v_nu_porta_serv_updates,
@@ -970,17 +1060,25 @@ begin
   // 5 segundos para espera de possível FTP...
   Sleep(5000);
 
-  // Crio a chave/valor cacic2 para autoexecução do Cacic, caso não exista esta chave/valor
-  // Crio a chave/valor chksis para autoexecução do Cacic, caso não exista esta chave/valor
-  //log_diario('Setando chave HLM../Run com ' + HomeDrive + '\chksis.exe',ExtractFilePath(ParamStr(0)));
-  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\CheckSystemRoutine', HomeDrive + '\chksis.exe');
-  //log_diario('Setando chave HLM../Run com ' + Dir + '\cacic2.exe',ExtractFilePath(ParamStr(0)));
+  Try
+    // Crio a chave/valor chksis para autoexecução do Cacic, caso não exista esta chave/valor
+    log_diario('Setando chave HLM../Run com ' + HomeDrive + '\chksis.exe');
+    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\CheckSystemRoutine', HomeDrive + '\chksis.exe');
+  Except
+  End;
 
   bool_ExistsAutoRun := false;
   if (GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2')=Dir + '\cacic2.exe') then
     bool_ExistsAutoRun := true
   else
-    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Dir + '\cacic2.exe');
+    Begin
+      Try
+        // Crio a chave/valor cacic2 para autoexecução do Cacic, caso não exista esta chave/valor
+        log_diario('Setando chave HLM../Run com ' + Dir + '\cacic2.exe');
+        SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Dir + '\cacic2.exe');
+      Except
+      End;
+    End;
 
   // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
   //if (bool_download_CACIC2) then
@@ -989,7 +1087,7 @@ begin
          // Begin
       if Posso_Rodar_CACIC or not bool_ExistsAutoRun then
         Begin
-          log_diario('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic,ExtractFilePath(ParamStr(0)));
+          log_diario('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
 
           // Caso tenha havido download de agentes principais, executar coletas imediatamente...
           if (bool_download_CACIC2) then
@@ -999,15 +1097,16 @@ begin
         End;
         //  End
         // else
-        //  log_diario('Não Executei. Chave de AutoExecução já existente...',ExtractFilePath(ParamStr(0)));
+      log_diario('Não Executei. Chave de AutoExecução já existente...');
       //End
+      Application.Terminate;
 end;
 
 begin
 //  Application.ShowMainForm:=false;
   if (FindWindowByTitle('chkcacic') = 0) and (FindWindowByTitle('cacic2') = 0) then
       if (FileExists(ExtractFilePath(ParamStr(0)) + 'chksis.ini')) then executa_chksis
-  else log_diario('Não executei devido execução em paralelo de "chkcacic" ou "cacic2"!',ExtractFilePath(ParamStr(0)));
+  else log_diario('Não executei devido execução em paralelo de "chkcacic" ou "cacic2"!');
 
   Halt;
   //Application.Terminate;

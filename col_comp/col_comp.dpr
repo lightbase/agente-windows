@@ -432,126 +432,133 @@ Begin
 end;
 var Reg_RCC : TRegistry;
     ChaveRegistro, ValorChaveRegistro, nm_compartilhamento, nm_dir_compart,
-    in_senha_escrita,	in_senha_leitura, te_comentario, strXML, strAux,
+    in_senha_escrita,	in_senha_leitura, te_comentario, strTripaDados, strAux,
     cs_tipo_permissao, cs_tipo_compart  : String;
     I, intAux: Integer;
     Lista_RCC : TStringList;
 Begin
   Try
-    SetValorDatMemoria('Col_Comp.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
-    nm_compartilhamento := '';
-    nm_dir_compart := '';
-    cs_tipo_compart := ' ';
-    cs_tipo_permissao := ' ';
-    in_senha_leitura := '';
-    in_senha_escrita := '';
-    log_diario('Coletando informações de Compartilhamentos.');
-    Reg_RCC := TRegistry.Create;
-    Reg_RCC.LazyWrite := False;
-    Lista_RCC := TStringList.Create;
-    Reg_RCC.Rootkey := HKEY_LOCAL_MACHINE;
-    {
-    strXML := '<?xml version="1.0" encoding="ISO-8859-1"?>' +
-              '<comparts>'           +
-              '<te_node_address>'    + GetValorChaveRegIni('TcpIp'  ,'TE_NODE_ADDRESS'   ,p_path_cacic_ini) + '</te_node_address>'    +
-              '<te_nome_computador>' + GetValorChaveRegIni('TcpIp'  ,'TE_NOME_COMPUTADOR',p_path_cacic_ini) + '</te_nome_computador>' +
-              '<te_workgroup>'       + GetValorChaveRegIni('TcpIp'  ,'TE_WORKGROUP'      ,p_path_cacic_ini) + '</te_workgroup>'       +
-              '<id_so>'              + GetValorChaveRegIni('Configs','ID_SO'             ,p_path_cacic_ini) + '</id_so>';
-    }
-
-    strXML := '<?xml version="1.0" encoding="ISO-8859-1"?><comparts>';
-
-    if Win32Platform = VER_PLATFORM_WIN32_NT then
-    Begin  // 2k, xp, nt.
-        ChaveRegistro := '\System\ControlSet001\Services\lanmanserver\Shares\';
-        Reg_RCC.OpenKeyReadOnly(ChaveRegistro);
-        Reg_RCC.GetValueNames(Lista_RCC);
-        Reg_RCC.CloseKey;
-        For I := 0 To Lista_RCC.Count - 1 Do
-        Begin
-           nm_compartilhamento := Lista_RCC.Strings[i];
-           strAux := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE' + ChaveRegistro + nm_compartilhamento);
-           nm_dir_compart := RetornaValorShareNT(strAux, 'Path=', 'Permissions=');
-           te_comentario := RetornaValorShareNT(strAux, 'Remark=', 'Type=');
-           cs_tipo_compart := RetornaValorShareNT(strAux, 'Type=', 'Fim');
-           if (cs_tipo_compart = '0') Then cs_tipo_compart := 'D' Else cs_tipo_compart := 'I';
-           strXML := strXML + '<compart>' +
-                     '<nm_compartilhamento>' + nm_compartilhamento + '</nm_compartilhamento>' +
-                     '<nm_dir_compart>' + nm_dir_compart + '</nm_dir_compart>' +
-                     '<cs_tipo_compart>' + cs_tipo_compart + '</cs_tipo_compart>' +
-                     '<te_comentario>' + te_comentario + '</te_comentario>' +
-                     '</compart>';
-        end;
-    end
-    Else
     Begin
-        ChaveRegistro := '\Software\Microsoft\Windows\CurrentVersion\Network\LanMan\';
-        Reg_RCC.OpenKeyReadOnly(ChaveRegistro);
-        Reg_RCC.GetKeyNames(Lista_RCC);
-        Reg_RCC.CloseKey;
-        For I := 0 To Lista_RCC.Count - 1 Do
-        Begin
-           nm_compartilhamento := Lista_RCC.Strings[i];
-           Reg_RCC.OpenKey(ChaveRegistro + nm_compartilhamento, True);
-           nm_dir_compart := Reg_RCC.ReadString('Path');
-           te_comentario := Reg_RCC.ReadString('Remark');
-           if (Reg_RCC.GetDataSize('Parm1enc') = 0) Then in_senha_escrita := '0' Else in_senha_escrita := '1';
-           if (Reg_RCC.GetDataSize('Parm2enc') = 0) Then in_senha_leitura := '0' Else in_senha_leitura := '1';
-           if (Reg_RCC.ReadInteger('Type') = 0) Then cs_tipo_compart := 'D' Else cs_tipo_compart := 'I';
-           intAux := Reg_RCC.ReadInteger('Flags');
-           Case intAux of    //http://www.la2600.org/talks/chronology/enigma/19971107.html
-             401 : cs_tipo_permissao := 'S'; // Somente Leitura.
-             258 : cs_tipo_permissao := 'C'; // Completo.
-             259 : cs_tipo_permissao := 'D'; // Depende de senha.
-           end;
-           Reg_RCC.CloseKey;
-           strXML := strXML + '<compart>' +
-                        '<nm_compartilhamento>' + nm_compartilhamento + '</nm_compartilhamento>' +
-                        '<nm_dir_compart>' + nm_dir_compart + '</nm_dir_compart>' +
-                        '<cs_tipo_compart>' + cs_tipo_compart + '</cs_tipo_compart>' +
-                        '<cs_tipo_permissao>' + cs_tipo_permissao + '</cs_tipo_permissao>' +
-                        '<in_senha_leitura>' + in_senha_leitura + '</in_senha_leitura>' +
-                        '<in_senha_escrita>' + in_senha_escrita + '</in_senha_escrita>' +
-                        '<te_comentario>' + te_comentario + '</te_comentario>' +
-                     '</compart>';
-        end;
-    end;
+      SetValorDatMemoria('Col_Comp.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+      nm_compartilhamento := '';
+      nm_dir_compart := '';
+      cs_tipo_compart := ' ';
+      cs_tipo_permissao := ' ';
+      in_senha_leitura := '';
+      in_senha_escrita := '';
+      log_diario('Coletando informações de Compartilhamentos.');
+      Reg_RCC := TRegistry.Create;
+      Reg_RCC.LazyWrite := False;
+      Lista_RCC := TStringList.Create;
+      Reg_RCC.Rootkey := HKEY_LOCAL_MACHINE;
+      {
+      strXML := '<?xml version="1.0" encoding="ISO-8859-1"?>' +
+                '<comparts>'           +
+                '<te_node_address>'    + GetValorChaveRegIni('TcpIp'  ,'TE_NODE_ADDRESS'   ,p_path_cacic_ini) + '</te_node_address>'    +
+                '<te_nome_computador>' + GetValorChaveRegIni('TcpIp'  ,'TE_NOME_COMPUTADOR',p_path_cacic_ini) + '</te_nome_computador>' +
+                '<te_workgroup>'       + GetValorChaveRegIni('TcpIp'  ,'TE_WORKGROUP'      ,p_path_cacic_ini) + '</te_workgroup>'       +
+                '<id_so>'              + GetValorChaveRegIni('Configs','ID_SO'             ,p_path_cacic_ini) + '</id_so>';
+      }
 
-    if (Lista_RCC.Count = 0) then strXML := strXML + '<compart>' +
-                     '<nm_compartilhamento></nm_compartilhamento>' +
-                     '<nm_dir_compart></nm_dir_compart>' +
-                     '<cs_tipo_compart></cs_tipo_compart>' +
-                     '<te_comentario></te_comentario>' +
-                     '</compart>';
+      //strXML := '<?xml version="1.0" encoding="ISO-8859-1"?><comparts>';
+      strTripaDados := '';
 
-    Reg_RCC.Free;
-    Lista_RCC.Free;
-    strXML := strXML + '</comparts>';
+      if Win32Platform = VER_PLATFORM_WIN32_NT then
+      Begin  // 2k, xp, nt.
+          ChaveRegistro := '\System\ControlSet001\Services\lanmanserver\Shares\';
+          Reg_RCC.OpenKeyReadOnly(ChaveRegistro);
+          Reg_RCC.GetValueNames(Lista_RCC);
+          Reg_RCC.CloseKey;
+          For I := 0 To Lista_RCC.Count - 1 Do
+          Begin
+             nm_compartilhamento := Lista_RCC.Strings[i];
+             strAux := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE' + ChaveRegistro + nm_compartilhamento);
+             nm_dir_compart := RetornaValorShareNT(strAux, 'Path=', 'Permissions=');
+             te_comentario := RetornaValorShareNT(strAux, 'Remark=', 'Type=');
+             cs_tipo_compart := RetornaValorShareNT(strAux, 'Type=', 'Fim');
+             if (cs_tipo_compart = '0') Then cs_tipo_compart := 'D' Else cs_tipo_compart := 'I';
+             if (strTripaDados <> '') then
+                strTripaDados := strTripaDados + '<REG>'; // Delimitador de REGISTRO
 
-    // Obtenho do registro o valor que foi previamente armazenado
-    ValorChaveRegistro := Trim(GetValorDatMemoria('Coletas.Compartilhamentos'));
-
-    SetValorDatMemoria('Col_Comp.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
-
-    // Se essas informações forem diferentes significa que houve alguma alteração
-    // na configuração. Nesse caso, gravo as informações no BD Central e, se não houver
-    // problemas durante esse procedimento, atualizo as informações no registro.
-    If (GetValorDatMemoria('Configs.IN_COLETA_FORCADA_COMP')='S') or (strXML <> ValorChaveRegistro) Then
-       Begin
-         SetValorDatMemoria('Col_Comp.UVC', strXML, v_tstrCipherOpened1);
-//log_diario('Vou chamar o CLOSE...');
-         CipherClose(p_path_cacic + 'temp\col_comp.dat', v_tstrCipherOpened1);
-//log_diario('Após chamada ao CLOSE...');
-       End
-    else
+             strTripaDados := strTripaDados + nm_compartilhamento + '<FIELD>' +
+                                              nm_dir_compart      + '<FIELD>' +
+                                              cs_tipo_compart     + '<FIELD>' +
+                                              te_comentario;
+          end;
+      end
+      Else
       Begin
+          ChaveRegistro := '\Software\Microsoft\Windows\CurrentVersion\Network\LanMan\';
+          Reg_RCC.OpenKeyReadOnly(ChaveRegistro);
+          Reg_RCC.GetKeyNames(Lista_RCC);
+          Reg_RCC.CloseKey;
+          For I := 0 To Lista_RCC.Count - 1 Do
+          Begin
+             nm_compartilhamento := Lista_RCC.Strings[i];
+             Reg_RCC.OpenKey(ChaveRegistro + nm_compartilhamento, True);
+             nm_dir_compart := Reg_RCC.ReadString('Path');
+             te_comentario := Reg_RCC.ReadString('Remark');
+             if (Reg_RCC.GetDataSize('Parm1enc') = 0) Then in_senha_escrita := '0' Else in_senha_escrita := '1';
+             if (Reg_RCC.GetDataSize('Parm2enc') = 0) Then in_senha_leitura := '0' Else in_senha_leitura := '1';
+             if (Reg_RCC.ReadInteger('Type') = 0) Then cs_tipo_compart := 'D' Else cs_tipo_compart := 'I';
+             intAux := Reg_RCC.ReadInteger('Flags');
+             Case intAux of    //http://www.la2600.org/talks/chronology/enigma/19971107.html
+               401 : cs_tipo_permissao := 'S'; // Somente Leitura.
+               258 : cs_tipo_permissao := 'C'; // Completo.
+               259 : cs_tipo_permissao := 'D'; // Depende de senha.
+             end;
+             Reg_RCC.CloseKey;
+             {
+             strXML := strXML + '<compart>' +
+                          '<nm_compartilhamento>' + nm_compartilhamento + '</nm_compartilhamento>' +
+                          '<nm_dir_compart>' + nm_dir_compart + '</nm_dir_compart>' +
+                          '<cs_tipo_compart>' + cs_tipo_compart + '</cs_tipo_compart>' +
+                          '<cs_tipo_permissao>' + cs_tipo_permissao + '</cs_tipo_permissao>' +
+                          '<in_senha_leitura>' + in_senha_leitura + '</in_senha_leitura>' +
+                          '<in_senha_escrita>' + in_senha_escrita + '</in_senha_escrita>' +
+                          '<te_comentario>' + te_comentario + '</te_comentario>' +
+                       '</compart>';
+             }
+             if (strTripaDados <> '') then
+                strTripaDados := strTripaDados + '<REG>'; // Delimitador de REGISTRO
+
+             strTripaDados := strTripaDados + nm_compartilhamento + '<FIELD>' +
+                                              nm_dir_compart      + '<FIELD>' +
+                                              cs_tipo_compart     + '<FIELD>' +
+                                              te_comentario       + '<FIELD>' +
+                                              in_senha_leitura    + '<FIELD>' +
+                                              in_senha_escrita    + '<FIELD>' +
+                                              cs_tipo_permissao;
+          end;
+      end;
+
+      Reg_RCC.Free;
+      Lista_RCC.Free;
+
+
+      // Obtenho do registro o valor que foi previamente armazenado
+      ValorChaveRegistro := Trim(GetValorDatMemoria('Coletas.Compartilhamentos'));
+
+      SetValorDatMemoria('Col_Comp.Fim'               , FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+
+      // Se essas informações forem diferentes significa que houve alguma alteração
+      // na configuração. Nesse caso, gravo as informações no BD Central e, se não houver
+      // problemas durante esse procedimento, atualizo as informações no registro.
+      If ((GetValorDatMemoria('Configs.IN_COLETA_FORCADA_COMP')='S') or (strTripaDados <> ValorChaveRegistro)) and
+         (strTripaDados <> '') Then
+        Begin
+          SetValorDatMemoria('Col_Comp.UVC', strTripaDados, v_tstrCipherOpened1);
+          CipherClose(p_path_cacic + 'temp\col_comp.dat', v_tstrCipherOpened1);
+        End
+      else
         SetValorDatMemoria('Col_Comp.nada', 'nada', v_tstrCipherOpened1);
-        CipherClose(p_path_cacic + 'temp\col_comp.dat', v_tstrCipherOpened1);
-      End;
+
+      CipherClose(p_path_cacic + 'temp\col_comp.dat', v_tstrCipherOpened1);
+    End;
   Except
     Begin
       SetValorDatMemoria('Col_Comp.nada', 'nada', v_tstrCipherOpened1);
-      SetValorDatMemoria('Col_Comp.Fim', '99999999', v_tstrCipherOpened1);      
+      SetValorDatMemoria('Col_Comp.Fim', '99999999', v_tstrCipherOpened1);
       CipherClose(p_path_cacic + 'temp\col_comp.dat', v_tstrCipherOpened1);
     End;
   End;

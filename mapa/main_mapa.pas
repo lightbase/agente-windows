@@ -43,15 +43,16 @@ uses  IniFiles,
       DCPbase64,
       ExtCtrls,
       Graphics,
-      dialogs;
+      Dialogs;
 
 var  strCipherClosed,
      strCipherOpened,
      strPathCacic,
      str_te_so                 : string;
 
-var  boolDebugs,
-     boolUON2                 : boolean;
+var  intPausaPadrao            : integer;
+
+var  boolDebugs                : boolean;
 
 
 // Some constants that are dependant on the cipher being used
@@ -93,12 +94,13 @@ type
     ed_te_info_patrimonio4: TEdit;
     ed_te_info_patrimonio5: TEdit;
     ed_te_info_patrimonio6: TEdit;
-    pnVersao: TPanel;
-    lbVersao: TLabel;
     pnMensagens: TPanel;
     lbMensagens: TLabel;
-    pnNomeServidorWEB: TPanel;
+    lbEtiqueta1a: TLabel;
+    cb_id_unid_organizacional_nivel1a: TComboBox;
+    Panel1: TPanel;
     lbNomeServidorWEB: TLabel;
+    lbVersao: TLabel;
 
     procedure mapa;
     procedure Grava_Debugs(strMsg : String);
@@ -141,23 +143,27 @@ type
     Function  Rat(OQue: String; Onde: String) : Integer;
     Function  RemoveZerosFimString(Texto : String) : String;
     function  GetValorChaveRegIni(p_SectionName, p_KeyName, p_IniFileName : String) : String;
-    Function  RetornaValorVetorUON1(id1Procurado1 : string) : String;
-    Function  RetornaValorVetorUON2(id1Procurado : string; id2Procurado : string) : String;
+    Function  RetornaValorVetorUON1(id1 : string) : String;
+    Function  RetornaValorVetorUON1a(id1a : string) : String;
+    Function  RetornaValorVetorUON2(id2,idLocal : string) : String;
     function  LetrasDrives: string;
     function  SearchFile(p_Drive,p_File:string) : boolean;
     procedure GetSubDirs(Folder:string; sList:TStringList);
-    procedure Mensagem(p_strMsg : String; p_boolAlerta : boolean);
+    procedure Mensagem(p_strMsg : String; p_boolAlerta : boolean; p_intPausaSegundos : integer);
     procedure FormActivate(Sender: TObject);
+    procedure cb_id_unid_organizacional_nivel1aChange(Sender: TObject);
   private
-    var_id_unid_organizacional_nivel1,
-    var_id_unid_organizacional_nivel2,
-    var_te_localizacao_complementar,
-    var_te_info_patrimonio1,
-    var_te_info_patrimonio2,
-    var_te_info_patrimonio3,
-    var_te_info_patrimonio4,
-    var_te_info_patrimonio5,
-    var_te_info_patrimonio6           : String;
+    strId_unid_organizacional_nivel1,
+    strId_unid_organizacional_nivel1a,
+    strId_unid_organizacional_nivel2,
+    strId_Local,
+    strTe_localizacao_complementar,
+    strTe_info_patrimonio1,
+    strTe_info_patrimonio2,
+    strTe_info_patrimonio3,
+    strTe_info_patrimonio4,
+    strTe_info_patrimonio5,
+    strTe_info_patrimonio6           : String;
   public
     boolAcessoOK               : boolean;
     strId_usuario,
@@ -172,7 +178,7 @@ var
 
 implementation
 
-uses acesso;
+uses acesso, Math;
 
 {$R *.dfm}
 
@@ -185,21 +191,32 @@ type
   end;
   TVetorUON1 = array of TRegistroUON1;
 
+  TRegistroUON1a = record
+    id1     : String;
+    id1a    : String;
+    nm1a    : String;
+    id_local: String;
+  end;
+
+  TVetorUON1a = array of TRegistroUON1a;
+
   TRegistroUON2 = record
-    id1 : String;
-    id2 : String;
-    nm2 : String;
+    id1a    : String;
+    id2     : String;
+    nm2     : String;
+    id_local: String;
   end;
   TVetorUON2 = array of TRegistroUON2;
 
-var VetorUON1 : TVetorUON1;
-    VetorUON2 : TVetorUON2;
+var VetorUON1  : TVetorUON1;
+    VetorUON1a : TVetorUON1a;
+    VetorUON2  : TVetorUON2;
 
-    // Esse array é usado apenas para saber a uon2, após a filtragem pelo uon1
+    // Esse array é usado apenas para saber a uon1a, após a filtragem pelo uon1
+    VetorUON1aFiltrado : array of String;
+
+    // Esse array é usado apenas para saber a uon2, após a filtragem pelo uon1a
     VetorUON2Filtrado : array of String;
-
-
-
 
 // Baixada de http://www.geocities.com/SiliconValley/Bay/1058/fdelphi.html
 Function TfrmMapaCacic.Rat(OQue: String; Onde: String) : Integer;
@@ -229,7 +246,7 @@ while (Pos >= 1) and not Achou do
 Result := Pos;
 end;
 
-procedure TfrmMapaCacic.Mensagem(p_strMsg : String; p_boolAlerta : boolean);
+procedure TfrmMapaCacic.Mensagem(p_strMsg : String; p_boolAlerta : boolean; p_intPausaSegundos : integer);
 Begin
   if p_boolAlerta then
     lbMensagens.Font.Color := clRed
@@ -239,6 +256,8 @@ Begin
   lbMensagens.Caption := p_strMsg;
   log_diario(lbMensagens.Caption);
   Application.ProcessMessages;
+  if (p_intPausaSegundos > 0) then
+    sleep(p_intPausaSegundos);
 End;
 
 procedure TfrmMapaCacic.log_diario(strMsg : String);
@@ -418,7 +437,7 @@ begin
             intClasses := intClasses + 1;
         End; // for intClasses...
     except
-          frmMapaCacic.Mensagem('ERRO! Problema na rotina parse',true);
+          frmMapaCacic.Mensagem('ERRO! Problema na rotina parse',true,intPausaPadrao);
     end;
 end;
 
@@ -444,7 +463,7 @@ End;
 
 procedure TfrmMapaCacic.Finalizar(p_pausa:boolean);
 Begin
-  Mensagem('Finalizando MapaCacic...',false);
+  Mensagem('Finalizando MapaCacic...',false,0);
 
   CipherClose(strDatFileName, tStringsCipherOpened);
   Apaga_Temps;
@@ -579,7 +598,7 @@ Begin
        idHTTP1.Free;
        log_DEBUG('Retorno: "'+Response_CS.DataString+'"');
     Except
-       Mensagem('ERRO! Comunicação impossível com o endereço ' + strEndereco + ': '+Response_CS.DataString,true);
+       Mensagem('ERRO! Comunicação impossível com o endereço ' + strEndereco + ': '+Response_CS.DataString,true,intPausaPadrao);
        result := '0';
        Exit;
     end;
@@ -588,7 +607,7 @@ Begin
     Try
       if (UpperCase(XML_RetornaValor('Status', Response_CS.DataString)) <> 'OK') Then
         Begin
-           Mensagem('PROBLEMAS DURANTE A COMUNICAÇÃO',true);
+           Mensagem('PROBLEMAS DURANTE A COMUNICAÇÃO',true,intPausaPadrao);
            log_diario('Endereço: ' + strEndereco);
            log_diario('Mensagem: ' + Response_CS.DataString);
            result := '0';
@@ -600,7 +619,7 @@ Begin
       Response_CS.Free;
     Except
       Begin
-        Mensagem('PROBLEMAS DURANTE A COMUNICAÇÃO',true);
+        Mensagem('PROBLEMAS DURANTE A COMUNICAÇÃO',true,intPausaPadrao);
         log_diario('Endereço: ' + strEndereco);
         log_diario('Mensagem: ' + Response_CS.DataString);
         result := '0';
@@ -990,216 +1009,442 @@ begin
     else if Trim(strRootKey) = 'HKEY_DYN_DATA'        Then Result := HKEY_DYN_DATA;
 end;
 
-Function TfrmMapaCacic.RetornaValorVetorUON1(id1Procurado1 : string) : String;
+Function TfrmMapaCacic.RetornaValorVetorUON1(id1 : string) : String;
 var I : Integer;
 begin
    For I := 0 to (Length(VetorUON1)-1)  Do
-       If (VetorUON1[I].id1 = id1Procurado1) Then Result := VetorUON1[I].nm1;
+       If (VetorUON1[I].id1 = id1) Then Result := VetorUON1[I].nm1;
 end;
 
+Function TfrmMapaCacic.RetornaValorVetorUON1a(id1a : string) : String;
+var I : Integer;
+begin
+   For I := 0 to (Length(VetorUON1a)-1)  Do
+       If (VetorUON1a[I].id1a     = id1a) Then Result := VetorUON1a[I].nm1a;
+end;
 
-Function TfrmMapaCacic.RetornaValorVetorUON2(id1Procurado : string; id2Procurado : string) : String;
+Function TfrmMapaCacic.RetornaValorVetorUON2(id2, idLocal: string) : String;
 var I : Integer;
 begin
    For I := 0 to (Length(VetorUON2)-1)  Do
-       If (VetorUON2[I].id1 = id1Procurado) and (VetorUON2[I].id2 = id2Procurado) Then Result := VetorUON2[I].nm2;
+       If (VetorUON2[I].id2      = id2) and
+          (VetorUON2[I].id_local = idLocal) Then Result := VetorUON2[I].nm2;
 end;
 
 procedure TfrmMapaCacic.RecuperaValoresAnteriores(p_strConfigs : String);
 begin
-    Mensagem('Recuperando Valores Anteriores...',false);
+    Mensagem('Recuperando Valores Anteriores...',false,intPausaPadrao div 3);
 
-    var_id_unid_organizacional_nivel1 := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1',tStringsCipherOpened);
-    if (var_id_unid_organizacional_nivel1='') then var_id_unid_organizacional_nivel1 := DeCrypt(XML.XML_RetornaValor('ID_UON1', p_strConfigs));
+    strId_unid_organizacional_nivel1 := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1',tStringsCipherOpened);
+    if (strId_unid_organizacional_nivel1='') then
+      strId_unid_organizacional_nivel1 := DeCrypt(XML.XML_RetornaValor('ID_UON1', p_strConfigs));
 
-    var_id_unid_organizacional_nivel2 := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2',tStringsCipherOpened);
-    if (var_id_unid_organizacional_nivel2='') then var_id_unid_organizacional_nivel2 := DeCrypt(XML.XML_RetornaValor('ID_UON2', p_strConfigs));
+    strId_unid_organizacional_nivel1a := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a',tStringsCipherOpened);
+    if (strId_unid_organizacional_nivel1a='') then
+      strId_unid_organizacional_nivel1a := DeCrypt(XML.XML_RetornaValor('ID_UON1a', p_strConfigs));
+
+    strId_unid_organizacional_nivel2 := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2',tStringsCipherOpened);
+    if (strId_unid_organizacional_nivel2='') then
+      strId_unid_organizacional_nivel2 := DeCrypt(XML.XML_RetornaValor('ID_UON2', p_strConfigs));
+
+    strId_Local := GetValorDatMemoria('Patrimonio.id_local',tStringsCipherOpened);
+    if (strId_Local='') then
+      strId_Local := DeCrypt(XML.XML_RetornaValor('ID_LOCAL', p_strConfigs));
 
     Try
-      cb_id_unid_organizacional_nivel1.ItemIndex := cb_id_unid_organizacional_nivel1.Items.IndexOf(RetornaValorVetorUON1(var_id_unid_organizacional_nivel1));
+      cb_id_unid_organizacional_nivel1.ItemIndex := cb_id_unid_organizacional_nivel1.Items.IndexOf(RetornaValorVetorUON1(strId_unid_organizacional_nivel1));
       cb_id_unid_organizacional_nivel1Change(Nil); // Para filtrar os valores do combo2 de acordo com o valor selecionado no combo1
-      cb_id_unid_organizacional_nivel2.ItemIndex := cb_id_unid_organizacional_nivel2.Items.IndexOf(RetornaValorVetorUON2(var_id_unid_organizacional_nivel1, var_id_unid_organizacional_nivel2));
+      cb_id_unid_organizacional_nivel1a.ItemIndex := cb_id_unid_organizacional_nivel1a.Items.IndexOf(RetornaValorVetorUON1(strId_unid_organizacional_nivel1));
+    Except
+    end;
+
+    Try
+      cb_id_unid_organizacional_nivel1a.ItemIndex := cb_id_unid_organizacional_nivel1a.Items.IndexOf(RetornaValorVetorUON1a(strId_unid_organizacional_nivel1a));
+      cb_id_unid_organizacional_nivel1aChange(Nil); // Para filtrar os valores do combo3 de acordo com o valor selecionado no combo2
+      cb_id_unid_organizacional_nivel2.ItemIndex := cb_id_unid_organizacional_nivel2.Items.IndexOf(RetornaValorVetorUON2(strId_unid_organizacional_nivel2,strId_Local));
     Except
     end;
 
     lbEtiqueta1.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1', p_strConfigs));
+    lbEtiqueta1a.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1a', p_strConfigs));
 
-
-    var_te_localizacao_complementar   := GetValorDatMemoria('Patrimonio.te_localizacao_complementar',tStringsCipherOpened);
-    if (var_te_localizacao_complementar='') then var_te_localizacao_complementar := DeCrypt(XML.XML_RetornaValor('TE_LOC_COMPL', p_strConfigs));
-
-    // Tentarei buscar informação gravada no Registry
-    var_te_info_patrimonio1           := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio1');
-    if (var_te_info_patrimonio1='') then
-      Begin
-        var_te_info_patrimonio1           := GetValorDatMemoria('Patrimonio.te_info_patrimonio1',tStringsCipherOpened);
-      End;
-    if (var_te_info_patrimonio1='') then var_te_info_patrimonio1 := DeCrypt(XML.XML_RetornaValor('TE_INFO1', p_strConfigs));
-
-    var_te_info_patrimonio2           := GetValorDatMemoria('Patrimonio.te_info_patrimonio2',tStringsCipherOpened);
-    if (var_te_info_patrimonio2='') then var_te_info_patrimonio2 := DeCrypt(XML.XML_RetornaValor('TE_INFO2', p_strConfigs));
-
-    var_te_info_patrimonio3           := GetValorDatMemoria('Patrimonio.te_info_patrimonio3',tStringsCipherOpened);
-    if (var_te_info_patrimonio3='') then var_te_info_patrimonio3 := DeCrypt(XML.XML_RetornaValor('TE_INFO3', p_strConfigs));
+    strTe_localizacao_complementar   := GetValorDatMemoria('Patrimonio.te_localizacao_complementar',tStringsCipherOpened);
+    if (strTe_localizacao_complementar='') then strTe_localizacao_complementar := DeCrypt(XML.XML_RetornaValor('TE_LOC_COMPL', p_strConfigs));
 
     // Tentarei buscar informação gravada no Registry
-    var_te_info_patrimonio4           := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio4');
-    if (var_te_info_patrimonio4='') then
+    strTe_info_patrimonio1           := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio1');
+    if (strTe_info_patrimonio1='') then
       Begin
-        var_te_info_patrimonio4           := GetValorDatMemoria('Patrimonio.te_info_patrimonio4',tStringsCipherOpened);
+        strTe_info_patrimonio1           := GetValorDatMemoria('Patrimonio.te_info_patrimonio1',tStringsCipherOpened);
       End;
-    if (var_te_info_patrimonio4='') then var_te_info_patrimonio4 := DeCrypt(XML.XML_RetornaValor('TE_INFO4', p_strConfigs));
+    if (strTe_info_patrimonio1='') then strTe_info_patrimonio1 := DeCrypt(XML.XML_RetornaValor('TE_INFO1', p_strConfigs));
 
-    var_te_info_patrimonio5           := GetValorDatMemoria('Patrimonio.te_info_patrimonio5',tStringsCipherOpened);
-    if (var_te_info_patrimonio5='') then var_te_info_patrimonio5 := DeCrypt(XML.XML_RetornaValor('TE_INFO5', p_strConfigs));
+    strTe_info_patrimonio2           := GetValorDatMemoria('Patrimonio.te_info_patrimonio2',tStringsCipherOpened);
+    if (strTe_info_patrimonio2='') then strTe_info_patrimonio2 := DeCrypt(XML.XML_RetornaValor('TE_INFO2', p_strConfigs));
 
-    var_te_info_patrimonio6           := GetValorDatMemoria('Patrimonio.te_info_patrimonio6',tStringsCipherOpened);
-    if (var_te_info_patrimonio6='') then var_te_info_patrimonio6 := DeCrypt(XML.XML_RetornaValor('TE_INFO6', p_strConfigs));
+    strTe_info_patrimonio3           := GetValorDatMemoria('Patrimonio.te_info_patrimonio3',tStringsCipherOpened);
+    if (strTe_info_patrimonio3='') then strTe_info_patrimonio3 := DeCrypt(XML.XML_RetornaValor('TE_INFO3', p_strConfigs));
+
+    // Tentarei buscar informação gravada no Registry
+    strTe_info_patrimonio4           := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio4');
+    if (strTe_info_patrimonio4='') then
+      Begin
+        strTe_info_patrimonio4           := GetValorDatMemoria('Patrimonio.te_info_patrimonio4',tStringsCipherOpened);
+      End;
+    if (strTe_info_patrimonio4='') then strTe_info_patrimonio4 := DeCrypt(XML.XML_RetornaValor('TE_INFO4', p_strConfigs));
+
+    strTe_info_patrimonio5           := GetValorDatMemoria('Patrimonio.te_info_patrimonio5',tStringsCipherOpened);
+    if (strTe_info_patrimonio5='') then strTe_info_patrimonio5 := DeCrypt(XML.XML_RetornaValor('TE_INFO5', p_strConfigs));
+
+    strTe_info_patrimonio6           := GetValorDatMemoria('Patrimonio.te_info_patrimonio6',tStringsCipherOpened);
+    if (strTe_info_patrimonio6='') then strTe_info_patrimonio6 := DeCrypt(XML.XML_RetornaValor('TE_INFO6', p_strConfigs));
 end;
 
 procedure TfrmMapaCacic.MontaCombos(p_strConfigs : String);
 var Parser   : TXmlParser;
     i        : integer;
-    v_Tag    : boolean;
+    strAux,
+    strAux1,
+    strTagName,
+    strItemName  : string;
 begin
-  Mensagem('Montando Listas para Seleção de U.O. Nível 1 e U.O. Nível 2...',false);
+  Mensagem('Montando Listas para Seleção de Unidades Organizacionais...',false,intPausaPadrao div 3);
 
   Parser := TXmlParser.Create;
   Parser.Normalize := True;
   Parser.LoadFromBuffer(PAnsiChar(p_strConfigs));
+  log_DEBUG('p_strConfigs: '+p_strConfigs);
   Parser.StartScan;
   i := -1;
-  v_Tag := false;
-  While Parser.Scan and (UpperCase(Parser.CurName) <> 'IT2') DO
-  Begin
-     if ((Parser.CurPartType = ptStartTag) and (UpperCase(Parser.CurName) = 'IT1')) Then
-        Begin
-          v_Tag := true;
+  strItemName := '';
+  strTagName  := '';
+  While Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT1') Then
+       Begin
           i := i + 1;
           SetLength(VetorUON1, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
-        end
-     else if (Parser.CurPartType in [ptContent, ptCData]) and v_Tag Then
-          if      (UpperCase(Parser.CurName) = 'ID1') then VetorUON1[i].id1 := DeCrypt(Parser.CurContent)
-          else if (UpperCase(Parser.CurName) = 'NM1') then VetorUON1[i].nm1 := DeCrypt(Parser.CurContent);
-  end;
+          strTagName := 'IT1';
+       end
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT1') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT1')Then
+       Begin
+         strAux1 := DeCrypt(Parser.CurContent);
+         if      (strItemName = 'ID1') then
+           Begin
+             VetorUON1[i].id1 := strAux1;
+             log_DEBUG('Gravei VetorUON1.id1: "'+strAux1+'"');
+           End
+         else if (strItemName = 'NM1') then
+           Begin
+             VetorUON1[i].nm1 := strAux1;
+             log_DEBUG('Gravei VetorUON1.nm1: "'+strAux1+'"');
+           End;
+       End;
+    End;
 
   // Código para montar o combo 2
   Parser.StartScan;
-  v_Tag := false;
+  strTagName := '';
+  strAux1    := '';
   i := -1;
   While Parser.Scan DO
-  Begin
-     if ((Parser.CurPartType = ptStartTag) and (UpperCase(Parser.CurName) = 'IT2')) Then
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT1A') Then
        Begin
-         v_Tag := TRUE;
-         i := i + 1;
-         SetLength(VetorUON2, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          i := i + 1;
+          SetLength(VetorUON1a, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          strTagName := 'IT1A';
        end
-     else if (Parser.CurPartType in [ptContent, ptCData]) and v_Tag Then
-      Begin
-        boolUON2 := true;
-        if      (UpperCase(Parser.CurName) = 'ID1') then
-            VetorUON2[i].id1 := DeCrypt(Parser.CurContent)
-        else if (UpperCase(Parser.CurName) = 'ID2') then
-            VetorUON2[i].id2 := DeCrypt(Parser.CurContent)
-        else if (UpperCase(Parser.CurName) = 'NM2') then
-            VetorUON2[i].nm2 := DeCrypt(Parser.CurContent);
-      End;
-  end;
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT1A') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT1A')Then
+        Begin
+          strAux1 := DeCrypt(Parser.CurContent);
+          if      (strItemName = 'ID1') then
+            Begin
+              VetorUON1a[i].id1 := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id1: "'+strAux1+'"');
+            End
+          else if (strItemName = 'SG_LOC') then
+            Begin
+              strAux := ' ('+strAux1 + ')';
+            End
+          else if (strItemName = 'ID1A') then
+            Begin
+              VetorUON1a[i].id1a := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id1a: "'+strAux1+'"');
+            End
+          else if (strItemName = 'NM1A') then
+            Begin
+              VetorUON1a[i].nm1a := strAux1+strAux;
+              log_DEBUG('Gravei VetorUON1a.nm1a: "'+strAux1+strAux+'"');
+            End
+          else if (strItemName = 'ID_LOCAL') then
+            Begin
+              VetorUON1a[i].id_local := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id_local: "'+strAux1+'"');
+            End;
+
+        End;
+    end;
+
+  // Código para montar o combo 3
+  Parser.StartScan;
+  strTagName := '';
+  i := -1;
+  While Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT2') Then
+       Begin
+          i := i + 1;
+          SetLength(VetorUON2, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          strTagName := 'IT2';
+       end
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT2') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT2')Then
+        Begin
+          strAux1  := DeCrypt(Parser.CurContent);
+          if      (strItemName = 'ID1A') then
+            Begin
+              VetorUON2[i].id1a := strAux1;
+              log_DEBUG('Gravei VetorUON2.id1a: "'+strAux1+'"');
+            End
+          else if (strItemName = 'ID2') then
+            Begin
+              VetorUON2[i].id2 := strAux1;
+              log_DEBUG('Gravei VetorUON2.id2: "'+strAux1+'"');
+            End
+          else if (strItemName = 'NM2') then
+            Begin
+              VetorUON2[i].nm2 := strAux1;
+              log_DEBUG('Gravei VetorUON2.nm2: "'+strAux1+'"');
+            End
+          else if (strItemName = 'ID_LOCAL') then
+            Begin
+              VetorUON2[i].id_local := strAux1;
+              log_DEBUG('Gravei VetorUON2.id_local: "'+strAux1+'"');
+            End;
+
+        End;
+    end;
   Parser.Free;
-  // Como os itens do combo1 nunca mudam durante a execução do programa (ao contrario do combo2), posso colocar o seu preenchimento aqui mesmo.
+  // Como os itens do combo1 nunca mudam durante a execução do programa (ao contrario dos combo2 e 3), posso colocar o seu preenchimento aqui mesmo.
   cb_id_unid_organizacional_nivel1.Items.Clear;
   For i := 0 to Length(VetorUON1) - 1 Do
      cb_id_unid_organizacional_nivel1.Items.Add(VetorUON1[i].nm1);
+
+  if (Length(VetorUON1) = 0) then
+    Begin
+      frmMapaCacic.Mensagem('ATENÇÃO! Verifique se esta subrede foi cadastrada no CACIC.',true,intPausaPadrao * 2);
+      Finalizar(true);
+    End;
+
+  For i := 0 to Length(VetorUON1) - 1 Do
+    Begin
+      Log_DEBUG('VetorUON1['+IntToStr(i)+'].id1='+VetorUON1[i].id1);
+      Log_DEBUG('VetorUON1['+IntToStr(i)+'].nm1='+VetorUON1[i].nm1);
+    End;
+
+  For i := 0 to Length(VetorUON1a) - 1 Do
+    Begin
+      Log_DEBUG('VetorUON1a['+IntToStr(i)+'].id1='+VetorUON1a[i].id1);
+      Log_DEBUG('VetorUON1a['+IntToStr(i)+'].id1a='+VetorUON1a[i].id1a);
+      Log_DEBUG('VetorUON1a['+IntToStr(i)+'].nm1a='+VetorUON1a[i].nm1a);
+      Log_DEBUG('VetorUON1a['+IntToStr(i)+'].id_local='+VetorUON1a[i].id_local);
+    End;
+
+  For i := 0 to Length(VetorUON2) - 1 Do
+    Begin
+      Log_DEBUG('VetorUON2['+IntToStr(i)+'].id1a='+VetorUON2[i].id1a);
+      Log_DEBUG('VetorUON2['+IntToStr(i)+'].id2='+VetorUON2[i].id2);
+      Log_DEBUG('VetorUON2['+IntToStr(i)+'].nm2='+VetorUON2[i].nm2);
+      Log_DEBUG('VetorUON2['+IntToStr(i)+'].id_local='+VetorUON2[i].id_local);
+    End;
 end;
 
 
 procedure TfrmMapaCacic.cb_id_unid_organizacional_nivel1Change(Sender: TObject);
 var i, j: Word;
-    strAux : String;
+    strIdUON1 : String;
 begin
-  if boolUON2 then
-    Begin
+      log_DEBUG('Nível 1 CHANGE');
       // Filtro os itens do combo2, de acordo com o item selecionado no combo1
-      strAux := VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].id1;
+      strIdUON1 := VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].id1;
+      cb_id_unid_organizacional_nivel1a.Items.Clear;
       cb_id_unid_organizacional_nivel2.Items.Clear;
-      SetLength(VetorUON2Filtrado, 0);
+      cb_id_unid_organizacional_nivel1a.Enabled := false;
+      cb_id_unid_organizacional_nivel2.Enabled  := false;
+      SetLength(VetorUON1aFiltrado, 0);
 
-      For i := 0 to Length(VetorUON2) - 1 Do
+      log_DEBUG('Tamanho de VetorUON1..: '+IntToStr(Length(VetorUON1)));
+      log_DEBUG('ItemIndex de cb_nivel1: '+IntToStr(cb_id_unid_organizacional_nivel1.ItemIndex));
+      log_DEBUG('Tamanho de VetorUON1a.: '+IntToStr(Length(VetorUON1a)));
+      For i := 0 to Length(VetorUON1a) - 1 Do
       Begin
           Try
-            if VetorUON2[i].id1 = strAux then
+            if VetorUON1a[i].id1 = strIdUON1 then
               Begin
-                cb_id_unid_organizacional_nivel2.Items.Add(VetorUON2[i].nm2);
-                j := Length(VetorUON2Filtrado);
-                SetLength(VetorUON2Filtrado, j + 1);
-                VetorUON2Filtrado[j] := VetorUON2[i].id2;
+                log_DEBUG('Add em cb_nivel1a: '+VetorUON1a[i].nm1a);
+                cb_id_unid_organizacional_nivel1a.Items.Add(VetorUON1a[i].nm1a);
+                j := Length(VetorUON1aFiltrado);
+                SetLength(VetorUON1aFiltrado, j + 1);
+                VetorUON1aFiltrado[j] := VetorUON1a[i].id1a + '#' +VetorUON1a[i].id_local;
+                log_DEBUG('VetorUON1aFiltrado['+IntToStr(j)+']= '+VetorUON1aFiltrado[j]);
               end;
           Except
           End;
       end;
-    End
-  else
-    Mensagem('ATENÇÃO! Não Existe '+frmMapaCacic.lbEtiqueta2.Caption+' Associado a '+VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].nm1+'. Procure um supervisor do sistema.',true);
+      if (cb_id_unid_organizacional_nivel1a.Items.Count > 0) then
+        Begin
+          cb_id_unid_organizacional_nivel1a.Enabled   := true;
+          cb_id_unid_organizacional_nivel1a.ItemIndex := 0;
+          log_DEBUG('Provocando CHANGE em nivel1a');
+          cb_id_unid_organizacional_nivel1aChange(nil);
+        End;
+end;
+
+procedure TfrmMapaCacic.cb_id_unid_organizacional_nivel1aChange(
+  Sender: TObject);
+var i, j: Word;
+    strIdUON1a,
+    strIdLocal : String;
+    intAux     : integer;
+    tstrAux    : TStrings;
+begin
+      log_DEBUG('Nível 1a CHANGE');
+      // Filtro os itens do combo2, de acordo com o item selecionado no combo1
+      //intAux := IfThen(cb_id_unid_organizacional_nivel1a.Items.Count > 1,cb_id_unid_organizacional_nivel1a.ItemIndex+1,0);
+      intAux := cb_id_unid_organizacional_nivel1a.ItemIndex;
+      Log_debug('cb_id_unid_organizacional_nivel1a.ItemIndex = '+intToStr(cb_id_unid_organizacional_nivel1a.ItemIndex));
+
+      tstrAux := TStrings.Create;
+      tstrAux := Explode(VetorUON1aFiltrado[cb_id_unid_organizacional_nivel1a.ItemIndex],'#');
+
+      strIdUON1a := tstrAux[0];
+      strIdLocal := tstrAux[1];
+
+      Log_debug('strIdLocal = '+strIdLocal);
+      cb_id_unid_organizacional_nivel2.Items.Clear;
+      cb_id_unid_organizacional_nivel2.Enabled  := false;
+      SetLength(VetorUON2Filtrado, 0);
+
+      log_DEBUG('Tamanho de VetorUON1a..: '+IntToStr(Length(VetorUON1a)));
+      log_DEBUG('ItemIndex de cb_nivel1a: '+IntToStr(cb_id_unid_organizacional_nivel1a.ItemIndex));
+      log_DEBUG('Tamanho de VetorUON2...: '+IntToStr(Length(VetorUON2)));
+
+      For i := 0 to Length(VetorUON2) - 1 Do
+      Begin
+          Try
+            if (VetorUON2[i].id1a     = strIdUON1a) and
+               (VetorUON2[i].id_local = strIdLocal) then
+              Begin
+                log_DEBUG('Add em cb_nivel2: '+VetorUON2[i].nm2);
+                cb_id_unid_organizacional_nivel2.Items.Add(VetorUON2[i].nm2);
+                j := Length(VetorUON2Filtrado);
+                SetLength(VetorUON2Filtrado, j + 1);
+                VetorUON2Filtrado[j] := VetorUON2[i].id2 + '#' + VetorUON2[i].id_local;
+                log_DEBUG('VetorUON2Filtrado['+IntToStr(j)+']= '+VetorUON2Filtrado[j]);
+              end;
+          Except
+          End;
+      end;
+      if (cb_id_unid_organizacional_nivel2.Items.Count > 0) then
+        Begin
+          cb_id_unid_organizacional_nivel2.Enabled := true;
+          cb_id_unid_organizacional_nivel2.ItemIndex := 0;
+        End;
 end;
 
 
 procedure TfrmMapaCacic.AtualizaPatrimonio(Sender: TObject);
-var strAux1,
-    strAux2,
-    strRetorno   : String;
-    Request_mapa : TStringList;
+var strIdUON1,
+    strIdUON1a,
+    strIdUON2,
+    strIdLocal,
+    strRetorno : String;
+    tstrListAux    : TStringList;
+    tstrAux    : TStrings;
 begin
+     tstrAux := TStrings.Create;
+     tstrAux := explode(VetorUON2Filtrado[cb_id_unid_organizacional_nivel2.ItemIndex],'#');
      Try
-        strAux1 := VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].id1;
-        strAux2 := VetorUON2Filtrado[cb_id_unid_organizacional_nivel2.ItemIndex];
+        strIdUON1  := VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].id1;
+        strIdUON2  := tstrAux[0];
+        strIdLocal := tstrAux[1];
      Except
      end;
+
+     tstrAux := explode(VetorUON1aFiltrado[cb_id_unid_organizacional_nivel1a.ItemIndex],'#');
+     Try
+        strIdUON1a  := tstrAux[0];
+     Except
+     end;
+
+     tstrAux.Free;
+
 // Assim, o envio será incondicional!  -  01/12/2006 - Anderson Peterle
-//     if (strAux1 <> var_id_unid_organizacional_nivel1) or
-//        (strAux2 <> var_id_unid_organizacional_nivel2) or
-//         (ed_te_localizacao_complementar.Text <> var_te_localizacao_complementar) or
-//         (ed_te_info_patrimonio1.Text <> var_te_info_patrimonio1) or
-//         (ed_te_info_patrimonio2.Text <> var_te_info_patrimonio2) or
-//         (ed_te_info_patrimonio3.Text <> var_te_info_patrimonio3) or
-//         (ed_te_info_patrimonio4.Text <> var_te_info_patrimonio4) or
-//         (ed_te_info_patrimonio5.Text <> var_te_info_patrimonio5) or
-//         (ed_te_info_patrimonio6.Text <> var_te_info_patrimonio6) then
+//     if (strAux1 <> strId_unid_organizacional_nivel1) or
+//        (strAux2 <> strId_unid_organizacional_nivel2) or
+//         (ed_te_localizacao_complementar.Text <> strTe_localizacao_complementar) or
+//         (ed_te_info_patrimonio1.Text <> strTe_info_patrimonio1) or
+//         (ed_te_info_patrimonio2.Text <> strTe_info_patrimonio2) or
+//         (ed_te_info_patrimonio3.Text <> strTe_info_patrimonio3) or
+//         (ed_te_info_patrimonio4.Text <> strTe_info_patrimonio4) or
+//         (ed_te_info_patrimonio5.Text <> strTe_info_patrimonio5) or
+//         (ed_te_info_patrimonio6.Text <> strTe_info_patrimonio6) then
 //      begin
 
-          Mensagem('Enviando Informações Coletadas ao Banco de Dados...',false);
+          Mensagem('Enviando Informações Coletadas ao Banco de Dados...',false,intPausaPadrao div 3);
 
           // Envio dos Dados Coletados ao Banco de Dados
-          Request_mapa  :=  TStringList.Create;
-          Request_mapa.Values['te_node_address']               := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'                    , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['id_so']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Configs.ID_SO'                            , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_so']                         := frmMapaCacic.EnCrypt(str_te_so);
-          Request_mapa.Values['id_ip_rede']                    := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.ID_IP_REDE'                         , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_ip']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_IP'                              , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_nome_computador']            := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR'                 , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['te_workgroup']                  := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_WORKGROUP'                       , frmMapaCacic.tStringsCipherOpened));
-          Request_mapa.Values['id_usuario']                    := frmMapaCacic.EnCrypt(frmMapaCacic.strId_usuario);
+          tstrListAux := TStringList.Create;
+          tstrListAux.Values['te_node_address']               := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'                    , frmMapaCacic.tStringsCipherOpened));
+          tstrListAux.Values['id_so']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Configs.ID_SO'                            , frmMapaCacic.tStringsCipherOpened));
+          tstrListAux.Values['te_so']                         := frmMapaCacic.EnCrypt(str_te_so);
+          tstrListAux.Values['id_ip_rede']                    := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.ID_IP_REDE'                         , frmMapaCacic.tStringsCipherOpened));
+          tstrListAux.Values['te_ip']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_IP'                              , frmMapaCacic.tStringsCipherOpened));
+          tstrListAux.Values['te_nome_computador']            := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR'                 , frmMapaCacic.tStringsCipherOpened));
+          tstrListAux.Values['te_workgroup']                  := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_WORKGROUP'                       , frmMapaCacic.tStringsCipherOpened));
+          tstrListAux.Values['id_usuario']                    := frmMapaCacic.EnCrypt(frmMapaCacic.strId_usuario);
 
-          Request_mapa.Values['id_unid_organizacional_nivel1'] := frmMapaCacic.EnCrypt(strAux1);
-          Request_mapa.Values['id_unid_organizacional_nivel2'] := frmMapaCacic.EnCrypt(strAux2);
-          Request_mapa.Values['te_localizacao_complementar'  ] := frmMapaCacic.EnCrypt(ed_te_localizacao_complementar.Text);
-          Request_mapa.Values['te_info_patrimonio1'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio1.Text);
-          Request_mapa.Values['te_info_patrimonio2'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio2.Text);
-          Request_mapa.Values['te_info_patrimonio3'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio3.Text);
-          Request_mapa.Values['te_info_patrimonio4'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio4.Text);
-          Request_mapa.Values['te_info_patrimonio5'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio5.Text);
-          Request_mapa.Values['te_info_patrimonio6'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio6.Text);
+          tstrListAux.Values['id_unid_organizacional_nivel1'] := frmMapaCacic.EnCrypt(strIdUON1);
+          tstrListAux.Values['id_unid_organizacional_nivel1a']:= frmMapaCacic.EnCrypt(strIdUON1A);
+          tstrListAux.Values['id_unid_organizacional_nivel2'] := frmMapaCacic.EnCrypt(strIdUON2);
+          tstrListAux.Values['te_localizacao_complementar'  ] := frmMapaCacic.EnCrypt(ed_te_localizacao_complementar.Text);
+          tstrListAux.Values['te_info_patrimonio1'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio1.Text);
+          tstrListAux.Values['te_info_patrimonio2'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio2.Text);
+          tstrListAux.Values['te_info_patrimonio3'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio3.Text);
+          tstrListAux.Values['te_info_patrimonio4'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio4.Text);
+          tstrListAux.Values['te_info_patrimonio5'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio5.Text);
+          tstrListAux.Values['te_info_patrimonio6'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio6.Text);
 
-          strRetorno := frmMapaCacic.ComunicaServidor('mapa_set_patrimonio.php', Request_mapa, '');
-          Request_mapa.Free;
+          log_DEBUG('Informações para contato com mapa_set_patrimonio:');
+          log_DEBUG('te_node_address: '+tstrListAux.Values['te_node_address']);
+          log_DEBUG('id_so: '+tstrListAux.Values['id_so']);
+          log_DEBUG('te_so: '+tstrListAux.Values['te_so']);
+          log_DEBUG('id_ip_rede: '+tstrListAux.Values['id_ip_rede']);
+          log_DEBUG('te_ip: '+tstrListAux.Values['te_ip']);
+          log_DEBUG('te_nome_computador: '+tstrListAux.Values['te_nome_computador']);
+          log_DEBUG('te_workgroup: '+tstrListAux.Values['te_workgroup']);
+
+          strRetorno := frmMapaCacic.ComunicaServidor('mapa_set_patrimonio.php', tstrListAux, '');
+          tstrListAux.Free;
 
           if not (frmMapaCacic.XML_RetornaValor('STATUS', strRetorno)='OK') then
-              Mensagem('ATENÇÃO: PROBLEMAS NO ENVIO DAS INFORMAÇÕES COLETADAS AO BANCO DE DADOS...',true);
+              Mensagem('ATENÇÃO: PROBLEMAS NO ENVIO DAS INFORMAÇÕES COLETADAS AO BANCO DE DADOS...',true,intPausaPadrao);
 //          else
 //            Begin
-              Mensagem('Salvando Informações Coletadas em Base Local...',false);
-              SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1', strAux1, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2', strAux2, tStringsCipherOpened);
+              Mensagem('Salvando Informações Coletadas em Base Local...',false,intPausaPadrao div 3);
+              SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1', strIdUON1, tStringsCipherOpened);
+              SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a', strIdUON1a, tStringsCipherOpened);
+              SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2' , strIdUON2, tStringsCipherOpened);
+              SetValorDatMemoria('Patrimonio.id_local'                      , strIdLocal, tStringsCipherOpened);
               SetValorDatMemoria('Patrimonio.te_localizacao_complementar'  , ed_te_localizacao_complementar.Text, tStringsCipherOpened);
               SetValorDatMemoria('Patrimonio.te_info_patrimonio1'          , ed_te_info_patrimonio1.Text, tStringsCipherOpened);
               SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio1', ed_te_info_patrimonio1.Text);
@@ -1219,12 +1464,17 @@ end;
 
 procedure TfrmMapaCacic.MontaInterface(p_strConfigs : String);
 Begin
-   Mensagem('Montando Interface para Coleta de Informações...',false);
+   Mensagem('Montando Interface para Coleta de Informações...',false,intPausaPadrao div 3);
 
    lbEtiqueta1.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1', p_strConfigs));
    lbEtiqueta1.Visible := true;
    cb_id_unid_organizacional_nivel1.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta1', p_strConfigs));
    cb_id_unid_organizacional_nivel1.Visible := true;
+
+   lbEtiqueta1a.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1a', p_strConfigs));
+   lbEtiqueta1a.Visible := true;
+   cb_id_unid_organizacional_nivel1a.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta1a', p_strConfigs));
+   cb_id_unid_organizacional_nivel1a.Visible := true;
 
    lbEtiqueta2.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta2', p_strConfigs));
    lbEtiqueta2.Visible := true;
@@ -1233,7 +1483,7 @@ Begin
 
    lbEtiqueta3.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta3', p_strConfigs));
    lbEtiqueta3.Visible := true;
-   ed_te_localizacao_complementar.Text := var_te_localizacao_complementar;
+   ed_te_localizacao_complementar.Text := strTe_localizacao_complementar;
    ed_te_localizacao_complementar.Visible := true;
 
    if (DeCrypt(XML.XML_RetornaValor('in_exibir_etiqueta4', p_strConfigs)) = 'S') then
@@ -1241,7 +1491,7 @@ Begin
       lbEtiqueta4.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta4', p_strConfigs));
       lbEtiqueta4.Visible := true;
       ed_te_info_patrimonio1.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta4', p_strConfigs));
-      ed_te_info_patrimonio1.Text          := var_te_info_patrimonio1;
+      ed_te_info_patrimonio1.Text          := strTe_info_patrimonio1;
       ed_te_info_patrimonio1.visible := True;
    end;
 
@@ -1250,7 +1500,7 @@ Begin
       lbEtiqueta5.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta5', p_strConfigs));
       lbEtiqueta5.Visible := true;
       ed_te_info_patrimonio2.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta5', p_strConfigs));
-      ed_te_info_patrimonio2.Text          := var_te_info_patrimonio2;
+      ed_te_info_patrimonio2.Text          := strTe_info_patrimonio2;
       ed_te_info_patrimonio2.visible := True;
    end;
 
@@ -1259,7 +1509,7 @@ Begin
       lbEtiqueta6.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta6', p_strConfigs));
       lbEtiqueta6.Visible := true;
       ed_te_info_patrimonio3.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta6', p_strConfigs));
-      ed_te_info_patrimonio3.Text          := var_te_info_patrimonio3;
+      ed_te_info_patrimonio3.Text          := strTe_info_patrimonio3;
       ed_te_info_patrimonio3.visible := True;
    end;
 
@@ -1268,7 +1518,7 @@ Begin
       lbEtiqueta7.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta7', p_strConfigs));
       lbEtiqueta7.Visible := true;
       ed_te_info_patrimonio4.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta7', p_strConfigs));
-      ed_te_info_patrimonio4.Text          := var_te_info_patrimonio4;
+      ed_te_info_patrimonio4.Text          := strTe_info_patrimonio4;
       ed_te_info_patrimonio4.visible := True;
    end;
 
@@ -1277,7 +1527,7 @@ Begin
       lbEtiqueta8.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta8', p_strConfigs));
       lbEtiqueta8.Visible := true;
       ed_te_info_patrimonio5.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta8', p_strConfigs));
-      ed_te_info_patrimonio5.Text          := var_te_info_patrimonio5;
+      ed_te_info_patrimonio5.Text          := strTe_info_patrimonio5;
       ed_te_info_patrimonio5.visible := True;
    end;
 
@@ -1286,10 +1536,10 @@ Begin
      lbEtiqueta9.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta9', p_strConfigs));
      lbEtiqueta9.Visible := true;
      ed_te_info_patrimonio6.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta9', p_strConfigs));
-     ed_te_info_patrimonio6.Text          := var_te_info_patrimonio6;
+     ed_te_info_patrimonio6.Text          := strTe_info_patrimonio6;
      ed_te_info_patrimonio6.visible := True;
   end;
-  Mensagem('',false);
+  Mensagem('',false,0);
   btGravarInformacoes.Visible := true;
 end;
 
@@ -1482,7 +1732,6 @@ begin
     strConfigs                           := GetValorDatMemoria('Patrimonio.Configs', frmMapaCacic.tStringsCipherOpened);
     gbLeiaComAtencao.Visible             := true;
     gbInformacoesSobreComputador.Visible := true;
-    boolUON2                             := false; // Inicializo com false e torno true quando da montagem da combo de UON2...
     MontaCombos(strConfigs);
     RecuperaValoresAnteriores(strConfigs);
     MontaInterface(strConfigs);
@@ -1497,7 +1746,8 @@ var intAux            : integer;
     strRetorno        : String;
     Request_mapa      : TStringList;
 begin
-  frmMapaCacic.lbVersao.Caption          := 'v: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
+  frmMapaCacic.lbVersao.Caption          := 'Versão: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
+  log_DEBUG('Versão do MapaCacic: '+frmMapaCacic.lbVersao.Caption);
   if (GetWinVer > 5) and not IsAdmin then
     Begin
       MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
@@ -1547,7 +1797,7 @@ begin
           else
             Begin
               pnMensagens.Visible := true;
-              Mensagem('Efetuando Comunicação com o Módulo Gerente WEB em "'+GetValorDatMemoria('Configs.EnderecoServidor', tStringsCipherOpened)+'"...',false);
+              Mensagem('Efetuando Comunicação com o Módulo Gerente WEB em "'+GetValorDatMemoria('Configs.EnderecoServidor', tStringsCipherOpened)+'"...',false,intPausaPadrao div 3);
               frmAcesso.Free;
 
               // Povoamento com dados de configurações da interface patrimonial
@@ -1560,18 +1810,20 @@ begin
               Request_mapa.Values['te_ip']             := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_IP'             , frmMapaCacic.tStringsCipherOpened));
               Request_mapa.Values['te_nome_computador']:= frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', frmMapaCacic.tStringsCipherOpened));
               Request_mapa.Values['te_workgroup']      := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , frmMapaCacic.tStringsCipherOpened));
+              Request_mapa.Values['id_usuario']        := frmMapaCacic.EnCrypt(frmMapaCacic.strId_usuario);
 
               strRetorno := frmMapaCacic.ComunicaServidor('mapa_get_patrimonio.php', Request_mapa, '.');
 
+              log_DEBUG('Retorno: "'+strRetorno+'"');
+
               if (frmMapaCacic.XML_RetornaValor('STATUS', strRetorno)='OK') then
                 Begin
-                  Mensagem('Comunicação Efetuada com Sucesso! Salvando Configurações Obtidas...',false);
+                  Mensagem('Comunicação Efetuada com Sucesso! Salvando Configurações Obtidas...',false,intPausaPadrao div 3);
                   frmMapaCacic.SetValorDatMemoria('Patrimonio.Configs', strRetorno, frmMapaCacic.tStringsCipherOpened)
                 End
               else
                 Begin
-                  Mensagem('PROBLEMAS NA COMUNICAÇÃO COM O MÓDULO GERENTE WEB...',true);
-                  sleep(3);
+                  Mensagem('PROBLEMAS NA COMUNICAÇÃO COM O MÓDULO GERENTE WEB...',true,intPausaPadrao);
                   Finalizar(true);
                 End;
 
@@ -1591,5 +1843,6 @@ begin
     End;
 
 end;
+
 
 end.

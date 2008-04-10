@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=2
 MinorVer=2
 Release=0
-Build=1
+Build=2
 Debug=0
 PreRelease=0
 Special=0
@@ -126,13 +126,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Dataprev-Unidade Regional Espírito Santo
 FileDescription=Coletor de Informações de Compartilhamento do Sistema CACIC
-FileVersion=2.2.0.1
+FileVersion=2.2.0.2
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
 ProductName=Col_COMP
-ProductVersion=2.2.0.1
+ProductVersion=2.2.0.2
 Comments=Baseado na licença GPL (General Public License)
 [HistoryLists\hlDebugSourcePath]
 Count=1

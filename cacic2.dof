@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=2
 MinorVer=2
 Release=0
-Build=26
+Build=30
 Debug=0
 PreRelease=0
 Special=0
@@ -126,13 +126,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Dataprev - Unidade Regional Espírito Santo
 FileDescription=Configurador Automático e Coletor de Informações Computacionais
-FileVersion=2.2.0.26
+FileVersion=2.2.0.30
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
 ProductName=Cacic - Agente Principal
-ProductVersion=2.2.0.26
+ProductVersion=2.2.0.30
 Comments=Baseado na licença GPL (General Public License)
 [HistoryLists\hlUnitAliases]
 Count=1

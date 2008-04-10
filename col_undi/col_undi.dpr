@@ -487,7 +487,7 @@ end;
 
 
 procedure Executa_Col_undi;
-var strXML,  strAux, id_tipo_unid_disco, ValorChaveRegistro : String;
+var strTripaDados,  strAux, id_tipo_unid_disco, ValorChaveRegistro : String;
     I: Integer;
     v_DISK : TMiTeC_Disk;
     v_Report : TstringList;
@@ -495,7 +495,8 @@ Begin
   SetValorDatMemoria('Col_Undi.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
   log_diario('Coletando informações de Unidades de Disco.');
   Try
-    strXML := '<?xml version="1.0" encoding="ISO-8859-1"?><unidades>';
+    //strXML := '<?xml version="1.0" encoding="ISO-8859-1"?><unidades>';
+    strTripaDados := '';
     v_DISK := TMiTeC_Disk.Create(nil);
 
     with v_DISK do
@@ -511,17 +512,30 @@ Begin
          if (UpperCase(id_tipo_unid_disco) = 'FIXED') then
          Begin
              id_tipo_unid_disco := '2';
-             strXML := strXML + '<unidade>' +
-                                   '<te_letra>' + Drive + '</te_letra>';
-             if ((id_tipo_unid_disco = '2') or (id_tipo_unid_disco = '4')) then strXML := strXML +
-                                   '<cs_sist_arq>' + FileSystem + '</cs_sist_arq>' +
-                                   '<nu_serial>' + SerialNumber + '</nu_serial>' +
-                                   '<nu_capacidade>' + IntToStr(Capacity  div 10485760) + '0</nu_capacidade>' +  // Em MB  - Coleta apenas de 10 em 10 MB
-                                   '<nu_espaco_livre>' + IntToStr(FreeSpace div 10485760 ) + '0</nu_espaco_livre>'; // Em MB  - Coleta apenas de 10 em 10 MB
-             if (id_tipo_unid_disco = '4') then strXML := strXML +
-                                   '<te_unc>' + ExpandUNCFilename(Drive) + '</te_unc>';
-             strXML := strXML +    '<id_tipo_unid_disco>' + id_tipo_unid_disco +  '</id_tipo_unid_disco>' +
-                              '</unidade>';
+             if (strTripaDados <> '') then
+                strTripaDados := strTripaDados + '<REG>'; // Delimitador de REGISTRO
+
+             //strXML := strXML + '<unidade>' +
+             //                      '<te_letra>' + Drive + '</te_letra>';
+             strTripaDados := strTripaDados + Drive + '<FIELD>';
+
+             strTripaDados := strTripaDados + id_tipo_unid_disco + '<FIELD>';
+
+             if ((id_tipo_unid_disco = '2') or (id_tipo_unid_disco = '4')) then
+                strTripaDados := strTripaDados + FileSystem                             + '<FIELD>' +
+                                                 SerialNumber                           + '<FIELD>' +
+                                                 IntToStr(Capacity  div 10485760) + '0' + '<FIELD>' +  // Em MB  - Coleta apenas de 10 em 10 MB
+                                                 IntToStr(FreeSpace div 10485760) + '0' + '<FIELD>' // Em MB  - Coleta apenas de 10 em 10 MB
+             else
+                strTripaDados := strTripaDados + '' + '<FIELD>' +
+                                                 '' + '<FIELD>' +
+                                                 '' + '<FIELD>' +  // Em MB  - Coleta apenas de 10 em 10 MB
+                                                 '' + '<FIELD>'; // Em MB  - Coleta apenas de 10 em 10 MB
+             if (id_tipo_unid_disco = '4') then
+                strTripaDados := strTripaDados + ExpandUNCFilename(Drive)
+             else
+                strTripaDados := strTripaDados + '';
+
          end;
       end;
 
@@ -536,7 +550,7 @@ Begin
       End;
 
     v_DISK.Free;
-    strXML := strXML + '</unidades>';
+    //strXML := strXML + '</unidades>';
 
     // Obtenho do registro o valor que foi previamente armazenado
     ValorChaveRegistro := Trim(GetValorDatMemoria('Coletas.UnidadesDisco',v_tstrCipherOpened));
@@ -546,9 +560,10 @@ Begin
     // Se essas informações forem diferentes significa que houve alguma alteração
     // na configuração. Nesse caso, gravo as informações no BD Central e, se não houver
     // problemas durante esse procedimento, atualizo as informações no registro.
-    If (GetValorDatMemoria('Configs.IN_COLETA_FORCADA_UNDI',v_tstrCipherOpened)='S') or (strXML <> ValorChaveRegistro) Then
+    If ((GetValorDatMemoria('Configs.IN_COLETA_FORCADA_UNDI',v_tstrCipherOpened)='S') or (strTripaDados <> ValorChaveRegistro)) and
+       (strTripaDados <> '') Then
      Begin
-       SetValorDatMemoria('Col_Undi.UVC', strXML, v_tstrCipherOpened1);
+       SetValorDatMemoria('Col_Undi.UVC', strTripaDados, v_tstrCipherOpened1);
        CipherClose(p_path_cacic + 'temp\col_undi.dat', v_tstrCipherOpened1);
      end
     else

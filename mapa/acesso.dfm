@@ -150,9 +150,38 @@ object frmAcesso: TfrmAcesso
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
+  object lbNomeServidorWEB: TLabel
+    Left = 0
+    Top = 272
+    Width = 300
+    Height = 12
+    AutoSize = False
+    Caption = 'Servidor: ABCDEFGHIJKLMNOP'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -9
+    Font.Name = 'Arial'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object lbVersao: TLabel
+    Left = 303
+    Top = 272
+    Width = 300
+    Height = 12
+    Alignment = taRightJustify
+    AutoSize = False
+    Caption = 'Vers'#227'o: X.X.X.X'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -9
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentFont = False
+  end
   object btAcesso: TButton
     Left = 174
-    Top = 241
+    Top = 233
     Width = 100
     Height = 30
     Caption = 'Acessar'
@@ -167,8 +196,8 @@ object frmAcesso: TfrmAcesso
     OnClick = btAcessoClick
   end
   object btCancela: TButton
-    Left = 324
-    Top = 241
+    Left = 330
+    Top = 233
     Width = 100
     Height = 30
     Caption = 'Cancelar'
@@ -182,9 +211,9 @@ object frmAcesso: TfrmAcesso
     OnClick = btCancelaClick
   end
   object pnAcesso: TPanel
-    Left = 5
-    Top = 10
-    Width = 596
+    Left = 2
+    Top = 3
+    Width = 602
     Height = 196
     BevelInner = bvRaised
     BevelOuter = bvLowered
@@ -203,7 +232,7 @@ object frmAcesso: TfrmAcesso
       ParentFont = False
     end
     object lbSenhaAcesso: TLabel
-      Left = 389
+      Left = 394
       Top = 39
       Width = 110
       Height = 16
@@ -218,7 +247,7 @@ object frmAcesso: TfrmAcesso
     object lbAviso: TLabel
       Left = 4
       Top = 121
-      Width = 587
+      Width = 593
       Height = 13
       Alignment = taCenter
       AutoSize = False
@@ -242,7 +271,7 @@ object frmAcesso: TfrmAcesso
       OnKeyUp = edNomeUsuarioAcessoKeyUp
     end
     object edSenhaAcesso: TEdit
-      Left = 389
+      Left = 394
       Top = 55
       Width = 150
       Height = 21
@@ -252,9 +281,9 @@ object frmAcesso: TfrmAcesso
     end
   end
   object pnMensagens: TPanel
-    Left = 4
-    Top = 205
-    Width = 596
+    Left = 1
+    Top = 200
+    Width = 602
     Height = 24
     BevelInner = bvLowered
     TabOrder = 3
@@ -265,51 +294,6 @@ object frmAcesso: TfrmAcesso
       Height = 17
       Alignment = taCenter
       AutoSize = False
-    end
-  end
-  object pnVersao: TPanel
-    Left = 513
-    Top = 267
-    Width = 90
-    Height = 14
-    BevelOuter = bvLowered
-    TabOrder = 4
-    object lbVersao: TLabel
-      Left = 4
-      Top = 1
-      Width = 85
-      Height = 12
-      Alignment = taCenter
-      AutoSize = False
-      Caption = 'v: X.X.X.X'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -9
-      Font.Name = 'Arial'
-      Font.Style = []
-      ParentFont = False
-    end
-  end
-  object pnNomeServidorWEB: TPanel
-    Left = 1
-    Top = 267
-    Width = 90
-    Height = 14
-    BevelOuter = bvLowered
-    TabOrder = 5
-    object lbNomeServidorWEB: TLabel
-      Left = 3
-      Top = 1
-      Width = 83
-      Height = 12
-      Alignment = taCenter
-      AutoSize = False
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -9
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
     end
   end
   object tm_Mensagem: TTimer

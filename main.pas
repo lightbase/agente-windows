@@ -107,11 +107,15 @@ type
     Mnu_FinalizarCacic: TMenuItem;
     listSistemasMonitorados: TListView;
     Panel1: TPanel;
-    Label1: TLabel;
+    lbColetasRealizadasNestaData: TLabel;
     listaColetas: TListView;
-    lbDataColeta: TLabel;
+    teDataColeta: TLabel;
     Panel2: TPanel;
     Panel3: TPanel;
+    pnVersao: TPanel;
+    lbServidorWEB: TLabel;
+    teServidorWEB: TLabel;
+    Panel5: TPanel;
     procedure RemoveIconesMortos;
     procedure ChecaCONFIGS;
     procedure CriaFormSenha(Sender: TObject);
@@ -141,7 +145,7 @@ type
     procedure Bt_Fechar_InfosGeraisClick(Sender: TObject);
     function  Get_File_Size(sFileToExamine: string; bInKBytes: Boolean): string;
     function  Posso_Rodar : boolean;
-    function  abstraiCSD(p_te_so : String) : integer;    
+    function  abstraiCSD(p_te_so : String) : integer;
   private
     ShutdownEmExecucao : Boolean;
     IsMenuOpen : Boolean;
@@ -506,7 +510,9 @@ begin
              end;
 
           log_DEBUG('Lendo '+v_DatFileName);
+
           Readln(v_DatFile,v_strCipherClosed);
+
           log_DEBUG('Povoando Variável');
           while not EOF(v_DatFile) do Readln(v_DatFile,v_strCipherClosed);
           log_DEBUG('Fechando '+v_DatFileName);
@@ -663,22 +669,35 @@ end;
 function TFormularioGeral.ChecaGERCOLS : boolean;
 var strFraseVersao : String;
 Begin
-  log_DEBUG('Verificando existência do Gerente de Coletas...');
-  if not (FileExists(p_path_cacic + 'modulos\ger_cols.exe')) then
+  Result := true;
+
+  log_DEBUG('Verificando existência e tamanho do Gerente de Coletas...');
+  v_Tamanho_Arquivo := Get_File_Size(p_path_cacic + 'modulos\ger_cols.exe',true);
+
+  log_DEBUG('Resultado: #'+v_Tamanho_Arquivo);
+
+  if (v_Tamanho_Arquivo = '0') or (v_Tamanho_Arquivo = '-1') then
     Begin
+      Result := false;
+
+      Matar(p_path_cacic + 'modulos\','ger_cols.exe');
+
       strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
       if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
         strFraseVersao := strFraseVersao + #13#10 + 'IP: '+getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
 
       InicializaTray(strFraseVersao);
       log_diario('Acionando recuperador de Módulo Gerente de Coletas.');
+      log_DEBUG('Recuperador de Módulo Gerente de Coletas: '+HomeDrive + '\chksis.exe');
       WinExec(PChar(HomeDrive + '\chksis.exe'),SW_HIDE);
 
       sleep(30000); // 30 segundos de espera para download do ger_cols.exe
-      if (FileExists(p_path_cacic + 'modulos\ger_cols.exe')) then
+      v_Tamanho_Arquivo := Get_File_Size(p_path_cacic + 'modulos\ger_cols.exe',true);
+      if not(v_Tamanho_Arquivo = '0') and not(v_Tamanho_Arquivo = '-1') then
         Begin
           log_diario('Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
           InicializaTray('');
+          Result := True;
         End
       else
           log_diario('Módulo Gerente de Coletas NÃO RECUPERADO!');
@@ -965,6 +984,9 @@ var strAux,
     v_Aguarde : TextFile;
     v_SystemDrive : TStrings;
 begin
+      // Não mostrar o formulário...
+      Application.ShowMainForm:=false;
+
       Try
          // De acordo com a versão do OS, determino o ShellCommand para chamadas externas.
          if ((GetWinVer <> 0) and (GetWinVer > 5)) or
@@ -984,7 +1006,6 @@ begin
             p_Shell_Command := 'command.com';
             strAux := GetEnvironmentVariable('windir') + '\';  //Ex.: c:\windows\
           End;
-
          v_SystemDrive := explode(strAux,'\');
          v_cacic_dir := v_SystemDrive[0] + '\' + getValorChaveRegIni('Cacic2','cacic_dir',strAux + 'chksis.ini') + '\';
 
@@ -1025,7 +1046,7 @@ begin
               // Chave AES. Recomenda-se que cada empresa altere a sua chave.
               // Esta chave é passada como parâmetro para o Gerente de Coletas que, por sua vez,
               // passa para o Inicializador de Coletas e este passa para os coletores...
-              v_CipherKey          := 'CacicBrasil';
+              v_CipherKey          := 'CacicBrasil';              
               v_IV                 := 'abcdefghijklmnop';
               v_SeparatorKey       := '=CacicIsFree='; // Usada apenas para o cacic2.dat
               v_DatFileName        := p_path_cacic + 'cacic2.dat';
@@ -1111,7 +1132,7 @@ begin
               strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
               if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
                 strFraseVersao := strFraseVersao + #13#10 + 'IP: '+ getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
-
+              pnVersao.Caption := 'V. ' + getVersionInfo(ParamStr(0));
               InicializaTray(strFraseVersao);
               CipherClose;
             End
@@ -1238,16 +1259,6 @@ begin
   Matar(p_path_cacic + 'temp\','*.ini');
 
   // Caso exista o Gerente de Coletas será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
-  If (FileExists(p_path_cacic + 'modulos\ger_cols.exe')) Then
-      Begin
-      v_versao := trim(GetVersionInfo(p_path_cacic + 'modulos\ger_cols.exe'));
-      if (v_versao = '0.0.0.0') then // Provavelmente arquivo corrompido ou versão muito antiga
-          Begin
-            log_diario('Excluindo versão ('+v_versao+') de Ger_Cols.exe');
-            Matar(p_path_cacic + 'modulos\','ger_cols.exe');
-          End;
-      End;
-
   if ChecaGERCOLS then
     Begin
       ChecaCONFIGS;
@@ -1255,7 +1266,9 @@ begin
       log_diario('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
       Timer_Nu_Exec_Apos.Enabled  := False;
       WinExec(PChar(p_path_cacic + 'modulos\GER_COLS.EXE /'+p_acao+' /p_CipherKey='+v_CipherKey),SW_HIDE);
-    End;
+    End
+  else
+    log_diario('Não foi possível invocar o Gerente de Coletas!');
 end;
 
 function TFormularioGeral.FindWindowByTitle(WindowTitle: string): Hwnd;
@@ -1760,7 +1773,8 @@ begin
           End;
       end;
 
-    lbDataColeta.Caption := '('+FormatDateTime('dd/mm/yyyy', now)+')';
+    teDataColeta.Caption := '('+FormatDateTime('dd/mm/yyyy', now)+')';
+    teServidorWEB.Caption := '"'+FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor',v_tstrCipherOpened)+'"';
 
     strAux := GetValorDatMemoria('Coletas.HOJE', v_tstrCipherOpened);
     if (strAux <> '') then

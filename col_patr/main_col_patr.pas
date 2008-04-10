@@ -33,7 +33,9 @@ uses  IniFiles,
       DIALOGS,
       DCPcrypt2,
       DCPrijndael,
-      DCPbase64;
+      DCPbase64,
+      ExtCtrls,
+      Math;
 
 var  p_path_cacic       : String;
      v_Dados_Patrimonio : TStrings;
@@ -79,6 +81,10 @@ type
     te_info_patrimonio4: TEdit;
     te_info_patrimonio5: TEdit;
     te_info_patrimonio6: TEdit;
+    Etiqueta1a: TLabel;
+    id_unid_organizacional_nivel1a: TComboBox;
+    Panel1: TPanel;
+    lbVersao: TLabel;
 
     function  SetValorChaveRegEdit(Chave: String; Dado: Variant): Variant;
     function  GetValorChaveRegEdit(Chave: String): Variant;
@@ -107,10 +113,19 @@ type
     function  GetVersionInfo(p_File: string):string;
     function  VerFmt(const MS, LS: DWORD): string;
     function  GetFolderDate(Folder: string): TDateTime;
+    procedure id_unid_organizacional_nivel1aChange(Sender: TObject);
   private
-    var_id_unid_organizacional_nivel1, var_id_unid_organizacional_nivel2, var_te_localizacao_complementar,
-    var_te_info_patrimonio1, var_te_info_patrimonio2, var_te_info_patrimonio3, var_te_info_patrimonio4,
-    var_te_info_patrimonio5, var_te_info_patrimonio6 : String;
+    var_id_unid_organizacional_nivel1,
+    var_id_unid_organizacional_nivel1a,
+    var_id_unid_organizacional_nivel2,
+    var_id_Local,
+    var_te_localizacao_complementar,
+    var_te_info_patrimonio1,
+    var_te_info_patrimonio2,
+    var_te_info_patrimonio3,
+    var_te_info_patrimonio4,
+    var_te_info_patrimonio5,
+    var_te_info_patrimonio6 : String;
   public
   end;
 
@@ -130,15 +145,29 @@ type
   end;
   TVetorUON1 = array of TRegistroUON1;
 
+  TRegistroUON1a = record
+    id1     : String;
+    id1a    : String;
+    nm1a    : String;
+    id_local: String;
+  end;
+
+  TVetorUON1a = array of TRegistroUON1a;
+
   TRegistroUON2 = record
-    id1 : String;
-    id2 : String;
-    nm2 : String;
+    id1a    : String;
+    id2     : String;
+    nm2     : String;
+    id_local: String;
   end;
   TVetorUON2 = array of TRegistroUON2;
 
-var VetorUON1 : TVetorUON1;
-    VetorUON2 : TVetorUON2;
+var VetorUON1  : TVetorUON1;
+    VetorUON1a : TVetorUON1a;
+    VetorUON2  : TVetorUON2;
+
+    // Esse array é usado apenas para saber a uon1a, após a filtragem pelo uon1
+    VetorUON1aFiltrado : array of String;
 
     // Esse array é usado apenas para saber a uon2, após a filtragem pelo uon1
     VetorUON2Filtrado : array of String;
@@ -582,27 +611,38 @@ begin
    end;
 end;
 
-Function RetornaValorVetorUON1(id1Procurado1 : string) : String;
+Function RetornaValorVetorUON1(id1 : string) : String;
 var I : Integer;
 begin
    For I := 0 to (Length(VetorUON1)-1)  Do
-       If (VetorUON1[I].id1 = id1Procurado1) Then Result := VetorUON1[I].nm1;
+       If (VetorUON1[I].id1 = id1) Then Result := VetorUON1[I].nm1;
 end;
 
-
-Function RetornaValorVetorUON2(id1Procurado : string; id2Procurado : string) : String;
+Function RetornaValorVetorUON1a(id1a : string) : String;
+var I : Integer;
+begin
+   For I := 0 to (Length(VetorUON1a)-1)  Do
+       If (VetorUON1a[I].id1a     = id1a) Then Result := VetorUON1a[I].nm1a;
+end;
+Function RetornaValorVetorUON2(id2, idLocal : string) : String;
 var I : Integer;
 begin
    For I := 0 to (Length(VetorUON2)-1)  Do
-       If (VetorUON2[I].id1 = id1Procurado) and (VetorUON2[I].id2 = id2Procurado) Then Result := VetorUON2[I].nm2;
+       If (VetorUON2[I].id2      = id2) and
+          (VetorUON2[I].id_local = idLocal) Then Result := VetorUON2[I].nm2;
 end;
+
 
 procedure TFormPatrimonio.RecuperaValoresAnteriores;
 begin
-    Etiqueta1.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1', v_configs));
+    Etiqueta1.Caption  := DeCrypt(XML.XML_RetornaValor('te_etiqueta1', v_configs));
+    Etiqueta1a.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1a', v_configs));
 
     var_id_unid_organizacional_nivel1 := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1',v_tstrCipherOpened);
     if (var_id_unid_organizacional_nivel1='') then var_id_unid_organizacional_nivel1 := DeCrypt(XML.XML_RetornaValor('ID_UON1', v_configs));
+
+    var_id_unid_organizacional_nivel1a := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a',v_tstrCipherOpened);
+    if (var_id_unid_organizacional_nivel1a='') then var_id_unid_organizacional_nivel1a := DeCrypt(XML.XML_RetornaValor('ID_UON1a', v_configs));
 
     var_id_unid_organizacional_nivel2 := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2',v_tstrCipherOpened);
     if (var_id_unid_organizacional_nivel2='') then var_id_unid_organizacional_nivel2 := DeCrypt(XML.XML_RetornaValor('ID_UON2', v_configs));
@@ -638,12 +678,32 @@ begin
     var_te_info_patrimonio6           := GetValorDatMemoria('Patrimonio.te_info_patrimonio6',v_tstrCipherOpened);
     if (var_te_info_patrimonio6='') then var_te_info_patrimonio6 := DeCrypt(XML.XML_RetornaValor('TE_INFO6', v_configs));
 
+    {
     Try
       id_unid_organizacional_nivel1.ItemIndex := id_unid_organizacional_nivel1.Items.IndexOf(RetornaValorVetorUON1(var_id_unid_organizacional_nivel1));
       id_unid_organizacional_nivel1Change(Nil); // Para filtrar os valores do combo2 de acordo com o valor selecionado no combo1
       id_unid_organizacional_nivel2.ItemIndex := id_unid_organizacional_nivel2.Items.IndexOf(RetornaValorVetorUON2(var_id_unid_organizacional_nivel1, var_id_unid_organizacional_nivel2));
     Except
     end;
+    }
+    Try
+      id_unid_organizacional_nivel1.ItemIndex := id_unid_organizacional_nivel1.Items.IndexOf(RetornaValorVetorUON1(var_id_unid_organizacional_nivel1));
+      id_unid_organizacional_nivel1Change(Nil); // Para filtrar os valores do combo2 de acordo com o valor selecionado no combo1
+
+    Except
+    end;
+
+    Try
+      id_unid_organizacional_nivel1a.ItemIndex := id_unid_organizacional_nivel1a.Items.IndexOf(RetornaValorVetorUON1a(var_id_unid_organizacional_nivel1a));
+      id_unid_organizacional_nivel1aChange(Nil); // Para filtrar os valores do combo3 de acordo com o valor selecionado no combo2
+    Except
+    End;
+    
+    Try
+      id_unid_organizacional_nivel2.ItemIndex := id_unid_organizacional_nivel2.Items.IndexOf(RetornaValorVetorUON2(var_id_unid_organizacional_nivel2,var_id_Local));
+    Except
+    end;
+
 
     te_localizacao_complementar.Text  := var_te_localizacao_complementar;
     te_info_patrimonio1.Text          := var_te_info_patrimonio1;
@@ -660,7 +720,12 @@ procedure TFormPatrimonio.MontaCombos;
 var Parser   : TXmlParser;
     i        : integer;
     v_Tag    : boolean;
+    strAux,
+    strAux1,
+    strTagName,
+    strItemName  : string;
 begin
+{
   Parser := TXmlParser.Create;
   Parser.Normalize := True;
   Parser.LoadFromBuffer(PAnsiChar(v_configs));
@@ -703,13 +768,147 @@ begin
   id_unid_organizacional_nivel1.Items.Clear;
   For i := 0 to Length(VetorUON1) - 1 Do
      id_unid_organizacional_nivel1.Items.Add(VetorUON1[i].nm1);
+ }
+
+
+  Parser := TXmlParser.Create;
+  Parser.Normalize := True;
+  Parser.LoadFromBuffer(PAnsiChar(v_Configs));
+  log_DEBUG('v_Configs: '+v_Configs);
+  Parser.StartScan;
+  i := -1;
+  strItemName := '';
+  strTagName  := '';
+  While Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT1') Then
+       Begin
+          i := i + 1;
+          SetLength(VetorUON1, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          strTagName := 'IT1';
+       end
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT1') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT1')Then
+       Begin
+         strAux1 := DeCrypt(Parser.CurContent);
+         if      (strItemName = 'ID1') then
+           Begin
+             VetorUON1[i].id1 := strAux1;
+             log_DEBUG('Gravei VetorUON1.id1: "'+strAux1+'"');
+           End
+         else if (strItemName = 'NM1') then
+           Begin
+             VetorUON1[i].nm1 := strAux1;
+             log_DEBUG('Gravei VetorUON1.nm1: "'+strAux1+'"');
+           End;
+       End;
+    End;
+
+  // Código para montar o combo 2
+  Parser.StartScan;
+  strTagName := '';
+  strAux1    := '';
+  i := -1;
+  While Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT1A') Then
+       Begin
+          i := i + 1;
+          SetLength(VetorUON1a, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          strTagName := 'IT1A';
+       end
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT1A') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT1A')Then
+        Begin
+          strAux1 := DeCrypt(Parser.CurContent);
+          if      (strItemName = 'ID1') then
+            Begin
+              VetorUON1a[i].id1 := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id1: "'+strAux1+'"');
+            End
+          else if (strItemName = 'SG_LOC') then
+            Begin
+              strAux := ' ('+strAux1 + ')';
+            End
+          else if (strItemName = 'ID1A') then
+            Begin
+              VetorUON1a[i].id1a := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id1a: "'+strAux1+'"');
+            End
+          else if (strItemName = 'NM1A') then
+            Begin
+              VetorUON1a[i].nm1a := strAux1+strAux;
+              log_DEBUG('Gravei VetorUON1a.nm1a: "'+strAux1+strAux+'"');
+            End
+          else if (strItemName = 'ID_LOCAL') then
+            Begin
+              VetorUON1a[i].id_local := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id_local: "'+strAux1+'"');
+            End;
+
+        End;
+    end;
+
+  // Código para montar o combo 3
+  Parser.StartScan;
+  strTagName := '';
+  i := -1;
+  While Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT2') Then
+       Begin
+          i := i + 1;
+          SetLength(VetorUON2, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          strTagName := 'IT2';
+       end
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT2') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT2')Then
+        Begin
+          strAux1  := DeCrypt(Parser.CurContent);
+          if      (strItemName = 'ID1A') then
+            Begin
+              VetorUON2[i].id1a := strAux1;
+              log_DEBUG('Gravei VetorUON2.id1a: "'+strAux1+'"');
+            End
+          else if (strItemName = 'ID2') then
+            Begin
+              VetorUON2[i].id2 := strAux1;
+              log_DEBUG('Gravei VetorUON2.id2: "'+strAux1+'"');
+            End
+          else if (strItemName = 'NM2') then
+            Begin
+              VetorUON2[i].nm2 := strAux1;
+              log_DEBUG('Gravei VetorUON2.nm2: "'+strAux1+'"');
+            End
+          else if (strItemName = 'ID_LOCAL') then
+            Begin
+              VetorUON2[i].id_local := strAux1;
+              log_DEBUG('Gravei VetorUON2.id_local: "'+strAux1+'"');
+            End;
+
+        End;
+    end;
+  Parser.Free;
+  // Como os itens do combo1 nunca mudam durante a execução do programa (ao contrario dos combo2 e 3), posso colocar o seu preenchimento aqui mesmo.
+  id_unid_organizacional_nivel1.Items.Clear;
+  For i := 0 to Length(VetorUON1) - 1 Do
+     id_unid_organizacional_nivel1.Items.Add(VetorUON1[i].nm1);
+
 end;
 
 
 procedure TFormPatrimonio.id_unid_organizacional_nivel1Change(Sender: TObject);
 var i, j: Word;
-    strAux : String;
+    strAux,
+    strIdUON1 : String;
 begin
+  {
   // Filtro os itens do combo2, de acordo com o item selecionado no combo1
   strAux := VetorUON1[id_unid_organizacional_nivel1.ItemIndex].id1;
 
@@ -725,23 +924,106 @@ begin
         VetorUON2Filtrado[j] := VetorUON2[i].id2;
      end;
   end;
+  }
+      // Filtro os itens do combo2, de acordo com o item selecionado no combo1
+      strIdUON1 := VetorUON1[id_unid_organizacional_nivel1.ItemIndex].id1;
+      id_unid_organizacional_nivel1a.Items.Clear;
+      id_unid_organizacional_nivel2.Items.Clear;
+      id_unid_organizacional_nivel1a.Enabled := false;
+      id_unid_organizacional_nivel2.Enabled  := false;
+      SetLength(VetorUON1aFiltrado, 0);
+
+      For i := 0 to Length(VetorUON1a) - 1 Do
+      Begin
+          Try
+            if VetorUON1a[i].id1 = strIdUON1 then
+              Begin
+                id_unid_organizacional_nivel1a.Items.Add(VetorUON1a[i].nm1a);
+                j := Length(VetorUON1aFiltrado);
+                SetLength(VetorUON1aFiltrado, j + 1);
+                VetorUON1aFiltrado[j] := VetorUON1a[i].id1a;
+              end;
+          Except
+          End;
+      end;
+      if (id_unid_organizacional_nivel1a.Items.Count > 0) then
+        Begin
+          id_unid_organizacional_nivel1a.Enabled   := true;
+          id_unid_organizacional_nivel1a.ItemIndex := 0;
+          id_unid_organizacional_nivel1aChange(nil);
+        End;
+
+end;
+procedure TFormPatrimonio.id_unid_organizacional_nivel1aChange(
+  Sender: TObject);
+var i, j: Word;
+    strIdUON1a,
+    strIdLocal : String;
+    intAux     : integer;
+begin
+      // Filtro os itens do combo2, de acordo com o item selecionado no combo1
+      intAux := IfThen(id_unid_organizacional_nivel1a.Items.Count > 1,id_unid_organizacional_nivel1a.ItemIndex+1,0);
+      strIdUON1a := VetorUON1a[intAux].id1a;
+      strIdLocal := VetorUON1a[intAux].id_local;
+      id_unid_organizacional_nivel2.Items.Clear;
+      id_unid_organizacional_nivel2.Enabled  := false;
+      SetLength(VetorUON2Filtrado, 0);
+
+      For i := 0 to Length(VetorUON2) - 1 Do
+      Begin
+          Try
+            if (VetorUON2[i].id1a     = strIdUON1a) and
+               (VetorUON2[i].id_local = strIdLocal) then
+              Begin
+                id_unid_organizacional_nivel2.Items.Add(VetorUON2[i].nm2);
+                j := Length(VetorUON2Filtrado);
+                SetLength(VetorUON2Filtrado, j + 1);
+                VetorUON2Filtrado[j] := VetorUON2[i].id2 + '#' + VetorUON2[i].id_local;
+              end;
+          Except
+          End;
+      end;
+      if (id_unid_organizacional_nivel2.Items.Count > 0) then
+        Begin
+          id_unid_organizacional_nivel2.Enabled := true;
+          id_unid_organizacional_nivel2.ItemIndex := 0;
+        End;
 end;
 
-
 procedure TFormPatrimonio.AtualizaPatrimonio(Sender: TObject);
-var strAux1, strAux2 : String;
+var strIdUON1,
+    strIdUON1a,
+    strIdUON2,
+    strIdLocal,
+    strRetorno : String;
+    tstrAux    : TStrings;
 begin
 
       //Verifico se houve qualquer alteração nas informações.
       // Só vou enviar as novas informações para o bd ou gravar no registro se houve alterações.
+      {
      Try
         strAux1 := VetorUON1[id_unid_organizacional_nivel1.ItemIndex].id1;
         strAux2 := VetorUON2Filtrado[id_unid_organizacional_nivel2.ItemIndex];
      Except
      end;
+     }
+
+     tstrAux := TStrings.Create;
+     tstrAux := explode(VetorUON2Filtrado[id_unid_organizacional_nivel2.ItemIndex],'#');
+     Try
+        strIdUON1  := VetorUON1[id_unid_organizacional_nivel1.ItemIndex].id1;
+        strIdUON1a := VetorUON1aFiltrado[id_unid_organizacional_nivel1a.ItemIndex];
+        strIdUON2  := tstrAux[0];
+        strIdLocal := tstrAux[1];
+     Except
+     end;
+     tstrAux.Free;
+
      SetValorDatMemoria('Col_Patr.Fim', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
-     if (strAux1 <> var_id_unid_organizacional_nivel1) or
-        (strAux2 <> var_id_unid_organizacional_nivel2) or
+     if (strIdUON1  <> var_id_unid_organizacional_nivel1) or
+        (strIdUON1a <> var_id_unid_organizacional_nivel1a) or
+        (strIdUON2  <> var_id_unid_organizacional_nivel2) or
          (te_localizacao_complementar.Text <> var_te_localizacao_complementar) or
          (te_info_patrimonio1.Text <> var_te_info_patrimonio1) or
          (te_info_patrimonio2.Text <> var_te_info_patrimonio2) or
@@ -751,17 +1033,18 @@ begin
          (te_info_patrimonio6.Text <> var_te_info_patrimonio6) then
       begin
          //Envio via rede para ao Agente Gerente, para gravação no BD.
-         SetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1', strAux1, v_tstrCipherOpened1);
-         SetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel2', strAux2, v_tstrCipherOpened1);
-         SetValorDatMemoria('Col_Patr.te_localizacao_complementar'  , te_localizacao_complementar.Text, v_tstrCipherOpened1);
-         SetValorDatMemoria('Col_Patr.te_info_patrimonio1'          , te_info_patrimonio1.Text, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1' , strIdUON1, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1a', strIdUON1a, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel2' , strIdUON2, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.te_localizacao_complementar'   , te_localizacao_complementar.Text, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.te_info_patrimonio1'           , te_info_patrimonio1.Text, v_tstrCipherOpened1);
          SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio1', te_info_patrimonio1.Text);
-         SetValorDatMemoria('Col_Patr.te_info_patrimonio2'          , te_info_patrimonio2.Text, v_tstrCipherOpened1);
-         SetValorDatMemoria('Col_Patr.te_info_patrimonio3'          , te_info_patrimonio3.Text, v_tstrCipherOpened1);
-         SetValorDatMemoria('Col_Patr.te_info_patrimonio4'          , te_info_patrimonio4.Text, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.te_info_patrimonio2'           , te_info_patrimonio2.Text, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.te_info_patrimonio3'           , te_info_patrimonio3.Text, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.te_info_patrimonio4'           , te_info_patrimonio4.Text, v_tstrCipherOpened1);
          SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio4', te_info_patrimonio4.Text);
-         SetValorDatMemoria('Col_Patr.te_info_patrimonio5'          , te_info_patrimonio5.Text, v_tstrCipherOpened1);
-         SetValorDatMemoria('Col_Patr.te_info_patrimonio6'          , te_info_patrimonio6.Text, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.te_info_patrimonio5'           , te_info_patrimonio5.Text, v_tstrCipherOpened1);
+         SetValorDatMemoria('Col_Patr.te_info_patrimonio6'           , te_info_patrimonio6.Text, v_tstrCipherOpened1);
          CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
       end
     else
@@ -779,6 +1062,9 @@ Begin
 
    Etiqueta1.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1', v_configs));
    id_unid_organizacional_nivel1.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta1', v_configs));
+
+   Etiqueta1a.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1a', v_configs));
+   id_unid_organizacional_nivel1a.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta1a', v_configs));
 
    Etiqueta2.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta2', v_configs));
    id_unid_organizacional_nivel2.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta2', v_configs));
@@ -926,8 +1212,10 @@ var boolColeta  : boolean;
     i,intAux    : integer;
     v_Aux       : String;
 Begin
+
   if (ParamCount>0) then
     Begin
+      FormPatrimonio.lbVersao.Caption          := 'Versão: ' + GetVersionInfo(ParamStr(0));
       For intAux := 1 to ParamCount do
         Begin
           if LowerCase(Copy(ParamStr(intAux),1,13)) = '/p_cipherkey=' then
@@ -1017,5 +1305,7 @@ Begin
           End;
     End;
 end;
+
+
 
 end.

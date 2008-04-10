@@ -18,6 +18,12 @@ Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ChkCacic.exe : Verificador/Instalador dos agentes principais Cacic2.exe e Ger_Cols.exe
 =====================================================================================================
 
+v 2.2.0.38
++ Acrescentado a obtenção de versão interna do S.O.
++ Acrescentado a inserção dos agentes principais nas exceções do FireWall interno do MS-Windows VISTA...
+.
+Diversas rebuilds...
+.
 v 2.2.0.17
 + Acrescentado o tratamento da passagem de opções em linha de comando
   * chkcacic /serv=<ip_server> /dir=<local_path>c:\%windir%\cacic
@@ -72,9 +78,11 @@ uses  Windows,
       DCPcrypt2,
       DCPrijndael,
       DCPbase64,
-      NTFileSecurity, IdFTP,
+      NTFileSecurity,
+      IdFTP,
       Tlhelp32,
-      dialogs;
+      dialogs,
+      ExtCtrls;
 
 var   v_ip_serv_cacic,
       v_cacic_dir,
@@ -112,34 +120,39 @@ const KeySize = 32; // 32 bytes = 256 bits
       BlockSize = 16; // 16 bytes = 128 bits
 
 Procedure chkcacic;
+procedure ComunicaInsucesso(strIndicador : String); //2.2.0.32
 Procedure CriaFormConfigura;
-Procedure MostraFormConfigura;
-Procedure GravaConfiguracoes;
 Procedure DelValorReg(Chave: String);
-procedure log_diario(strMsg : String);
-procedure log_DEBUG(p_msg:string);
-procedure KillProcess(hWindowHandle: HWND); // 2.2.0.15
-procedure Matar(v_dir,v_files: string); // 2.2.0.16
+Procedure GravaConfiguracoes;
 procedure GravaIni(strFullPath : STring);
-Function ListFileDir(Path: string):string;
-Function FTP(p_Host : String; p_Port : String; p_Username : String; p_Password : String; p_PathServer : String; p_File : String; p_Dest : String) : Boolean;
-Function Explode(Texto, Separador : String) : TStrings;
-Function GetRootKey(strRootKey: String): HKEY;
-Function SetValorChaveRegEdit(Chave: String; Dado: Variant): Variant;
-Function GetValorChaveRegEdit(Chave: String): Variant;
-Function SetValorChaveRegIni(p_Secao, p_Chave, p_Valor, p_File : String): String;
-Function GetValorChaveRegIni(p_Secao, p_Chave, p_File : String): String;
-Function HomeDrive : string;
-Function RemoveCaracteresEspeciais(Texto : String) : String;
-Function FindWindowByTitle(WindowTitle: string): Hwnd;
-Function GetVersionInfo(p_File: string):string;
-Function VerFmt(const MS, LS: DWORD): string;
-Function GetWinVer: Integer;
-Function KillTask(ExeFileName: string): Integer;
-Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer; // 2.2.0.16
-function Posso_Rodar_CACIC : boolean;
-function GetFolderDate(Folder: string): TDateTime;
+procedure KillProcess(hWindowHandle: HWND); // 2.2.0.15
+procedure LogDebug(p_msg:string);
+procedure LogDiario(strMsg : String);
+procedure Matar(v_dir,v_files: string); // 2.2.0.16
+Procedure MostraFormConfigura;
+
 function abstraiCSD(p_te_so : String) : integer;
+Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer; // 2.2.0.16
+Function Explode(Texto, Separador : String) : TStrings;
+Function FindWindowByTitle(WindowTitle: string): Hwnd;
+Function FTP(p_Host : String; p_Port : String; p_Username : String; p_Password : String; p_PathServer : String; p_File : String; p_Dest : String) : Boolean;
+function Get_File_Size(sFileToExamine: string): integer; // 2.2.0.31
+function GetFolderDate(Folder: string): TDateTime;
+function GetNetworkUserName : String; // 2.2.0.32
+Function GetRootKey(strRootKey: String): HKEY;
+Function GetValorChaveRegEdit(Chave: String): Variant;
+Function GetValorChaveRegIni(p_Secao, p_Chave, p_File : String): String;
+Function GetVersionInfo(p_File: string):string;
+Function GetWinVer: Integer;
+Function HomeDrive : string;
+Function KillTask(ExeFileName: string): Integer;
+Function ListFileDir(Path: string):string;
+function Posso_Rodar_CACIC : boolean;
+Function SetValorChaveRegEdit(Chave: String; Dado: Variant): Variant;
+Function SetValorChaveRegIni(p_Secao, p_Chave, p_Valor, p_File : String): String;
+Function RemoveCaracteresEspeciais(Texto : String) : String;
+Function VerFmt(const MS, LS: DWORD): string;
+
 type
   TForm1 = class(TForm)
     PJVersionInfo1: TPJVersionInfo;
@@ -158,269 +171,6 @@ implementation
 uses FormConfig;
 
 {$R *.dfm}
-
-function IsAdmin: Boolean;
-var hAccessToken: THandle;
-    ptgGroups: PTokenGroups;
-    dwInfoBufferSize: DWORD;
-    psidAdministrators: PSID;
-    x: Integer;
-    bSuccess: BOOL;
-begin
-  Result   := False;
-  bSuccess := OpenThreadToken(GetCurrentThread, TOKEN_QUERY, True, hAccessToken);
-  if not bSuccess then
-  begin
-    if GetLastError = ERROR_NO_TOKEN then
-      bSuccess := OpenProcessToken(GetCurrentProcess, TOKEN_QUERY, hAccessToken);
-  end;
-  if bSuccess then
-  begin
-    GetMem(ptgGroups, 1024);
-    bSuccess := GetTokenInformation(hAccessToken, TokenGroups, ptgGroups, 1024, dwInfoBufferSize);
-    CloseHandle(hAccessToken);
-    if bSuccess then
-    begin
-      AllocateAndInitializeSid(constSECURITY_NT_AUTHORITY, 2,
-                               constSECURITY_BUILTIN_DOMAIN_RID,
-                               constDOMAIN_ALIAS_RID_ADMINS,
-                               0, 0, 0, 0, 0, 0, psidAdministrators);
-      {$R-}
-      for x := 0 to ptgGroups.GroupCount - 1 do
-        if EqualSid(psidAdministrators, ptgGroups.Groups[x].Sid) then
-        begin
-          Result := True;
-          Break;
-        end;
-      {$R+}
-      FreeSid(psidAdministrators);
-    end;
-    FreeMem(ptgGroups);
-  end;
-end;
-
-procedure log_diario(strMsg : String);
-var
-    HistoricoLog : TextFile;
-begin
-   try
-       FileSetAttr (v_home_drive + 'chkcacic.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-       AssignFile(HistoricoLog,v_home_drive + 'chkcacic.log'); {Associa o arquivo a uma variável do tipo TextFile}
-
-       {$IOChecks off}
-       Reset(HistoricoLog); {Abre o arquivo texto}
-       {$IOChecks on}
-
-       if (IOResult <> 0) then // Arquivo não existe, será recriado.
-          begin
-            Rewrite (HistoricoLog);
-            Append(HistoricoLog);
-            Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now) + '======================> Iniciando o Log <=======================');
-          end;
-       Append(HistoricoLog);
-       Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now)+ '[Instalador] '+strMsg); {Grava a string Texto no arquivo texto}
-       CloseFile(HistoricoLog); {Fecha o arquivo texto}
-   except
-       //Erro na gravação do log!
-       //Application.Terminate;
-   end;
-end;
-
-procedure log_DEBUG(p_msg:string);
-Begin
-  if v_Debugs then
-    Begin
-      ShowMessage('DEBUG - '+p_msg);
-      log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
-    End;
-End;
-
-// Pad a string with zeros so that it is a multiple of size
-function PadWithZeros(const str : string; size : integer) : string;
-var
-  origsize, i : integer;
-begin
-  Result := str;
-  origsize := Length(Result);
-  if ((origsize mod size) <> 0) or (origsize = 0) then
-  begin
-    SetLength(Result,((origsize div size)+1)*size);
-    for i := origsize+1 to Length(Result) do
-      Result[i] := #0;
-  end;
-end;
-
-
-// Encrypt a string and return the Base64 encoded result
-function EnCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Try
-    // Pad Key, IV and Data with zeros as appropriate
-    l_Key   := PadWithZeros(v_CipherKey,KeySize);
-    l_IV    := PadWithZeros(v_IV,BlockSize);
-    l_Data  := PadWithZeros(p_Data,BlockSize);
-
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(v_CipherKey) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(v_CipherKey) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-    // Encrypt the data
-    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
-
-    // Return the Base64 encoded result
-    Result := Base64EncodeStr(l_Data);
-  Except
-    log_diario('Erro no Processo de Criptografia');
-  End;
-end;
-
-function DeCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Try
-    // Pad Key and IV with zeros as appropriate
-    l_Key := PadWithZeros(v_CipherKey,KeySize);
-    l_IV := PadWithZeros(v_IV,BlockSize);
-
-    // Decode the Base64 encoded string
-    l_Data := Base64DecodeStr(p_Data);
-
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(v_CipherKey) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(v_CipherKey) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-    // Decrypt the data
-    l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
-
-    // Return the result
-    Result := l_Data;
-  Except
-    log_diario('Erro no Processo de Decriptografia');
-  End;
-end;
-
-
-Function Implode(p_Array : TStrings ; p_Separador : String) : String;
-var intAux : integer;
-    strAux : string;
-Begin
-    strAux := '';
-    For intAux := 0 To p_Array.Count -1 do
-      Begin
-        if (strAux<>'') then strAux := strAux + p_Separador;
-        strAux := strAux + p_Array[intAux];
-      End;
-    Implode := strAux;
-end;
-
-Function CipherClose(p_DatFileName : string) : String;
-var v_strCipherOpenImploded : string;
-    v_DatFile : TextFile;
-begin
-   try
-       FileSetAttr (p_DatFileName,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-       AssignFile(v_DatFile,p_DatFileName); {Associa o arquivo a uma variável do tipo TextFile}
-
-       // Recriação do arquivo .DAT
-       Rewrite (v_DatFile);
-       Append(v_DatFile);
-
-       v_strCipherOpenImploded := Implode(v_tstrCipherOpened,v_SeparatorKey);
-       v_strCipherClosed := EnCrypt(v_strCipherOpenImploded);
-
-       Writeln(v_DatFile,v_strCipherClosed); {Grava a string Texto no arquivo texto}
-
-       CloseFile(v_DatFile);
-   except
-   end;
-end;
-
-Function CipherOpen(p_DatFileName : string) : TStrings;
-var v_DatFile         : TextFile;
-    v_strCipherOpened,
-    v_strCipherClosed : string;
-begin
-  v_strCipherOpened    := '';
-  if FileExists(p_DatFileName) then
-    begin
-      AssignFile(v_DatFile,p_DatFileName);
-      {$IOChecks off}
-      Reset(v_DatFile);
-      {$IOChecks on}
-      if (IOResult <> 0) then // Arquivo não existe, será recriado.
-         begin
-           Rewrite (v_DatFile);
-           Append(v_DatFile);
-         end;
-
-      Readln(v_DatFile,v_strCipherClosed);
-      while not EOF(v_DatFile) do Readln(v_DatFile,v_strCipherClosed);
-      CloseFile(v_DatFile);
-      v_strCipherOpened:= DeCrypt(v_strCipherClosed);
-    end;
-    if (trim(v_strCipherOpened)<>'') then
-      Result := explode(v_strCipherOpened,v_SeparatorKey)
-    else
-      Result := explode('Configs.ID_SO'+v_SeparatorKey+inttostr(intWinVer)+v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
-
-
-    if Result.Count mod 2 <> 0 then
-        Result.Add('');
-
-end;
-
-Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String);
-begin
-    log_DEBUG('Setando Chave "'+p_Chave+'" com "'+p_Valor+'"');
-    // Exemplo: p_Chave => Configs.nu_ip_servidor  :  p_Valor => 10.71.0.120
-    if (v_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
-        v_tstrCipherOpened[v_tstrCipherOpened.IndexOf(p_Chave)+1] := p_Valor
-    else
-      Begin
-        v_tstrCipherOpened.Add(p_Chave);
-        v_tstrCipherOpened.Add(p_Valor);
-      End;
-end;
-
-Function GetValorDatMemoria(p_Chave : String) : String;
-begin
-    if (v_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
-      Result := v_tstrCipherOpened[v_tstrCipherOpened.IndexOf(p_Chave)+1]
-    else
-      Result := '';
-end;
-
-
-function VerFmt(const MS, LS: DWORD): string;
-  // Format the version number from the given DWORDs containing the info
-begin
-  Result := Format('%d.%d.%d.%d',
-    [HiWord(MS), LoWord(MS), HiWord(LS), LoWord(LS)])
-end;
-
 function GetWinVer: Integer;
 const
   { operating system (OS)constants }
@@ -496,15 +246,327 @@ begin
   if (Result = 0) then
     Result := abstraiCSD(v_te_so);
 
-  log_DEBUG('GetWinVer => ID_interna: '+ v_te_so + ' ID_Externa: ' + IntToStr(Result));
+  LogDebug('GetWinVer => ID_interna: '+ v_te_so + ' ID_Externa: ' + IntToStr(Result));
 end;
+function GetNetworkUserName : String;
+  //  Gets the name of the user currently logged into the network on
+  //  the local PC
+var
+  temp: PChar;
+  Ptr: DWord;
+const
+  buff = 255;
+begin
+  ptr := buff;
+  temp := StrAlloc(buff);
+  GetUserName(temp, ptr);
+  Result := string(temp);
+  StrDispose(temp);
+end;
+
+function IsAdmin: Boolean;
+var hAccessToken: THandle;
+    ptgGroups: PTokenGroups;
+    dwInfoBufferSize: DWORD;
+    psidAdministrators: PSID;
+    x: Integer;
+    bSuccess: BOOL;
+begin
+  Result   := False;
+  bSuccess := OpenThreadToken(GetCurrentThread, TOKEN_QUERY, True, hAccessToken);
+  if not bSuccess then
+  begin
+    if GetLastError = ERROR_NO_TOKEN then
+      bSuccess := OpenProcessToken(GetCurrentProcess, TOKEN_QUERY, hAccessToken);
+  end;
+  if bSuccess then
+  begin
+    GetMem(ptgGroups, 1024);
+    bSuccess := GetTokenInformation(hAccessToken, TokenGroups, ptgGroups, 1024, dwInfoBufferSize);
+    CloseHandle(hAccessToken);
+    if bSuccess then
+    begin
+      AllocateAndInitializeSid(constSECURITY_NT_AUTHORITY, 2,
+                               constSECURITY_BUILTIN_DOMAIN_RID,
+                               constDOMAIN_ALIAS_RID_ADMINS,
+                               0, 0, 0, 0, 0, 0, psidAdministrators);
+      {$R-}
+      for x := 0 to ptgGroups.GroupCount - 1 do
+        if EqualSid(psidAdministrators, ptgGroups.Groups[x].Sid) then
+        begin
+          Result := True;
+          Break;
+        end;
+      {$R+}
+      FreeSid(psidAdministrators);
+    end;
+    FreeMem(ptgGroups);
+  end;
+end;
+
+procedure ComunicaInsucesso(strIndicador : String);
+var IdHTTP2: TIdHTTP;
+    Request_Config  : TStringList;
+    Response_Config : TStringStream;
+begin
+  GetWinVer(); // Para obtenção de "te_so"
+  // Envio notificação de insucesso para o Módulo Gerente Centralizado
+  Request_Config                                 := TStringList.Create;
+  Request_Config.Values['cs_indicador']          := strIndicador;
+  Request_Config.Values['id_usuario']            := GetNetworkUserName();
+  Request_Config.Values['te_so']                 := v_te_so;
+  Response_Config                                := TStringStream.Create('');
+  Try
+    Try
+      IdHTTP2 := TIdHTTP.Create(nil);
+      IdHTTP2.Post('http://' + v_ip_serv_cacic + '/cacic2/ws/instalacacic.php', Request_Config, Response_Config);
+      IdHTTP2.Free;
+      Request_Config.Free;
+      Response_Config.Free;
+    Except
+    End;
+  finally
+    Begin
+      IdHTTP2.Free;
+      Request_Config.Free;
+      Response_Config.Free;
+    End;
+  End;
+end;
+
+procedure LogDiario(strMsg : String);
+var
+    HistoricoLog : TextFile;
+begin
+   try
+       FileSetAttr (v_home_drive + 'chkcacic.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+       AssignFile(HistoricoLog,v_home_drive + 'chkcacic.log'); {Associa o arquivo a uma variável do tipo TextFile}
+
+       {$IOChecks off}
+       Reset(HistoricoLog); {Abre o arquivo texto}
+       {$IOChecks on}
+
+       if (IOResult <> 0) then // Arquivo não existe, será recriado.
+          begin
+            Rewrite (HistoricoLog);
+            Append(HistoricoLog);
+            Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now) + '======================> Iniciando o Log <=======================');
+          end;
+       Append(HistoricoLog);
+       Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now)+ '[Instalador] '+strMsg); {Grava a string Texto no arquivo texto}
+       CloseFile(HistoricoLog); {Fecha o arquivo texto}
+   except
+       //Erro na gravação do log!
+       //Application.Terminate;
+   end;
+end;
+
+procedure LogDebug(p_msg:string);
+Begin
+  if v_Debugs then
+    Begin
+
+      //if FileExists(Dir + '\Temp\Debugs\show.txt') then
+      //    ShowMessage('DEBUG - '+p_msg);
+
+      LogDiario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
+    End;
+End;
+
+// Pad a string with zeros so that it is a multiple of size
+function PadWithZeros(const str : string; size : integer) : string;
+var
+  origsize, i : integer;
+begin
+  Result := str;
+  origsize := Length(Result);
+  if ((origsize mod size) <> 0) or (origsize = 0) then
+  begin
+    SetLength(Result,((origsize div size)+1)*size);
+    for i := origsize+1 to Length(Result) do
+      Result[i] := #0;
+  end;
+end;
+
+
+// Encrypt a string and return the Base64 encoded result
+function EnCrypt(p_Data : String) : String;
+var
+  l_Cipher : TDCP_rijndael;
+  l_Data, l_Key, l_IV : string;
+begin
+  Try
+    // Pad Key, IV and Data with zeros as appropriate
+    l_Key   := PadWithZeros(v_CipherKey,KeySize);
+    l_IV    := PadWithZeros(v_IV,BlockSize);
+    l_Data  := PadWithZeros(p_Data,BlockSize);
+
+    // Create the cipher and initialise according to the key length
+    l_Cipher := TDCP_rijndael.Create(nil);
+    if Length(v_CipherKey) <= 16 then
+      l_Cipher.Init(l_Key[1],128,@l_IV[1])
+    else if Length(v_CipherKey) <= 24 then
+      l_Cipher.Init(l_Key[1],192,@l_IV[1])
+    else
+      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+
+    // Encrypt the data
+    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+
+    // Free the cipher and clear sensitive information
+    l_Cipher.Free;
+    FillChar(l_Key[1],Length(l_Key),0);
+
+    // Return the Base64 encoded result
+    Result := Base64EncodeStr(l_Data);
+  Except
+    LogDiario('Erro no Processo de Criptografia');
+  End;
+end;
+
+function DeCrypt(p_Data : String) : String;
+var
+  l_Cipher : TDCP_rijndael;
+  l_Data, l_Key, l_IV : string;
+begin
+  Try
+    // Pad Key and IV with zeros as appropriate
+    l_Key := PadWithZeros(v_CipherKey,KeySize);
+    l_IV := PadWithZeros(v_IV,BlockSize);
+
+    // Decode the Base64 encoded string
+    l_Data := Base64DecodeStr(p_Data);
+
+    // Create the cipher and initialise according to the key length
+    l_Cipher := TDCP_rijndael.Create(nil);
+    if Length(v_CipherKey) <= 16 then
+      l_Cipher.Init(l_Key[1],128,@l_IV[1])
+    else if Length(v_CipherKey) <= 24 then
+      l_Cipher.Init(l_Key[1],192,@l_IV[1])
+    else
+      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+
+    // Decrypt the data
+    l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+
+    // Free the cipher and clear sensitive information
+    l_Cipher.Free;
+    FillChar(l_Key[1],Length(l_Key),0);
+
+    // Return the result
+    Result := l_Data;
+  Except
+    LogDiario('Erro no Processo de Decriptografia');
+  End;
+end;
+
+
+Function Implode(p_Array : TStrings ; p_Separador : String) : String;
+var intAux : integer;
+    strAux : string;
+Begin
+    strAux := '';
+    For intAux := 0 To p_Array.Count -1 do
+      Begin
+        if (strAux<>'') then strAux := strAux + p_Separador;
+        strAux := strAux + p_Array[intAux];
+      End;
+    Implode := strAux;
+end;
+
+Function CipherClose(p_DatFileName : string) : String;
+var v_strCipherOpenImploded : string;
+    v_DatFile : TextFile;
+begin
+   try
+       FileSetAttr (p_DatFileName,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+       AssignFile(v_DatFile,p_DatFileName); {Associa o arquivo a uma variável do tipo TextFile}
+
+       // Recriação do arquivo .DAT
+       Rewrite (v_DatFile);
+       Append(v_DatFile);
+
+       v_strCipherOpenImploded := Implode(v_tstrCipherOpened,v_SeparatorKey);
+       v_strCipherClosed := EnCrypt(v_strCipherOpenImploded);
+
+       Writeln(v_DatFile,v_strCipherClosed); {Grava a string Texto no arquivo texto}
+
+       CloseFile(v_DatFile);
+   except
+   end;
+end;
+
+Function CipherOpen(p_DatFileName : string) : TStrings;
+var v_DatFile         : TextFile;
+    v_strCipherOpened,
+    v_strCipherClosed : string;
+begin
+  v_strCipherOpened    := '';
+  if FileExists(p_DatFileName) then
+    begin
+      AssignFile(v_DatFile,p_DatFileName);
+      {$IOChecks off}
+      Reset(v_DatFile);
+      {$IOChecks on}
+      if (IOResult <> 0) then // Arquivo não existe, será recriado.
+         begin
+           Rewrite (v_DatFile);
+           Append(v_DatFile);
+         end;
+
+      Readln(v_DatFile,v_strCipherClosed);
+      while not EOF(v_DatFile) do Readln(v_DatFile,v_strCipherClosed);
+      CloseFile(v_DatFile);
+      v_strCipherOpened:= DeCrypt(v_strCipherClosed);
+    end;
+    if (trim(v_strCipherOpened)<>'') then
+      Result := explode(v_strCipherOpened,v_SeparatorKey)
+    else
+      Result := explode('Configs.ID_SO'+v_SeparatorKey+inttostr(intWinVer)+v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
+
+
+    if Result.Count mod 2 <> 0 then
+        Result.Add('');
+
+end;
+
+Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String);
+begin
+    LogDebug('Setando Chave "'+p_Chave+'" com "'+p_Valor+'"');
+    // Exemplo: p_Chave => Configs.nu_ip_servidor  :  p_Valor => 10.71.0.120
+    if (v_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
+        v_tstrCipherOpened[v_tstrCipherOpened.IndexOf(p_Chave)+1] := p_Valor
+    else
+      Begin
+        v_tstrCipherOpened.Add(p_Chave);
+        v_tstrCipherOpened.Add(p_Valor);
+      End;
+end;
+
+Function GetValorDatMemoria(p_Chave : String) : String;
+begin
+    if (v_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
+      Result := v_tstrCipherOpened[v_tstrCipherOpened.IndexOf(p_Chave)+1]
+    else
+      Result := '';
+end;
+
+
+function VerFmt(const MS, LS: DWORD): string;
+  // Format the version number from the given DWORDs containing the info
+begin
+  Result := Format('%d.%d.%d.%d',
+    [HiWord(MS), LoWord(MS), HiWord(LS), LoWord(LS)])
+end;
+
+
 
 function abstraiCSD(p_te_so : String) : integer;
   var tstrTe_so : tstrings;
   Begin
     tstrTe_so := Explode(p_te_so, '.');
     Result := StrToInt(tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
-    log_DEBUG('abstraiCSD=> '+ tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
+    LogDebug('abstraiCSD=> '+ tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
   End;
 
 function GetVersionInfo(p_File: string):string;
@@ -567,7 +629,7 @@ begin
     end;
     ListaAuxSet.Free;
     RegEditSet.Free;
-    log_DEBUG('Setando valor "'+Dado+'" para chave "'+Chave+'"');
+    LogDebug('Setando valor "'+Dado+'" para chave "'+Chave+'"');
 end;
 
 Function RemoveCaracteresEspeciais(Texto : String) : String;
@@ -746,48 +808,53 @@ Function FTP(p_Host : String; p_Port : String; p_Username : String; p_Password :
 var IdFTP : TIdFTP;
 begin
   Try
-    Log_Debug('FTP: Criando instance');
+    LogDebug('FTP: Criando instance');
+
     IdFTP               := TIdFTP.Create(nil);
 
-    Log_Debug('FTP: Host       => "'+p_Host+'"');
+    LogDebug('FTP: Host       => "'+p_Host+'"');
     IdFTP.Host          := p_Host;
 
-    Log_Debug('FTP: UserName   => "'+p_Username+'"');
+    LogDebug('FTP: UserName   => "'+p_Username+'"');
     IdFTP.Username      := p_Username;
 
-    Log_Debug('FTP: PassWord   => "'+p_Password+'"');
+    LogDebug('FTP: PassWord   => "'+p_Password+'"');
     IdFTP.Password      := p_Password;
 
-    Log_Debug('FTP: PathServer => "'+p_PathServer+'"');
+    LogDebug('FTP: PathServer => "'+p_PathServer+'"');
     IdFTP.Port          := strtoint(p_Port);
 
-    Log_Debug('FTP: Setando TransferType para "ftBinary"');
+    LogDebug('FTP: Setando TransferType para "ftBinary"');
     IdFTP.TransferType  := ftBinary;
 
-    Log_Debug('FTP: Change to "'+p_PathServer+'"');
+    LogDebug('FTP: Setando Passive para "true"');
+    IdFTP.Passive := true;
+
+    LogDebug('FTP: Change to "'+p_PathServer+'"');
     Try
       if IdFTP.Connected = true then
         begin
-          Log_Debug('FTP: Connected => Desconectando...');
+          LogDebug('FTP: Connected => Desconectando...');
           IdFTP.Disconnect;
         end;
-      Log_Debug('FTP: Efetuando Conexão...');
+      LogDebug('FTP: Efetuando Conexão...');
       IdFTP.Connect(true);
-      Log_Debug('FTP: Change to "'+p_PathServer+'"');
+      LogDebug('FTP: Change to "'+p_PathServer+'"');
       IdFTP.ChangeDir(p_PathServer);
       Try
-        Log_Debug('Iniciando FTP de "'+p_Dest + '\' + p_File+'"');
-        IdFTP.Get(p_File, p_Dest + '\' + p_File, True);
-        result := true;
-      Except
-        Begin
-          Log_Debug('Oops! Problemas Após Início de Operação...');
-          result := false;
-        end;
+        LogDebug('Iniciando FTP de "'+p_Dest + '\' + p_File+'"');
+        LogDebug('Size de "'+p_File+'" Antes do FTP => '+IntToSTR(IdFTP.Size(p_File)));
+        IdFTP.Get(p_File, p_Dest + '\' + p_File, True, True);
+        LogDebug('Size de "'+p_Dest + '\' + p_File +'" Após o FTP   => '+IntToSTR(Get_File_Size(p_Dest + '\' + p_File)));
+      Finally
+          LogDebug('Size de "'+p_Dest + '\' + p_File +'" Após o FTP em Finally   => '+IntToStr(Get_File_Size(p_Dest + '\' + p_File)));
+          IdFTP.Disconnect;
+          IdFTP.Free;
+          result := true;
       End;
     Except
       Begin
-        Log_Debug('Oops! Problemas Sem Início de Operação...');
+        LogDebug('Oops! Problemas Sem Início de Operação...');
         result := false;
       End;
     end;
@@ -947,17 +1014,27 @@ begin
 end;
 procedure LiberaFireWall(p_objeto:string);
 begin
-  log_DEBUG('Rotina para Liberação de FireWall...');
+  LogDebug('Rotina para Liberação de FireWall...');
   Try
-    if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll])))='') then
+    if (abstraiCSD(v_te_so) >= 260) then // Se VISTA...
       Begin
-        SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll]),p_objeto+'.exe:*:Enabled:'+p_objeto);
+        if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll])))='') then
+          Begin
+            SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll]),p_objeto+'.exe:*:Enabled:'+p_objeto);
+          End
+        else
+          LogDebug('Exceção para "'+p_objeto+'" já existente.');
       End
-    else log_DEBUG('Exceção para "'+p_objeto+'" já existente.');
+    else
+      if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll])))='') then
+        Begin
+          SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll]),p_objeto+'.exe:*:Enabled:'+p_objeto);
+        End
+      else
+        LogDebug('Exceção para "'+p_objeto+'" já existente.');
   Except
-    log_DEBUG('Problema adicionando "'+p_objeto+'" à lista de exceções do FireWall!');
+    LogDebug('Problema adicionando "'+p_objeto+'" à lista de exceções do FireWall!');
   End;
-
 end;
 
 {
@@ -995,7 +1072,7 @@ Begin
   v_versao_REM := XML_RetornaValor(StringReplace(StrUpper(PChar(v_array_NomeAgente[v_array_NomeAgente.count-1])),'.EXE','',[rfReplaceAll]), v_retorno);
   v_versao_LOC := GetVersionInfo(p_strNomeAgente);
 
-  log_DEBUG('Checando versão de "'+p_strNomeAgente+'"');
+  LogDebug('Checando versão de "'+p_strNomeAgente+'"');
 
   intAux := v_array_NomeAgente.Count;
 
@@ -1005,12 +1082,12 @@ Begin
     Begin
       if (GetValorChaveRegIni('versoes_agentes',v_array_NomeAgente[intAux-1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini')<>'') then
         Begin
-          log_DEBUG('Encontrado arquivo "'+(ExtractFilePath(Application.Exename)+'versoes_agentes.ini')+'"');
+          LogDebug('Encontrado arquivo "'+(ExtractFilePath(Application.Exename)+'versoes_agentes.ini')+'"');
           v_versao_REM := GetValorChaveRegIni('versoes_agentes',v_array_NomeAgente[intAux-1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini');
         End;
     End;
 
-  log_DEBUG('Versão Remota: "'+v_versao_REM+'" - Versão Local: "'+v_versao_LOC+'"');
+  LogDebug('Versão Remota: "'+v_versao_REM+'" - Versão Local: "'+v_versao_LOC+'"');
 
   if (v_versao_REM + v_versao_LOC <> '') and
      (v_versao_LOC <> '0000') then
@@ -1037,13 +1114,13 @@ begin
   while result=0 do
     begin
       strFileName := StringReplace(v_dir + '\' + SearchRec.Name,'\\','\',[rfReplaceAll]);
-      log_DEBUG('Tentando Excluir: '+strFileName);
+      LogDebug('Tentando Excluir: '+strFileName);
       if DeleteFile(strFileName) then
-        log_DEBUG('Exclusão de ' + strFileName + ' efetuada com sucesso!')
+        LogDebug('Exclusão de ' + strFileName + ' efetuada com sucesso!')
       else
         Begin
-          log_DEBUG('Exclusão não efetuada! Provavelmente já esteja sendo executado...');
-          log_DEBUG('Tentarei finalizar Tarefa/Processo...');
+          LogDebug('Exclusão não efetuada! Provavelmente já esteja sendo executado...');
+          LogDebug('Tentarei finalizar Tarefa/Processo...');
           if ((intWinVer <> 0) and (intWinVer <= 5))  or
              (abstraiCSD(v_te_so) < 250) then // Menor que NT Like
             KillTask(SearchRec.Name)
@@ -1051,7 +1128,7 @@ begin
             KillProcess(FindWindow(PChar(SearchRec.Name),nil));
 
             if DeleteFile(strFileName) then
-              log_DEBUG('Exclusão Impossibilitada de ' + strFileName + '!');
+              LogDebug('Exclusão Impossibilitada de ' + strFileName + '!');
         End;
 
       Result:=FindNext(SearchRec);
@@ -1125,7 +1202,7 @@ procedure verifyAndGet(strModuleName,
     // Verifico validade do Módulo e mato-o em caso negativo.
     intFileSize := Get_File_Size(strDestinationFolderName + '\'+strModuleName);
 
-    log_DEBUG('verifyAndGet - intFileSize de "'+strDestinationFolderName + '\'+strModuleName+'": ' + IntToStr(intFileSize));
+    LogDebug('verifyAndGet - intFileSize de "'+strDestinationFolderName + '\'+strModuleName+'": ' + IntToStr(intFileSize));
 
     If (intFileSize <= 0) then
       Matar(strDestinationFolderName, strModuleName);
@@ -1134,7 +1211,7 @@ procedure verifyAndGet(strModuleName,
       Begin
         if (FileExists(ExtractFilePath(Application.Exename) + '\modulos\'+strModuleName)) then
           Begin
-            log_diario('Copiando '+strModuleName+' de '+ExtractFilePath(Application.Exename)+'modulos\');
+            LogDiario('Copiando '+strModuleName+' de '+ExtractFilePath(Application.Exename)+'modulos\');
             CopyFile(PChar(ExtractFilePath(Application.Exename) + 'modulos\'+strModuleName), PChar(strDestinationFolderName + '\'+strModuleName),false);
             FileSetAttr (PChar(strDestinationFolderName + '\' + strModuleName),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED
           End
@@ -1150,17 +1227,17 @@ procedure verifyAndGet(strModuleName,
                          strDestinationFolderName) and (strExibeInformacoes = 'S') then
                   MessageDLG(#13#10+'ATENÇÃO! Não foi possível efetuar FTP para "'+strDestinationFolderName + '\'+strModuleName+'".'+#13#10+'Verifique o Servidor de Updates.',mtError,[mbOK],0);
             Except
-              log_DEBUG('FTP de "'+ strDestinationFolderName + '\' + strModuleName+'" Interrompido.');
+              LogDebug('FTP de "'+ strDestinationFolderName + '\' + strModuleName+'" Interrompido.');
             End;
 
             if not FileExists(strDestinationFolderName + '\' + strModuleName) Then
               Begin
-                log_DEBUG('Problemas Efetuando Download de '+ strDestinationFolderName + '\' + strModuleName+' (FTP)');
-                log_DEBUG('Conexão:');
-                log_DEBUG(strServUpdates+', '+strPortaServUpdates+', '+strNomeUsuarioLoginServUpdates+', '+strSenhaLoginServUpdates+', '+strPathServUpdates);
+                LogDebug('Problemas Efetuando Download de '+ strDestinationFolderName + '\' + strModuleName+' (FTP)');
+                LogDebug('Conexão:');
+                LogDebug(strServUpdates+', '+strPortaServUpdates+', '+strNomeUsuarioLoginServUpdates+', '+strSenhaLoginServUpdates+', '+strPathServUpdates);
               End
             else
-                log_diario('Download Concluído de "'+strModuleName+'" (FTP)');
+                LogDiario('Download Concluído de "'+strModuleName+'" (FTP)');
           end;
       End;
   End;
@@ -1227,15 +1304,24 @@ begin
            bool_CommandLine := true;
     End;
 
+
+  // ATENÇÃO: Trecho para uso exclusivo no âmbito da DATAPREV a nível Brasil, para internalização maciça.
+  //          Para envio à Comunidade, retirar as chaves mais abaixo, para que o código padrão seja descomentado.
+  //          Anderson Peterle - FEV2008
+  //v_ip_serv_cacic                 := 'UXRJO115';
+  //v_cacic_dir                     := 'Cacic';
+  //v_exibe_informacoes             := 'N'; // Manter o "N", pois, esse mesmo ChkCacic será colocado em NetLogons!
+
+
+
   if not bool_CommandLine then
     Begin
       If not (FileExists(ExtractFilePath(Application.Exename) + '\chkcacic.ini')) then
           Begin
-              log_diario('Abrindo formulário de configurações');
+              LogDiario('Abrindo formulário de configurações');
               CriaFormConfigura;
               MostraFormConfigura;
           End;
-
       v_ip_serv_cacic                 := GetValorChaveRegIni('Cacic2', 'ip_serv_cacic'    , ExtractFilePath(Application.Exename) + '\chkcacic.ini');
       v_cacic_dir                     := GetValorChaveRegIni('Cacic2', 'cacic_dir'        , ExtractFilePath(Application.Exename) + '\chkcacic.ini');
       v_exibe_informacoes             := GetValorChaveRegIni('Cacic2', 'exibe_informacoes', ExtractFilePath(Application.Exename) + '\chkcacic.ini');
@@ -1249,7 +1335,7 @@ begin
      if (FormatDateTime('ddmmyyyy', GetFolderDate(Dir + '\Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
        Begin
          v_Debugs := true;
-         log_DEBUG('Pasta "' + Dir + '\Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(Dir + '\Temp\Debugs'))+' encontrada. DEBUG ativado.');
+         LogDebug('Pasta "' + Dir + '\Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(Dir + '\Temp\Debugs'))+' encontrada. DEBUG ativado.');
        End;
     End;
 
@@ -1258,20 +1344,21 @@ begin
   // Verifico se o S.O. é NT Like e se o Usuário está com privilégio administrativo...
   if (((intWinVer <> 0) and (intWinVer >= 6)) or
       (abstraiCSD(v_te_so) >= 250)) and
-     (v_exibe_informacoes = 'S') and
      not IsAdmin then // Se NT/2000/XP/...
     Begin
-      MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
+      if (v_exibe_informacoes = 'S') then
+        MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
+      ComunicaInsucesso('0'); // O indicador "0" (zero) sinalizará falta de privilégio na estação
     End
   else
     Begin
-      log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
-      log_DEBUG(':::::::::::::: OBTENDO VALORES DO "chkcacic.ini" ::::::::::::::');
-      log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
-      log_DEBUG('Drive de instalação......................: '+v_home_drive);
-      log_DEBUG('Pasta para instalação....................: '+Dir);
-      log_DEBUG('IP do servidor...........................: '+v_ip_serv_cacic);
-      log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+      LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+      LogDebug(':::::::::::::: OBTENDO VALORES DO "chkcacic.ini" ::::::::::::::');
+      LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+      LogDebug('Drive de instalação......................: '+v_home_drive);
+      LogDebug('Pasta para instalação....................: '+Dir);
+      LogDebug('IP do servidor...........................: '+v_ip_serv_cacic);
+      LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
       bool_configura := false;
 
       //chave AES. Recomenda-se que cada empresa/órgão altere a sua chave.
@@ -1281,50 +1368,42 @@ begin
       v_DatFileName  := Dir + '\cacic2.dat';
       v_tstrCipherOpened := CipherOpen(v_DatFileName);
 
-
       if ((intWinVer <> 0) and (intWinVer >= 8)) or
-         (abstraiCSD(v_te_so) >= 250) then // Se >= WinXP...
+         (abstraiCSD(v_te_so) >= 250) then // Se >= Maior ou Igual ao WinXP...
         Begin
           Try
-            // Libero as policies do FireWall (testes)
-            Try
+            // Libero as policies do FireWall Interno
+            if (abstraiCSD(v_te_so) >= 260) then // Maior ou Igual ao VISTA...
               Begin
-              Log_DEBUG('Valor de "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DisableStatefulFTP" => '+trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DisableStatefulFTP')));
-              if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DisableStatefulFTP'))='0') then
-                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DisableStatefulFTP','1');
+                Try
+                  Begin
+                    // Liberando as conexões de Saída para o FTP
+                    SetValorChaveRegEdit('HKEY_LOCAL//_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App=C:\\windows\\system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App=C:\\windows\\system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
 
-              Log_DEBUG('Valor de "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\EnableFirewall" => '+trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\EnableFirewall')));
-              if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\EnableFirewall'))='1') then
-                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\EnableFirewall','0');
+                    // Liberando as conexões de Saída para o Ger_Cols
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+Dir+'\modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+Dir+'\modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
 
-              Log_DEBUG('Valor de "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\DisableNotifications" => '+trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\DisableNotifications')));
-              if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\DisableNotifications'))='0') then
-                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\DisableNotifications','1');
+                    // Liberando as conexões de Saída para o ChkCacic
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkcacic.exe|Desc=chkcacic.exe|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkcacic.exe|Desc=chkcacic.exe|Edge=FALSE|');
 
-              Log_DEBUG('Valor de "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile\DisableNotifications" => '+trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile\DisableNotifications')));
-              if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile\DisableNotifications'))='0') then
-                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile\DisableNotifications','1');
-
-              Log_DEBUG('Valor de "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile\EnableFirewall" => '+trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile\EnableFirewall')));
-              if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile\EnableFirewall'))='1') then
-                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\DomainProfile\EnableFirewall','0');
-
-              Log_DEBUG('Valor de "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile\DisableNotifications" => '+trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile\DisableNotifications')));
-              if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile\DisableNotifications'))='0') then
-                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile\DisableNotifications','1');
-
-              Log_DEBUG('Valor de "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile\EnableFirewall" => '+trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile\EnableFirewall')));
-              if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile\EnableFirewall'))='1') then
-                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\PublicProfile\EnableFirewall','0');
+                    // Liberando as conexões de Saída para o ChkSis
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+HomeDrive + '\chksis.exe|Name=Módulo Verificador de Integridade do Sistema CACIC|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+HomeDrive + '\chksis.exe|Name=Módulo Verificador de Integridade do Sistema CACIC|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
+                  End
+                Except
+                  LogDebug('Problema Liberando Policies de FireWall!');
+                End;
               End
-            Except
-              log_DEBUG('Problema Liberando Policies de FireWall!');
-            End;
-
-            // Acrescento o ChkCacic às exceções do FireWall nativo...
-            {chkcacic}
-            LiberaFireWall(ExtractFilePath(Application.Exename) + 'chkcacic');
-
+            else
+              Begin
+                // Acrescento o ChkCacic às exceções do FireWall nativo...
+                {chkcacic}
+                LogDebug('Inserindo "'+ExtractFilePath(Application.Exename) + 'chkcacic" nas exceções do FireWall!');
+                LiberaFireWall(ExtractFilePath(Application.Exename) + 'chkcacic');
+              End;
           Except
           End;
         End;
@@ -1334,7 +1413,7 @@ begin
 
       while (v_ip_serv_cacic = '') or (v_cacic_dir = '') or bool_configura do
           Begin
-              log_diario('Abrindo formulário de configurações');
+              LogDiario('Abrindo formulário de configurações');
               bool_configura := false;
               CriaFormConfigura;
               Configs.Edit_ip_serv_cacic.text                 := v_ip_serv_cacic;
@@ -1352,7 +1431,7 @@ begin
       // Verifico a existência do diretório configurado para o Cacic, normalmente CACIC
       if not DirectoryExists(Dir) then
           begin
-            log_diario('Criando pasta '+Dir);
+            LogDiario('Criando pasta '+Dir);
             ForceDirectories(Dir);
           end;
 
@@ -1361,14 +1440,14 @@ begin
           begin
             Matar(Dir, '\cacic2.exe');
             ForceDirectories(Dir + '\modulos');
-            log_diario('Criando pasta '+Dir+'\modulos');
+            LogDiario('Criando pasta '+Dir+'\modulos');
           end;
 
       // Crio o SubDiretório TEMP, caso não exista
       if not DirectoryExists(Dir+'\temp') then
           begin
             ForceDirectories(Dir + '\temp');
-            log_diario('Criando pasta '+Dir+'\temp');
+            LogDiario('Criando pasta '+Dir+'\temp');
           end;
 
 
@@ -1380,6 +1459,7 @@ begin
       Response_Config                      := TStringStream.Create('');
 
       Try
+        LogDiario('Iniciando comunicação com '+'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php');
         IdHTTP1 := TIdHTTP.Create(IdHTTP1);
         idHTTP1.AllowCookies                     := true;
         idHTTP1.ASCIIFilter                      := false;
@@ -1399,9 +1479,11 @@ begin
         idHTTP1.Request.ContentType              := 'text/html';
         idHTTP1.SendBufferSize                   := 32768;
         idHTTP1.Tag                              := 0;
-        log_diario('Iniciando comunicação com '+'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php');
+        
         IdHTTP1.Post('http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php', Request_Config, Response_Config);
+        idHTTP1.Disconnect;
         idHTTP1.Free;
+
         v_retorno := Response_Config.DataString;
         v_te_serv_updates               := XML_RetornaValor('te_serv_updates'              , v_retorno);
         v_nu_porta_serv_updates         := XML_RetornaValor('nu_porta_serv_updates'        , v_retorno);
@@ -1409,27 +1491,27 @@ begin
         v_te_senha_login_serv_updates   := XML_RetornaValor('te_senha_login_serv_updates'  , v_retorno);
         v_te_path_serv_updates          := XML_RetornaValor('te_path_serv_updates'         , v_retorno);
 
-        log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
-        log_DEBUG(':::::::::::::::: VALORES OBTIDOS NO Gerente WEB :::::::::::::::');
-        log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
-        log_DEBUG('Servidor de updates......................: '+v_te_serv_updates);
-        log_DEBUG('Porta do servidor de updates.............: '+v_nu_porta_serv_updates);
-        log_DEBUG('Usuário para login no servidor de updates: '+v_nm_usuario_login_serv_updates);
-        log_DEBUG('Pasta no servidor de updates.............: '+v_te_path_serv_updates);
-        log_DEBUG(' ');
-        log_DEBUG('Versões dos Agentes Principais:');
-        log_DEBUG('------------------------------');
-        log_DEBUG('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno));
-        log_DEBUG('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno));
-        log_DEBUG('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno));
-        log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+        LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+        LogDebug(':::::::::::::::: VALORES OBTIDOS NO Gerente WEB :::::::::::::::');
+        LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+        LogDebug('Servidor de updates......................: '+v_te_serv_updates);
+        LogDebug('Porta do servidor de updates.............: '+v_nu_porta_serv_updates);
+        LogDebug('Usuário para login no servidor de updates: '+v_nm_usuario_login_serv_updates);
+        LogDebug('Pasta no servidor de updates.............: '+v_te_path_serv_updates);
+        LogDebug(' ');
+        LogDebug('Versões dos Agentes Principais:');
+        LogDebug('------------------------------');
+        LogDebug('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno));
+        LogDebug('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno));
+        LogDebug('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno));
+        LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
       Except
         Begin
           if v_exibe_informacoes = 'S' then
             MessageDLG(#13#10+'ATENÇÃO! Não foi possível estabelecer comunicação com o módulo Gerente WEB em "'+v_ip_serv_cacic+'".',mtError,[mbOK],0);
-          log_diario('**********************************************************');
-          log_diario('Oops! Não Foi Possível Comunicar com o Módulo Gerente WEB!');
-          log_diario('**********************************************************');
+          LogDiario('**********************************************************');
+          LogDiario('Oops! Não Foi Possível Comunicar com o Módulo Gerente WEB!');
+          LogDiario('**********************************************************');
         End
       End;
       Request_Config.Free;
@@ -1440,10 +1522,11 @@ begin
       if ((intWinVer <> 0) and (intWinVer > 5)) or
           (abstraiCSD(v_te_so) >= 250) then
         Begin
-          log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
-          log_DEBUG('::::::: VERIFICANDO FILE SYSTEM E ATRIBUINDO PERMISSÕES :::::::');
-          log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+          LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+          LogDebug('::::::: VERIFICANDO FILE SYSTEM E ATRIBUINDO PERMISSÕES :::::::');
+          LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
 
+          // Atribuição de acesso ao módulo principal e pastas
           Form1.FS_SetSecurity(Dir);
           Form1.FS_SetSecurity(Dir + '\cacic2.exe');
           Form1.FS_SetSecurity(Dir + '\cacic2.dat');
@@ -1451,7 +1534,7 @@ begin
           Form1.FS_SetSecurity(Dir + '\modulos');
           Form1.FS_SetSecurity(Dir + '\temp');
 
-          // Atribuição de acesso a todos os módulos para permissão de atualizações de versão
+          // Atribuição de acesso aos módulos de gerenciamento de coletas e coletas para permissão de atualizações de versões
           Form1.FS_SetSecurity(Dir + '\modulos\ger_cols.exe');
           Form1.FS_SetSecurity(Dir + '\modulos\col_anvi.exe');
           Form1.FS_SetSecurity(Dir + '\modulos\col_comp.exe');
@@ -1470,7 +1553,7 @@ begin
 
           // Atribuição de acesso para atualização/exclusão de log do instalador
           Form1.FS_SetSecurity(v_home_drive + 'chkcacic.log');
-          log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+          LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
         End;
 
       // Verificação de versão do cacic2.exe e exclusão em caso de versão antiga/diferente da atual
@@ -1548,7 +1631,7 @@ begin
       // Tento detectar o ChkSis.INI e crio-o caso necessário
       If not FileExists(HomeDrive + '\chksis.ini') Then
           begin
-            log_DEBUG('Criando '+HomeDrive + '\chksis.ini');
+            LogDebug('Criando '+HomeDrive + '\chksis.ini');
             GravaIni(HomeDrive + '\chksis.ini');
             FileSetAttr ( PChar(HomeDrive + '\chksis.ini'),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
           end;
@@ -1556,13 +1639,13 @@ begin
       // Tento detectar o cacic2.INI e crio-o caso necessário
       If not FileExists(Dir + '\cacic2.ini') Then
           begin
-            log_DEBUG('Criando/Recriando '+Dir + '\cacic2.ini');
+            LogDebug('Criando/Recriando '+Dir + '\cacic2.ini');
             GravaIni(Dir + '\cacic2.ini');
           end;
 
       // Verifico se existe a pasta "modulos"
       v_modulos := ListFileDir(ExtractFilePath(Application.Exename)+'\modulos\*.exe');
-      if (v_modulos <> '') then log_diario('Pasta "Modulos" encontrada..');
+      if (v_modulos <> '') then LogDiario('Pasta "Modulos" encontrada..');
 
       // Tento detectar o Agente Principal e copio ou faço FTP caso não exista
       verifyAndGet('cacic2.exe',
@@ -1593,7 +1676,7 @@ begin
                    (v_array_modulos[intAux]<>'ger_cols.exe') and
                    (v_array_modulos[intAux]<>'chksis.exe') then
                   Begin
-                    log_diario('Copiando '+v_array_modulos[intAux]+' de '+ExtractFilePath(Application.Exename)+'modulos\');
+                    LogDiario('Copiando '+v_array_modulos[intAux]+' de '+ExtractFilePath(Application.Exename)+'modulos\');
                     CopyFile(PChar(ExtractFilePath(Application.Exename) + 'modulos\'+v_array_modulos[intAux]), PChar(Dir + '\modulos\'+v_array_modulos[intAux]),false);
                     FileSetAttr (PChar(Dir + '\modulos\'+v_array_modulos[intAux]),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
                   End;
@@ -1640,16 +1723,17 @@ begin
             // Acrescento o ChkSis e o Ger_Cols às exceções do FireWall nativo...
 
             {chksis}
+            LogDebug('Inserindo "'+HomeDrive + '\chksis" nas exceções do FireWall!');
             LiberaFireWall(HomeDrive + '\chksis');
 
             {ger_cols}
+            LogDebug('Inserindo "'+Dir + '\modulos\ger_cols" nas exceções do FireWall!');
             LiberaFireWall(Dir + '\modulos\ger_cols');
-
           Except
           End;
         End;
 
-      log_DEBUG('Gravando registros para auto-execução');
+      LogDebug('Gravando registros para auto-execução');
 
       // Crio a chave/valor cacic2 para autoexecução do Cacic, caso não exista esta chave/valor
       // Crio a chave/valor chksis para autoexecução do ChkSIS, caso não exista esta chave/valor
@@ -1663,26 +1747,26 @@ begin
 
       // Igualo as chaves ip_serv_cacic dos arquivos chksis.ini e cacic2.ini!
       SetValorDatMemoria('Configs.EnderecoServidor', v_ip_serv_cacic);
-      log_DEBUG('Fechando Arquivo de Configurações do Cacic');
+      LogDebug('Fechando Arquivo de Configurações do Cacic');
       CipherClose(v_DatFileName);
 
-      log_DEBUG('Abrindo Arquivo de Configurações do ChkSis');
+      LogDebug('Abrindo Arquivo de Configurações do ChkSis');
       CipherOpen(HomeDrive + '\chksis.dat');
       SetValorDatMemoria('Cacic2.ip_serv_cacic', v_ip_serv_cacic);
       CipherClose(HomeDrive + '\chksis.dat');
 
       // Volto a gravar o chksis.ini para o difícil caso de leitura por versões antigas
       SetValorChaveRegIni('Cacic2', 'ip_serv_cacic', v_ip_serv_cacic, HomeDrive + '\chksis.ini');
-      log_DEBUG('Fechando Arquivo de Configurações do ChkSis');
+      LogDebug('Fechando Arquivo de Configurações do ChkSis');
 
-      log_DEBUG('Resgatando informações para identificação de alteração do agente CACIC2');
+      LogDebug('Resgatando informações para identificação de alteração do agente CACIC2');
       // Pego as informações de dia/mês/ano/horas/minutos/segundos/milésimos que identificam os agentes
       strDataHoraCACIC2_FIM  := FormatDateTime('ddmmyyyyhhnnsszzz', GetFolderDate(Dir + '\cacic2.exe'));
-      log_DEBUG('Inicial => "' + strDataHoraCACIC2_INI  + '" Final => "' + strDataHoraCACIC2_FIM  + '"');
+      LogDebug('Inicial => "' + strDataHoraCACIC2_INI  + '" Final => "' + strDataHoraCACIC2_FIM  + '"');
 
-      log_DEBUG('Resgatando informações para identificação de alteração do agente GER_COLS');
+      LogDebug('Resgatando informações para identificação de alteração do agente GER_COLS');
       strDataHoraGERCOLS_FIM := FormatDateTime('ddmmyyyyhhnnsszzz', GetFolderDate(Dir + '\modulos\ger_cols.exe'));
-      log_DEBUG('Inicial => "' + strDataHoraGERCOLS_INI + '" Final => "' + strDataHoraGERCOLS_FIM + '"');
+      LogDebug('Inicial => "' + strDataHoraGERCOLS_INI + '" Final => "' + strDataHoraGERCOLS_FIM + '"');
 
       // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
       if ((strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) OR
@@ -1692,33 +1776,37 @@ begin
             if (GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2')=Dir + '\cacic2.exe') then
               Begin
                 if (v_exibe_informacoes = 'S') then
-                  MessageDlg(#13#10+#13#10+v_te_instala_frase_sucesso+#13#10+#13#10+#13#10 + '======================================================' + #13#10 + v_te_texto_janela_instalacao+ '======================================================',mtInformation,[mbok],0);
+                  MessageDlg(#13#10+#13#10+'Sistema CACIC'+#13#10+#13#10+v_te_instala_frase_sucesso+#13#10+#13#10+#13#10 + '======================================================' + #13#10 + v_te_texto_janela_instalacao+ #13#10 +'======================================================',mtInformation,[mbok],0);
               End
-            else if (v_exibe_informacoes = 'S') then
-                  MessageDlg(#13#10+#13#10+v_te_instala_frase_insucesso+#13#10+#13#10+#13#10 + '======================================================' + #13#10 +  v_te_texto_janela_instalacao+ '======================================================',mtInformation,[mbok],0);
-
+            else
+              Begin
+                if (v_exibe_informacoes = 'S') then
+                  MessageDlg(#13#10+#13#10+'Sistema CACIC'+#13#10+#13#10+v_te_instala_frase_insucesso+#13#10+#13#10+#13#10 + '======================================================' + #13#10 +  v_te_texto_janela_instalacao+ #13#10 +'======================================================',mtInformation,[mbok],0);
+                ComunicaInsucesso('1'); // O indicador "1" sinalizará que não foi devido a privilégio na estação
+              End;
           End
       else
-        log_diario('ATENÇÃO: Instalação NÃO REALIZADA ou ATUALIZAÇÃO DESNECESSÁRIA!');
+        LogDiario('ATENÇÃO: Instalação NÃO REALIZADA ou ATUALIZAÇÃO DESNECESSÁRIA!');
 
-      if Posso_Rodar_CACIC or not bool_ExistsAutoRun then
+      if Posso_Rodar_CACIC or
+         not bool_ExistsAutoRun or
+         (strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) then
         Begin
-          log_DEBUG('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
+          LogDebug('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
 
           // Caso tenha havido download de agentes principais, executar coletas imediatamente...
-          if ((strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) OR
-              (strDataHoraGERCOLS_INI <> strDataHoraGERCOLS_FIM)) then
+          if (strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) then
             WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute'), SW_HIDE)
           else
             WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             ), SW_HIDE);
         End
       else
-        log_DEBUG('Chave de Auto-Execução já existente ou Execução já iniciada...');
+        LogDebug('Chave de Auto-Execução já existente ou Execução já iniciada...');
     End;
   Except
-    log_diario('Falha na Instalação/Atualização');
+    LogDiario('Falha na Instalação/Atualização');
   End;
-
+  Application.Terminate;
 end;
 
 function FindWindowByTitle(WindowTitle: string): Hwnd;
@@ -1815,7 +1903,7 @@ begin
 //  if (FindWindowByTitle('chksis') = 0) then
       chkcacic;
 //  else
-//      log_diario('Não executei devido execução em paralelo de "chksis"');
+//      LogDiario('Não executei devido execução em paralelo de "chksis"');
 
   Application.Terminate;
 end;
@@ -1838,7 +1926,7 @@ begin
             Begin   // If local group, alias or user...
               v_FS_Security.FileRights[intAux]       := [faAll];
               v_FS_Security.DirectoryRights[intAux]  := [faAll];
-              log_DEBUG(p_Target + ' [Full Access] >> '+v_FS_Security.EntryName[intAux]);
+              LogDebug(p_Target + ' [Full Access] >> '+v_FS_Security.EntryName[intAux]);
               //Setting total access on p_Target to local groups.
             End;
           End;
@@ -1848,7 +1936,7 @@ begin
       // Set total permissions to local groups
       v_FS_Security.SetSecurity;
     end
-  else Log_diario('File System: "' + v_FS_Security.FileSystemName+'" - Ok!');
+  else LogDiario('File System: "' + v_FS_Security.FileSystemName+'" - Ok!');
 
   v_FS_Security.Free;
 end;

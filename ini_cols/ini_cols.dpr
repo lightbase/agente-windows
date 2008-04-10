@@ -457,6 +457,7 @@ begin
              v_DatFileName  := p_path_cacic + 'cacic2.dat';
              v_SeparatorKey := '=CacicIsFree=';
 
+             Matar(p_path_cacic+'temp\','*.dat');
              Try
                   // Caso exista o Gerente de Coletas será verificada a versão...
                   // Devido a problemas na rotina de FTP na versão 2.0.1.2,

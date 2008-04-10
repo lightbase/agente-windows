@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=2
 MinorVer=2
 Release=0
-Build=1
+Build=3
 Debug=0
 PreRelease=0
 Special=0
@@ -126,13 +126,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=Dataprev-Unidade Regional Espírito Santo
 FileDescription=Coletor de Informações de Patrimônio do Sistema CACIC
-FileVersion=2.2.0.1
+FileVersion=2.2.0.3
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
 ProductName=Col_PATR
-ProductVersion=2.2.0.1
+ProductVersion=2.2.0.3
 Comments=Baseado na Licença GPL(General Public License)
 [HistoryLists\hlDebugSourcePath]
 Count=1

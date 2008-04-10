@@ -3,7 +3,7 @@ unit XML;
 
 interface
 
-Uses LibXmlParser, SysUtils, dialogs;
+Uses LibXmlParser, SysUtils;
 
 Function XML_RetornaValor(Tag : String; Fonte : String) : String;
 

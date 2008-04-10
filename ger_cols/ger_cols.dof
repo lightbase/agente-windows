@@ -76,9 +76,9 @@ LocaleToUnicode=1
 ImagebaseMultiple=1
 SuspiciousTypecast=1
 PrivatePropAccessor=1
-UnsafeType=0
-UnsafeCode=0
-UnsafeCast=0
+UnsafeType=1
+UnsafeCode=1
+UnsafeCast=1
 [Linker]
 MapFile=0
 OutputObjs=0
@@ -94,10 +94,10 @@ OutputDir=
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
-SearchPath=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\ZLibex
-Packages=vcl;rtl;vclx;indy;inet;xmlrtl;vclie;inetdbbde;inetdbxpress;dbrtl;dsnap;dsnapcon;vcldb;soaprtl;VclSmp;dbexpress;dbxcds;inetdb;bdertl;vcldbx;webdsnap;websnap;adortl;ibxpress;teeui;teedb;tee;dss;visualclx;visualdbclx;vclactnband;vclshlctrls;IntrawebDB_50_70;Intraweb_50_70;Rave50CLX;Rave50VCL;dclOffice2k
+SearchPath=
+Packages=
 Conditionals=
-DebugSourceDirs=C:\Arquivos de programas\Borland\Delphi7\
+DebugSourceDirs=
 UsePackages=0
 [Parameters]
 RunParams=
@@ -108,14 +108,14 @@ DebugCWD=
 [Language]
 ActiveLang=
 ProjectLang=
-RootDir=C:\Arquivos de programas\Borland\Delphi7\Bin\
+RootDir=
 [Version Info]
 IncludeVerInfo=1
 AutoIncBuild=0
-MajorVer=2
-MinorVer=2
+MajorVer=1
+MinorVer=0
 Release=0
-Build=27
+Build=0
 Debug=0
 PreRelease=0
 Special=0
@@ -123,33 +123,3 @@ Private=0
 DLL=0
 Locale=1046
 CodePage=1252
-[Version Info Keys]
-CompanyName=Dataprev-Unidade Regional Espírito Santo
-FileDescription=Módulo Gerente de Coletas do Sistema CACIC
-FileVersion=2.2.0.27
-InternalName=
-LegalCopyright=
-LegalTrademarks=
-OriginalFilename=
-ProductName=Ger_COLS
-ProductVersion=2.2.0.27
-Comments=Baseado na licença GPL (General Public License)
-[HistoryLists\hlDebugSourcePath]
-Count=2
-Item0=C:\Arquivos de programas\Borland\Delphi7\
-Item1=C:\Arquivos de programas\Borland\Delphi7\Mitec\v910_Delphi7
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlSearchPath]
-Count=10
-Item0=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\ZLibex
-Item1=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\ZLibex;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\TpAbbrevia
-Item2=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion
-Item3=C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Hashes;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Ciphers;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Mitec\v1010_Delphi7
-Item4=C:\Arquivos de programas\Borland\Delphi7\Mitec\9.60;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Hashes;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Ciphers;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Mitec\v1010_Delphi7
-Item5=C:\Arquivos de programas\Borland\Delphi7\Mitec\9.60;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Hashes;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Ciphers;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP
-Item6=C:\Arquivos de programas\Borland\Delphi7\Mitec\9.60;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Hashes;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Ciphers
-Item7=C:\Arquivos de programas\Borland\Delphi7\Mitec\9.60;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Hashes
-Item8=C:\Arquivos de programas\Borland\Delphi7\Mitec\9.60
-Item9=C:\Arquivos de programas\Borland\Delphi7\Mitec\v910_Delphi7
