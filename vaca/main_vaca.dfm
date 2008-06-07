@@ -1,4 +1,4 @@
-object Form1: TForm1
+object frmVACA: TfrmVACA
   Left = 276
   Top = 405
   AutoScroll = False

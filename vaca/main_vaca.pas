@@ -18,7 +18,7 @@ uses
   md5;
 
 type
-  TForm1 = class(TForm)
+  TfrmVACA = class(TForm)
     List: TListView;
     Bt_Fechar: TButton;
     Bt_VAI: TButton;
@@ -55,13 +55,13 @@ type
   end;
 
 var
-  Form1: TForm1;
+  frmVACA: TfrmVACA;
 
 implementation
 
 {$R *.DFM}
 //Para gravar no Arquivo INI...
-function TForm1.SetValorChaveRegIni(p_Secao: String; p_Chave: String; p_Valor: String; p_Path : String): String;
+function TfrmVACA.SetValorChaveRegIni(p_Secao: String; p_Chave: String; p_Valor: String; p_Path : String): String;
 var Reg_Ini     : TIniFile;
 begin
 //    FileSetAttr (p_Path,0);
@@ -80,7 +80,7 @@ end;
 
 //Para buscar do Arquivo INI...
 // Marreta devido a limitações do KERNEL w9x no tratamento de arquivos texto e suas seções
-function TForm1.GetValorChaveRegIni(p_SectionName, p_KeyName, p_IniFileName : String) : String;
+function TfrmVACA.GetValorChaveRegIni(p_SectionName, p_KeyName, p_IniFileName : String) : String;
 var
   FileText : TStringList;
   i, j, v_Size_Section, v_Size_Key : integer;
@@ -116,7 +116,7 @@ var
     Except
     End;
   end;
-function TForm1.Get_File_Size(sFileToExamine: string; bInKBytes: Boolean): string;
+function TfrmVACA.Get_File_Size(sFileToExamine: string; bInKBytes: Boolean): string;
 var
   SearchRec: TSearchRec;
   sgPath: string;
@@ -135,7 +135,7 @@ begin
   Result := IntToStr(I1);
 end;
 
-procedure TForm1.FormCreate(Sender: TObject);
+procedure TfrmVACA.FormCreate(Sender: TObject);
 begin
   Label4.Caption := 'v: '+GetVersionInfo(ExtractFilePath(Application.Exename)+'vaca.exe');
   SetValorChaveRegIni('Informação','Nota','Versoes dos Agentes do Sistema CACIC',ExtractFilePath(Application.Exename)+'versoes_agentes.ini');
@@ -144,14 +144,14 @@ end;
 // Para cálculo de HASH de determinado arquivo.
 // Objetivo principal: Verificar autenticidade de agentes para trabalho cooperativo
 // Anderson Peterle - Dataprev/ES - 08/Maio/2008
-function TForm1.GetFileHash(strFileName : String) : String;
+function TfrmVACA.GetFileHash(strFileName : String) : String;
 Begin
   Result := 'Arquivo "'+strFileName+'" Inexistente!';
   if (FileExists(strFileName)) then
     Result := MD5Print(MD5File(strFileName));
 End;
 
-procedure TForm1.RemontaINI(strTripaChavesValores,p_Path : String);
+procedure TfrmVACA.RemontaINI(strTripaChavesValores,p_Path : String);
 var Reg_Ini : TIniFile;
     intAux  : integer;
     tstrAux1,
@@ -178,26 +178,26 @@ begin
   Reg_Ini.Free;
 End;
 
-function TForm1.InsertItemLISTA(strName,strVerINI,strVerEXE,strSize,strDate : string; boolOK : boolean) : boolean;
+function TfrmVACA.InsertItemLISTA(strName,strVerINI,strVerEXE,strSize,strDate : string; boolOK : boolean) : boolean;
 var intAux : integer;
 Begin
-  intAux := Form1.List.Items.Count;
+  intAux := frmVACA.List.Items.Count;
 
-  Form1.List.Items.Add;
-  Form1.List.Items[intAux].Caption := '';
-  Form1.List.Items[intAux].SubItems.Add(strName);
-  Form1.List.Items[intAux].SubItems.Add(strVerINI);
-  Form1.List.Items[intAux].SubItems.Add(strVerEXE);
-  Form1.List.Items[intAux].SubItems.Add(strSize);
-  Form1.List.Items[intAux].SubItems.Add(strDate);
+  frmVACA.List.Items.Add;
+  frmVACA.List.Items[intAux].Caption := '';
+  frmVACA.List.Items[intAux].SubItems.Add(strName);
+  frmVACA.List.Items[intAux].SubItems.Add(strVerINI);
+  frmVACA.List.Items[intAux].SubItems.Add(strVerEXE);
+  frmVACA.List.Items[intAux].SubItems.Add(strSize);
+  frmVACA.List.Items[intAux].SubItems.Add(strDate);
 
   if boolOK then
-    Form1.List.Items[intAux].ImageIndex := 1
+    frmVACA.List.Items[intAux].ImageIndex := 1
   else
-    Form1.List.Items[intAux].ImageIndex := 0;
+    frmVACA.List.Items[intAux].ImageIndex := 0;
 End;
 
-procedure TForm1.Refresh;
+procedure TfrmVACA.Refresh;
 var v_modulos,
     strNomePacoteLinux,
     strVersaoPacoteLinux,
@@ -299,7 +299,7 @@ begin
   end;
 end;
 
-function TForm1.getDadosAgenteLinux(strNomeAgenteLinux:String) : TStrings;
+function TfrmVACA.getDadosAgenteLinux(strNomeAgenteLinux:String) : TStrings;
 var tstrAux : TStrings;
     strAux  : String;
 Begin
@@ -309,7 +309,7 @@ Begin
   Result := tstrAux;
 End;
 
-Function TForm1.ListFileDir(Path,p_exception : string):string;
+Function TfrmVACA.ListFileDir(Path,p_exception : string):string;
 var
   SR: TSearchRec;
   FileList : string;
@@ -328,24 +328,24 @@ begin
   end;
 end;
 
-procedure TForm1.Bt_FecharClick(Sender: TObject);
+procedure TfrmVACA.Bt_FecharClick(Sender: TObject);
 begin
   Close;
 end;
-function TForm1.GetVersionInfo(p_File: string):string;
+function TfrmVACA.GetVersionInfo(p_File: string):string;
 begin
   PJVersionInfo1.FileName := PChar(p_File);
-  Result := Form1.VerFmt(Form1.PJVersionInfo1.FixedFileInfo.dwFileVersionMS, Form1.PJVersionInfo1.FixedFileInfo.dwFileVersionLS);
+  Result := frmVACA.VerFmt(frmVACA.PJVersionInfo1.FixedFileInfo.dwFileVersionMS, frmVACA.PJVersionInfo1.FixedFileInfo.dwFileVersionLS);
 end;
 
-function TForm1.VerFmt(const MS, LS: DWORD): string;
+function TfrmVACA.VerFmt(const MS, LS: DWORD): string;
   // Format the version number from the given DWORDs containing the info
 begin
   Result := Format('%d.%d.%d.%d',
     [HiWord(MS), LoWord(MS), HiWord(LS), LoWord(LS)])
 end;
 
-Function TForm1.Explode(Texto, Separador : String) : TStrings;
+Function TfrmVACA.Explode(Texto, Separador : String) : TStrings;
 var
     strItem : String;
     ListaAuxUTILS : TStrings;
@@ -365,7 +365,7 @@ Begin
       Explode := ListaAuxUTILS;
 end;
 
-procedure TForm1.Bt_VAIClick(Sender: TObject);
+procedure TfrmVACA.Bt_VAIClick(Sender: TObject);
 var v_modulos : string;
     v_array_modulos,
     tstrDadosAgenteLinux : TStrings;
@@ -383,7 +383,6 @@ begin
                 SetValorChaveRegIni('versoes_agentes',v_array_modulos[intAux],GetVersionInfo(v_array_modulos[intAux]),ExtractFilePath(Application.Exename)+'versoes_agentes.ini');
       End;
   finally
-    Screen.Cursor:=crdefault;
     Refresh;
   end;
 
@@ -401,18 +400,18 @@ begin
                 SetValorChaveRegIni('versoes_agentes',tstrDadosAgenteLinux[0],tstrDadosAgenteLinux[1],ExtractFilePath(Application.Exename)+'versoes_agentes.ini')
       End;
   finally
-    Screen.Cursor:=crdefault;
     Refresh;
   end;
 
+  Screen.Cursor:=crdefault;
 end;
 
-procedure TForm1.Image1Click(Sender: TObject);
+procedure TfrmVACA.Image1Click(Sender: TObject);
 begin
   Refresh;
 end;
 
-procedure TForm1.ListAdvancedCustomDrawSubItem(Sender: TCustomListView;
+procedure TfrmVACA.ListAdvancedCustomDrawSubItem(Sender: TCustomListView;
   Item: TListItem; SubItem: Integer; State: TCustomDrawState;
   Stage: TCustomDrawStage; var DefaultDraw: Boolean);
 begin
