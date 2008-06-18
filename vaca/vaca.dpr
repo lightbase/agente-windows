@@ -8,7 +8,7 @@ uses
 
 begin
   Application.Initialize;
-  Application.Title := 'MSI Demo';
+  Application.Title := 'V.A.C.A.';
   Application.CreateForm(TForm1, Form1);
   Application.Run;
 end.

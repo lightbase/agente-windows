@@ -47,6 +47,7 @@ uses
   DCPrijndael,
   DCPbase64,
   ZLibEx;
+
 {$APPTYPE CONSOLE}
 var p_path_cacic,
     v_scripter,
@@ -91,7 +92,6 @@ var BatchFile,
 const KeySize = 32; // 32 bytes = 256 bits
       BlockSize = 16; // 16 bytes = 128 bits
 
-                                
 // Pad a string with zeros so that it is a multiple of size
 function PadWithZeros(const str : string; size : integer) : string;
 var
@@ -138,6 +138,32 @@ begin
        if (trim(v_acao_gercols)='') then v_acao_gercols := strMsg;
    except
    end;
+end;
+
+// Gerador de Palavras-Chave
+function GeraPalavraChave: String;
+var intLimite,
+    intContaLetras : integer;
+    strPalavra,
+    strCaracter    : String;
+    charCaracter   : Char;
+begin
+  Randomize;
+  strPalavra  := '';
+  intLimite  := RandomRange(10,30); // Gerarei uma palavra com tamanho mínimo 10 e máximo 30
+  for intContaLetras := 1 to intLimite do
+    Begin
+      strCaracter := '.';
+      while not (strCaracter[1] in ['0'..'9','A'..'Z','a'..'z']) do
+        Begin
+          if (strCaracter = '.') then strCaracter := '';
+          Randomize;
+          strCaracter := chr(RandomRange(1,250));
+        End;
+
+      strPalavra := strPalavra + strCaracter;
+    End;
+  Result := strPalavra;
 end;
 
 function VerFmt(const MS, LS: DWORD): string;
@@ -371,8 +397,6 @@ begin
         FillChar(l_Key[1],Length(l_Key),0);
         log_DEBUG('Criptografia(ATIVADA) de "'+p_Data+'" => "'+l_Data+'"');
         // Return the Base64 encoded result
-
-        // Substituo os sinais de "+" por <MAIS> devido a problema com tráfego POST
 
         Result := trim(Base64EncodeStr(l_Data));
       End
@@ -1291,6 +1315,8 @@ Begin
        idHTTP1.SendBufferSize                   := 32768; // ATENÇÃO: Esta propriedade deixa de existir na próxima versão do Indy (10.x)
        idHTTP1.Tag                              := 0;
 
+       // ATENÇÃO: Substituo os sinais de "+" acima por <MAIS> devido a problemas encontrados no envio POST
+
        if v_Debugs then
           Begin
             Log_Debug('te_so => '+v_te_so);
@@ -1459,27 +1485,27 @@ Begin
       End;
 End;
 
-Function FTP_Get(Arq : String; DirDestino : String) : Boolean;
-var v_te_senha_login_serv_updates : string;
-    IdFTP1 : TIdFTP;
+Function FTP_Get(strHost, strUser, strPass, strArq, strDirOrigem, strDirDestino, strTipo : String; intPort : integer) : Boolean;
+var IdFTP1 : TIdFTP;
 begin
-    v_te_senha_login_serv_updates := GetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES', v_tstrCipherOpened);
     log_DEBUG('Instanciando FTP...');
-    IdFTP1               := TIdFTP.Create(IdFTP1);
-
+    IdFTP1                := TIdFTP.Create(IdFTP1);
     log_DEBUG('FTP Instanciado!');
-    IdFTP1.Host          := GetValorDatMemoria('Configs.TE_SERV_UPDATES', v_tstrCipherOpened);
-    IdFTP1.Username      := GetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES', v_tstrCipherOpened);
-    IdFTP1.Password      := v_te_senha_login_serv_updates;
-    IdFTP1.Port          := strtoint(GetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES', v_tstrCipherOpened));
-    IdFTP1.TransferType  := ftBinary;
-    IdFTP1.Passive       := true;
+    IdFTP1.Host           := strHost;
+    IdFTP1.Username       := strUser;
+    IdFTP1.Password       := strPass;
+    IdFTP1.Port           := intPort;
+    IdFTP1.Passive        := true;
+    if (strTipo = 'ASC') then
+      IdFTP1.TransferType := ftASCII
+    else
+      IdFTP1.TransferType := ftBinary;
 
-    log_DEBUG('Iniciando FTP de '+Arq +' para '+StringReplace(DirDestino + '\' + Arq,'\\','\',[rfReplaceAll]));
+    log_DEBUG('Iniciando FTP de '+strArq +' para '+StringReplace(strDirDestino + '\' + strArq,'\\','\',[rfReplaceAll]));
     log_DEBUG('Host........ ='+IdFTP1.Host);
     log_DEBUG('UserName.... ='+IdFTP1.Username);
     log_DEBUG('Port........ ='+inttostr(IdFTP1.Port));
-    log_DEBUG('Pasta Origem ='+GetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES', v_tstrCipherOpened));
+    log_DEBUG('Pasta Origem ='+strDirOrigem);
 
     Try
       if IdFTP1.Connected = true then
@@ -1488,20 +1514,20 @@ begin
         end;
       //IdFTP1.Connect(True);
       IdFTP1.Connect;
-      IdFTP1.ChangeDir(GetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES', v_tstrCipherOpened));
+      IdFTP1.ChangeDir(strDirOrigem);
       Try
         // Substituo \\ por \ devido a algumas vezes em que o DirDestino assume o valor de DirTemp...
-        log_DEBUG('FTP - Size de "'+Arq+'" Antes => '+IntToSTR(IdFTP1.Size(Arq)));
-        IdFTP1.Get(Arq, StringReplace(DirDestino + '\' + Arq,'\\','\',[rfReplaceAll]), True);
-        log_DEBUG('FTP - Size de "'+DirDestino + '\' + Arq +'" Após => '+Get_File_Size(DirDestino + '\' + Arq,true));
+        log_DEBUG('FTP - Size de "'+strArq+'" Antes => '+IntToSTR(IdFTP1.Size(strArq)));
+        IdFTP1.Get(strArq, StringReplace(strDirDestino + '\' + strArq,'\\','\',[rfReplaceAll]), True);
+        log_DEBUG('FTP - Size de "'+strDirDestino + '\' + strArq +'" Após => '+Get_File_Size(strDirDestino + '\' + strArq,true));
       Finally
         result := true;
-        log_DEBUG('FTP - Size de "'+DirDestino + '\' + Arq +'" Após em Finally => '+Get_File_Size(DirDestino + '\' + Arq,true));
+        log_DEBUG('FTP - Size de "'+strDirDestino + '\' + strArq +'" Após em Finally => '+Get_File_Size(strDirDestino + '\' + strArq,true));
         idFTP1.Disconnect;
         IdFTP1.Free;
       End;
     Except
-        log_DEBUG('FTP - Erro - Size de "'+DirDestino + '\' + Arq +'" Após em Finally => '+Get_File_Size(DirDestino + '\' + Arq,true));
+        log_DEBUG('FTP - Erro - Size de "'+strDirDestino + '\' + strArq +'" Após em Except => '+Get_File_Size(strDirDestino + '\' + strArq,true));
         result := false;
     end;
 end;
@@ -1588,7 +1614,14 @@ Begin
 
            Try
              log_DEBUG('Baixando: '+ p_File + '.exe para '+v_Dir_Temp);
-             if (FTP_Get(p_File + '.exe', v_Dir_Temp) = False) Then
+             if (FTP_Get(GetValorDatMemoria('Configs.TE_SERV_UPDATES', v_tstrCipherOpened),
+                         GetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES', v_tstrCipherOpened),
+                         GetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES', v_tstrCipherOpened),
+                         p_File + '.exe',
+                         GetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES', v_tstrCipherOpened),
+                         v_Dir_Temp,
+                         'BIN',
+                         strtoint(GetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES', v_tstrCipherOpened))) = False) Then
                Begin
                 log_diario('ERRO!');
                 strAux  := 'Não foi possível baixar o módulo "'+ p_Nome_Modulo + '".';
@@ -2004,13 +2037,13 @@ Begin
 
     // Verifica existência dos dados de configurações principais e estado de CountUPD. Caso verdadeiro, simula uma instalação pelo chkCACIC...
     if  ((GetValorDatMemoria('Configs.TE_SERV_UPDATES'              , v_tstrCipherOpened) = '') or
-        (GetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES', v_tstrCipherOpened) = '') or
-        (GetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'  , v_tstrCipherOpened) = '') or
-        (GetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'         , v_tstrCipherOpened) = '') or
-        (GetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'        , v_tstrCipherOpened) = '') or
-        (GetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'     , v_tstrCipherOpened) = '') or
-        (CountUPD > 0)) and
-        (GetValorDatMemoria('Configs.ID_FTP', v_tstrCipherOpened) = '') then
+         (GetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES', v_tstrCipherOpened) = '') or
+         (GetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'  , v_tstrCipherOpened) = '') or
+         (GetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'         , v_tstrCipherOpened) = '') or
+         (GetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'        , v_tstrCipherOpened) = '') or
+         (GetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'     , v_tstrCipherOpened) = '') or
+         (CountUPD > 0)) and
+         (GetValorDatMemoria('Configs.ID_FTP', v_tstrCipherOpened) = '') then
         Begin
           log_DEBUG('Preparando contato com módulo Gerente WEB para Downloads.');
           v_acao_gercols := 'Contactando o módulo Gerente WEB: get_config.php...';
@@ -2392,6 +2425,13 @@ Begin
              // Request_SVG.Values['te_tripa_perfis']       := strTripa;
              // Proposital, para forçar a chegada dos perfis, solução temporária...
              Request_SVG.Values['te_tripa_perfis']       := StringReplace(EnCrypt('',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+
+             // Gero e armazeno uma palavra-chave e a envio ao Gerente WEB para atualização no BD.
+             // Essa palavra-chave será usada para o acesso ao Agente Principal
+             strAux := GeraPalavraChave;
+
+             SetValorDatMemoria('Configs.te_palavra_chave',strAux, v_tstrCipherOpened);
+             Request_SVG.Values['te_palavra_chave']       := EnCrypt(strAux,l_cs_compress);
              v_te_serv_cacic := GetValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened);
 
              strRetorno := ComunicaServidor('get_config.php', Request_SVG, v_mensagem_log);
@@ -2967,16 +3007,6 @@ Begin
 
                     if (GetValorDatMemoria('Col_Anvi.nada',v_tstrCipherOpened1)='') then
                       Begin
-
-                        // Dados para uso do Gerente WEB...
-                        //Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
-                        //Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR',v_tstrCipherOpened),l_cs_compress);
-
                         // Preparação para envio...
                         Request_Ger_Cols.Values['nu_versao_engine' ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Anvi.nu_versao_engine' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
                         Request_Ger_Cols.Values['nu_versao_pattern'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Anvi.nu_versao_pattern',v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
@@ -3027,15 +3057,6 @@ Begin
 
                     if (GetValorDatMemoria('Col_Comp.nada',v_tstrCipherOpened1)='') then
                       Begin
-                        // Dados para uso do Gerente WEB...
-                        //Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
-                        //Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR',v_tstrCipherOpened),l_cs_compress);
-
                         // Preparação para envio...
                         Request_Ger_Cols.Values['CompartilhamentosLocais'] := StringReplace(EnCrypt(StringReplace(GetValorDatMemoria('Col_Comp.UVC',v_tstrCipherOpened1),'\','<BarrInv>',[rfReplaceAll]),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
                         if v_Debugs then
@@ -3083,15 +3104,6 @@ Begin
 
                     if (GetValorDatMemoria('Col_Hard.nada',v_tstrCipherOpened1)='') then
                       Begin
-                        // Dados para uso do Gerente WEB...
-                        //Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
-                        //Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR',v_tstrCipherOpened),l_cs_compress);
-
                         // Preparação para envio...
                         Request_Ger_Cols.Values['te_Tripa_TCPIP'          ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_Tripa_TCPIP'          ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
                         Request_Ger_Cols.Values['te_Tripa_CPU'            ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_Tripa_CPU'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
@@ -3153,15 +3165,6 @@ Begin
 
                     if (GetValorDatMemoria('Col_Patr.nada',v_tstrCipherOpened1)='') then
                       Begin
-                        // Dados para uso do Gerente WEB...
-                        //Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
-                        //Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR',v_tstrCipherOpened),l_cs_compress);
-
                         // Preparação para envio...
                         Request_Ger_Cols.Values['id_unid_organizacional_nivel1']  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1'  ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
                         Request_Ger_Cols.Values['id_unid_organizacional_nivel1a'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1a' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
@@ -3225,15 +3228,6 @@ Begin
 
                     if (GetValorDatMemoria('Col_Moni.nada',v_tstrCipherOpened1)='') then
                       Begin
-                        // Dados para uso do Gerente WEB...
-                        //Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
-                        //Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR',v_tstrCipherOpened),l_cs_compress);
-
                         // Preparação para envio...
                         Request_Ger_Cols.Values['te_tripa_monitorados'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Moni.UVC',v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
 
@@ -3279,15 +3273,6 @@ Begin
 
                     if (GetValorDatMemoria('Col_Soft.nada',v_tstrCipherOpened1)='') then
                       Begin
-                        // Dados para uso do Gerente WEB...
-                        //Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
-                        //Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR',v_tstrCipherOpened),l_cs_compress);
-
                         // Preparação para envio...
                         Request_Ger_Cols.Values['te_versao_bde'           ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_bde'           ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
                         Request_Ger_Cols.Values['te_versao_dao'           ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_dao'           ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
@@ -3343,15 +3328,6 @@ Begin
 
                     if (GetValorDatMemoria('Col_Undi.nada',v_tstrCipherOpened1)='') then
                       Begin
-                        // Dados para uso do Gerente WEB...
-                        //Request_Ger_Cols.Values['te_node_address'   ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_so'             ] := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_so'             ] := EnCrypt(v_te_so,l_cs_compress);
-                        //Request_Ger_Cols.Values['te_ip'             ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['id_ip_rede'        ] := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_workgroup'      ] := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      ,v_tstrCipherOpened),l_cs_compress);
-                        //Request_Ger_Cols.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR',v_tstrCipherOpened),l_cs_compress);
-
                         // Preparação para envio...
                         Request_Ger_Cols.Values['UnidadesDiscos'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Undi.UVC',v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
 

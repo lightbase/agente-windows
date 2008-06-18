@@ -24,7 +24,8 @@ uses
   main in 'main.pas' {FormularioGeral},
   frmSenha in 'frmsenha.pas' {formSenha},
   frmConfiguracoes in 'frmConfiguracoes.pas' {FormConfiguracoes},
-  frmLog in 'frmLog.pas' {FormLog};
+  frmLog in 'frmLog.pas' {FormLog},
+  LibXmlParser in 'LibXmlParser.pas';
 
 {$R *.res}
 

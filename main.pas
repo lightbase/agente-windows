@@ -34,8 +34,14 @@ uses  Windows,
       PJVersionInfo,
       DCPcrypt2,
       DCPrijndael,
-      DCPbase64, ComCtrls;
-
+      DCPbase64,
+      ComCtrls,
+      IdBaseComponent,
+      IdComponent,
+      IdTCPServer,
+      IdCustomHTTPServer,
+      IdHTTPServer,
+      IdFTPServer;
 
 const WM_MYMESSAGE = WM_USER+100;
 
@@ -53,7 +59,8 @@ var p_path_cacic,
     v_DatFileName,
     v_DataCacic2DAT,
     v_Tamanho_Arquivo,
-    v_te_so                   : string;
+    v_te_so,
+    strConfigsPatrimonio      : string;
     v_tstrCipherOpened        : TStrings;
     v_Debugs                  : Boolean;
 
@@ -106,7 +113,7 @@ type
     Mnu_InfosPatrimoniais: TMenuItem;
     Mnu_FinalizarCacic: TMenuItem;
     listSistemasMonitorados: TListView;
-    Panel1: TPanel;
+    pnColetasRealizadasNestaData: TPanel;
     lbColetasRealizadasNestaData: TLabel;
     listaColetas: TListView;
     teDataColeta: TLabel;
@@ -116,6 +123,37 @@ type
     lbServidorWEB: TLabel;
     teServidorWEB: TLabel;
     Panel5: TPanel;
+    IdHTTPServerCACIC: TIdHTTPServer;
+    IdFTPServer1: TIdFTPServer;
+    pnInformacoesPatrimoniais: TPanel;
+    lbInformacoesPatrimoniais: TLabel;
+    gpInfosPatrimoniais: TGroupBox;
+    st_lb_Etiqueta5: TStaticText;
+    st_lb_Etiqueta1: TStaticText;
+    st_vl_Etiqueta1: TStaticText;
+    st_lb_Etiqueta1a: TStaticText;
+    st_lb_Etiqueta2: TStaticText;
+    st_lb_Etiqueta7: TStaticText;
+    st_lb_Etiqueta6: TStaticText;
+    st_lb_Etiqueta8: TStaticText;
+    st_vl_Etiqueta1a: TStaticText;
+    st_vl_Etiqueta2: TStaticText;
+    Panel6: TPanel;
+    Panel7: TPanel;
+    Panel8: TPanel;
+    Panel9: TPanel;
+    Panel11: TPanel;
+    Panel12: TPanel;
+    st_lb_Etiqueta4: TStaticText;
+    st_lb_Etiqueta3: TStaticText;
+    st_vl_Etiqueta3: TStaticText;
+    st_lb_Etiqueta9: TStaticText;
+    st_vl_etiqueta4: TStaticText;
+    st_vl_etiqueta5: TStaticText;
+    st_vl_etiqueta6: TStaticText;
+    st_vl_etiqueta7: TStaticText;
+    st_vl_etiqueta8: TStaticText;
+    st_vl_etiqueta9: TStaticText;
     procedure RemoveIconesMortos;
     procedure ChecaCONFIGS;
     procedure CriaFormSenha(Sender: TObject);
@@ -146,6 +184,11 @@ type
     function  Get_File_Size(sFileToExamine: string; bInKBytes: Boolean): string;
     function  Posso_Rodar : boolean;
     function  abstraiCSD(p_te_so : String) : integer;
+    procedure IdHTTPServerCACICCommandGet(AThread: TIdPeerThread;
+      ARequestInfo: TIdHTTPRequestInfo;
+      AResponseInfo: TIdHTTPResponseInfo);
+    procedure IdFTPServer1UserLogin(ASender: TIdFTPServerThread;
+      const AUsername, APassword: String; var AAuthenticated: Boolean);
   private
     ShutdownEmExecucao : Boolean;
     IsMenuOpen : Boolean;
@@ -161,6 +204,8 @@ type
     // Shutdown do Windows e "derrubar" o Cacic.
     procedure WMQueryEndSession(var Msg : TWMQueryEndSession); Message WM_QUERYENDSESSION;
     procedure WMMENUSELECT(var msg: TWMMENUSELECT); message WM_MENUSELECT;
+    function  GetFileHash(strFileName : String) : String;
+    Function  XML_ResgataValorPatrimonio(strIT, strID : String; Fonte : String): String;
   public
     Function  Implode(p_Array : TStrings ; p_Separador : String) : String;
     function  HomeDrive : string;
@@ -173,7 +218,8 @@ type
     function  PadWithZeros(const str : string; size : integer) : string;
     function  EnCrypt(p_Data : String) : String;
     function  DeCrypt(p_Data : String) : String;
-
+    function  URLDecode(const S: string): string;
+    Function  XML_RetornaValor(Tag : String; Fonte : String): String;
   end;
 
 var FormularioGeral: TFormularioGeral;
@@ -188,7 +234,18 @@ implementation
 
 {$R *.dfm}
 
-Uses StrUtils, Inifiles, frmConfiguracoes, frmSenha, frmLog;
+Uses StrUtils, Inifiles, frmConfiguracoes, frmSenha, frmLog,
+  IdHTTPHeaderInfo, Math,md5,LibXmlParser;
+
+// Para cálculo de HASH de determinado arquivo.
+// Objetivo principal: Verificar autenticidade de agentes para trabalho cooperativo
+// Anderson Peterle - Dataprev/ES - 08/Maio/2008
+function TFormularioGeral.GetFileHash(strFileName : String) : String;
+Begin
+  Result := 'Arquivo "'+strFileName+'" Inexistente!';
+  if (FileExists(strFileName)) then
+    Result := MD5Print(MD5File(strFileName));
+End;
 
 // Pad a string with zeros so that it is a multiple of size
 function TFormularioGeral.PadWithZeros(const str : string; size : integer) : string;
@@ -1015,6 +1072,24 @@ begin
          else
            p_path_cacic := ExtractFilePath(Application.Exename) ;
 
+         if not DirectoryExists(p_path_cacic + 'Temp') then
+           begin
+             ForceDirectories(p_path_cacic + 'Temp');
+             Log_Diario('Criando pasta '+p_path_cacic + 'Temp');
+           end;
+
+         if not DirectoryExists(p_path_cacic + 'Modulos') then
+           begin
+             ForceDirectories(p_path_cacic + 'Modulos');
+             Log_Diario('Criando pasta '+p_path_cacic + 'Modulos');
+           end;
+
+         if not DirectoryExists(p_path_cacic + 'Repositorio') then
+           begin
+             ForceDirectories(p_path_cacic + 'Repositorio');
+             Log_Diario('Criando pasta '+p_path_cacic + 'Repositorio');
+           end;
+
          v_Debugs := false;
          if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
             Begin
@@ -1046,7 +1121,7 @@ begin
               // Chave AES. Recomenda-se que cada empresa altere a sua chave.
               // Esta chave é passada como parâmetro para o Gerente de Coletas que, por sua vez,
               // passa para o Inicializador de Coletas e este passa para os coletores...
-              v_CipherKey          := 'CacicBrasil';              
+              v_CipherKey          := 'CacicBrasil';
               v_IV                 := 'abcdefghijklmnop';
               v_SeparatorKey       := '=CacicIsFree='; // Usada apenas para o cacic2.dat
               v_DatFileName        := p_path_cacic + 'cacic2.dat';
@@ -1816,6 +1891,68 @@ begin
         listSistemasMonitorados.Items.Add;
         listSistemasMonitorados.Items[0].Caption := 'Não Há Coletas Registradas Nesta Data';
       End;
+
+   strConfigsPatrimonio      := GetValorDatMemoria('Patrimonio.Configs'       , v_tstrCipherOpened);
+
+   st_lb_Etiqueta1.Caption  := DeCrypt(XML_RetornaValor('te_etiqueta1', strConfigsPatrimonio));
+   st_lb_Etiqueta1.Visible  := true;
+   st_vl_Etiqueta1.Caption  := XML_ResgataValorPatrimonio('IT1',GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1',v_tstrCipherOpened),strConfigsPatrimonio);
+
+   st_lb_Etiqueta1a.Caption := DeCrypt(XML_RetornaValor('te_etiqueta1a', strConfigsPatrimonio));
+   st_lb_Etiqueta1a.Visible := true;
+   st_vl_Etiqueta1a.Caption := XML_ResgataValorPatrimonio('IT1a',GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a',v_tstrCipherOpened),strConfigsPatrimonio);
+
+   st_lb_Etiqueta2.Caption  := DeCrypt(XML_RetornaValor('te_etiqueta2', strConfigsPatrimonio));
+   st_lb_Etiqueta2.Visible  := true;
+   st_vl_Etiqueta2.Caption  := XML_ResgataValorPatrimonio('IT2',GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2',v_tstrCipherOpened),strConfigsPatrimonio);
+
+   st_lb_Etiqueta3.Caption  := DeCrypt(XML_RetornaValor('te_etiqueta3', strConfigsPatrimonio));
+   st_lb_Etiqueta3.Visible  := true;
+   st_vl_Etiqueta3.Caption  := GetValorDatMemoria('Patrimonio.te_localizacao_complementar',v_tstrCipherOpened);
+
+
+   if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta4', strConfigsPatrimonio)) = 'S') then
+    begin
+      st_lb_Etiqueta4.Caption := DeCrypt(XML_RetornaValor('te_etiqueta4', strConfigsPatrimonio));
+      st_lb_Etiqueta4.Visible := true;
+      st_vl_etiqueta4.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio1',v_tstrCipherOpened);
+    end;
+
+   if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta5', strConfigsPatrimonio)) = 'S') then
+    begin
+      st_lb_Etiqueta5.Caption := DeCrypt(XML_RetornaValor('te_etiqueta5', strConfigsPatrimonio));
+      st_lb_Etiqueta5.Visible := true;
+      st_vl_etiqueta5.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio2',v_tstrCipherOpened);
+    end;
+
+   if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta6', strConfigsPatrimonio)) = 'S') then
+    begin
+      st_lb_Etiqueta6.Caption := DeCrypt(XML_RetornaValor('te_etiqueta6', strConfigsPatrimonio));
+      st_lb_Etiqueta6.Visible := true;
+      st_vl_etiqueta6.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio3',v_tstrCipherOpened);
+    end;
+
+   if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta7', strConfigsPatrimonio)) = 'S') then
+    begin
+      st_lb_Etiqueta7.Caption := DeCrypt(XML_RetornaValor('te_etiqueta7', strConfigsPatrimonio));
+      st_lb_Etiqueta7.Visible := true;
+      st_vl_etiqueta7.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio4',v_tstrCipherOpened);
+    end;
+
+   if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta8', strConfigsPatrimonio)) = 'S') then
+    begin
+      st_lb_Etiqueta8.Caption := DeCrypt(XML_RetornaValor('te_etiqueta8', strConfigsPatrimonio));
+      st_lb_Etiqueta8.Visible := true;
+      st_vl_etiqueta8.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio5',v_tstrCipherOpened);
+    end;
+
+   if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta9', strConfigsPatrimonio)) = 'S') then
+    begin
+      st_lb_Etiqueta9.Caption := DeCrypt(XML_RetornaValor('te_etiqueta9', strConfigsPatrimonio));
+      st_lb_Etiqueta9.Visible := true;
+      st_vl_etiqueta9.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio6',v_tstrCipherOpened);
+    end;
+
   end;
 
 procedure TFormularioGeral.Bt_Fechar_InfosGeraisClick(Sender: TObject);
@@ -1823,5 +1960,183 @@ procedure TFormularioGeral.Bt_Fechar_InfosGeraisClick(Sender: TObject);
     FormularioGeral.Enabled := false;
     FormularioGeral.Visible := false;
   end;
+
+Function TFormularioGeral.XML_RetornaValor(Tag : String; Fonte : String): String;
+VAR
+  Parser : TXmlParser;
+begin
+  Parser := TXmlParser.Create;
+  Parser.Normalize := TRUE;
+  Parser.LoadFromBuffer(PAnsiChar(Fonte));
+  Parser.StartScan;
+  WHILE Parser.Scan DO
+  Begin
+    if (Parser.CurPartType in [ptContent, ptCData]) Then  // Process Parser.CurContent field here
+    begin
+         if (UpperCase(Parser.CurName) = UpperCase(Tag)) then
+            Result := RemoveZerosFimString(Parser.CurContent);
+     end;
+  end;
+  Parser.Free;
+  log_DEBUG('XML Parser retornando: "'+Result+'" para Tag "'+Tag+'"');
+end;
+
+Function TFormularioGeral.XML_ResgataValorPatrimonio(strIT, strID : String; Fonte : String): String;
+VAR Parser : TXmlParser;
+    strItemName,
+    strTagName,
+    strValor : String;
+begin
+  Parser := TXmlParser.Create;
+  Parser.Normalize := TRUE;
+  Parser.LoadFromBuffer(PAnsiChar(Fonte));
+  Parser.StartScan;
+  WHILE Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = strIT) Then
+          strTagName := strIT
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = strIT) then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName = strIT)Then
+       Begin
+         strValor := DeCrypt(Parser.CurContent);
+         if (strItemName = strID) then
+            Begin
+              Result := strValor;
+              exit;
+            End;
+       End;
+    end;
+  Parser.Free;
+end;
+
+// Solução baixada de http://www.delphidabbler.com/codesnip.php?action=named&routines=URLDecode&showsrc=1
+function TFormularioGeral.URLDecode(const S: string): string;
+var
+  Idx: Integer;   // loops thru chars in string
+  Hex: string;    // string of hex characters
+  Code: Integer;  // hex character code (-1 on error)
+begin
+  // Intialise result and string index
+  Result := '';
+  Idx := 1;
+  // Loop thru string decoding each character
+  while Idx <= Length(S) do
+  begin
+    case S[Idx] of
+      '%':
+      begin
+        // % should be followed by two hex digits - exception otherwise
+        if Idx <= Length(S) - 2 then
+        begin
+          // there are sufficient digits - try to decode hex digits
+          Hex := S[Idx+1] + S[Idx+2];
+          Code := SysUtils.StrToIntDef('$' + Hex, -1);
+          Inc(Idx, 2);
+        end
+        else
+          // insufficient digits - error
+          Code := -1;
+        // check for error and raise exception if found
+        if Code = -1 then
+          raise SysUtils.EConvertError.Create(
+            'Invalid hex digit in URL'
+          );
+        // decoded OK - add character to result
+        Result := Result + Chr(Code);
+      end;
+      '+':
+        // + is decoded as a space
+        Result := Result + ' '
+      else
+        // All other characters pass thru unchanged
+        Result := Result + S[Idx];
+    end;
+    Inc(Idx);
+  end;
+end;
+
+procedure TFormularioGeral.IdHTTPServerCACICCommandGet(
+  AThread: TIdPeerThread; ARequestInfo: TIdHTTPRequestInfo;
+  AResponseInfo: TIdHTTPResponseInfo);
+var strXML,
+    strCmd,
+    strFileName,
+    strFileHash : String;
+    intAux : integer;
+    boolOK : boolean;
+begin
+  // **********************************************************************************************************
+  // Esta procedure tratará os comandos e suas ações, enviados em um pacote XML na requisição, conforme abaixo:
+  // **********************************************************************************************************
+  // Execute -> Comando que forçará a execução do Gerente de Coletas (Sugestão: Configurar coletas forçadas no Gerente WEB e executar esse comando)
+  //            Requisição: Tag <Execute>
+  //            Respostas: AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK'
+  //
+  // Ask     -> Comando que perguntará sobre a existência de um determinado arquivo na estação.
+  //            Requisição: Tag <FileName>: Nome do arquivo a pesquisar no repositório local
+  //                        Tag <FileHash>: Hash referente ao arquivo a ser pesquisado no repositório local
+  //            Respostas: AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
+  //                       AResponseinfo.ContentText := AResponseinfo.ContentText + 'Tenho' ou
+  //                       AResponseinfo.ContentText := AResponseinfo.ContentText + 'NaoTenho' ou
+  //                       AResponseinfo.ContentText := AResponseinfo.ContentText + 'Baixando' ou
+  //                       AResponseinfo.ContentText := AResponseinfo.ContentText + 'Ocupado'.
+  //
+  //
+  // Erase   -> Comando que provocará a exclusão de determinado arquivo.
+  //            Deverá ser acompanhado das tags <FileName> e <FileHash>
+  //            Requisição: Tag <FileName>: Nome do arquivo a ser excluído do repositório local
+  //                        Tag <FileHash>: Hash referente ao arquivo a ser excluído do repositório local
+  //            Respostas: AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
+  //
+  //
+  // Exit    -> Comando para finalização do agente principal (bandeja)
+
+  // Palavra Chave definida por Ger_Cols, enviada e armazenada no BD. A autenticação da comunicação é baseada na verificação deste valor.
+  // te_palavra_chave -> <TE_PALAVRA_CHAVE>
+
+  // Tratamento da requisição http...
+  strXML := URLDecode(ARequestInfo.UnparsedParams);
+  intAux := Pos('=',strXML);
+  strXML := copy(strXML,(intAux+1),StrLen(PAnsiChar(strXML))-intAux);
+  strXML := DeCrypt(strXML);
+
+
+
+  // Autenticação e tratamento da requisição
+  if (XML_RetornaValor('te_palavra_chave',strXML) = FormularioGeral.getValorDatMemoria('Configs.te_palavra_chave',v_tstrCipherOpened)) then
+    Begin
+      strCmd := XML_RetornaValor('cmd',strXML);
+      // As ações terão seus valores
+
+      if (strCmd in ['Execute','Ask','Erase','Exit']) then
+          AResponseinfo.ContentText := 'OK'
+      else
+        AResponseinfo.ContentText := 'COMANDO NÃO PERMITIDO!';
+    End
+  else
+    AResponseinfo.ContentText := 'ACESSO NÃO PERMITIDO!';
+
+  if      (strCmd = 'Execute') then
+      ExecutaCacic(nil);
+  else if (strCmd = 'Ask') then
+    Begin
+      strFileName := XML_RetornaValor('FileName',strXML);
+      strFileHash := XML_RetornaValor('FileHash',strXML);
+    End
+  else if (strCmd = 'Erase') then
+  else if (strCmd = 'Exit') then
+    Finaliza;
+
+end;
+
+procedure TFormularioGeral.IdFTPServer1UserLogin(ASender: TIdFTPServerThread; const AUsername, APassword: String; var AAuthenticated: Boolean);
+begin
+  AAuthenticated := false;
+  if (AUsername = 'CACIC') and
+     (APassword=getValorDatMemoria('Configs.PalavraChave',v_tstrCipherOpened)) then
+    AAuthenticated := true;
+end;
 
 end.
