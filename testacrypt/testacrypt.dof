@@ -110,12 +110,12 @@ ActiveLang=
 ProjectLang=
 RootDir=C:\Arquivos de programas\Borland\Delphi7\Bin\
 [Version Info]
-IncludeVerInfo=0
+IncludeVerInfo=1
 AutoIncBuild=0
-MajorVer=1
-MinorVer=0
+MajorVer=2
+MinorVer=4
 Release=0
-Build=0
+Build=371
 Debug=0
 PreRelease=0
 Special=0
@@ -126,13 +126,13 @@ CodePage=1252
 [Version Info Keys]
 CompanyName=
 FileDescription=
-FileVersion=1.0.0.0
+FileVersion=2.4.0.371
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
 ProductName=
-ProductVersion=1.0.0.0
+ProductVersion=2.4.0.371
 Comments=
 [HistoryLists\hlDebugSourcePath]
 Count=1

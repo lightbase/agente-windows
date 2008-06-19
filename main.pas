@@ -2067,6 +2067,7 @@ var strXML,
     intAux : integer;
     boolOK : boolean;
 begin
+
   // **********************************************************************************************************
   // Esta procedure tratará os comandos e suas ações, enviados em um pacote XML na requisição, conforme abaixo:
   // **********************************************************************************************************
@@ -2110,7 +2111,10 @@ begin
       strCmd := XML_RetornaValor('cmd',strXML);
       // As ações terão seus valores
 
-      if (strCmd in ['Execute','Ask','Erase','Exit']) then
+      if (strCmd = 'Execute') or
+         (strCmd = 'Ask')     or
+         (strCmd = 'Erase')   or
+         (strCmd = 'Exit')    then
           AResponseinfo.ContentText := 'OK'
       else
         AResponseinfo.ContentText := 'COMANDO NÃO PERMITIDO!';
@@ -2119,7 +2123,7 @@ begin
     AResponseinfo.ContentText := 'ACESSO NÃO PERMITIDO!';
 
   if      (strCmd = 'Execute') then
-      ExecutaCacic(nil);
+      ExecutaCacic(nil)
   else if (strCmd = 'Ask') then
     Begin
       strFileName := XML_RetornaValor('FileName',strXML);
@@ -2128,7 +2132,6 @@ begin
   else if (strCmd = 'Erase') then
   else if (strCmd = 'Exit') then
     Finaliza;
-
 end;
 
 procedure TFormularioGeral.IdFTPServer1UserLogin(ASender: TIdFTPServerThread; const AUsername, APassword: String; var AAuthenticated: Boolean);
