@@ -2071,30 +2071,49 @@ begin
   // **********************************************************************************************************
   // Esta procedure tratará os comandos e suas ações, enviados em um pacote XML na requisição, conforme abaixo:
   // **********************************************************************************************************
-  // Execute -> Comando que forçará a execução do Gerente de Coletas (Sugestão: Configurar coletas forçadas no Gerente WEB e executar esse comando)
-  //            Requisição: Tag <Execute>
-  //            Respostas: AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK'
+  // Execute  -> Comando que forçará a execução do Gerente de Coletas (Sugestão: Configurar coletas forçadas no Gerente WEB e executar esse comando)
+  //             Requisição: Tag <Execute>
+  //             Respostas:  AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK'
   //
-  // Ask     -> Comando que perguntará sobre a existência de um determinado arquivo na estação.
-  //            Requisição: Tag <FileName>: Nome do arquivo a pesquisar no repositório local
-  //                        Tag <FileHash>: Hash referente ao arquivo a ser pesquisado no repositório local
-  //            Respostas: AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
-  //                       AResponseinfo.ContentText := AResponseinfo.ContentText + 'Tenho' ou
-  //                       AResponseinfo.ContentText := AResponseinfo.ContentText + 'NaoTenho' ou
-  //                       AResponseinfo.ContentText := AResponseinfo.ContentText + 'Baixando' ou
-  //                       AResponseinfo.ContentText := AResponseinfo.ContentText + 'Ocupado'.
-  //
-  //
-  // Erase   -> Comando que provocará a exclusão de determinado arquivo.
-  //            Deverá ser acompanhado das tags <FileName> e <FileHash>
-  //            Requisição: Tag <FileName>: Nome do arquivo a ser excluído do repositório local
-  //                        Tag <FileHash>: Hash referente ao arquivo a ser excluído do repositório local
-  //            Respostas: AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
+  // Ask      -> Comando que perguntará sobre a existência de um determinado arquivo na estação.
+  //             Requisição: Tag <FileName>: Nome do arquivo a pesquisar no repositório local
+  //                         Tag <FileHash>: Hash referente ao arquivo a ser pesquisado no repositório local
+  //             Respostas:  AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'Tenho' ou
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'NaoTenho' ou
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'Baixando' ou
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'Ocupado'.
   //
   //
-  // Exit    -> Comando para finalização do agente principal (bandeja)
+  // Erase    -> Comando que provocará a exclusão de determinado arquivo.
+  //             Deverá ser acompanhado das tags <FileName> e <FileHash>
+  //             Requisição: Tag <FileName>: Nome do arquivo a ser excluído do repositório local
+  //                         Tag <FileHash>: Hash referente ao arquivo a ser excluído do repositório local
+  //             Respostas:  AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'AcaoExecutada' ou
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'ArquivoNaoEncontrado' ou
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'EscritaNaoPermitida';
+  //
+  // Registry -> Comando que provocará ação no Registry de estações com MS-Windows.
+  //             Deverá ser acompanhado das tags <Path>, <Action>, <Condition> e <Value>
+  //             Requisição: Tag <Path>      : Caminho no Registry
+  //                         Tag <Action>    : Ação para execução
+  //                                           SAVE   => Salva o valor contido na tag <Value> de acordo com condição contida na tag <Condition>
+  //                                           ERASE  => Apaga a chave de acordo com condição contida na tag <Condition>
+  //                         Tag <Condition> : Condiçção para execução da ação
+  //                                           EQUAL  => Se o valor contido na tag <Value> for IGUAL     ao valor encontrado na chave
+  //                                           DIFFER => Se o valor contido na tag <Value> for DIFERENTE ao valor encontrado na chave
+  //                                           NONE   => Nenhuma condição, permitindo a execução da ação de forma incondicional
+  //                         Tag <Value>     : Valor a ser utilizado na ação
+  //             Respostas:  AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'AcaoExecutada' ou
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'ChaveNaoEncontrada' ou
+  //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'EscritaNaoPermitida';
+  //
+  // Exit     -> Comando para finalização do agente principal (bandeja)
 
   // Palavra Chave definida por Ger_Cols, enviada e armazenada no BD. A autenticação da comunicação é baseada na verificação deste valor.
+  // A geração da palavra chave dar-se-á a cada contato do Ger_Cols com o módulo Gerente WEB
   // te_palavra_chave -> <TE_PALAVRA_CHAVE>
 
   // Tratamento da requisição http...
@@ -2111,10 +2130,11 @@ begin
       strCmd := XML_RetornaValor('cmd',strXML);
       // As ações terão seus valores
 
-      if (strCmd = 'Execute') or
-         (strCmd = 'Ask')     or
-         (strCmd = 'Erase')   or
-         (strCmd = 'Exit')    then
+      if (strCmd = 'Execute')   or
+         (strCmd = 'Ask')       or
+         (strCmd = 'Erase')     or
+         (strCmd = 'Registry')  or
+         (strCmd = 'Exit')      then
           AResponseinfo.ContentText := 'OK'
       else
         AResponseinfo.ContentText := 'COMANDO NÃO PERMITIDO!';
@@ -2122,15 +2142,16 @@ begin
   else
     AResponseinfo.ContentText := 'ACESSO NÃO PERMITIDO!';
 
-  if      (strCmd = 'Execute') then
+  if      (strCmd = 'Execute')  then
       ExecutaCacic(nil)
-  else if (strCmd = 'Ask') then
+  else if (strCmd = 'Ask')      then
     Begin
       strFileName := XML_RetornaValor('FileName',strXML);
       strFileHash := XML_RetornaValor('FileHash',strXML);
     End
-  else if (strCmd = 'Erase') then
-  else if (strCmd = 'Exit') then
+  else if (strCmd = 'Erase')    then
+  else if (strCmd = 'Registry') then
+  else if (strCmd = 'Exit')     then
     Finaliza;
 end;
 
