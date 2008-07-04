@@ -540,8 +540,11 @@ begin
              IntToStr(minorVer)   +
              ifThen(CSDVersion='','','.'+CSDVersion);
 
+  {
+  Forço o envio do identificador interno
   if (Result = 0) then
-    Result := abstraiCSD(v_te_so);
+  }
+  Result := abstraiCSD(v_te_so);
 end;
 
 procedure Matar(v_dir,v_files: string);
