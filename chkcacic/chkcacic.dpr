@@ -16,14 +16,29 @@ Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 *)
 program chkcacic;
 uses
-  Forms,
+  Forms, windows,
   main in 'main.pas',
-  FormConfig in 'FormConfig.pas' {Configs};
+  FormConfig in 'FormConfig.pas' {Configs},
+  CACIC_Library in '..\CACIC_Library.pas';
 
 {$R *.res}
 
+const
+  CACIC_APP_NAME = 'chkcacic';
+
+var
+  oCacic : TCACIC;
+
 begin
-  Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
-  Application.Run;
+   oCacic := TCACIC.Create();
+
+   if( not oCacic.isAppRunning( CACIC_APP_NAME ) )
+     then begin
+        Application.Initialize;
+        Application.CreateForm(TForm1, Form1);
+        Application.Run;
+     end;
+
+   oCacic.Free();
+
 end.

@@ -82,7 +82,8 @@ uses  Windows,
       IdFTP,
       Tlhelp32,
       dialogs,
-      ExtCtrls;
+      ExtCtrls,
+      CACIC_Library;
 
 var   v_ip_serv_cacic,
       v_cacic_dir,
@@ -108,6 +109,9 @@ var   v_ip_serv_cacic,
       v_Debugs     : boolean;
 
 var   v_tstrCipherOpened        : TStrings;
+
+var
+  g_oCacic: TCACIC;  /// Biblioteca CACIC_Library
 
 // Constantes a serem usadas pela função IsAdmin...
 const constSECURITY_NT_AUTHORITY: TSIDIdentifierAuthority = (Value: (0, 0, 0, 0, 0, 5));
@@ -309,12 +313,11 @@ var IdHTTP2: TIdHTTP;
     Request_Config  : TStringList;
     Response_Config : TStringStream;
 begin
-  GetWinVer(); // Para obtenção de "te_so"
   // Envio notificação de insucesso para o Módulo Gerente Centralizado
   Request_Config                                 := TStringList.Create;
   Request_Config.Values['cs_indicador']          := strIndicador;
   Request_Config.Values['id_usuario']            := GetNetworkUserName();
-  Request_Config.Values['te_so']                 := v_te_so;
+  Request_Config.Values['te_so']                 := g_oCacic.getWindowsStrId();
   Response_Config                                := TStringStream.Create('');
   Try
     Try
@@ -595,7 +598,8 @@ var RegEditSet: TRegistry;
 begin
     ListaAuxSet := Explode(Chave, '\');
     strRootKey := ListaAuxSet[0];
-    For I := 1 To ListaAuxSet.Count - 2 Do strKey := strKey + ListaAuxSet[I] + '\';
+    For I := 1 To ListaAuxSet.Count - 2 do
+      strKey := strKey + ListaAuxSet[I] + '\';
     strValue := ListaAuxSet[ListaAuxSet.Count - 1];
 
     RegEditSet := TRegistry.Create;
@@ -1016,7 +1020,7 @@ procedure LiberaFireWall(p_objeto:string);
 begin
   LogDebug('Rotina para Liberação de FireWall...');
   Try
-    if (abstraiCSD(v_te_so) >= 260) then // Se VISTA...
+    if (g_oCacic.isWindowsGEVista()) then // Se >= WinVISTA...
       Begin
         if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll])))='') then
           Begin
@@ -1121,8 +1125,7 @@ begin
         Begin
           LogDebug('Exclusão não efetuada! Provavelmente já esteja sendo executado...');
           LogDebug('Tentarei finalizar Tarefa/Processo...');
-          if ((intWinVer <> 0) and (intWinVer <= 5))  or
-             (abstraiCSD(v_te_so) < 250) then // Menor que NT Like
+          if (not g_oCacic.isWindowsNTPlataform()) then // Menor que NT Like
             KillTask(SearchRec.Name)
           else
             KillProcess(FindWindow(PChar(SearchRec.Name),nil));
@@ -1137,10 +1140,8 @@ end;
 
 function Posso_Rodar_CACIC : boolean;
 Begin
-  result := false;
-
   // Se o aguarde_CACIC.txt existir é porque refere-se a uma versão mais atual: 2.2.0.20 ou maior
-  if  (FileExists(v_cacic_dir + 'aguarde_CACIC.txt')) then
+  if  (FileExists(g_oCacic.getCacicPath() + '\aguarde_CACIC.txt')) then
     Begin
       // Se eu conseguir matar o arquivo abaixo é porque não há outra sessão deste agente aberta... (POG? Nããão!  :) )
       Matar(v_cacic_dir,'aguarde_CACIC.txt');
@@ -1312,8 +1313,6 @@ begin
   //v_cacic_dir                     := 'Cacic';
   //v_exibe_informacoes             := 'N'; // Manter o "N", pois, esse mesmo ChkCacic será colocado em NetLogons!
 
-
-
   if not bool_CommandLine then
     Begin
       If not (FileExists(ExtractFilePath(Application.Exename) + '\chkcacic.ini')) then
@@ -1328,6 +1327,9 @@ begin
       v_te_instala_informacoes_extras := StringReplace(GetValorChaveRegIni('Cacic2', 'te_instala_informacoes_extras', ExtractFilePath(Application.Exename) + '\chkcacic.ini'),'*13*10',#13#10,[rfReplaceAll]);
     End;
 
+  g_oCacic := TCACIC.Create();
+  g_oCacic.setCacicPath(v_home_drive + v_cacic_dir);
+
   Dir                             := v_home_drive + v_cacic_dir; // Ex.: c:\cacic\
 
   if DirectoryExists(Dir + '\Temp\Debugs') then
@@ -1341,17 +1343,13 @@ begin
 
   intWinVer := GetWinVer;
 
-  // Verifico se o S.O. é NT Like e se o Usuário está com privilégio administrativo...
-  if (((intWinVer <> 0) and (intWinVer >= 6)) or
-      (abstraiCSD(v_te_so) >= 250)) and
-     not IsAdmin then // Se NT/2000/XP/...
-    Begin
+  // Verifica se o S.O. é NT Like e se o Usuário está com privilégio administrativo...
+  if (g_oCacic.isWindowsNTPlataform()) and (not g_oCacic.isWindowsAdmin()) then begin // Se NT/2000/XP/...
       if (v_exibe_informacoes = 'S') then
         MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
       ComunicaInsucesso('0'); // O indicador "0" (zero) sinalizará falta de privilégio na estação
-    End
-  else
-    Begin
+  end
+  else begin
       LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
       LogDebug(':::::::::::::: OBTENDO VALORES DO "chkcacic.ini" ::::::::::::::');
       LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
@@ -1368,12 +1366,11 @@ begin
       v_DatFileName  := Dir + '\cacic2.dat';
       v_tstrCipherOpened := CipherOpen(v_DatFileName);
 
-      if ((intWinVer <> 0) and (intWinVer >= 8)) or
-         (abstraiCSD(v_te_so) >= 250) then // Se >= Maior ou Igual ao WinXP...
+      if (g_oCacic.isWindowsGEXP()) then // Se >= Maior ou Igual ao WinXP...
         Begin
           Try
             // Libero as policies do FireWall Interno
-            if (abstraiCSD(v_te_so) >= 260) then // Maior ou Igual ao VISTA...
+            if (g_oCacic.isWindowsGEVista()) then // Maior ou Igual ao VISTA...
               Begin
                 Try
                   Begin
@@ -1426,7 +1423,13 @@ begin
               MostraFormConfigura;
           End;
 
-      if (ParamCount > 0) and (LowerCase(Copy(ParamStr(1),1,7)) = '/config') then application.Terminate;
+      if (ParamCount > 0) and (LowerCase(Copy(ParamStr(1),1,7)) = '/config') then begin
+         try
+             g_oCacic.Free();
+         except
+         end;
+         Application.Terminate;
+      end;
 
       // Verifico a existência do diretório configurado para o Cacic, normalmente CACIC
       if not DirectoryExists(Dir) then
@@ -1519,8 +1522,7 @@ begin
 
       // Se NTFS em NT/2K/XP...
       // If NTFS on NT Like...
-      if ((intWinVer <> 0) and (intWinVer > 5)) or
-          (abstraiCSD(v_te_so) >= 250) then
+      if (g_oCacic.isWindowsNTPlataform()) then
         Begin
           LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
           LogDebug('::::::: VERIFICANDO FILE SYSTEM E ATRIBUINDO PERMISSÕES :::::::');
@@ -1716,8 +1718,7 @@ begin
                    v_te_path_serv_updates,
                    v_exibe_informacoes);
 
-      if ((intWinVer <> 0) and (intWinVer >= 8)) or
-         (abstraiCSD(v_te_so) >= 250) then // Se >= WinXP...
+      if (g_oCacic.isWindowsGEXP()) then // Se >= WinXP...
         Begin
           Try
             // Acrescento o ChkSis e o Ger_Cols às exceções do FireWall nativo...
@@ -1806,6 +1807,10 @@ begin
   Except
     LogDiario('Falha na Instalação/Atualização');
   End;
+  try
+    g_oCacic.Free();
+  except
+  end;
   Application.Terminate;
 end;
 
@@ -1900,10 +1905,7 @@ begin
   Application.ShowMainForm:=false;
   v_Debugs := false;
 
-//  if (FindWindowByTitle('chksis') = 0) then
-      chkcacic;
-//  else
-//      LogDiario('Não executei devido execução em paralelo de "chksis"');
+  chkcacic;
 
   Application.Terminate;
 end;

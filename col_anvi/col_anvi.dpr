@@ -18,16 +18,18 @@ Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 program col_anvi;
 {$R *.res}
 
-uses  Windows,
-      classes,
-      sysutils,
-      Registry,
-      TLHELP32,
-      ShellAPI,
-      PJVersionInfo,
-      DCPcrypt2,
-      DCPrijndael,
-      DCPbase64;
+uses
+  Windows,
+  classes,
+  sysutils,
+  Registry,
+  TLHELP32,
+  ShellAPI,
+  PJVersionInfo,
+  DCPcrypt2,
+  DCPrijndael,
+  DCPbase64,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 var  p_path_cacic,
      v_CipherKey,
@@ -588,8 +590,17 @@ end;
 
 var tstrTripa1 : TStrings;
     intAux     : integer;
+const
+  CACIC_APP_NAME = 'col_anvi';
+
+var
+  oCacic : TCACIC;
+
 begin
-  if (ParamCount>0) then
+   oCacic := TCACIC.Create();
+
+   if( not oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+    if (ParamCount>0) then
     Begin
       For intAux := 1 to ParamCount do
         Begin
@@ -637,4 +648,5 @@ begin
              Halt(0);
           End;
     End;
+    oCacic.Free();
 end.

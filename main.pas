@@ -41,7 +41,8 @@ uses  Windows,
       IdTCPServer,
       IdCustomHTTPServer,
       IdHTTPServer,
-      IdFTPServer;
+      IdFTPServer,
+      CACIC_Library;
 
 const WM_MYMESSAGE = WM_USER+100;
 
@@ -471,13 +472,6 @@ begin
       log_DEBUG('Posição ['+inttostr(intAux)+']='+v_tstrCipherOpened[intAux]);
 
    try
-       {
-       v_Tamanho_Arquivo := Get_File_Size(v_DatFileName,true);
-
-       if (v_Tamanho_Arquivo = '0') or
-          (v_Tamanho_Arquivo = '-1') then FormularioGeral.Matar(p_path_cacic,'cacic2.dat');
-       }
-
        FileSetAttr (v_DatFileName,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
 
        log_DEBUG('Localizando arquivo: '+v_DatFileName);
@@ -486,16 +480,6 @@ begin
        log_DEBUG('Abrindo arquivo: '+v_DatFileName);
        ReWrite(v_DatFile); {Abre o arquivo texto}
        {$IOChecks on}
-       {
-       if (IOResult <> 0) then // Arquivo não existe, será recriado.
-          begin
-            if v_Debugs then log_DEBUG('Recriando arquivo: '+v_DatFileName);
-            Rewrite (v_DatFile);
-            if v_Debugs then log_DEBUG('Append(1) no arquivo: '+v_DatFileName);
-            Append(v_DatFile);
-          end
-       else
-       }
        log_DEBUG('Append(2) no arquivo: '+v_DatFileName);
        Append(v_DatFile);
        log_DEBUG('Criando vetor para criptografia.');
@@ -591,12 +575,6 @@ begin
         if Result.Count mod 2 = 0 then
             Result.Add('');
 
-        {
-        log_DEBUG(v_DatFileName+' aberto com sucesso!');
-        if v_Debugs then
-          for intAux := 0 to (v_tstrCipherOpened.Count-1) do
-            log_DEBUG('Posição ['+inttostr(intAux)+'] do MemoryDAT: '+Result[intAux]);
-        }
     End
   else log_DEBUG('Cacic2.dat ainda não alterado! Não foi necessário reabrí-lo.');
 end;
@@ -1040,16 +1018,17 @@ var strAux,
     intAux : integer;
     v_Aguarde : TextFile;
     v_SystemDrive : TStrings;
+    oCacic : TCACIC;
 begin
       // Não mostrar o formulário...
       Application.ShowMainForm:=false;
+      oCacic := TCACIC.Create;
+      oCacic.showTrayIcon(false);
 
       Try
          // De acordo com a versão do OS, determino o ShellCommand para chamadas externas.
-         if ((GetWinVer <> 0) and (GetWinVer > 5)) or
-              (abstraiCSD(v_te_so) >= 250) then //Se NT/2K/XP... then
+         if (oCacic.isWindowsNTPlataform()) then //Se NT/2K/XP... then
           Begin
-            //p_Shell_Command := GetEnvironmentVariable('SYSTEMROOT') + '\system32\cmd.exe /c '; //NT/2K/XP
             p_Shell_Path    := HomeDrive + '\system32\'; //NT/2K/XP
             p_Shell_Command := 'cmd.exe'; //NT/2K/XP
             strAux := HomeDrive + '\';  //Ex.: c:\windows\
@@ -1058,7 +1037,6 @@ begin
           Begin
             v_windir := GetEnvironmentVariable('windir');
             if (trim(v_windir) <> '') then v_windir := v_windir + '\';
-            //p_Shell_Command := v_windir + 'command.com /c ';
             p_Shell_Path    := v_windir;
             p_Shell_Command := 'command.com';
             strAux := GetEnvironmentVariable('windir') + '\';  //Ex.: c:\windows\
@@ -1206,7 +1184,7 @@ begin
               // Envia o ícone para a bandeja com HINT mostrando Versão...
               strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
               if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
-                strFraseVersao := strFraseVersao + #13#10 + 'IP: '+ getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
+                strFraseVersao := strFraseVersao + char(13) + char(10) + 'IP: '+ getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
               pnVersao.Caption := 'V. ' + getVersionInfo(ParamStr(0));
               InicializaTray(strFraseVersao);
               CipherClose;
@@ -1214,11 +1192,24 @@ begin
          else
             Begin
               log_DEBUG('Agente finalizado devido a concomitância de sessões...');
+
+              // Libera memoria referente ao objeto oCacic
+              try
+                oCacic.Free;
+              except
+              end;
+
               Finaliza;
             End;
       Except
         log_diario('PROBLEMAS NA INICIALIZAÇÃO (2)');
       End;
+
+      // Libera memoria referente ao objeto oCacic
+      try
+         oCacic.Free;
+      except
+      end;
 end;
 
 procedure TFormularioGeral.SetaVariaveisGlobais;
@@ -1545,58 +1536,7 @@ begin
                   Invoca_GerCols(nil,'UpdatePrincipal');
                   log_diario('Finalizando... (Atualização em aproximadamente 20 segundos).');
                   Finaliza;
-                  {
-                  // O método abaixo foi descartado devido à janela MS-DOS que em algumas máquinas
-                  // permaneciam abertas e minimizadas e, em alguns casos, escureciam totalmente a tela do usuário,
-                  // causando muito descontentamento!  :|
-                  FileSetAttr(p_path_cacic + 'cacic2.exe', 0);
-                  Batchfile := TStringList.Create;
-                  Batchfile.Add('@echo off');
-                  Batchfile.Add(':Label1');
-                  Batchfile.Add('del ' + p_path_cacic + 'cacic2.exe');
-                  Batchfile.Add('if Exist ' + p_path_cacic + 'cacic2.exe goto Label1');
-                  Batchfile.Add('move ' + p_path_cacic + 'temp\cacic2.exe ' + p_path_cacic + 'cacic2.exe');
-                  Batchfile.Add(p_path_cacic + 'cacic2.exe /atualizacao');
-                  Batchfile.SaveToFile(p_path_cacic + 'Temp\cacic2.bat');
-                  BatchFile.Free;
-                  log_diario('* Atualizando versão do módulo Principal');
-                  Shell_NotifyIcon(NIM_Delete,@NotifyStruc);
-                  Shell_NotifyIcon(NIM_MODIFY,@NotifyStruc);
-                  Executa(p_Shell_Path + p_Shell_Command + 'Temp\cacic2.bat /c',SW_HIDE);
-                  FreeMemory(0);
-                  Halt(0);
-                  }
                 End;
-
-                {
-                // Não usar VBS pois, o processo morre quando o CACIC é finalizado.
-                // E também pela dependência do WSH, certo?!!  :|
-                Begin
-                  main.frmMain.log_diario('* Atualizando versão do módulo Principal');
-                  FileSetAttr(p_path_cacic + 'cacic2.exe', 0);
-                  Batchfile := TStringList.Create;
-                  Batchfile.Add('Dim fso,fsoDEL,v_pausa,WshShell');
-                  Batchfile.Add('Set fsoDEL = CreateObject("Scripting.FileSystemObject")');
-                  Batchfile.Add('While (fsoDEL.FileExists("'+p_path_cacic+'cacic2.exe"))');
-                  Batchfile.Add('   fsoDEL.DeleteFile("'+p_path_cacic+'cacic2.exe")');
-                  Batchfile.Add('Wend');
-                  Batchfile.Add('Set fso = CreateObject("Scripting.FileSystemObject")');
-                  Batchfile.Add('fso.MoveFile ' + p_path_cacic + 'temp\cacic2.exe, "' + p_path_cacic + 'cacic2.exe"');
-                  Batchfile.Add('Set WshShell = WScript.CreateObject("WScript.Shell")');
-                  Batchfile.Add('WshShell.Run "' + p_path_cacic + 'cacic2.exe /atualizacao",10,FALSE');
-                  Batchfile.Add('For v_pausa = 1 to 5000:next');
-                  Batchfile.Add('WScript.Quit');
-                  Batchfile.SaveToFile(p_path_cacic + 'Temp\cacic2.vbs');
-                  Batchfile.SaveToFile(p_path_cacic + 'Temp\cacic21.vbs');
-                  BatchFile.Free;
-                  Executa_VBS('cacic2');
-                  Shell_NotifyIcon(NIM_Delete,@NotifyStruc);
-                  Shell_NotifyIcon(NIM_MODIFY,@NotifyStruc);
-                  FreeMemory(0);
-                  Halt(0);
-                  Application.Terminate;
-                End;
-              }
 
               // A existência de "temp\cacic2.bat" significa AutoUpdate já executado!
               // Essa verificação foi usada no modelo antigo de AutoUpdate e deve ser mantida

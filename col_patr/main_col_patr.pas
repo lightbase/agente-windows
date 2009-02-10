@@ -678,14 +678,6 @@ begin
     var_te_info_patrimonio6           := GetValorDatMemoria('Patrimonio.te_info_patrimonio6',v_tstrCipherOpened);
     if (var_te_info_patrimonio6='') then var_te_info_patrimonio6 := DeCrypt(XML.XML_RetornaValor('TE_INFO6', v_configs));
 
-    {
-    Try
-      id_unid_organizacional_nivel1.ItemIndex := id_unid_organizacional_nivel1.Items.IndexOf(RetornaValorVetorUON1(var_id_unid_organizacional_nivel1));
-      id_unid_organizacional_nivel1Change(Nil); // Para filtrar os valores do combo2 de acordo com o valor selecionado no combo1
-      id_unid_organizacional_nivel2.ItemIndex := id_unid_organizacional_nivel2.Items.IndexOf(RetornaValorVetorUON2(var_id_unid_organizacional_nivel1, var_id_unid_organizacional_nivel2));
-    Except
-    end;
-    }
     Try
       id_unid_organizacional_nivel1.ItemIndex := id_unid_organizacional_nivel1.Items.IndexOf(RetornaValorVetorUON1(var_id_unid_organizacional_nivel1));
       id_unid_organizacional_nivel1Change(Nil); // Para filtrar os valores do combo2 de acordo com o valor selecionado no combo1
@@ -725,52 +717,6 @@ var Parser   : TXmlParser;
     strTagName,
     strItemName  : string;
 begin
-{
-  Parser := TXmlParser.Create;
-  Parser.Normalize := True;
-  Parser.LoadFromBuffer(PAnsiChar(v_configs));
-  Parser.StartScan;
-  i := -1;
-  v_Tag := false;
-  While Parser.Scan and (UpperCase(Parser.CurName) <> 'IT2') DO
-  Begin
-     if ((Parser.CurPartType = ptStartTag) and (UpperCase(Parser.CurName) = 'IT1')) Then
-        Begin
-          v_Tag := true;
-          i := i + 1;
-          SetLength(VetorUON1, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
-        end
-     else if (Parser.CurPartType in [ptContent, ptCData]) and v_Tag Then
-          if      (UpperCase(Parser.CurName) = 'ID1') then VetorUON1[i].id1 := DeCrypt(Parser.CurContent)
-          else if (UpperCase(Parser.CurName) = 'NM1') then VetorUON1[i].nm1 := DeCrypt(Parser.CurContent);
-  end;
-
-  // Código para montar o combo 2
-  Parser.StartScan;
-
-  v_Tag := false;
-  i := -1;
-  While Parser.Scan DO
-  Begin
-     if ((Parser.CurPartType = ptStartTag) and (UpperCase(Parser.CurName) = 'IT2')) Then
-       Begin
-         v_Tag := TRUE;
-         i := i + 1;
-         SetLength(VetorUON2, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
-       end
-     else if (Parser.CurPartType in [ptContent, ptCData]) and v_Tag Then
-        if      (UpperCase(Parser.CurName) = 'ID1') then VetorUON2[i].id1 := DeCrypt(Parser.CurContent)
-        else if (UpperCase(Parser.CurName) = 'ID2') then VetorUON2[i].id2 := DeCrypt(Parser.CurContent)
-        else if (UpperCase(Parser.CurName) = 'NM2') then VetorUON2[i].nm2 := DeCrypt(Parser.CurContent);
-  end;
-  Parser.Free;
-  // Como os itens do combo1 nunca mudam durante a execução do programa (ao contrario do combo2), posso colocar o seu preenchimento aqui mesmo.
-  id_unid_organizacional_nivel1.Items.Clear;
-  For i := 0 to Length(VetorUON1) - 1 Do
-     id_unid_organizacional_nivel1.Items.Add(VetorUON1[i].nm1);
- }
-
-
   Parser := TXmlParser.Create;
   Parser.Normalize := True;
   Parser.LoadFromBuffer(PAnsiChar(v_Configs));
@@ -908,23 +854,6 @@ var i, j: Word;
     strAux,
     strIdUON1 : String;
 begin
-  {
-  // Filtro os itens do combo2, de acordo com o item selecionado no combo1
-  strAux := VetorUON1[id_unid_organizacional_nivel1.ItemIndex].id1;
-
-  id_unid_organizacional_nivel2.Items.Clear;
-  SetLength(VetorUON2Filtrado, 0);
-  For i := 0 to Length(VetorUON2) - 1 Do
-  Begin
-     if VetorUON2[i].id1 = strAux then
-     Begin
-        id_unid_organizacional_nivel2.Items.Add(VetorUON2[i].nm2);
-        j := Length(VetorUON2Filtrado);
-        SetLength(VetorUON2Filtrado, j + 1);
-        VetorUON2Filtrado[j] := VetorUON2[i].id2;
-     end;
-  end;
-  }
       // Filtro os itens do combo2, de acordo com o item selecionado no combo1
       strIdUON1 := VetorUON1[id_unid_organizacional_nivel1.ItemIndex].id1;
       id_unid_organizacional_nivel1a.Items.Clear;
@@ -998,17 +927,6 @@ var strIdUON1,
     strRetorno : String;
     tstrAux    : TStrings;
 begin
-
-      //Verifico se houve qualquer alteração nas informações.
-      // Só vou enviar as novas informações para o bd ou gravar no registro se houve alterações.
-      {
-     Try
-        strAux1 := VetorUON1[id_unid_organizacional_nivel1.ItemIndex].id1;
-        strAux2 := VetorUON2Filtrado[id_unid_organizacional_nivel2.ItemIndex];
-     Except
-     end;
-     }
-
      tstrAux := TStrings.Create;
      tstrAux := explode(VetorUON2Filtrado[id_unid_organizacional_nivel2.ItemIndex],'#');
      Try
@@ -1141,8 +1059,8 @@ end;
 
 procedure TFormPatrimonio.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-   SetValorDatMemoria('Col_Patr.nada', 'nada', v_tstrCipherOpened1);
-   CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
+   //SetValorDatMemoria('Col_Patr.nada', 'nada', v_tstrCipherOpened1);
+   //CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
    Application.Terminate;
 end;
 // Função adaptada de http://www.latiumsoftware.com/en/delphi/00004.php
@@ -1194,8 +1112,6 @@ Function TFormPatrimonio.RemoveCaracteresEspeciais(Texto, p_Fill : String; p_sta
 var I : Integer;
     strAux : String;
 Begin
-//     if ord(Texto[I]) in [32..126] Then
-//   else strAux := strAux + ' ';  // Coloca um espaço onde houver caracteres especiais
    strAux := '';
    if (Length(trim(Texto))>0) then
      For I := 0 To Length(Texto) Do

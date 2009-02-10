@@ -18,13 +18,15 @@ Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 program col_comp;
 {$R *.res}
 
-uses  Windows,
-      SysUtils,
-      Classes,
-      Registry,
-      DCPcrypt2,
-      DCPrijndael,
-      DCPbase64;
+uses
+  Windows,
+  SysUtils,
+  Classes,
+  Registry,
+  DCPcrypt2,
+  DCPrijndael,
+  DCPbase64,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 var  p_path_cacic : string;
      v_CipherKey,
@@ -566,8 +568,17 @@ end;
 
 var tstrTripa1 : TStrings;
     intAux     : integer;
+const
+  CACIC_APP_NAME = 'col_comp';
+
+var
+  hwind:HWND;
+  oCacic : TCACIC;
+
 begin
-  if (ParamCount>0) then
+  oCacic := TCACIC.Create();
+  if( not oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+    if (ParamCount>0) then
     Begin
       For intAux := 1 to ParamCount do
         Begin
@@ -586,7 +597,7 @@ begin
                end;
 
              // A chave AES foi obtida no parâmetro p_CipherKey. Recomenda-se que cada empresa altere a sua chave.
-             v_IV                := 'abcdefghijklmnop';             
+             v_IV                := 'abcdefghijklmnop';
              v_DatFileName       := p_path_cacic + 'cacic2.dat';
              v_tstrCipherOpened  := TStrings.Create;
              v_tstrCipherOpened  := CipherOpen(v_DatFileName);
@@ -603,4 +614,5 @@ begin
              Halt(0);
           End;
     End;
+   oCacic.Free();
 end.

@@ -185,6 +185,7 @@ object frmAcesso: TfrmAcesso
     Width = 100
     Height = 30
     Caption = 'Acessar'
+    Default = True
     Enabled = False
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText

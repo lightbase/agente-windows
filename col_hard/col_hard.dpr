@@ -24,6 +24,7 @@ program col_hard;
 
 uses
   Windows,
+  Registry,
   SysUtils,
   Classes,
   IniFiles,
@@ -37,7 +38,8 @@ uses
   DCPcrypt2,
   DCPrijndael,
   DCPbase64,
-  PJVersionInfo;
+  PJVersionInfo,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 var  p_path_cacic, v_mensagem : string;
      v_debugs : boolean;
@@ -720,7 +722,7 @@ var v_te_cpu_fabricante,
     v_DHCP_IPAddress,
     v_PrimaryWINS_IPAddress,
     v_SecondaryWINS_IPAddress                        : String;
-    i                             : Integer;
+    i, j, count                   : Integer;
     v_qt_mem_ram                  : WORD;
     v_CPU                         : TMiTeC_CPU;
     v_DISPLAY                     : TMiTeC_Display;
@@ -733,43 +735,71 @@ var v_te_cpu_fabricante,
     v_tstrCPU,
     v_tstrCDROM,
     v_tstrTCPIP                   : TStringList;
+
+    v_cpu_freq                    : TStrings;
+    v_registry                    : TRegistry;
+
+    oCacic : TCACIC;
+
 begin
+  oCacic := TCACIC.Create();
   Try
      SetValorDatMemoria('Col_Hard.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
      v_Report := TStringList.Create;
      log_diario('Coletando informações de Hardware.');
 
+     v_cpu_freq  := TStringList.Create;
      v_tstrCPU   := TStringList.Create;
      v_tstrCDROM := TStringList.Create;
      v_tstrTCPIP := TStringList.Create;
 
      Try
         Begin
+            Log_Debug('Instanciando SMBIOS para obter frequencia de CPU...');
+            v_SMBIOS := TMiTeC_SMBIOS.Create(nil);
+            v_SMBIOS.RefreshData;
+            v_te_cpu_frequencia := 'ND';
+            if(v_SMBIOS.Processor[0].Frequency > 0) then
+              v_te_cpu_frequencia := inttostr(v_SMBIOS.Processor[0].Frequency) + 'Mhz'   // Frequancia de CPU via BIOS
+            else begin
+               v_registry := TRegistry.Create;
+               try
+                 v_registry.RootKey := HKEY_LOCAL_MACHINE;
+                 try
+                   if(v_registry.Openkey('HARDWARE\DESCRIPTION\System\CentralProcessor\0\', False)) then begin
+                     v_te_cpu_frequencia := inttostr(v_registry.ReadInteger('~MHz'))+'Mhz'; // Frequencia de CPU via Regitry
+                     v_registry.CloseKey;
+                   end;
+                 except
+                   log_diario('CPU - informação de frequência ['+v_te_cpu_frequencia+'] não disponível (by SMBIOS/Registry): ');
+                 end;
+               finally
+                 v_registry.Free;
+               end;
+            end;
+            v_SMBIOS.Free;
+
+            Log_Debug('CPU - frequência estática (by SMBIOS/Registry): '+v_te_cpu_frequencia);
+
             Log_Debug('Instanciando v_CPU...');
             v_CPU := TMiTeC_CPU.Create(nil);
-            Log_Debug('RefreshingData...');
+            Log_Debug('Atualização de dados de CPU...');
             v_CPU.RefreshData;
-            Log_Debug('Gerando MSI_XML_Reports...');
-            MSI_XML_Reports.CPU_XML_Report(v_CPU,TRUE,v_Report);
-            Log_Debug('Liberando v_CPU...');
-            //v_CPU.Report(v_Report);
-            v_CPU.Free;
+            Log_Debug('Dados de CPU atualizados - OK!');
 
-            Log_Debug('CPU Informations - OK!');
-            // CPU Informations
+            // Obtem dados de CPU
             Try
-              i := 1;
-              while (i <= 128) DO// Vamos procurar até 128 processadores! Eu já ouví dizer de máquinas neste porte!!  (AP - 15FEV2008)
-                Begin
-                  strAux               := 'Processor #' + trim(intToStr(i));
-                  v_te_cpu_serial      := parse('TCPU',strAux,'Serial Number',v_Report);
-                  v_te_cpu_desc        := AnsiToAscii(parse('TCPU',strAux,'CPUName',v_Report));
-                  IF (v_te_cpu_desc = '') then
-                    v_te_cpu_desc      := AnsiToAscii(parse('TCPU',strAux,'MarketingName',v_Report));
-                  v_te_cpu_frequencia  := AnsiToAscii(parse('TCPU',strAux,'Frequency',v_Report));
-                  v_te_cpu_fabricante  := AnsiToAscii(parse('TCPU',strAux,'Vendor',v_Report));
+               for i:=0 to v_CPU.CPUCount-1 do begin
+                  v_te_cpu_serial := v_CPU.SerialNumber;
+                  v_te_cpu_desc   := v_CPU.CPUName;
+                  if(v_te_cpu_desc = '') then
+                     v_te_cpu_desc := v_CPU.MarketingName;
 
-                  // Se pegou ao menos a descrição, adiciono à tripa...
+                  v_te_cpu_fabricante  := cVendorNames[v_CPU.Vendor].Prefix;
+
+                  Log_Debug('CPU - frequência dinâmica (by CPU): '+inttostr(v_CPU.Frequency) + 'Mhz');
+
+                  // Se pegou ao menos a descrição, adiciona-se à tripa...
                   if (v_te_cpu_desc <> '') then
                     Begin
                       v_tstrCPU.Add('te_cpu_desc###'       + v_te_cpu_desc        + '#FIELD#' +
@@ -777,34 +807,27 @@ begin
                                     'te_cpu_serial###'     + v_te_cpu_serial      + '#FIELD#' +
                                     'te_cpu_frequencia###' + v_te_cpu_frequencia);
                       Log_Debug('Adicionando a tstrCPU: "'+v_tstrCPU[v_tstrCPU.count-1]);
-                      Log_DEBUG('Tamanho de v_tstrCPU 0: '+intToStr(v_tstrCPU.Count));                      
+                      Log_DEBUG('Tamanho de v_tstrCPU 0: '+intToStr(v_tstrCPU.Count));
                     End;
-                  i := i+1;
-                End;
+               end;
             Except
-              log_diario('Problema em CPU Details!');
+              log_diario('Problemas ao coletar dados de CPU!');
             end;
+            v_CPU.Free;
+            Log_DEBUG('Tamanho de v_tstrCPU 1: '+intToStr(v_tstrCPU.Count));
 
-     Log_DEBUG('Tamanho de v_tstrCPU 1: '+intToStr(v_tstrCPU.Count));
             // Media informations
             Try
               v_MEDIA := TMiTeC_Media.Create(nil);
               v_MEDIA.RefreshData;
-              //v_MEDIA.Report(v_Report);
-              MSI_XML_Reports.Media_XML_Report(v_MEDIA,TRUE,v_Report);
-              v_MEDIA.Free;
-
-              v_DataName := parse('TMedia','','SoundCardDeviceIndex',v_Report);
-              if (v_DataName <> '-1') then
-                Begin
-                  if (v_DataName <>'0') then v_DataName := IntToStr(StrToInt(v_DataName)+1);
-                  v_DataName := 'Device['+v_DataName+']';
-                  v_te_placa_som_desc := trim(AnsiToAscii(parse('TMedia','Devices',v_DataName,v_Report)));
-                End;
-            except log_diario('Problema em MEDIA Details!');
+              if v_Media.SoundCardIndex>-1 then begin
+                 //n:=Tree.Items.AddChild(r,Media.Devices[Media.SoundCardIndex]);
+                 v_te_placa_som_desc := v_Media.Devices[v_Media.SoundCardIndex];
+              end;
+            except log_diario('Problemas ao coletar dados de Aúdio');
             end;
 
-            Log_Debug('MEDIA Informations - OK!');
+            Log_Debug('Dados de aúdio coletados - OK!');
 
             // Devices informations
             Try
@@ -812,7 +835,6 @@ begin
               v_DEVICES := TMiTeC_Devices.Create(nil);
               Log_Debug('RefreshingData...');
               v_DEVICES.RefreshData;
-              //if v_Debugs then v_DEVICES.Report(v_Report);
               if v_Debugs then MSI_XML_Reports.Devices_XML_Report(v_DEVICES,TRUE,v_Report);
               Log_Debug('v_DEVICES.DeviceCount = '+intToStr(v_DEVICES.DeviceCount));
               i := 0;
@@ -901,59 +923,37 @@ begin
             except log_diario('Problema em MEMORY Details!');
             end;
 
-//
             Try
               Begin
                 v_SMBIOS := TMiTeC_SMBIOS.Create(nil);
                 v_SMBIOS.RefreshData;
-                //v_SMBIOS.Report(v_Report);
-                MSI_XML_Reports.SMBIOS_XML_Report(v_SMBIOS,true,v_Report);
-
-                v_SMBIOS.Free;
-
-
-                if Parse('TSMBIOS','MemoryModule', 'Count', v_Report) <> '0' then
+                if v_SMBIOS.MemoryModuleCount > -1 then
                   Begin
-                    i :=0;
-                    while i < StrToInt(Parse('TSMBIOS','MemoryModule', 'Count', v_Report)) do
-                      Begin
-                      v_SectionName := 'MemoryModule/Module_'+IntToStr(i);
-                      v_te_mem_ram_tipo:=Parse('TSMBIOS',v_SectionName, 'Type', v_Report);
-                        if Parse('TSMBIOS',v_SectionName, 'Size', v_Report)<>'0' then
-                          begin
-                            if (v_te_mem_ram_desc <> '') then v_te_mem_ram_desc := v_te_mem_ram_desc + ' - ';
-                            v_te_mem_ram_desc := v_te_mem_ram_desc + 'Slot ' + IntToStr(i) + ': ' + Parse('TSMBIOS',v_SectionName, 'Size', v_Report) + '(' + v_te_mem_ram_tipo +')';
-                          end;
-                        i := i+1;
-                      End;
-                  end
-                else
-                  Begin
-                    i := 0;
-                    while i < StrToInt(Parse('TSMBIOS','MemoryDevice', 'Count', v_Report)) do
-                      Begin
-                        v_SectionName := 'MemoryModule/Device_'+IntToStr(i);
-                        v_te_mem_ram_tipo := Parse('TSMBIOS',v_SectionName, 'Type', v_Report);
-
-                        if Parse('TSMBIOS',v_SectionName, 'Size', v_Report)<>'0' then
-                          begin
-                            if (v_te_mem_ram_desc <> '') then v_te_mem_ram_desc := v_te_mem_ram_desc + ' - ';
-                            v_te_mem_ram_desc := v_te_mem_ram_desc + 'Slot ' + IntToStr(i) + ': ' + Parse('TSMBIOS',v_SectionName, 'Size', v_Report) + '(' + v_te_mem_ram_tipo + ')';
-                          end;
-                        i := i+1;
+                    for i:=0 to v_SMBIOS.MemoryModuleCount-1 do begin
+                      if (v_SMBIOS.MemoryModule[i].Size <> 0) then begin
+                         v_te_mem_ram_tipo := v_SMBIOS.GetMemoryTypeStr(v_SMBIOS.MemoryModule[i].Types);
+                         if (v_te_mem_ram_desc <> '') then
+                            v_te_mem_ram_desc := v_te_mem_ram_desc + ' - ';
+                         v_te_mem_ram_desc := v_te_mem_ram_desc + 'Slot '+ inttostr(i) + ': '
+                                                                + v_SMBIOS.MemoryDevice[i].Manufacturer + ' '
+                                                                //+ v_SMBIOS.MemoryDevice[i].Device + ' '
+                                                                + inttostr(v_SMBIOS.MemoryModule[i].Size) + 'Mb '
+                                                                + '(' + v_te_mem_ram_tipo +')';
                       end;
-                  End;
+                    end;
+                  end;
 
                 if (trim(v_te_placa_mae_fabricante)='') then
-                v_te_placa_mae_fabricante := AnsiToAscii(Trim(Parse('TSMBIOS','Mainboard', 'Manufacturer', v_Report)));
-                if (trim(v_te_placa_mae_desc)='')       then
-                v_te_placa_mae_desc       := AnsiToAscii(Trim(Parse('TSMBIOS','Mainboard', 'Model', v_Report)));
-                v_te_bios_data            := Trim(Parse('TSMBIOS','BIOS', 'Date', v_Report));
-                v_te_bios_fabricante      := Trim(Parse('TSMBIOS','BIOS', 'Vendor', v_Report));
-                v_te_bios_desc            := AnsiToAscii(Trim(Parse('TBIOS','', 'Copyright', v_Report)));
-                if (v_te_bios_desc = '') then
-                  v_te_bios_desc            := Trim(Parse('TSMBIOS','BIOS', 'Version', v_Report));
+                    v_te_placa_mae_fabricante := v_SMBIOS.MainBoardManufacturer;
 
+                if (trim(v_te_placa_mae_desc)='')       then
+                    v_te_placa_mae_desc       := v_SMBIOS.MainBoardModel;
+
+                v_te_bios_data            := v_SMBIOS.BIOSDate;
+                v_te_bios_fabricante      := v_SMBIOS.BIOSVendor;
+                v_te_bios_desc            := v_SMBIOS.BIOSVersion;
+
+                v_SMBIOS.Free;
                 Log_Debug('SMBIOS Informations - OK!');
               End;
             Except log_diario('Problema em SMBIOS Details!');
@@ -964,15 +964,13 @@ begin
               Begin
                 v_DISPLAY := TMiTeC_Display.Create(nil);
                 v_DISPLAY.RefreshData;
-                //v_DISPLAY.Report(v_Report);
-                MSI_XML_Reports.Display_XML_Report(v_DISPLAY,true,v_Report);
+
+                if (trim(v_te_placa_video_desc)='') then v_te_placa_video_desc := v_DISPLAY.Adapter;
+                v_qt_placa_video_cores     := IntToStr(v_DISPLAY.ColorDepth);
+                v_qt_placa_video_mem       := IntToStr(v_DISPLAY.Memory div 1048576 ) + 'Mb';
+                v_te_placa_video_resolucao := IntToStr(v_DISPLAY.HorzRes) + 'x' + IntToStr(v_DISPLAY.VertRes);
+
                 v_DISPLAY.Free;
-
-                if (trim(v_te_placa_video_desc)='') then v_te_placa_video_desc := parse('TDisplay','','Adapter',v_Report);
-                v_qt_placa_video_cores     := parse('TDisplay','','ColorDepth',v_Report);
-                v_qt_placa_video_mem       := IntToStr(StrToInt(parse('TDisplay','','MemorySize',v_Report)) div 1048576 );
-                v_te_placa_video_resolucao := parse('TDisplay','','HorizontalResolution',v_Report) + 'x' + parse('TDisplay','','VerticalResolution',v_Report);
-
                 Log_Debug('VIDEO Informations - OK!');
               End;
             Except log_diario('Problema em VIDEO Details!');
@@ -983,27 +981,23 @@ begin
               Begin
                 v_TCP := TMiTeC_TCPIP.Create(nil);
                 v_TCP.RefreshData;
-                //v_TCP.Report(v_Report);
-                MSI_XML_Reports.TCPIP_XML_Report(v_TCP,true,v_Report);
-                v_TCP.Free;
+
                 v_mensagem := 'Ativando TCP Getinfo...';
 
                 i := 0;
                 v_Macs_Invalidos := trim(GetValorDatMemoria('TCPIP.TE_ENDERECOS_MAC_INVALIDOS',v_tstrCipherOpened));
 
-                // Em virtude de possibilidades de existência de VmWare likes,
-                // serão verificados até 50 adaptadores de redes! :) Não pesquisei essa possibilidade, por via das dúvidas... (AP - 15FEV2008)
-                While (i < 50)  do
-                  Begin
-                    v_SectionName             := 'Adapter_'+inttostr(i);
-                    v_te_placa_rede_desc      := AnsiToAscii(trim(parse('TTCPIP',v_SectionName,'Name',v_Report)));
-                    v_PhysicalAddress         := parse('TTCPIP',v_SectionName,'PhysicalAddress',v_Report);
-                    v_IPAddress               := parse('TTCPIP',v_SectionName,'IPAddress',v_Report);
-                    v_IPMask                  := parse('TTCPIP',v_SectionName,'IPMask',v_Report);
-                    v_Gateway_IPAddress       := parse('TTCPIP',v_SectionName,'Gateway_IPAddress',v_Report);
-                    v_DHCP_IPAddress          := parse('TTCPIP',v_SectionName,'DHCP_IPAddress',v_Report);
-                    v_PrimaryWINS_IPAddress   := parse('TTCPIP',v_SectionName,'PrimaryWINS_IPAddress',v_Report);
-                    v_SecondaryWINS_IPAddress := parse('TTCPIP',v_SectionName,'SecondaryWINS_IPAddress',v_Report);
+                // Avalia quantidade de placas de rede e obtem respectivos dados
+                if v_TCP.AdapterCount>0 then
+                  for i:=0 to v_TCP.AdapterCount-1 do begin
+                    v_te_placa_rede_desc      := v_TCP.Adapter[i].Name;
+                    v_PhysicalAddress         := v_TCP.Adapter[i].Address;
+                    v_IPAddress               := v_TCP.Adapter[i].IPAddress[0];
+                    v_IPMask                  := v_TCP.Adapter[i].IPAddressMask[0];
+                    v_Gateway_IPAddress       := v_TCP.Adapter[i].Gateway_IPAddress[0];
+                    v_DHCP_IPAddress          := v_TCP.Adapter[i].DHCP_IPAddress[0];
+                    v_PrimaryWINS_IPAddress   := v_TCP.Adapter[i].PrimaryWINS_IPAddress[0];
+                    v_SecondaryWINS_IPAddress := v_TCP.Adapter[i].SecondaryWINS_IPAddress[0];
 
                     if (trim( v_te_placa_rede_desc    +
                               v_PhysicalAddress       +
@@ -1024,10 +1018,8 @@ begin
                                         'te_wins_secundario###' + v_SecondaryWINS_IPAddress);
                         Log_Debug('Adicionando a tstrTCPIP: "'+v_tstrTCPIP[v_tstrTCPIP.count-1]+'"');
                       End
-                    else
-                      i := 50;
-                    i := i + 1;
                   End;
+                v_TCP.Free;
                 Log_Debug('TCPIP Informations - OK!');
               End;
             Except log_diario('Problema em TCP Details!');
@@ -1086,7 +1078,7 @@ begin
      Try
      // Monto a string que será comparada com o valor armazenado no registro.
       v_mensagem := 'Montando pacote para comparações...';
-     UVC := StringReplace(Trim( v_Tripa_TCPIP              + ';' +
+     UVC := oCacic.trimEspacosExcedentes(v_Tripa_TCPIP     + ';' +
                                 v_Tripa_CPU                + ';' +
                                 v_Tripa_CDROM              + ';' +
                                 v_te_mem_ram_desc          + ';' +
@@ -1103,7 +1095,7 @@ begin
                                 v_te_placa_som_desc        + ';' +
                                 v_te_teclado_desc          + ';' +
                                 v_te_modem_desc            + ';' +
-                                v_te_mouse_desc),'  ',' ',[rfReplaceAll]);
+                                v_te_mouse_desc);
      Except log_diario('Problema em comparação de envio!');
      End;
 
@@ -1116,29 +1108,30 @@ begin
      // na configuração de hardware. Nesse caso, gravo as informações no BD Central
      // e, se não houver problemas durante esse procedimento, atualizo as
      // informações no registro.
-     If (GetValorDatMemoria('Configs.IN_COLETA_FORCADA_HARD',v_tstrCipherOpened)='S') or (UVC <> ValorChaveRegistro) Then
+     If (GetValorDatMemoria('Configs.IN_COLETA_FORCADA_HARD',v_tstrCipherOpened)='S') or
+         (oCacic.trimEspacosExcedentes(UVC) <> oCacic.trimEspacosExcedentes(ValorChaveRegistro)) Then
       Begin
         Try
         //Envio via rede para ao Agente Gerente, para gravação no BD.
-        SetValorDatMemoria('Col_Hard.te_Tripa_TCPIP'          , StringReplace(v_Tripa_TCPIP             ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_Tripa_CPU'            , StringReplace(v_Tripa_CPU               ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_Tripa_CDROM'          , StringReplace(v_Tripa_CDROM             ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_placa_mae_fabricante' , StringReplace(v_te_placa_mae_fabricante ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_placa_mae_desc'       , StringReplace(v_te_placa_mae_desc       ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.qt_mem_ram'              , StringReplace(IntToStr(v_qt_mem_ram)    ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_mem_ram_desc'         , StringReplace(v_te_mem_ram_desc         ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_bios_desc'            , StringReplace(v_te_bios_desc            ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_bios_data'            , StringReplace(v_te_bios_data            ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_bios_fabricante'      , StringReplace(v_te_bios_fabricante      ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.qt_placa_video_cores'    , StringReplace(v_qt_placa_video_cores    ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_placa_video_desc'     , StringReplace(v_te_placa_video_desc     ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.qt_placa_video_mem'      , StringReplace(v_qt_placa_video_mem      ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_placa_video_resolucao', StringReplace(v_te_placa_video_resolucao,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_placa_som_desc'       , StringReplace(v_te_placa_som_desc       ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_teclado_desc'         , StringReplace(v_te_teclado_desc         ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_mouse_desc'           , StringReplace(v_te_mouse_desc           ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.te_modem_desc'           , StringReplace(v_te_modem_desc           ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Hard.UVC'                     , StringReplace(UVC                       ,'  ',' ',[rfReplaceAll]) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_Tripa_TCPIP'          , oCacic.trimEspacosExcedentes( v_Tripa_TCPIP              ), v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_Tripa_CPU'            , oCacic.trimEspacosExcedentes( v_Tripa_CPU                ), v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_Tripa_CDROM'          , oCacic.trimEspacosExcedentes( v_Tripa_CDROM              ), v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_placa_mae_fabricante' , oCacic.trimEspacosExcedentes( v_te_placa_mae_fabricante  ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_placa_mae_desc'       , oCacic.trimEspacosExcedentes( v_te_placa_mae_desc        ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.qt_mem_ram'              , oCacic.trimEspacosExcedentes( IntToStr(v_qt_mem_ram)     ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_mem_ram_desc'         , oCacic.trimEspacosExcedentes( v_te_mem_ram_desc          ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_bios_desc'            , oCacic.trimEspacosExcedentes( v_te_bios_desc             ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_bios_data'            , oCacic.trimEspacosExcedentes( v_te_bios_data             ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_bios_fabricante'      , oCacic.trimEspacosExcedentes( v_te_bios_fabricante       ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.qt_placa_video_cores'    , oCacic.trimEspacosExcedentes( v_qt_placa_video_cores     ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_placa_video_desc'     , oCacic.trimEspacosExcedentes( v_te_placa_video_desc      ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.qt_placa_video_mem'      , oCacic.trimEspacosExcedentes( v_qt_placa_video_mem       ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_placa_video_resolucao', oCacic.trimEspacosExcedentes( v_te_placa_video_resolucao ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_placa_som_desc'       , oCacic.trimEspacosExcedentes( v_te_placa_som_desc        ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_teclado_desc'         , oCacic.trimEspacosExcedentes( v_te_teclado_desc          ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_mouse_desc'           , oCacic.trimEspacosExcedentes( v_te_mouse_desc            ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.te_modem_desc'           , oCacic.trimEspacosExcedentes( v_te_modem_desc            ) , v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Hard.UVC'                     , oCacic.trimEspacosExcedentes( UVC                        ) , v_tstrCipherOpened1);
         CipherClose(p_path_cacic + 'temp\col_hard.dat', v_tstrCipherOpened1);
         Except log_diario('Problema em gravação de dados no DAT!');
         End;
@@ -1157,12 +1150,21 @@ begin
       log_diario('Problema na execução => ' + v_mensagem);
     End;
   End;
+  oCacic.Free();
 end;
+
+const
+  CACIC_APP_NAME = 'col_hard';
 
 var tstrTripa1 : TStrings;
     intAux     : integer;
+    oCacic : TCACIC;
+
 begin
-  if (ParamCount>0) then
+   oCacic := TCACIC.Create();
+
+   if( not oCacic.isAppRunning( CACIC_APP_NAME ) )  then
+    if (ParamCount>0) then
     Begin
       For intAux := 1 to ParamCount do
         Begin
@@ -1172,7 +1174,6 @@ begin
 
        if (trim(v_CipherKey)<>'') then
           Begin
-
              //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.ini
              tstrTripa1 := explode(ExtractFilePath(ParamStr(0)),'\');
              p_path_cacic := '';
@@ -1207,7 +1208,9 @@ begin
                 SetValorDatMemoria('Col_Hard.nada', 'nada', v_tstrCipherOpened1);
                 CipherClose(p_path_cacic + 'temp\col_hard.dat', v_tstrCipherOpened1);
              End;
-             Halt(0);
           End;
     End;
+
+   oCacic.Free();
+
 end.

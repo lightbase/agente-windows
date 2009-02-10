@@ -27,8 +27,8 @@ uses
   PJVersionInfo,
   DCPcrypt2,
   DCPrijndael,
-  DCPbase64;
-
+  DCPbase64,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 var p_path_cacic,
     v_te_senha_login_serv_updates,
@@ -410,9 +410,17 @@ begin
   End;
 end;
 
+const
+   CACIC_APP_NAME = 'ini_cols';
+
+var
+   oCacic : TCACIC;
 
 begin
-  if (ParamCount>0) then // A passagem da chave EAS é mandatória...
+   oCacic := TCACIC.Create();
+
+   if( not oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+    if (ParamCount>0) then // A passagem da chave EAS é mandatória...
     Begin
        For intAux := 1 to ParamCount do
           Begin
@@ -545,4 +553,5 @@ begin
              end;
           End;
     End;
+    oCacic.Free();
 end.

@@ -18,28 +18,30 @@ Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 program chksis;
 {$R *.res}
 
-uses  Windows,
-      forms,
-      SysUtils,
-      Classes,
-      Registry,
-      Inifiles,
-      XML,
-      LibXmlParser,
-      strUtils,
-      IdHTTP,
-      IdFTP,
-      idFTPCommon,
-      IdBaseComponent,
-      IdComponent,
-      IdTCPConnection,
-      IdTCPClient,
-      PJVersionInfo,
-      Winsock,
-      DCPcrypt2,
-      DCPrijndael,
-      DCPbase64,
-      Tlhelp32;
+uses
+  Windows,
+  forms,
+  SysUtils,
+  Classes,
+  Registry,
+  Inifiles,
+  XML,
+  LibXmlParser,
+  strUtils,
+  IdHTTP,
+  IdFTP,
+  idFTPCommon,
+  IdBaseComponent,
+  IdComponent,
+  IdTCPConnection,
+  IdTCPClient,
+  PJVersionInfo,
+  Winsock,
+  DCPcrypt2,
+  DCPrijndael,
+  DCPbase64,
+  Tlhelp32,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 var PJVersionInfo1: TPJVersionInfo;
     Dir,
@@ -1102,14 +1104,25 @@ begin
       Application.Terminate;
 end;
 
-begin
-//  Application.ShowMainForm:=false;
-  if (FindWindowByTitle('chkcacic') = 0) and (FindWindowByTitle('cacic2') = 0) then
-      if (FileExists(ExtractFilePath(ParamStr(0)) + 'chksis.ini')) then executa_chksis
-  else log_diario('Não executei devido execução em paralelo de "chkcacic" ou "cacic2"!');
+const
+  CACIC_APP_NAME = 'chksis';
 
-  Halt;
-  //Application.Terminate;
+var
+  oCacic : TCACIC;
+
+begin
+   oCacic := TCACIC.Create();
+
+   if( not oCacic.isAppRunning( CACIC_APP_NAME ) )
+     then begin
+       if (FindWindowByTitle('chkcacic') = 0) and (FindWindowByTitle('cacic2') = 0)
+         then
+           if (FileExists(ExtractFilePath(ParamStr(0)) + 'chksis.ini'))
+              then executa_chksis
+              else log_diario('Não executei devido execução em paralelo de "chkcacic" ou "cacic2"!');
+     end;
+
+   oCacic.Free();
 
 end.
 

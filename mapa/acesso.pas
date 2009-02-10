@@ -84,7 +84,7 @@ begin
       str_local_Aux := trim(frmMapaCacic.DeCrypt(frmMapaCacic.XML_RetornaValor('TE_VERSAO_MAPA',strRetorno)));
       if (str_local_Aux <> '') then
         Begin
-          MessageDLG(#13#10#13#10+'ATENÇÃO! Foi disponibilizada a versão "'+str_local_Aux+'".'+#13#10#13#10#13#10+'Efetue o download acessando http://www-cacic, na opção Repositório.'+#13#10#13#10,mtInformation,[mbOK],0);
+          MessageDLG(#13#10#13#10+'ATENÇÃO! Foi disponibilizada a versão "'+str_local_Aux+'".'+#13#10#13#10+'Acesse o gerente cacic na opção "Repositório" e baixe o programa "MapaCACIC"!'+#13#10,mtWarning,[mbOK],0);
           btCancela.Click;
         End;
 
@@ -97,12 +97,12 @@ begin
         End
       else
         Begin
-          str_local_Aux := 'Usuário/Senha Incorretos ou Nível de Acesso Não Permitido!';
+          str_local_Aux := 'Usuário/Senha incorretos ou Nível de acesso não permitido!';
         End
     End
   else
     Begin
-      str_local_Aux := 'Problemas na Comunicação!';
+      str_local_Aux := 'Problemas na comunicação!';
     End;
 
   lbMsg_Erro_Senha.Caption := str_local_Aux;

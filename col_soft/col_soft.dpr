@@ -32,7 +32,8 @@ uses
   MSI_XML_Reports,
   DCPcrypt2,
   DCPrijndael,
-  DCPbase64;
+  DCPbase64,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 var  p_path_cacic,
      v_CipherKey,
@@ -769,13 +770,19 @@ begin
  End;
 end;
 
+const
+  CACIC_APP_NAME = 'col_soft';
 
-
-
-var tstrTripa1 : TStrings;
+var
+    tstrTripa1 : TStrings;
     intAux     : integer;
+    oCacic : TCACIC;
+
 begin
-  if (ParamCount>0) then
+   oCacic := TCACIC.Create();
+
+   if( not oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+    if (ParamCount>0) then
     Begin
       For intAux := 1 to ParamCount do
         Begin
@@ -820,7 +827,9 @@ begin
                 SetValorDatMemoria('Col_Soft.nada', 'nada', v_tstrCipherOpened1);
                 CipherClose(p_path_cacic + 'temp\col_soft.dat', v_tstrCipherOpened1);
              End;
-             Halt(0);
           End;
     End;
+
+   oCacic.Free();
+
 end.

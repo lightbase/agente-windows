@@ -18,15 +18,17 @@ Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 program col_moni;
 {$R *.res}
 
-uses  Windows,
-      sysutils,
-      inifiles,
-      Registry,
-      Classes,
-      PJVersionInfo,
-      DCPcrypt2,
-      DCPrijndael,
-      DCPbase64;
+uses
+  Windows,
+  sysutils,
+  inifiles,
+  Registry,
+  Classes,
+  PJVersionInfo,
+  DCPcrypt2,
+  DCPrijndael,
+  DCPbase64,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 var  p_path_cacic, v_Res_Search, v_Drive, v_File : string;
      PJVersionInfo1: TPJVersionInfo;
@@ -1074,11 +1076,18 @@ begin
   end;
 end;
 
+const
+  CACIC_APP_NAME = 'col_moni';
 
 var tstrTripa1 : TStrings;
     intAux     : integer;
+    oCacic : TCACIC;
+
 begin
-  if (ParamCount>0) then
+   oCacic := TCACIC.Create();
+
+   if( not oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+    if (ParamCount>0) then
     Begin
       For intAux := 1 to ParamCount do
         Begin
@@ -1122,7 +1131,9 @@ begin
                SetValorDatMemoria('Col_Moni.nada', 'nada', v_tstrCipherOpened1);
                CipherClose(p_path_cacic + 'temp\col_moni.dat', v_tstrCipherOpened1);
              End;
-             Halt(0);
           End;
     End;
+
+    oCacic.Free();
+
 end.

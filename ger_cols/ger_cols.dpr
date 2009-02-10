@@ -34,6 +34,7 @@ uses
   IdBaseComponent,
   IdComponent,
   PJVersionInfo,
+  MSI_Machine,
   MSI_NETWORK,
   MSI_XML_Reports,
   StrUtils,
@@ -46,7 +47,8 @@ uses
   DCPcrypt2,
   DCPrijndael,
   DCPbase64,
-  ZLibEx;
+  ZLibEx,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 {$APPTYPE CONSOLE}
 var p_path_cacic,
@@ -86,6 +88,8 @@ var v_Debugs,
 var BatchFile,
     Request_Ger_Cols          : TStringList;
 
+var
+  g_oCacic: TCACIC;
 
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
@@ -224,8 +228,6 @@ end; {DeCompress}
 Function RemoveCaracteresEspeciais(Texto, p_Fill : String; p_start, p_end:integer) : String;
 var I : Integer;
 Begin
-//     if ord(Texto[I]) in [32..126] Then
-//   else strAux := strAux + ' ';  // Coloca um espaço onde houver caracteres especiais
    strAux := '';
    if (Length(trim(Texto))>0) then
      For I := 0 To Length(Texto) Do
@@ -376,10 +378,6 @@ begin
         l_IV    := PadWithZeros(v_IV,BlockSize);
         l_Data  := PadWithZeros(trim(p_Data),BlockSize);
 
-        //log_DEBUG('Encrypt - HEXA da CHAVE "'+v_CipherKey+'": "'+StringtoHex(l_Key)+'"');
-        //log_DEBUG('Encrypt - HEXA do IV    "'+v_IV+'": "'+StringtoHex(l_IV)+'"');
-        //log_DEBUG('Encrypt - HEXA do DADO  "'+trim(p_Data)+'": "'+StringtoHex(l_Data)+'"');
-
         // Create the cipher and initialise according to the key length
         l_Cipher := TDCP_rijndael.Create(nil);
         if Length(v_CipherKey) <= 16 then
@@ -430,10 +428,6 @@ begin
 
         // Decode the Base64 encoded string
         l_Data := Base64DecodeStr(trim(v_Data));
-
-        //log_DEBUG('Decrypt - HEXA da CHAVE "'+v_CipherKey+'": "'+StringtoHex(l_Key)+'"');
-        //log_DEBUG('Decrypt - HEXA do IV    "'+v_IV+'": "'+StringtoHex(l_IV)+'"');
-        //log_DEBUG('Decrypt - HEXA do DADO  "'+trim(p_Data)+'": "'+StringtoHex(l_Data)+'"');
 
         // Create the cipher and initialise according to the key length
         l_Cipher := TDCP_rijndael.Create(nil);
@@ -569,12 +563,6 @@ var v_strCipherOpenImploded,
     v_cs_cipher             : boolean;
 begin
    try
-   {
-       log_DEBUG('Valores MemoryDAT salvos e arquivo "'+p_DatFileName+ '" devidamente fechado!');
-        if v_Debugs then
-          for intAux := 0 to (p_tstrCipherOpened.Count-1) do
-            log_DEBUG('Posição ['+inttostr(intAux)+']='+p_tstrCipherOpened[intAux]);
-   }
        FileSetAttr (p_DatFileName,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
        AssignFile(v_DatFile,p_DatFileName); {Associa o arquivo a uma variável do tipo TextFile}
 
@@ -655,13 +643,6 @@ begin
 
     if Result.Count mod 2 = 0 then
         Result.Add('');
-
-    {
-    log_DEBUG(v_DatFileName+' aberto com sucesso!');
-    if v_Debugs then
-      for intLoop := 0 to (Result.Count-1) do
-        log_DEBUG('Posição ['+inttostr(intLoop)+'] do MemoryDAT: '+Result[intLoop]);
-    }
 
 end;
 
@@ -1255,13 +1236,12 @@ Begin
     if (strAux = '') then
         strAux := 'A.B.C.D'; // Apenas para forçar que o Gerente extraia via _SERVER[REMOTE_ADDR]
 
-    // Tratamentos de valores para tráfego POST:
-    // v_te_so => transformar ' ' em <ESPACE> Razão: o mmcrypt se perde quando encontra ' ' (espaço)
-    v_te_so := StringReplace(v_te_so,' ','<ESPACE>',[rfReplaceAll]);
-
     v_AuxRequest.Values['te_node_address']   := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['id_so']             := StringReplace(EnCrypt(IntToStr(intAux)                                                  ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_so']             := StringReplace(EnCrypt(v_te_so                                                           ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    // Tratamentos de valores para tráfego POST:
+    // v_te_so => transformar ' ' em <ESPACE> Razão: o mmcrypt se perde quando encontra ' ' (espaço)
+    //v_te_so := StringReplace(v_te_so,' ','<ESPACE>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_so']             := StringReplace(EnCrypt(StringReplace(v_te_so,' ','<ESPACE>',[rfReplaceAll])              ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['te_ip']             := StringReplace(EnCrypt(strAux                                                            ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['id_ip_rede']        := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['te_workgroup']      := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
@@ -1852,12 +1832,18 @@ var Request_SVG, v_array_campos, v_array_valores, v_Report : TStringList;
     v_mac_address,v_metodo_obtencao,v_nome_arquivo,IpConfigLINHA, v_enderecos_mac_invalidos, v_win_dir, v_dir_command, v_dir_ipcfg, v_win_dir_command, v_win_dir_ipcfg, v_te_serv_cacic : string;
     tstrTripa1, tstrTripa2, tstrTripa3, tstrTripa4, tstrTripa5, tstrEXCECOES : TStrings;
     IpConfigTXT, chksis_ini : textfile;
+
+    v_oMachine : TMiTec_Machine;
     v_TCPIP     : TMiTeC_TCPIP;
     v_NETWORK : TMiTeC_Network;
 Begin
   Try
     ChecaCipher;
     ChecaCompress;
+
+    v_acao_gercols := 'Instanciando TMiTeC_Machine...';
+    v_oMachine := TMiTec_Machine.Create(nil);
+    v_oMachine.RefreshData();
 
     v_acao_gercols := 'Instanciando TMiTeC_TcpIp...';
     v_TCPIP := TMiTeC_tcpip.Create(nil);
@@ -1869,7 +1855,6 @@ Begin
       Begin
         log_DEBUG('Montando ambiente para busca de configurações...');
         v_Report := TStringList.Create;
-        //v_tcpip.Report(v_Report,false);
         MSI_XML_Reports.TCPIP_XML_Report(v_TCPIP,true,v_Report);
         for intAux1:=0 to v_Report.count-1 do
             Grava_Debugs(v_report[intAux1]);
@@ -1889,7 +1874,7 @@ Begin
     Try v_mac_address      := v_tcpip.Adapter[v_index_ethernet].Address                    except v_mac_address       := ''; end;
     Try te_mascara         := v_tcpip.Adapter[v_index_ethernet].IPAddressMask[0]           except te_mascara          := ''; end;
     Try te_ip              := v_tcpip.Adapter[v_index_ethernet].IPAddress[0]               except te_ip               := ''; end;
-    Try te_nome_host       := v_tcpip.HostName                                             except te_nome_host        := ''; end;
+    Try te_nome_host       := v_oMachine.MachineName                                       except te_nome_host        := ''; end;
 
     if (v_mac_address='') or (te_ip='') then
       Begin
@@ -1904,7 +1889,6 @@ Begin
         if (v_Debugs) then
           Begin
             v_acao_gercols := 'Gerando Report para TMiTeC_Network...';
-            //v_NETWORK.Report(v_Report,false);
             MSI_XML_Reports.Network_XML_Report(v_NETWORK,true,v_Report);
 
             for intAux1:=0 to v_Report.count-1 do
@@ -1917,18 +1901,13 @@ Begin
 
         v_mac_address  := parse('TNetwork','MACAdresses','MACAddress[0]',v_Report);
         te_ip          := parse('TNetwork','IPAddresses','IPAddress[0]',v_Report);
+
         v_Report.Free;
       End;
 
     // Verifico comunicação com o Módulo Gerente WEB.
     Request_SVG := TStringList.Create;
     Request_SVG.Values['in_teste']          := StringReplace(EnCrypt('OK',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    //Request_SVG.Values['te_node_address']   := EnCrypt(v_mac_address,l_cs_compress);
-    //Request_SVG.Values['id_so']             := EnCrypt(inttostr(GetWinVer),l_cs_compress);
-    //Request_SVG.Values['te_so']             := EnCrypt(v_te_so,l_cs_compress);
-    //Request_SVG.Values['id_ip_rede']        := EnCrypt(GetIPRede(te_ip, te_mascara),l_cs_compress);
-    //Request_SVG.Values['te_workgroup']      := EnCrypt(GetWorkgroup,l_cs_compress);
-    //Request_SVG.Values['te_nome_computador']:= EnCrypt(te_nome_host,l_cs_compress);
 
     v_acao_gercols := 'Preparando teste de comunicação com Módulo Gerente WEB.';
 
@@ -1972,13 +1951,6 @@ Begin
         // Nova tentativa, preciso reinicializar o objeto devido aos restos da operação anterior... (Eu acho!)  :)
         Request_SVG.Free;
         Request_SVG := TStringList.Create;
-        //Request_SVG.Values['te_node_address']   := EnCrypt(v_mac_address,l_cs_compress);
-        //Request_SVG.Values['id_so']             := EnCrypt(inttostr(GetWinVer),l_cs_compress);
-        //Request_SVG.Values['te_so']             := EnCrypt(v_te_so,l_cs_compress);
-        //Request_SVG.Values['id_ip_rede']        := EnCrypt(GetIPRede(te_ip, te_mascara),l_cs_compress);
-        //Request_SVG.Values['te_workgroup']      := EnCrypt(GetWorkgroup,l_cs_compress);
-        //Request_SVG.Values['te_nome_computador']:= EnCrypt(te_nome_host,l_cs_compress);
-        //Request_SVG.Values['te_ip']             := EnCrypt(te_ip,l_cs_compress);
         Request_SVG.Values['in_teste']          := StringReplace(EnCrypt('OK',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
         Try
           strRetorno := ComunicaServidor('get_config.php', Request_SVG, 'Teste de comunicação com o Módulo Gerente WEB.');
@@ -2112,10 +2084,10 @@ Begin
     if (not p_mensagem_log) then v_mensagem_log := '';
 
   // Caso a obtenção dos dados de TCP via MSI_NETWORK/TCP tenha falhado...
-  if (v_mac_address='') or (te_mascara='')    or (te_ip='')           or (te_gateway='') or
-     (te_nome_host='')  or (te_serv_dhcp='' ) or (te_dns_primario='') or (te_wins_primario='') or
-     (te_wins_secundario='') then
-    Begin
+  // (considerado falha somente se v_mac_address, te_ip ou v_te_so forem nulos
+  //  por serem chaves - demais valores devem ser avaliados pelo administrador)
+
+  if (v_mac_address='') or (te_ip='') then begin
       v_nome_arquivo    := p_path_cacic + 'Temp\ipconfig.txt';
       v_metodo_obtencao := 'WMI Object';
       v_acao_gercols    := 'Criando batch para obtenção de IPCONFIG via WMI...';
@@ -2160,6 +2132,7 @@ Begin
 
          if ChecaAgente(p_path_cacic + 'modulos', v_scripter) then
            WinExec(PChar(p_path_cacic + 'modulos\' + v_scripter + ' //b ' + p_path_cacic + 'temp\ipconfig.vbs'), SW_HIDE);
+
       Except
         Begin
           log_diario('Erro na geração do ipconfig.txt pelo ' + v_metodo_obtencao+'.');
@@ -2170,7 +2143,8 @@ Begin
       sleep(5000);
 
       v_Tamanho_Arquivo := Get_File_Size(p_path_cacic + 'Temp\ipconfig.txt',true);
-      if not (FileExists(p_path_cacic + 'Temp\ipconfi1.txt')) or (v_Tamanho_Arquivo='0')  then // O arquivo ipconfig.txt foi gerado vazio, tentarei IPConfig ou WinIPcfg!
+      // O arquivo ipconfig.txt foi gerado vazio, tentarei IPConfig ou WinIPcfg!
+      if not (FileExists(p_path_cacic + 'Temp\ipconfi1.txt')) or (v_Tamanho_Arquivo='0')  then
         Begin
           Try
              v_win_dir          := PegaWinDir(nil);
@@ -2289,11 +2263,18 @@ Begin
            if (te_wins_primario='')   then Try te_wins_primario   := PegaDadosIPConfig(v_array_campos,v_array_valores,'servidor,wins,prim;wins,server,primary','')              Except te_wins_primario   := ''; end;
            if (te_wins_secundario='') then Try te_wins_secundario := PegaDadosIPConfig(v_array_campos,v_array_valores,'servidor,wins,secund;wins,server,secondary','')          Except te_wins_secundario := ''; end;
 
-           if ((GetWinVer <> 0) and (GetWinVer > 5)) or
-              (abstraiCSD(v_te_so) >= 250) then //Se NT/2K/XP
-             Try te_dominio_windows := PegaDadosIPConfig(v_array_campos,v_array_valores,'usu,rio,logado;usu,rio,logado','')                                                                                Except te_dominio_windows := 'Não Identificado'; end
+           if (g_oCacic.isWindowsNT()) then //Se NT/2K/XP
+             Try
+                te_dominio_windows := PegaDadosIPConfig(v_array_campos,v_array_valores,'usu,rio,logado;usu,rio,logado','')
+             Except
+                te_dominio_windows := 'Não Identificado';
+             end
            else
-             Try te_dominio_windows := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MSNP32\NetworkProvider\AuthenticatingAgent') + '@' + GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Network\Logon\username') Except te_dominio_windows := 'Não Identificado'; end
+             Try
+                te_dominio_windows := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MSNP32\NetworkProvider\AuthenticatingAgent') + '@' + GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Network\Logon\username')
+             Except te_dominio_windows := 'Não Identificado';
+             end;
+
         End // fim do Begin
       Else
         Begin
@@ -2352,6 +2333,13 @@ Begin
     // O cálculo para obtenção deste parâmetro poderá ser feito pelo módulo Gerente Web através do script get_config.php
     // if (trim(v_mascara)='') then v_mascara := '255.255.255.0';
 
+    if(te_ip<>'') then
+      try
+        SetValorDatMemoria('TcpIp.TE_IP',te_ip, v_tstrCipherOpened);
+      except
+         log_diario('Erro setando TE_IP.');
+      end;
+
     try
       if (trim(GetIPRede(te_ip, te_mascara))<>'') then
       SetValorDatMemoria('TcpIp.ID_IP_REDE',GetIPRede(te_ip, te_mascara), v_tstrCipherOpened);
@@ -2359,18 +2347,15 @@ Begin
        log_diario('Erro setando IP_REDE.');
     end;
 
+    if( (v_te_so<>'') and (v_mac_address<>'') and (te_ip<>'') ) // Verifica dados chave para controles
+       then log_diario('Dados de rede usados: SO=' + v_te_so + ' MAC=' + v_mac_address + ' IP=' + te_ip)
+       else log_diario('Erro na obtenção de dados de rede: SO=' + v_te_so + ' MAC=' + v_mac_address + ' IP=' + te_ip);
+
     try
       SetValorDatMemoria('TcpIp.TE_NODE_ADDRESS',StringReplace(v_mac_address,':','-',[rfReplaceAll]), v_tstrCipherOpened);
     except
        log_diario('Erro setando NODE_ADDRESS.');
     end;
-
-    // Esta atribuição foi realizada no teste de comunicação mais acima
-    //Try
-    //  SetValorDatMemoria('TcpIp.TE_IP',TE_IP, v_tstrCipherOpened);
-    //except
-    //  log_diario('Erro setando IP.');
-    //End;
 
     Try
       SetValorDatMemoria('TcpIp.TE_NOME_HOST',TE_NOME_HOST, v_tstrCipherOpened);
@@ -2395,13 +2380,6 @@ Begin
             // Passei a enviar sempre a versão do CACIC...
             // Solicito do servidor a configuração que foi definida pelo administrador do CACIC.
             Request_SVG := TStringList.Create;
-            //Request_SVG.Values['te_node_address']    := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['id_so']              := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           , v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['te_so']              := EnCrypt(v_te_so,l_cs_compress);
-            //Request_SVG.Values['id_ip_rede']         := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['te_ip']              := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             , v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['te_workgroup']       := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened),l_cs_compress);
 
             //Tratamento de Sistemas Monitorados
             intAux4 := 1;
@@ -2425,7 +2403,6 @@ Begin
                 intAux4 := intAux4 + 1;
               end; //While
 
-             // Request_SVG.Values['te_tripa_perfis']       := strTripa;
              // Proposital, para forçar a chegada dos perfis, solução temporária...
              Request_SVG.Values['te_tripa_perfis']       := StringReplace(EnCrypt('',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
 
@@ -2461,13 +2438,6 @@ Begin
                   // Solicito do servidor a configuração que foi definida pelo administrador do CACIC.
                   Request_SVG.Free;
                   Request_SVG := TStringList.Create;
-                  //Request_SVG.Values['te_node_address']    := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress);
-                  //Request_SVG.Values['id_so']              := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           , v_tstrCipherOpened),l_cs_compress);
-                  //Request_SVG.Values['te_so']              := EnCrypt(v_te_so,l_cs_compress);
-                  //Request_SVG.Values['id_ip_rede']         := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress);
-                  //Request_SVG.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened),l_cs_compress);
-                  //Request_SVG.Values['te_ip']              := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             , v_tstrCipherOpened),l_cs_compress);
-                  //Request_SVG.Values['te_workgroup']       := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened),l_cs_compress);
                   Request_SVG.Values['te_tripa_perfis']    := StringReplace(EnCrypt('',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
                   strRetorno := ComunicaServidor('get_config.php', Request_SVG, v_mensagem_log);
                   Seta_l_cs_cipher(strRetorno);
@@ -2575,8 +2545,7 @@ Begin
             if (te_dominio_windows = '') then
               Begin
                 Try
-                  if ((GetWinVer <> 0) and (GetWinVer > 5)) or
-                     (abstraiCSD(v_te_so) >= 250) then //Se NT/2K/XP
+                  if (g_oCacic.isWindowsNT()) then //Se NT/2K/XP
                      te_dominio_windows := GetNetworkUserName + '@' + GetDomainName
                   else
                      te_dominio_windows := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Network\Logon\username')+ '@' + GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MSNP32\NetworkProvider\AuthenticatingAgent');
@@ -2585,13 +2554,6 @@ Begin
               End;
 
             Request_SVG := TStringList.Create;
-            //Request_SVG.Values['te_node_address']    := EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['id_so']              := EnCrypt(GetValorDatMemoria('Configs.ID_SO'           , v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['te_so']              := EnCrypt(v_te_so,l_cs_compress);
-            //Request_SVG.Values['id_ip_rede']         := EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['te_nome_computador'] := EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['te_ip']              := EnCrypt(GetValorDatMemoria('TcpIp.TE_IP'             , v_tstrCipherOpened),l_cs_compress);
-            //Request_SVG.Values['te_workgroup']       := EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened),l_cs_compress);
             Request_SVG.Values['te_mascara']         := StringReplace(EnCrypt(te_mascara,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
             Request_SVG.Values['te_gateway']         := StringReplace(EnCrypt(te_gateway,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
             Request_SVG.Values['te_serv_dhcp']       := StringReplace(EnCrypt(te_serv_dhcp,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
@@ -2693,8 +2655,7 @@ Begin
                 Begin
                   v_acao_gercols := 'Configurando diretório para o CACIC. (Registry para w95/95OSR2/98/98SE/ME)';
                   // Identifico a versão do Windows
-                  If ((GetWinVer <> 0) and (GetWinVer <= 5)) or
-                     (abstraiCSD(v_te_so) < 250) then
+                  If (g_oCacic.isWindows9xME()) then
                     begin
                     //Se for 95/95OSR2/98/98SE/ME faço aqui...  (Em NT Like isto é feito no LoginScript)
                     SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Trim(Copy(ParamStr(intAux),12,Length((ParamStr(intAux))))) + '\cacic2.exe');
@@ -2957,8 +2918,6 @@ Begin
                                   Request_Ger_Cols.Values['in_chkcacic']   := StringReplace(EnCrypt('chkcacic',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
                                   Request_Ger_Cols.Values['te_fila_ftp']   := StringReplace(EnCrypt('2',l_cs_compress),'+','<MAIS>',[rfReplaceAll]); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
                                   Request_Ger_Cols.Values['id_ftp']        := StringReplace(EnCrypt(GetValorDatMemoria('Configs.ID_FTP',v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
-                                  //Request_Ger_Cols.Values['te_so']         := EnCrypt(v_te_so,l_cs_compress);
-                                  //Request_Ger_Cols.Values['id_ip_estacao'] := EnCrypt(GetIP,l_cs_compress); // Informará o IP para registro na tabela redes_grupos_FTP
                                   ComunicaServidor('get_config.php', Request_Ger_Cols, '>> Liberando Grupo FTP!...');
                                   Request_Ger_Cols.Free;
                                   SetValorDatMemoria('Configs.ID_FTP','', v_tstrCipherOpened)
@@ -3382,83 +3341,93 @@ Begin
 
 End;
 
+const
+   CACIC_APP_NAME = 'ger_cols';
+
 begin
-  Try
-  // Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.DAT
-  tstrTripa1   := explode(ExtractFilePath(ParamStr(0)),'\');
-  p_path_cacic := '';
-  For intAux := 0 to tstrTripa1.Count -2 do
-      p_path_cacic := p_path_cacic + tstrTripa1[intAux] + '\';
+   g_oCacic := TCACIC.Create();
 
-  v_Debugs := false;
-  if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
-    Begin
-      if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
-        Begin
-          v_Debugs := true;
-          log_DEBUG('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
-        End;
-    End;
+   if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then begin
+     Try
+       // Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.DAT
+       tstrTripa1   := explode(ExtractFilePath(ParamStr(0)),'\');
+       p_path_cacic := '';
+       For intAux := 0 to tstrTripa1.Count -2 do
+           p_path_cacic := p_path_cacic + tstrTripa1[intAux] + '\';
 
-    For intAux := 1 to ParamCount do
-      if LowerCase(Copy(ParamStr(intAux),1,13)) = '/p_cipherkey=' then
-        Begin
-          v_CipherKey := Trim(Copy(ParamStr(intAux),14,Length((ParamStr(intAux)))));
-          log_DEBUG('Parâmetro para cifragem recebido.');
-        End;
+       g_oCacic.setCacicPath(p_path_cacic);
 
-    // Caso tenha sido invocado por um CACIC2.EXE versão antiga, assumo o valor abaixo...
-    // Solução provisória até a convergência das versões do Agente Principal e do Gerente de Coletas
-    if (trim(v_CipherKey)='') then v_CipherKey := 'CacicBrasil';
+       // Obtem a string de identificação do SO (v_te_so), para uso nas comunicações com o Gerente WEB.
+       v_te_so := g_oCacic.getWindowsStrId();
 
-    if (trim(v_CipherKey)<>'') then
-      Begin
-        v_IV := 'abcdefghijklmnop';
+       v_Debugs := false;
+       if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
+           if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+          Begin
+            v_Debugs := true;
+            log_DEBUG('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+          End;
 
-        // De acordo com a versão do OS, determino o ShellCommand para chamadas externas.
-        p_Shell_Command := 'command.com /c ';
-        if ((GetWinVer <> 0) and (GetWinVer > 5)) or
-           (abstraiCSD(v_te_so) >= 250) then p_Shell_Command := 'cmd.exe /c '; //NT/2K/XP
+        For intAux := 1 to ParamCount do
+          if LowerCase(Copy(ParamStr(intAux),1,13)) = '/p_cipherkey=' then
+            Begin
+              v_CipherKey := Trim(Copy(ParamStr(intAux),14,Length((ParamStr(intAux)))));
+              log_DEBUG('Parâmetro para cifragem recebido.');
+            End;
 
-        if not DirectoryExists(p_path_cacic + 'Temp') then
-          ForceDirectories(p_path_cacic + 'Temp');
+        // Caso tenha sido invocado por um CACIC2.EXE versão antiga, assumo o valor abaixo...
+        // Solução provisória até a convergência das versões do Agente Principal e do Gerente de Coletas
+        if (trim(v_CipherKey)='') then
+           v_CipherKey := 'CacicBrasil';
 
-        // A chave AES foi obtida no parâmetro p_CipherKey. Recomenda-se que cada empresa altere a sua chave.
-        v_DatFileName      := p_path_cacic + 'cacic2.dat';
-        v_tstrCipherOpened := TStrings.Create;
-        v_tstrCipherOpened := CipherOpen(v_DatFileName);
+        if (trim(v_CipherKey)<>'') then
+          Begin
+            v_IV := 'abcdefghijklmnop';
 
-        // Não tirar desta posição
-        SetValorDatMemoria('Configs.ID_SO',IntToStr(GetWinVer), v_tstrCipherOpened);
+           // De acordo com a versão do OS, determina-se o ShellCommand para chamadas externas.
+           p_Shell_Command := 'cmd.exe /c '; //NT/2K/XP
+           if(g_oCacic.isWindows9xME()) then
+              p_Shell_Command := 'command.com /c ';
 
-        v_scripter := 'wscript.exe';
-        // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento
-        AssignFile(v_Aguarde,p_path_cacic + 'temp\aguarde_GER.txt'); {Associa o arquivo a uma variável do tipo TextFile}
-        {$IOChecks off}
-        Reset(v_Aguarde); {Abre o arquivo texto}
-        {$IOChecks on}
-        if (IOResult <> 0) then // Arquivo não existe, será recriado.
-          Rewrite (v_Aguarde);
+           if not DirectoryExists(p_path_cacic + 'Temp') then
+             ForceDirectories(p_path_cacic + 'Temp');
 
-        Append(v_Aguarde);
-        Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ger_Cols');
-        Append(v_Aguarde);
+           // A chave AES foi obtida no parâmetro p_CipherKey. Recomenda-se que cada empresa altere a sua chave.
+           v_DatFileName      := p_path_cacic + 'cacic2.dat';
+           v_tstrCipherOpened := TStrings.Create;
+           v_tstrCipherOpened := CipherOpen(v_DatFileName);
 
-        ChecaCipher;
-        ChecaCompress;
+           // Não tirar desta posição
+           SetValorDatMemoria('Configs.ID_SO',IntToStr(GetWinVer), v_tstrCipherOpened);
 
-        // Provoco a alimentação da variável v_te_so, para uso nas comunicações com o Gerente WEB.
-        GetWinVer;
+           v_scripter := 'wscript.exe';
+           // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento
+           AssignFile(v_Aguarde,p_path_cacic + 'temp\aguarde_GER.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+           {$IOChecks off}
+           Reset(v_Aguarde); {Abre o arquivo texto}
+           {$IOChecks on}
+           if (IOResult <> 0) then // Arquivo não existe, será recriado.
+             Rewrite (v_Aguarde);
 
-        Executa_Ger_Cols;
-        Finalizar(true);
-      End;
-  Except
-    Begin
-     log_diario('PROBLEMAS EM EXECUTA_GER_COLS! Ação: ' + v_acao_gercols+'.');
-     CriaTXT(p_path_cacic,'ger_erro');
-     Finalizar(false);
-     SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
-    End;
-  End;
+           Append(v_Aguarde);
+           Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ger_Cols');
+           Append(v_Aguarde);
+
+           ChecaCipher;
+           ChecaCompress;
+
+           Executa_Ger_Cols;
+           Finalizar(true);
+          End;
+       Except
+         Begin
+           log_diario('PROBLEMAS EM EXECUTA_GER_COLS! Ação: ' + v_acao_gercols+'.');
+           CriaTXT(p_path_cacic,'ger_erro');
+           Finalizar(false);
+           SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
+         End;
+     End;
+   End;
+
+   g_oCacic.Free();
 end.

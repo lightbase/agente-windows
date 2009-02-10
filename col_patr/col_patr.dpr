@@ -19,14 +19,42 @@ program col_patr;
 
 uses
   Forms,
+  Windows,
   main_col_patr in 'main_col_patr.pas' {FormPatrimonio},
-  LibXmlParser in 'LibXmlParser.pas',
-  XML in 'xml.pas';
+  LibXmlParser,
+  XML,
+  CACIC_Library in '..\CACIC_Library.pas';
 
 {$R *.res}
 
+const
+  CACIC_APP_NAME = 'col_patr';
+
+var
+  hwind:HWND;
+  oCacic : TCACIC;
+
 begin
-  Application.Initialize;
-  Application.CreateForm(TFormPatrimonio, FormPatrimonio);
-  Application.Run;
+   oCacic := TCACIC.Create();
+
+   if( oCacic.isAppRunning( CACIC_APP_NAME ) )
+     then begin
+        hwind := 0;
+        repeat			// The string 'My app' must match your App Title (below)
+           hwind:=Windows.FindWindowEx(0,hwind,'TApplication', CACIC_APP_NAME );
+        until (hwind<>Application.Handle);
+        IF (hwind<>0) then
+        begin
+           Windows.ShowWindow(hwind,SW_SHOWNORMAL);
+           Windows.SetForegroundWindow(hwind);
+        end;
+     end
+     else begin
+       Application.Initialize;
+       Application.CreateForm(TFormPatrimonio, FormPatrimonio);
+       Application.Run;
+     end;
+
+   oCacic.Free();
+
 end.

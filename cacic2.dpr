@@ -25,42 +25,42 @@ uses
   frmSenha in 'frmsenha.pas' {formSenha},
   frmConfiguracoes in 'frmConfiguracoes.pas' {FormConfiguracoes},
   frmLog in 'frmLog.pas' {FormLog},
-  LibXmlParser in 'LibXmlParser.pas';
+  LibXmlParser,
+  CACIC_Library in 'CACIC_Library.pas';
 
 {$R *.res}
 
-VAR								// Add Vars
-	MutexHandle: THandle;
-	hwind:HWND;
+const
+  CACIC_APP_NAME = 'cacic2';
+
+var
+  hwind:HWND;
+  oCacic : TCACIC;
 
 begin
-
-   // Esse código evita que mais de uma cópia do cacic seja instanciada.
-   MutexHandle := CreateMutex(nil, TRUE, 'cacic2'); // should be a unique string
-   IF MutexHandle <> 0 then
-   begin
-      IF GetLastError = ERROR_ALREADY_EXISTS then
-      begin
-        CloseHandle(MutexHandle);
+   oCacic := TCACIC.Create();
+   
+   if( oCacic.isAppRunning( CACIC_APP_NAME ) )
+     then begin
         hwind := 0;
         repeat			// The string 'My app' must match your App Title (below)
-           hwind:=Windows.FindWindowEx(0,hwind,'TApplication','cacic2');
+           hwind:=Windows.FindWindowEx(0,hwind,'TApplication', CACIC_APP_NAME );
         until (hwind<>Application.Handle);
         IF (hwind<>0) then
         begin
            Windows.ShowWindow(hwind,SW_SHOWNORMAL);
            Windows.SetForegroundWindow(hwind);
         end;
-
         FreeMemory(0);
         Halt(0);
-      end
-   end;
+     end;
+
+   oCacic.Free();
 
    // Preventing application button showing in the task bar
    SetWindowLong(Application.Handle, GWL_EXSTYLE, GetWindowLong(Application.Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW and not WS_EX_APPWINDOW );
    Application.Initialize;
    Application.Title := 'cacic2';
    Application.CreateForm(TFormularioGeral, FormularioGeral);
-  Application.Run;
+   Application.Run;
 end.
