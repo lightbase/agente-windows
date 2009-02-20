@@ -37,12 +37,10 @@ uses  Windows,
       DCPbase64,
       ComCtrls,
       IdBaseComponent,
-      IdComponent,
-      IdTCPServer,
-      IdCustomHTTPServer,
-      IdHTTPServer,
-      IdFTPServer,
-      CACIC_Library;
+      IdComponent, Buttons,
+	  CACIC_Library;
+      //IdTCPServer;
+      //IdFTPServer;
 
 const WM_MYMESSAGE = WM_USER+100;
 
@@ -53,7 +51,6 @@ var p_path_cacic,
     p_Shell_Path,
     v_versao        : string;
     BatchFile : TStringList;
-    v_icon_tray : integer;
     v_CipherKey,
     v_SeparatorKey,
     v_IV,
@@ -63,12 +60,12 @@ var p_path_cacic,
     v_te_so,
     strConfigsPatrimonio      : string;
     v_tstrCipherOpened        : TStrings;
-    v_Debugs                  : Boolean;
+    boolCrypt,
+    boolDebugs                : Boolean;
 
 type
   TFormularioGeral = class(TForm)
     Pn_InfosGerais: TPanel;
-    Bt_Fechar_InfosGerais: TButton;
     Pn_SisMoni: TPanel;
     Lb_SisMoni: TLabel;
     Pn_TCPIP: TPanel;
@@ -118,14 +115,6 @@ type
     lbColetasRealizadasNestaData: TLabel;
     listaColetas: TListView;
     teDataColeta: TLabel;
-    Panel2: TPanel;
-    Panel3: TPanel;
-    pnVersao: TPanel;
-    lbServidorWEB: TLabel;
-    teServidorWEB: TLabel;
-    Panel5: TPanel;
-    IdHTTPServerCACIC: TIdHTTPServer;
-    IdFTPServer1: TIdFTPServer;
     pnInformacoesPatrimoniais: TPanel;
     lbInformacoesPatrimoniais: TLabel;
     gpInfosPatrimoniais: TGroupBox;
@@ -144,7 +133,6 @@ type
     Panel8: TPanel;
     Panel9: TPanel;
     Panel11: TPanel;
-    Panel12: TPanel;
     st_lb_Etiqueta4: TStaticText;
     st_lb_Etiqueta3: TStaticText;
     st_vl_Etiqueta3: TStaticText;
@@ -155,6 +143,21 @@ type
     st_vl_etiqueta7: TStaticText;
     st_vl_etiqueta8: TStaticText;
     st_vl_etiqueta9: TStaticText;
+    Mnu_SuporteRemoto: TMenuItem;
+    lbSemInformacoesPatrimoniais: TLabel;
+    pnServidores: TPanel;
+    lbServidores: TLabel;
+    GroupBox1: TGroupBox;
+    staticVlServidorUpdates: TStaticText;
+    staticNmServidorUpdates: TStaticText;
+    staticNmServidorAplicacao: TStaticText;
+    staticVlServidorAplicacao: TStaticText;
+    Panel4: TPanel;
+    Panel1: TPanel;
+    Panel2: TPanel;
+    Panel3: TPanel;
+    pnVersao: TPanel;
+    bt_Fechar_Infos_Gerais: TBitBtn;
     procedure RemoveIconesMortos;
     procedure ChecaCONFIGS;
     procedure CriaFormSenha(Sender: TObject);
@@ -185,17 +188,28 @@ type
     function  Get_File_Size(sFileToExamine: string; bInKBytes: Boolean): string;
     function  Posso_Rodar : boolean;
     function  abstraiCSD(p_te_so : String) : integer;
+{
     procedure IdHTTPServerCACICCommandGet(AThread: TIdPeerThread;
       ARequestInfo: TIdHTTPRequestInfo;
       AResponseInfo: TIdHTTPResponseInfo);
+
     procedure IdFTPServer1UserLogin(ASender: TIdFTPServerThread;
       const AUsername, APassword: String; var AAuthenticated: Boolean);
+}
+    procedure Mnu_SuporteRemotoClick(Sender: TObject);
+//    procedure StartVNCServer;
+    procedure PopupMenu1Popup(Sender: TObject);
   private
     ShutdownEmExecucao : Boolean;
     IsMenuOpen : Boolean;
     NotifyStruc : TNotifyIconData; {Estrutura do tray icon}
     procedure InicializaTray(v_Hint:string);
     procedure Finaliza;
+    procedure VerificaDebugs;
+    procedure MontaVetoresPatrimonio(p_strConfigs : String);
+    Function  RetornaValorVetorUON1(id1 : string) : String;
+    Function  RetornaValorVetorUON1a(id1a : string) : String;
+    Function  RetornaValorVetorUON2(id2, idLocal: string) : String;
     procedure Invoca_GerCols(Sender: TObject;p_acao:string);
     function  GetVersionInfo(p_File: string):string;
     function  VerFmt(const MS, LS: DWORD): string;
@@ -206,7 +220,6 @@ type
     procedure WMQueryEndSession(var Msg : TWMQueryEndSession); Message WM_QUERYENDSESSION;
     procedure WMMENUSELECT(var msg: TWMMENUSELECT); message WM_MENUSELECT;
     function  GetFileHash(strFileName : String) : String;
-    Function  XML_ResgataValorPatrimonio(strIT, strID : String; Fonte : String): String;
   public
     Function  Implode(p_Array : TStrings ; p_Separador : String) : String;
     function  HomeDrive : string;
@@ -223,7 +236,17 @@ type
     Function  XML_RetornaValor(Tag : String; Fonte : String): String;
   end;
 
-var FormularioGeral: TFormularioGeral;
+var FormularioGeral             : TFormularioGeral;
+    boolServerON                : Boolean;
+    handleStartServerThreadID,
+    handleStartVNCThreadID,
+    handleCacicRC               : THandle;
+    dwordStartServerID,
+    dwordStartVNCID             : dword;
+    procStartServer             : procedure; stdcall;
+    procStopServer              : procedure; stdcall;
+    threadCacicRC               : TThread;
+
 
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
@@ -236,10 +259,39 @@ implementation
 {$R *.dfm}
 
 Uses StrUtils, Inifiles, frmConfiguracoes, frmSenha, frmLog,
-  IdHTTPHeaderInfo, Math,md5,LibXmlParser;
+     Math,md5,LibXmlParser,WinVNC;
+
+// Estruturas de dados para armazenar os itens da uon1, uon1a e uon2
+type
+  TRegistroUON1 = record
+    id1 : String;
+    nm1 : String;
+  end;
+  TVetorUON1 = array of TRegistroUON1;
+
+  TRegistroUON1a = record
+    id1     : String;
+    id1a    : String;
+    nm1a    : String;
+    id_local: String;
+  end;
+
+  TVetorUON1a = array of TRegistroUON1a;
+
+  TRegistroUON2 = record
+    id1a    : String;
+    id2     : String;
+    nm2     : String;
+    id_local: String;
+  end;
+  TVetorUON2 = array of TRegistroUON2;
+
+var VetorUON1  : TVetorUON1;
+    VetorUON1a : TVetorUON1a;
+    VetorUON2  : TVetorUON2;
 
 // Para cálculo de HASH de determinado arquivo.
-// Objetivo principal: Verificar autenticidade de agentes para trabalho cooperativo
+// Objetivo principal: Verificar autenticidade de agentes quando em trabalho cooperativo
 // Anderson Peterle - Dataprev/ES - 08/Maio/2008
 function TFormularioGeral.GetFileHash(strFileName : String) : String;
 Begin
@@ -262,7 +314,164 @@ begin
       Result[i] := #0;
   end;
 end;
+Function TFormularioGeral.RetornaValorVetorUON1(id1 : string) : String;
+var I : Integer;
+begin
+   For I := 0 to (Length(VetorUON1)-1)  Do
+       If (VetorUON1[I].id1 = id1) Then Result := VetorUON1[I].nm1;
+end;
 
+Function TFormularioGeral.RetornaValorVetorUON1a(id1a : string) : String;
+var I : Integer;
+begin
+   For I := 0 to (Length(VetorUON1a)-1)  Do
+       If (VetorUON1a[I].id1a     = id1a) Then Result := VetorUON1a[I].nm1a;
+end;
+
+Function TFormularioGeral.RetornaValorVetorUON2(id2, idLocal: string) : String;
+var I : Integer;
+begin
+   For I := 0 to (Length(VetorUON2)-1)  Do
+       If (VetorUON2[I].id2      = id2) and
+          (VetorUON2[I].id_local = idLocal) Then Result := VetorUON2[I].nm2;
+end;
+
+procedure TFormularioGeral.MontaVetoresPatrimonio(p_strConfigs : String);
+var Parser   : TXmlParser;
+    i        : integer;
+    strAux,
+    strAux1,
+    strTagName,
+    strItemName  : string;
+begin
+
+  Parser := TXmlParser.Create;
+  Parser.Normalize := True;
+  Parser.LoadFromBuffer(PAnsiChar(p_strConfigs));
+  log_DEBUG('MontaVetores.p_strConfigs: '+p_strConfigs);
+
+  // Código para montar o vetor UON1
+  Parser.StartScan;
+  i := -1;
+  strItemName := '';
+  strTagName  := '';
+  While Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT1') Then
+       Begin
+          i := i + 1;
+          SetLength(VetorUON1, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          strTagName := 'IT1';
+       end
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT1') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT1')Then
+       Begin
+         strAux1 := DeCrypt(Parser.CurContent);
+         if      (strItemName = 'ID1') then
+           Begin
+             VetorUON1[i].id1 := strAux1;
+             log_DEBUG('Gravei VetorUON1.id1: "'+strAux1+'"');
+           End
+         else if (strItemName = 'NM1') then
+           Begin
+             VetorUON1[i].nm1 := strAux1;
+             log_DEBUG('Gravei VetorUON1.nm1: "'+strAux1+'"');
+           End;
+       End;
+    End;
+
+  // Código para montar o vetor UON1a
+  Parser.StartScan;
+  strTagName := '';
+  strAux1    := '';
+  i := -1;
+  While Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT1A') Then
+       Begin
+          i := i + 1;
+          SetLength(VetorUON1a, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          strTagName := 'IT1A';
+       end
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT1A') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT1A')Then
+        Begin
+          strAux1 := DeCrypt(Parser.CurContent);
+          if      (strItemName = 'ID1') then
+            Begin
+              VetorUON1a[i].id1 := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id1: "'+strAux1+'"');
+            End
+          else if (strItemName = 'SG_LOC') then
+            Begin
+              strAux := ' ('+strAux1 + ')';
+            End
+          else if (strItemName = 'ID1A') then
+            Begin
+              VetorUON1a[i].id1a := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id1a: "'+strAux1+'"');
+            End
+          else if (strItemName = 'NM1A') then
+            Begin
+              VetorUON1a[i].nm1a := strAux1+strAux;
+              log_DEBUG('Gravei VetorUON1a.nm1a: "'+strAux1+strAux+'"');
+            End
+          else if (strItemName = 'ID_LOCAL') then
+            Begin
+              VetorUON1a[i].id_local := strAux1;
+              log_DEBUG('Gravei VetorUON1a.id_local: "'+strAux1+'"');
+            End;
+
+        End;
+    end;
+
+  // Código para montar o vetor UON2
+  Parser.StartScan;
+  strTagName := '';
+  i := -1;
+  While Parser.Scan DO
+    Begin
+     strItemName := UpperCase(Parser.CurName);
+     if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT2') Then
+       Begin
+          i := i + 1;
+          SetLength(VetorUON2, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          strTagName := 'IT2';
+       end
+     else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT2') then
+       strTagName := ''
+     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT2')Then
+        Begin
+          strAux1  := DeCrypt(Parser.CurContent);
+          if      (strItemName = 'ID1A') then
+            Begin
+              VetorUON2[i].id1a := strAux1;
+              log_DEBUG('Gravei VetorUON2.id1a: "'+strAux1+'"');
+            End
+          else if (strItemName = 'ID2') then
+            Begin
+              VetorUON2[i].id2 := strAux1;
+              log_DEBUG('Gravei VetorUON2.id2: "'+strAux1+'"');
+            End
+          else if (strItemName = 'NM2') then
+            Begin
+              VetorUON2[i].nm2 := strAux1;
+              log_DEBUG('Gravei VetorUON2.nm2: "'+strAux1+'"');
+            End
+          else if (strItemName = 'ID_LOCAL') then
+            Begin
+              VetorUON2[i].id_local := strAux1;
+              log_DEBUG('Gravei VetorUON2.id_local: "'+strAux1+'"');
+            End;
+
+        End;
+    end;
+  Parser.Free;
+end;
 
 // Encrypt a string and return the Base64 encoded result
 function TFormularioGeral.EnCrypt(p_Data : String) : String;
@@ -270,33 +479,41 @@ var
   l_Cipher : TDCP_rijndael;
   l_Data, l_Key, l_IV : string;
 begin
-  Try
-    // Pad Key, IV and Data with zeros as appropriate
-    l_Key   := PadWithZeros(v_CipherKey,KeySize);
-    l_IV    := PadWithZeros(v_IV,BlockSize);
-    l_Data  := PadWithZeros(p_Data,BlockSize);
+  if boolCrypt then
+    Begin
+      Try
+        // Pad Key, IV and Data with zeros as appropriate
+        l_Key   := PadWithZeros(v_CipherKey,KeySize);
+        log_DEBUG('Encrypt: l_Key => "'+l_Key+'"');
+        l_IV    := PadWithZeros(v_IV,BlockSize);
+        log_DEBUG('Encrypt: l_IV  => "'+l_IV+'"');
+        l_Data  := PadWithZeros(p_Data,BlockSize);
+        log_DEBUG('Encrypt: l_Data antes CBC => "'+l_Data+'"');
+        // Create the cipher and initialise according to the key length
+        l_Cipher := TDCP_rijndael.Create(nil);
+        if Length(v_CipherKey) <= 16 then
+          l_Cipher.Init(l_Key[1],128,@l_IV[1])
+        else if Length(v_CipherKey) <= 24 then
+          l_Cipher.Init(l_Key[1],192,@l_IV[1])
+        else
+          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
 
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(v_CipherKey) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(v_CipherKey) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+        // Encrypt the data
+        l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+        log_DEBUG('Encrypt: l_Data após CBC e Antes do Base64Encode=> "'+l_Data+'"');
+        // Free the cipher and clear sensitive information
+        l_Cipher.Free;
+        FillChar(l_Key[1],Length(l_Key),0);
 
-    // Encrypt the data
-    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
-
-    // Return the Base64 encoded result
-    Result := Base64EncodeStr(l_Data);
-  Except
-    log_diario('Erro no Processo de Criptografia');
-  End;
+        // Return the Base64 encoded result
+        Result := Base64EncodeStr(l_Data);
+        log_DEBUG('Encrypt: l_Data após Base64Encode=> "'+l_Data+'"');
+      Except
+        log_diario('Erro no Processo de Criptografia');
+      End;
+    End
+  else
+    Result := p_Data;
 end;
 
 function TFormularioGeral.DeCrypt(p_Data : String) : String;
@@ -304,35 +521,40 @@ var
   l_Cipher : TDCP_rijndael;
   l_Data, l_Key, l_IV : string;
 begin
-  Try
-    // Pad Key and IV with zeros as appropriate
-    l_Key := PadWithZeros(v_CipherKey,KeySize);
-    l_IV := PadWithZeros(v_IV,BlockSize);
+  if boolCrypt then
+    Begin
+      Try
+        // Pad Key and IV with zeros as appropriate
+        l_Key := PadWithZeros(v_CipherKey,KeySize);
+        l_IV := PadWithZeros(v_IV,BlockSize);
 
-    // Decode the Base64 encoded string
-    l_Data := Base64DecodeStr(p_Data);
+        // Decode the Base64 encoded string
+        l_Data := Base64DecodeStr(p_Data);
 
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(v_CipherKey) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(v_CipherKey) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+        // Create the cipher and initialise according to the key length
+        l_Cipher := TDCP_rijndael.Create(nil);
+        if Length(v_CipherKey) <= 16 then
+          l_Cipher.Init(l_Key[1],128,@l_IV[1])
+        else if Length(v_CipherKey) <= 24 then
+          l_Cipher.Init(l_Key[1],192,@l_IV[1])
+        else
+          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
 
-    // Decrypt the data
-    l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+        // Decrypt the data
+        l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
 
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
+        // Free the cipher and clear sensitive information
+        l_Cipher.Free;
+        FillChar(l_Key[1],Length(l_Key),0);
 
-    // Return the result
-    Result := trim(RemoveZerosFimString(l_Data));
-  Except
-    log_diario('Erro no Processo de Decriptografia');
-  End;
+        // Return the result
+        Result := trim(RemoveZerosFimString(l_Data));
+      Except
+        log_diario('Erro no Processo de Decriptografia');
+      End;
+    End
+  else
+    Result := p_Data;
 end;
 
 function Pode_Coletar : boolean;
@@ -342,13 +564,15 @@ var v_JANELAS_EXCECAO, v_plural1, v_plural2 : string;
     v_contador, intContaJANELAS, intAux : integer;
 Begin
     // Se eu conseguir matar o arquivo abaixo é porque Ger_Cols e Ini_Cols já finalizaram suas atividades...
+    FormularioGeral.Matar(p_path_cacic+'temp\','aguarde_SRCACIC.txt');
     FormularioGeral.Matar(p_path_cacic+'temp\','aguarde_GER.txt');
     FormularioGeral.Matar(p_path_cacic+'temp\','aguarde_INI.txt');
     intContaJANELAS := 0;
     h := 0;
 
-    if  (not (FileExists(p_path_cacic + 'temp\aguarde_GER.txt'))  and
-         not (FileExists(p_path_cacic + 'temp\aguarde_INI.txt'))) then
+    if  (not FileExists(p_path_cacic + 'temp\aguarde_GER.txt')     and
+         not FileExists(p_path_cacic + 'temp\aguarde_SRCACIC.txt') and
+         not FileExists(p_path_cacic + 'temp\aguarde_INI.txt'))    then
         Begin
           FormularioGeral.CipherOpen;
           // Verificação das janelas abertas para que não aconteça coletas caso haja aplicações pesadas rodando (configurado no Módulo Gerente)
@@ -401,13 +625,16 @@ Begin
      if (intContaJANELAS = 0) and
         (h = 0) and
         (not FileExists(p_path_cacic + 'temp\aguarde_GER.txt')) and
+        (not FileExists(p_path_cacic + 'temp\aguarde_SRCACIC.txt')) and
         (not FileExists(p_path_cacic + 'temp\aguarde_INI.txt')) then
           Result := true
      else
         Begin
           FormularioGeral.log_DEBUG('Ação NEGADA!');
           if (intContaJANELAS=0) then
-            if (FileExists(p_path_cacic + 'temp\aguarde_GER.txt')) then
+            if (FileExists(p_path_cacic + 'temp\aguarde_SRCACIC.txt')) then
+              FormularioGeral.log_DEBUG('Suporte Remoto em atividade.')
+            else if (FileExists(p_path_cacic + 'temp\aguarde_GER.txt')) then
               FormularioGeral.log_DEBUG('Gerente de Coletas em atividade.')
             else if (FileExists(p_path_cacic + 'temp\aguarde_INI.txt')) then
               FormularioGeral.log_DEBUG('Inicializador de Coletas em atividade.')
@@ -467,7 +694,7 @@ var v_DatFile                 : TextFile;
 begin
 
   log_DEBUG('Fechando '+v_DatFileName);
-  if v_Debugs then
+  if boolDebugs then
     for intAux := 0 to (v_tstrCipherOpened.Count-1) do
       log_DEBUG('Posição ['+inttostr(intAux)+']='+v_tstrCipherOpened[intAux]);
 
@@ -995,7 +1222,7 @@ function TFormularioGeral.abstraiCSD(p_te_so : String) : integer;
 
 procedure TFormularioGeral.log_DEBUG(p_msg:string);
 Begin
-  if v_Debugs then log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
+  if boolDebugs then log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
 End;
 
 function TFormularioGeral.Posso_Rodar : boolean;
@@ -1007,6 +1234,19 @@ Begin
   FormularioGeral.Matar(p_path_cacic,'aguarde_CACIC.txt');
   if  (not (FileExists(p_path_cacic + 'aguarde_CACIC.txt'))) then
     result := true;
+End;
+
+procedure TFormularioGeral.VerificaDebugs;
+Begin
+  boolDebugs := false;
+  if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
+    Begin
+     if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+       Begin
+         boolDebugs := true;
+         log_DEBUG('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+       End;
+    End;
 End;
 
 procedure TFormularioGeral.FormCreate(Sender: TObject);
@@ -1024,6 +1264,7 @@ begin
       Application.ShowMainForm:=false;
       oCacic := TCACIC.Create;
       oCacic.showTrayIcon(false);
+	  boolCrypt := true;
 
       Try
          // De acordo com a versão do OS, determino o ShellCommand para chamadas externas.
@@ -1062,21 +1303,7 @@ begin
              Log_Diario('Criando pasta '+p_path_cacic + 'Modulos');
            end;
 
-         if not DirectoryExists(p_path_cacic + 'Repositorio') then
-           begin
-             ForceDirectories(p_path_cacic + 'Repositorio');
-             Log_Diario('Criando pasta '+p_path_cacic + 'Repositorio');
-           end;
-
-         v_Debugs := false;
-         if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
-            Begin
-             if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
-               Begin
-                 v_Debugs := true;
-                 log_DEBUG('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
-               End;
-            End;
+         VerificaDebugs;
 
          log_DEBUG('Pasta do Sistema: "' + p_path_cacic + '"');
 
@@ -1182,7 +1409,7 @@ begin
               End;
 
               // Envia o ícone para a bandeja com HINT mostrando Versão...
-              strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
+              strFraseVersao := 'CACIC  v:' + getVersionInfo(ParamStr(0));
               if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
                 strFraseVersao := strFraseVersao + char(13) + char(10) + 'IP: '+ getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
               pnVersao.Caption := 'V. ' + getVersionInfo(ParamStr(0));
@@ -1722,13 +1949,16 @@ end;
 
 procedure TFormularioGeral.Mnu_InfosTCPClick(Sender: TObject);
 var v_tripa_perfis, v_tripa_infos_coletadas,strAux : string;
-    v_array_perfis, v_array_tripa_infos_coletadas, v_array_infos_coletadas,tstringsAux : tstrings;
-    v_conta_perfis, v_conta_infos_coletadas, intAux, intAux1 : integer;
+    v_array_perfis, v_array_tripa_infos_coletadas, v_array_infos_coletadas : tstrings;
+    v_conta_perfis, v_conta_infos_coletadas, intAux : integer;
     v_achei : boolean;
 begin
     FormularioGeral.Enabled       := true;
     FormularioGeral.Visible       := true;
 
+    CipherClose;
+    CipherOpen;
+    
     ST_VL_NomeHost.Caption        := getValorDatMemoria('TcpIp.TE_NOME_HOST'       ,v_tstrCipherOpened);
     ST_VL_IPEstacao.Caption       := getValorDatMemoria('TcpIp.TE_IP'              ,v_tstrCipherOpened);
     ST_VL_MacAddress.Caption      := getValorDatMemoria('TcpIp.TE_NODE_ADDRESS'    ,v_tstrCipherOpened);
@@ -1789,7 +2019,8 @@ begin
       end;
 
     teDataColeta.Caption := '('+FormatDateTime('dd/mm/yyyy', now)+')';
-    teServidorWEB.Caption := '"'+FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor',v_tstrCipherOpened)+'"';
+    staticVlServidorAplicacao.Caption := '"'+FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor',v_tstrCipherOpened)+'"';
+    staticVlServidorUpdates.Caption   := '"'+FormularioGeral.getValorDatMemoria('Configs.Te_Serv_Updates',v_tstrCipherOpened)+'"';
 
     strAux := GetValorDatMemoria('Coletas.HOJE', v_tstrCipherOpened);
     if (strAux <> '') then
@@ -1833,65 +2064,112 @@ begin
       End;
 
    strConfigsPatrimonio      := GetValorDatMemoria('Patrimonio.Configs'       , v_tstrCipherOpened);
+   MontaVetoresPatrimonio(strConfigsPatrimonio);
+
+   if (strConfigsPatrimonio = '') then
+    lbSemInformacoesPatrimoniais.Visible := true
+   else
+    lbSemInformacoesPatrimoniais.Visible := false;
 
    st_lb_Etiqueta1.Caption  := DeCrypt(XML_RetornaValor('te_etiqueta1', strConfigsPatrimonio));
-   st_lb_Etiqueta1.Visible  := true;
-   st_vl_Etiqueta1.Caption  := XML_ResgataValorPatrimonio('IT1',GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1',v_tstrCipherOpened),strConfigsPatrimonio);
+   st_lb_Etiqueta1.Caption  := st_lb_Etiqueta1.Caption + IfThen(st_lb_Etiqueta1.Caption='','',':');
+   st_vl_Etiqueta1.Caption  := RetornaValorVetorUON1(GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1',v_tstrCipherOpened));
 
    st_lb_Etiqueta1a.Caption := DeCrypt(XML_RetornaValor('te_etiqueta1a', strConfigsPatrimonio));
-   st_lb_Etiqueta1a.Visible := true;
-   st_vl_Etiqueta1a.Caption := XML_ResgataValorPatrimonio('IT1a',GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a',v_tstrCipherOpened),strConfigsPatrimonio);
+   st_lb_Etiqueta1a.Caption := st_lb_Etiqueta1a.Caption + IfThen(st_lb_Etiqueta1a.Caption='','',':');
+   st_vl_Etiqueta1a.Caption := RetornaValorVetorUON1a(GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a',v_tstrCipherOpened));
 
    st_lb_Etiqueta2.Caption  := DeCrypt(XML_RetornaValor('te_etiqueta2', strConfigsPatrimonio));
-   st_lb_Etiqueta2.Visible  := true;
-   st_vl_Etiqueta2.Caption  := XML_ResgataValorPatrimonio('IT2',GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2',v_tstrCipherOpened),strConfigsPatrimonio);
+   st_lb_Etiqueta2.Caption  := st_lb_Etiqueta2.Caption + IfThen(st_lb_Etiqueta2.Caption='','',':');
+   st_vl_Etiqueta2.Caption  := RetornaValorVetorUON2(GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2',v_tstrCipherOpened),GetValorDatMemoria('Patrimonio.id_local',v_tstrCipherOpened));
 
    st_lb_Etiqueta3.Caption  := DeCrypt(XML_RetornaValor('te_etiqueta3', strConfigsPatrimonio));
-   st_lb_Etiqueta3.Visible  := true;
+   st_lb_Etiqueta3.Caption  := st_lb_Etiqueta3.Caption + IfThen(st_lb_Etiqueta3.Caption='','',':');
    st_vl_Etiqueta3.Caption  := GetValorDatMemoria('Patrimonio.te_localizacao_complementar',v_tstrCipherOpened);
 
 
    if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta4', strConfigsPatrimonio)) = 'S') then
     begin
       st_lb_Etiqueta4.Caption := DeCrypt(XML_RetornaValor('te_etiqueta4', strConfigsPatrimonio));
+      st_lb_Etiqueta4.Caption := st_lb_Etiqueta4.Caption + IfThen(st_lb_Etiqueta4.Caption='','',':');
       st_lb_Etiqueta4.Visible := true;
       st_vl_etiqueta4.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio1',v_tstrCipherOpened);
-    end;
+    end
+   else
+    Begin
+      st_lb_Etiqueta4.Visible := false;
+      st_vl_etiqueta4.Visible := false;
+    End;
 
    if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta5', strConfigsPatrimonio)) = 'S') then
     begin
       st_lb_Etiqueta5.Caption := DeCrypt(XML_RetornaValor('te_etiqueta5', strConfigsPatrimonio));
+      st_lb_Etiqueta5.Caption := st_lb_Etiqueta5.Caption + IfThen(st_lb_Etiqueta5.Caption='','',':');
       st_lb_Etiqueta5.Visible := true;
       st_vl_etiqueta5.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio2',v_tstrCipherOpened);
-    end;
+    end
+   else
+    Begin
+      st_lb_Etiqueta5.Visible := false;
+      st_vl_etiqueta5.Visible := false;
+    End;
+
 
    if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta6', strConfigsPatrimonio)) = 'S') then
     begin
       st_lb_Etiqueta6.Caption := DeCrypt(XML_RetornaValor('te_etiqueta6', strConfigsPatrimonio));
+      st_lb_Etiqueta6.Caption := st_lb_Etiqueta6.Caption + IfThen(st_lb_Etiqueta6.Caption='','',':');
       st_lb_Etiqueta6.Visible := true;
       st_vl_etiqueta6.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio3',v_tstrCipherOpened);
-    end;
+    end
+   else
+    Begin
+      st_lb_Etiqueta6.Visible := false;
+      st_vl_etiqueta6.Visible := false;
+    End;
+
 
    if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta7', strConfigsPatrimonio)) = 'S') then
     begin
       st_lb_Etiqueta7.Caption := DeCrypt(XML_RetornaValor('te_etiqueta7', strConfigsPatrimonio));
+      st_lb_Etiqueta7.Caption := st_lb_Etiqueta7.Caption + IfThen(st_lb_Etiqueta7.Caption='','',':');
       st_lb_Etiqueta7.Visible := true;
       st_vl_etiqueta7.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio4',v_tstrCipherOpened);
-    end;
+    end
+   else
+    Begin
+      st_lb_Etiqueta7.Visible := false;
+      st_vl_etiqueta7.Visible := false;
+    End;
+
 
    if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta8', strConfigsPatrimonio)) = 'S') then
     begin
       st_lb_Etiqueta8.Caption := DeCrypt(XML_RetornaValor('te_etiqueta8', strConfigsPatrimonio));
+      st_lb_Etiqueta8.Caption := st_lb_Etiqueta8.Caption + IfThen(st_lb_Etiqueta8.Caption='','',':');
       st_lb_Etiqueta8.Visible := true;
       st_vl_etiqueta8.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio5',v_tstrCipherOpened);
-    end;
+    end
+   else
+    Begin
+      st_lb_Etiqueta8.Visible := false;
+      st_vl_etiqueta8.Visible := false;
+    End;
+
 
    if (DeCrypt(XML_RetornaValor('in_exibir_etiqueta9', strConfigsPatrimonio)) = 'S') then
     begin
       st_lb_Etiqueta9.Caption := DeCrypt(XML_RetornaValor('te_etiqueta9', strConfigsPatrimonio));
+      st_lb_Etiqueta9.Caption := st_lb_Etiqueta9.Caption + IfThen(st_lb_Etiqueta9.Caption='','',':');
       st_lb_Etiqueta9.Visible := true;
       st_vl_etiqueta9.Caption := GetValorDatMemoria('Patrimonio.te_info_patrimonio6',v_tstrCipherOpened);
-    end;
+    end
+   else
+    Begin
+      st_lb_Etiqueta9.Visible := false;
+      st_vl_etiqueta9.Visible := false;
+    End;
+
 
   end;
 
@@ -1919,36 +2197,6 @@ begin
   end;
   Parser.Free;
   log_DEBUG('XML Parser retornando: "'+Result+'" para Tag "'+Tag+'"');
-end;
-
-Function TFormularioGeral.XML_ResgataValorPatrimonio(strIT, strID : String; Fonte : String): String;
-VAR Parser : TXmlParser;
-    strItemName,
-    strTagName,
-    strValor : String;
-begin
-  Parser := TXmlParser.Create;
-  Parser.Normalize := TRUE;
-  Parser.LoadFromBuffer(PAnsiChar(Fonte));
-  Parser.StartScan;
-  WHILE Parser.Scan DO
-    Begin
-     strItemName := UpperCase(Parser.CurName);
-     if (Parser.CurPartType = ptStartTag) and (strItemName = strIT) Then
-          strTagName := strIT
-     else if (Parser.CurPartType = ptEndTag) and (strItemName = strIT) then
-       strTagName := ''
-     else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName = strIT)Then
-       Begin
-         strValor := DeCrypt(Parser.CurContent);
-         if (strItemName = strID) then
-            Begin
-              Result := strValor;
-              exit;
-            End;
-       End;
-    end;
-  Parser.Free;
 end;
 
 // Solução baixada de http://www.delphidabbler.com/codesnip.php?action=named&routines=URLDecode&showsrc=1
@@ -1996,7 +2244,7 @@ begin
     Inc(Idx);
   end;
 end;
-
+{
 procedure TFormularioGeral.IdHTTPServerCACICCommandGet(
   AThread: TIdPeerThread; ARequestInfo: TIdHTTPRequestInfo;
   AResponseInfo: TIdHTTPResponseInfo);
@@ -2101,6 +2349,136 @@ begin
   if (AUsername = 'CACIC') and
      (APassword=getValorDatMemoria('Configs.PalavraChave',v_tstrCipherOpened)) then
     AAuthenticated := true;
+end;
+}
+procedure TFormularioGeral.Mnu_SuporteRemotoClick(Sender: TObject);
+var boolAux          : boolean;
+    strPalavraChave,
+    strTeSO,
+    strTeNodeAddress : String;
+    fileAguarde : TextFile;
+begin
+  if boolServerON then // Ordeno ao SrCACICsrv que auto-finalize
+    Begin
+      Log_Diario('Desativando Suporte Remoto Seguro.');
+      WinExec(PChar(p_path_cacic + 'modulos\srcacicsrv.exe -kill'),SW_HIDE);
+      boolServerON := false;
+    End
+  else
+    Begin
+      GetWinVer;
+      log_DEBUG('Invocando "'+p_path_cacic + 'modulos\srcacicsrv.exe"...');
+      Log_Diario('Ativando Suporte Remoto Seguro.');
+      boolAux   := boolCrypt;
+      boolCrypt := true;
+
+      // Alguns cuidados necessários ao tráfego e recepção de valores pelo Gerente WEB
+      // Some cares about send and receive at Gerente WEB
+      strPalavraChave  := StringReplace(FormularioGeral.getValorDatMemoria('Configs.te_palavra_chave', v_tstrCipherOpened),'+','<MAIS>'  ,[rfReplaceAll]);
+      strPalavraChave  := StringReplace(strPalavraChave,' '     ,'<ESPACE>'  ,[rfReplaceAll]);
+      strPalavraChave  := StringReplace(strPalavraChave,'"'     ,'<AD>'      ,[rfReplaceAll]);
+      strPalavraChave  := StringReplace(strPalavraChave,''''    ,'<AS>'      ,[rfReplaceAll]);
+      strPalavraChave  := StringReplace(strPalavraChave,'\'     ,'<BarrInv>' ,[rfReplaceAll]);
+      strPalavraChave  := StringReplace(EnCrypt(strPalavraChave),'+','<MAIS>',[rfReplaceAll]);
+
+      strTeSO          := StringReplace(v_te_so         ,' '     ,'<ESPACE>'  ,[rfReplaceAll]);
+      strTeSO          := StringReplace(EnCrypt(strTeSO),'+','<MAIS>',[rfReplaceAll]);
+
+      strTeNodeAddress := StringReplace(FormularioGeral.getValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),' ','<ESPACE>'  ,[rfReplaceAll]);
+      strTeNodeAddress := StringReplace(EnCrypt(strTeNodeAddress),'+','<MAIS>',[rfReplaceAll]);
+
+      log_DEBUG('Invocando "'+p_path_cacic + 'modulos\srcacicsrv.exe -start [' + EnCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
+                                                                           '[' + EnCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
+                                                                           '[' + strTeSO                                                                                     + ']' +
+                                                                           '[' + strTeNodeAddress                                                                            + ']' +
+                                                                           '[' + strPalavraChave                                                                             + ']' +
+                                                                           '[' + p_path_cacic + 'Temp\aguarde_srCACIC.txt'                                                   + ']');
+
+
+      // Detectar versão do Windows antes de fazer a chamada seguinte...
+      try
+        AssignFile(fileAguarde,p_path_cacic + 'Temp\aguarde_srCACIC.txt');
+        {$IOChecks off}
+        Reset(fileAguarde); {Abre o arquivo texto}
+        {$IOChecks on}
+        if (IOResult <> 0) then // Arquivo não existe, será recriado.
+          begin
+            Rewrite (fileAguarde);
+            Append(fileAguarde);
+            Writeln(fileAguarde,FormatDateTime('dd/mm hh:nn:ss : ', Now) + '======================> Pseudo-Cookie para o srCACICsrv.exe <=======================');
+          end;
+
+        CloseFile(fileAguarde);
+      Finally
+      End;
+
+      WinExec(PChar(p_path_cacic + 'modulos\srcacicsrv.exe -start [' + EnCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
+                                                                 '[' + EnCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
+                                                                 '[' + strTeSO                                                                                     + ']' +
+                                                                 '[' + strTeNodeAddress                                                                            + ']' +
+                                                                 '[' + strPalavraChave                                                                             + ']' +
+                                                                 '[' + p_path_cacic + 'Temp\aguarde_srCACIC.txt'                                                   + ']'),SW_NORMAL);
+
+      boolCrypt := boolAux;
+      BoolServerON := true;
+    End;
+
+  {
+  //handleCacicRC := LoadLibrary('modulos\cacicrc.dll');
+  threadCacicRC := WinVNCThread.Create(false);
+
+//  if (handleCacicRC > 0) then
+  if (threadCacicRC.Handle > 0) then
+    Begin
+      //procStartServer := GetProcAddress(handleCacicRC,'StartServer');
+      WinVNCThread.Synchronize(threadCacicRC,StartVNCServer);
+      if not boolServerON then
+        begin
+          handleStartVNCThreadID := CreateThread(nil, 0, @TFormularioGeral.StartVNCServer, nil, 0, dwordStartVNCID);
+          if (handleStartVNCThreadID <> 0) then
+              boolServerON := true;
+        end
+      else
+        begin
+          procStopServer := GetProcAddress(handleCacicRC,'StopServer');
+          procStopServer;
+          TerminateThread(dwordStartServerID, 0);
+          TerminateThread(handleStartServerThreadID, 0);
+          FreeProcInstance(@procStartServer);
+          FreeProcInstance(@procStopServer);
+          FreeLibrary(handleCacicRC);
+          boolServerON := false;
+        end;
+    End
+  else
+    MessageBox(0, 'Não foi possivel carregar a biblioteca de acesso remoto!', 'Erro', MB_ICONERROR);
+
+  }
+end;
+{
+procedure TFormularioGeral.StartVNCServer;
+begin
+  handleStartServerThreadID := CreateThread(nil, 0, @procStartServer, nil, 0, dwordStartServerID);
+end;
+}
+procedure TFormularioGeral.PopupMenu1Popup(Sender: TObject);
+begin
+  VerificaDebugs;
+  if FileExists(p_path_cacic + 'modulos\srcacicsrv.exe') then
+    Mnu_SuporteRemoto.Enabled := true
+  else
+    Mnu_SuporteRemoto.Enabled := false;
+
+  boolServerON := false;
+  FormularioGeral.Matar(p_path_cacic+'temp\','aguarde_SRCACIC.txt');
+  if  FileExists(p_path_cacic + 'temp\aguarde_SRCACIC.txt') then
+    Begin
+      Mnu_SuporteRemoto.Caption := 'Desativar Suporte Remoto';
+      boolServerON := true;
+    End
+  else
+    Mnu_SuporteRemoto.Caption := 'Ativar Suporte Remoto';
+
 end;
 
 end.

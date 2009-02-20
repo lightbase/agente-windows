@@ -48,6 +48,7 @@ uses
   DCPrijndael,
   DCPbase64,
   ZLibEx,
+  md5,
   CACIC_Library in '..\CACIC_Library.pas';
 
 {$APPTYPE CONSOLE}
@@ -95,6 +96,16 @@ var
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
 const KeySize = 32; // 32 bytes = 256 bits
       BlockSize = 16; // 16 bytes = 128 bits
+
+// Para cálculo de HASH de determinado arquivo.
+// Objetivo principal: Verificar autenticidade de agentes para trabalho cooperativo
+// Anderson Peterle - Dataprev/ES - 08/Maio/2008
+function GetFileHash(strFileName : String) : String;
+Begin
+  Result := 'Arquivo "'+strFileName+'" Inexistente!';
+  if (FileExists(strFileName)) then
+    Result := MD5Print(MD5File(strFileName));
+End;
 
 // Pad a string with zeros so that it is a multiple of size
 function PadWithZeros(const str : string; size : integer) : string;
@@ -150,7 +161,6 @@ var intLimite,
     intContaLetras : integer;
     strPalavra,
     strCaracter    : String;
-    charCaracter   : Char;
 begin
   Randomize;
   strPalavra  := '';
@@ -228,6 +238,8 @@ end; {DeCompress}
 Function RemoveCaracteresEspeciais(Texto, p_Fill : String; p_start, p_end:integer) : String;
 var I : Integer;
 Begin
+//     if ord(Texto[I]) in [32..126] Then
+//   else strAux := strAux + ' ';  // Coloca um espaço onde houver caracteres especiais
    strAux := '';
    if (Length(trim(Texto))>0) then
      For I := 0 To Length(Texto) Do
@@ -334,9 +346,9 @@ end;
 Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String; p_tstrCipherOpened : TStrings);
 var v_Aux     : string;
 begin
+    log_DEBUG('SetValorDatMemoria - Gravando Chave "'+p_Chave+'" com Valor "'+p_Valor+'"');
     // Exemplo: p_Chave => Configs.nu_ip_servidor  :  p_Valor => 10.71.0.120
     v_Aux := RemoveZerosFimString(p_Valor);
-    log_DEBUG('Gravando Chave: "'+p_Chave+'" => "'+v_Aux+'"');
     if (p_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
         p_tstrCipherOpened[p_tstrCipherOpened.IndexOf(p_Chave)+1] := v_Aux
     else
@@ -346,13 +358,25 @@ begin
       End;
 end;
 Function GetValorDatMemoria(p_Chave : String; p_tstrCipherOpened : TStrings) : String;
+var intTamanhoLista,
+    intIndiceChave : integer;
 begin
-    if (p_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
-        Result := trim(p_tstrCipherOpened[p_tstrCipherOpened.IndexOf(p_Chave)+1])
+    log_DEBUG('GetValorDatMemoria - Resgatando Chave: "'+p_Chave+'"...');
+    intIndiceChave := p_tstrCipherOpened.IndexOf(p_Chave);
+    log_DEBUG('GetValorDatMemoria - Índice: '+intToStr(intIndiceChave));
+    if (intIndiceChave <> -1) then
+      Begin
+        intTamanhoLista := p_tstrCipherOpened.Count;
+        log_DEBUG('GetValorDatMemoria - Tamanho da Lista: '+intToStr(intTamanhoLista));        
+        if ((intIndiceChave + 1) < intTamanhoLista) then
+          Result := trim(p_tstrCipherOpened[intIndiceChave + 1])
+        else
+          Result := '';
+      End
     else
         Result := '';
 
-    log_DEBUG('Resgatando Chave: "'+p_Chave+'" => "'+Result+'"');
+    log_DEBUG('GetValorDatMemoria - Retornando "'+Result+'"');
 end;
 
 // Encrypt a string and return the Base64 encoded result
@@ -372,6 +396,10 @@ begin
         l_IV    := PadWithZeros(v_IV,BlockSize);
         l_Data  := PadWithZeros(trim(p_Data),BlockSize);
 
+        //log_DEBUG('Encrypt - HEXA da CHAVE "'+v_CipherKey+'": "'+StringtoHex(l_Key)+'"');
+        //log_DEBUG('Encrypt - HEXA do IV    "'+v_IV+'": "'+StringtoHex(l_IV)+'"');
+        //log_DEBUG('Encrypt - HEXA do DADO  "'+trim(p_Data)+'": "'+StringtoHex(l_Data)+'"');
+
         // Create the cipher and initialise according to the key length
         l_Cipher := TDCP_rijndael.Create(nil);
         if Length(v_CipherKey) <= 16 then
@@ -387,18 +415,18 @@ begin
         // Free the cipher and clear sensitive information
         l_Cipher.Free;
         FillChar(l_Key[1],Length(l_Key),0);
-        log_DEBUG('Criptografia(ATIVADA) de "'+p_Data+'" => "'+l_Data+'"');
+        log_DEBUG('EnCrypt - Criptografia(ATIVADA) de "'+p_Data+'" => "'+l_Data+'"');
         // Return the Base64 encoded result
 
         Result := trim(Base64EncodeStr(l_Data));
       End
     else
       Begin
-        log_DEBUG('Criptografia(DESATIVADA) de "'+p_Data+'"');
+        log_DEBUG('EnCrypt - Criptografia(DESATIVADA) de "'+p_Data+'"');
         Result := trim(p_Data);
       End;
   Except
-    log_diario('Erro no Processo de Criptografia');
+    log_diario('EnCrypt - Erro no Processo de Criptografia');
   End;
   if (p_Compress) and (l_cs_compress) then
        Result := Compress(Result);
@@ -423,6 +451,10 @@ begin
         // Decode the Base64 encoded string
         l_Data := Base64DecodeStr(trim(v_Data));
 
+        //log_DEBUG('Decrypt - HEXA da CHAVE "'+v_CipherKey+'": "'+StringtoHex(l_Key)+'"');
+        //log_DEBUG('Decrypt - HEXA do IV    "'+v_IV+'": "'+StringtoHex(l_IV)+'"');
+        //log_DEBUG('Decrypt - HEXA do DADO  "'+trim(p_Data)+'": "'+StringtoHex(l_Data)+'"');
+
         // Create the cipher and initialise according to the key length
         l_Cipher := TDCP_rijndael.Create(nil);
         if Length(v_CipherKey) <= 16 then
@@ -438,17 +470,17 @@ begin
         // Free the cipher and clear sensitive information
         l_Cipher.Free;
         FillChar(l_Key[1],Length(l_Key),0);
-        log_DEBUG('DeCriptografia(ATIVADA) de "'+v_Data+'" => "'+l_Data+'"');
+        log_DEBUG('DeCrypt - DeCriptografia(ATIVADA) de "'+v_Data+'" => "'+l_Data+'"');
         // Return the result
         Result := trim(RemoveZerosFimString(l_Data));
       End
     else
       Begin
-        log_DEBUG('DeCriptografia(DESATIVADA) de "'+v_Data+'"');
+        log_DEBUG('DeCrypt - DeCriptografia(DESATIVADA) de "'+v_Data+'"');
         Result := trim(v_Data);
       End;
   Except
-    log_diario('Erro no Processo de DeCriptografia. Dado = '+v_Data);
+    log_diario('DeCrypt - Erro no Processo de DeCriptografia. Dado = '+v_Data);
   End;
 end;
 
@@ -1144,12 +1176,13 @@ Begin
     if (strAux = '') then
         strAux := 'A.B.C.D'; // Apenas para forçar que o Gerente extraia via _SERVER[REMOTE_ADDR]
 
-    v_AuxRequest.Values['te_node_address']   := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['id_so']             := StringReplace(EnCrypt(g_oCacic.getWindowsStrId()                   , l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     // Tratamentos de valores para tráfego POST:
     // v_te_so => transformar ' ' em <ESPACE> Razão: o mmcrypt se perde quando encontra ' ' (espaço)
-    //v_te_so := StringReplace(v_te_so,' ','<ESPACE>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_so']             := StringReplace(EnCrypt(StringReplace(v_te_so,' ','<ESPACE>',[rfReplaceAll])              ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_te_so := StringReplace(v_te_so,' ','<ESPACE>',[rfReplaceAll]);
+
+    v_AuxRequest.Values['te_node_address']   := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['id_so']             := StringReplace(EnCrypt(g_oCacic.getWindowsStrId()                   , l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_so']             := StringReplace(EnCrypt(v_te_so                                                           ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['te_ip']             := StringReplace(EnCrypt(strAux                                                            ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['id_ip_rede']        := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['te_workgroup']      := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
@@ -1433,8 +1466,13 @@ end;
 
 function Ver_UPD(p_File, p_Nome_Modulo, p_Dir_Inst, p_Dir_Temp : string; p_Medir_FTP:boolean) : integer;
 var Baixar      : boolean;
-    strAux, strAux1, v_versao_disponivel,
-    v_Dir_Temp, v_versao_atual : String;
+    strAux,
+    strAux1,
+    v_versao_disponivel,
+    v_Dir_Temp,
+    v_versao_atual,
+    strHashLocal,
+    strHashRemoto : String;
 Begin
    log_DEBUG('Verificando necessidade de FTP para "'+p_Nome_Modulo +'" ('+p_File+')');
    Result := 0;
@@ -1454,6 +1492,7 @@ Begin
        if not (p_Medir_FTP) then
           Begin
             v_versao_disponivel := StringReplace(GetValorDatMemoria('Configs.'+UpperCase('DT_VERSAO_'+ p_File + '_DISPONIVEL'), v_tstrCipherOpened),'.EXE','',[rfReplaceAll]);
+
             log_DEBUG('Versão Disponível para "'+p_Nome_Modulo+'": '+v_versao_disponivel);
             if (trim(v_versao_disponivel)='') then v_versao_disponivel := '*';
 
@@ -1485,7 +1524,14 @@ Begin
           End
        else
           Begin
-           if (v_Tamanho_Arquivo = '0') or (v_Tamanho_Arquivo = '-1') or (trim(GetVersionInfo(p_Dir_Inst + p_File + '.exe'))='0.0.0.0') then
+            strHashLocal  := GetFileHash(p_Dir_Inst + p_File + '.exe');
+            strHashRemoto := GetValorDatMemoria('Configs.TE_HASH_'+UpperCase(p_File), v_tstrCipherOpened);
+            // TESTE
+            //if (UpperCase(p_File) = 'GER_COLS') or (UpperCase(p_File) = 'CACIC2') then
+            //  strHashLocal := strHashRemoto;
+            //
+            log_DEBUG('Ver_UPD => '+p_File+'  [strHashLocal]: '+strHashLocal+' [strHashRemoto]: '+strHashRemoto);
+           if ((strHashRemoto <> '') and (strHashLocal <> strHashRemoto)) or (v_Tamanho_Arquivo = '0') or (v_Tamanho_Arquivo = '-1') or (trim(GetVersionInfo(p_Dir_Inst + p_File + '.exe'))='0.0.0.0') then
               Begin
                 if (p_Medir_FTP) then
                   Result := 1
@@ -1905,18 +1951,20 @@ Begin
     v_acao_gercols := 'Contabilizando necessidade de Updates...';
 
     // O valor "true" para o 5º parâmetro da função Ver_UPD informa para apenas verificar a necessidade de FTP do referido objeto.
-    CountUPD := CountUPD + Ver_UPD('ini_cols'                                        ,'Inicializador de Coletas'      ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD(StringReplace(v_scripter,'.exe','',[rfReplaceAll]),'Interpretador VBS'             ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('chksis'                                          ,'Verificador de Integridade do Sistema',PegaWinDir(nil)+'\','',true);
-    CountUPD := CountUPD + Ver_UPD('cacic2'  ,'Agente Principal',p_path_cacic,'Temp',true);
-    CountUPD := CountUPD + Ver_UPD('ger_cols','Gerente de Coletas',p_path_cacic + 'modulos\','Temp',true);
-    CountUPD := CountUPD + Ver_UPD('col_anvi','Coletor de Informações de Anti-Vírus OfficeScan',p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_comp','Coletor de Informações de Compartilhamentos',p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_hard','Coletor de Informações de Hardware',p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_patr','Coletor de Informações de Patrimônio/Loc.Fís.',p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_moni','Coletor de Informações de Sistemas Monitorados',p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_soft','Coletor de Informações de Softwares Básicos',p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_undi','Coletor de Informações de Unidades de Disco',p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('ini_cols'                                         ,'Inicializador de Coletas'                         ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD(StringReplace(v_scripter,'.exe','',[rfReplaceAll]) ,'Interpretador VBS'                                ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('chksis'                                           ,'Verificador de Integridade do Sistema'            ,PegaWinDir(nil)+'\','',true);
+    CountUPD := CountUPD + Ver_UPD('cacic2'                                           ,'Agente Principal'                                 ,p_path_cacic,'Temp',true);
+    CountUPD := CountUPD + Ver_UPD('srcacicsrv'                                       ,'Suporte Remoto Seguro'                            ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('ger_cols'                                         ,'Gerente de Coletas'                               ,p_path_cacic + 'modulos\','Temp',true);
+    CountUPD := CountUPD + Ver_UPD('col_anvi'                                         ,'Coletor de Informações de Anti-Vírus OfficeScan'  ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_comp'                                         ,'Coletor de Informações de Compartilhamentos'      ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_hard'                                         ,'Coletor de Informações de Hardware'               ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_patr'                                         ,'Coletor de Informações de Patrimônio/Loc.Fís.'    ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_moni'                                         ,'Coletor de Informações de Sistemas Monitorados'   ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_soft'                                         ,'Coletor de Informações de Softwares Básicos'      ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_undi'                                         ,'Coletor de Informações de Unidades de Disco'      ,p_path_cacic + 'modulos\','',true);
+
 
 
     // Verifica existência dos dados de configurações principais e estado de CountUPD. Caso verdadeiro, simula uma instalação pelo chkCACIC...
@@ -1966,8 +2014,13 @@ Begin
 
     v_acao_gercols := 'Verificando versões do scripter e chksis';
     log_DEBUG(''+v_acao_gercols);
+
     Ver_UPD(StringReplace(v_scripter,'.exe','',[rfReplaceAll]),'Interpretador VBS'                    ,p_path_cacic + 'modulos\','',false);
     Ver_UPD('chksis'                                          ,'Verificador de Integridade do Sistema',PegaWinDir(nil)+'\'      ,'',false);
+
+    log_diario('Verificando nova versão para módulo Suporte Remoto Seguro.');
+    // Caso encontre nova versão de srCACICsrv esta será gravada em modulos.
+    Ver_UPD('srcacicsrv','Suporte Remoto Seguro',p_path_cacic + 'modulos\','',false);
 
     // Verifico existência do chksis.ini
     if not (FileExists(PegaWinDir(nil) + 'chksis.ini')) then
@@ -1993,10 +2046,10 @@ Begin
     if (not p_mensagem_log) then v_mensagem_log := '';
 
   // Caso a obtenção dos dados de TCP via MSI_NETWORK/TCP tenha falhado...
-  // (considerado falha somente se v_mac_address, te_ip ou v_te_so forem nulos
-  //  por serem chaves - demais valores devem ser avaliados pelo administrador)
-
-  if (v_mac_address='') or (te_ip='') then begin
+  if (v_mac_address='') or (te_mascara='')    or (te_ip='')           or (te_gateway='') or
+     (te_nome_host='')  or (te_serv_dhcp='' ) or (te_dns_primario='') or (te_wins_primario='') or
+     (te_wins_secundario='') then
+    Begin
       v_nome_arquivo    := p_path_cacic + 'Temp\ipconfig.txt';
       v_metodo_obtencao := 'WMI Object';
       v_acao_gercols    := 'Criando batch para obtenção de IPCONFIG via WMI...';
@@ -2041,7 +2094,6 @@ Begin
 
          if ChecaAgente(p_path_cacic + 'modulos', v_scripter) then
            WinExec(PChar(p_path_cacic + 'modulos\' + v_scripter + ' //b ' + p_path_cacic + 'temp\ipconfig.vbs'), SW_HIDE);
-
       Except
         Begin
           log_diario('Erro na geração do ipconfig.txt pelo ' + v_metodo_obtencao+'.');
@@ -2052,8 +2104,7 @@ Begin
       sleep(5000);
 
       v_Tamanho_Arquivo := Get_File_Size(p_path_cacic + 'Temp\ipconfig.txt',true);
-      // O arquivo ipconfig.txt foi gerado vazio, tentarei IPConfig ou WinIPcfg!
-      if not (FileExists(p_path_cacic + 'Temp\ipconfi1.txt')) or (v_Tamanho_Arquivo='0')  then
+      if not (FileExists(p_path_cacic + 'Temp\ipconfi1.txt')) or (v_Tamanho_Arquivo='0')  then // O arquivo ipconfig.txt foi gerado vazio, tentarei IPConfig ou WinIPcfg!
         Begin
           Try
              v_win_dir          := PegaWinDir(nil);
@@ -2242,23 +2293,12 @@ Begin
     // O cálculo para obtenção deste parâmetro poderá ser feito pelo módulo Gerente Web através do script get_config.php
     // if (trim(v_mascara)='') then v_mascara := '255.255.255.0';
 
-    if(te_ip<>'') then
-      try
-        SetValorDatMemoria('TcpIp.TE_IP',te_ip, v_tstrCipherOpened);
-      except
-         log_diario('Erro setando TE_IP.');
-      end;
-
     try
       if (trim(GetIPRede(te_ip, te_mascara))<>'') then
       SetValorDatMemoria('TcpIp.ID_IP_REDE',GetIPRede(te_ip, te_mascara), v_tstrCipherOpened);
     except
        log_diario('Erro setando IP_REDE.');
     end;
-
-    if( (v_te_so<>'') and (v_mac_address<>'') and (te_ip<>'') ) // Verifica dados chave para controles
-       then log_diario('Dados de rede usados: SO=' + v_te_so + ' MAC=' + v_mac_address + ' IP=' + te_ip)
-       else log_diario('Erro na obtenção de dados de rede: SO=' + v_te_so + ' MAC=' + v_mac_address + ' IP=' + te_ip);
 
     try
       SetValorDatMemoria('TcpIp.TE_NODE_ADDRESS',StringReplace(v_mac_address,':','-',[rfReplaceAll]), v_tstrCipherOpened);
@@ -2401,51 +2441,61 @@ Begin
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //Gravação no CACIC2.DAT dos valores de REDE, COMPUTADOR e EXECUÇÃO obtidos, para consulta pelos outros módulos...
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                SetValorDatMemoria('Configs.CS_AUTO_UPDATE'               ,UpperCase(DeCrypt(XML_RetornaValor('cs_auto_update'          , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_HARDWARE'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_hardware'      , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_SOFTWARE'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_software'      , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_MONITORADO'         ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_monitorado'    , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_OFFICESCAN'         ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_officescan'    , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_COMPARTILHAMENTOS'  ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_compart'       , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_UNID_DISC'          ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_unid_disc'     , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_PATRIMONIO'         ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_patrimonio'    , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_CACIC2_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_cacic2_disponivel'       , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_GER_COLS_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_ger_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_CHKSIS_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_chksis_disponivel'       , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_ANVI_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_col_anvi_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_COMP_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_col_comp_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_HARD_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_col_hard_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_MONI_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_col_moni_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_PATR_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_col_patr_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_SOFT_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_col_soft_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_UNDI_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_col_undi_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_INI_COLS_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_ini_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_'+
-                 StringReplace(v_scripter,'.exe','',[rfReplaceAll])+
-                 '_DISPONIVEL'                                            ,DeCrypt(XML_RetornaValor('dt_versao_'+
-                                                                           StringReplace(v_scripter,'.exe','',[rfReplaceAll])+
-                                                                           '_disponivel'                                                , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_SERV_UPDATES'              ,DeCrypt(XML_RetornaValor('te_serv_updates'                   , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'        ,DeCrypt(XML_RetornaValor('nu_porta_serv_updates'             , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'         ,DeCrypt(XML_RetornaValor('te_path_serv_updates'              , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES',DeCrypt(XML_RetornaValor('nm_usuario_login_serv_updates'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'  ,DeCrypt(XML_RetornaValor('te_senha_login_serv_updates'       , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.IN_EXIBE_ERROS_CRITICOS'      ,UpperCase(DeCrypt(XML_RetornaValor('in_exibe_erros_criticos' , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE'          ,DeCrypt(XML_RetornaValor('te_senha_adm_agente'               , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NU_INTERVALO_RENOVACAO_PATRIM',DeCrypt(XML_RetornaValor('nu_intervalo_renovacao_patrim'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NU_INTERVALO_EXEC'            ,DeCrypt(XML_RetornaValor('nu_intervalo_exec'                 , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NU_EXEC_APOS'                 ,DeCrypt(XML_RetornaValor('nu_exec_apos'                      , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.IN_EXIBE_BANDEJA'             ,UpperCase(DeCrypt(XML_RetornaValor('in_exibe_bandeja'        , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'           ,DeCrypt(XML_RetornaValor('te_janelas_excecao'                , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'     ,DeCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA'         ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada'     , strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI'    ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_anvi', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_COMP'    ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_comp', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_HARD'    ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_hard', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_MONI'    ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_moni', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_PATR'    ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_patr', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_SOFT'    ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_soft', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_UNDI'    ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_undi', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_AUTO_UPDATE'                 ,UpperCase(DeCrypt(XML_RetornaValor('cs_auto_update'          , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_HARDWARE'             ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_hardware'      , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_SOFTWARE'             ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_software'      , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_MONITORADO'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_monitorado'    , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_OFFICESCAN'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_officescan'    , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_COMPARTILHAMENTOS'    ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_compart'       , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_UNID_DISC'            ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_unid_disc'     , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_PATRIMONIO'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_patrimonio'    , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_CACIC2_DISPONIVEL'    ,DeCrypt(XML_RetornaValor('dt_versao_cacic2_disponivel'       , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_CACIC2'                 ,DeCrypt(XML_RetornaValor('te_hash_cacic2'                    , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_GER_COLS_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_ger_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_GER_COLS'               ,DeCrypt(XML_RetornaValor('te_hash_ger_cols'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_CHKSIS_DISPONIVEL'    ,DeCrypt(XML_RetornaValor('dt_versao_chksis_disponivel'       , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_CHKSIS'                 ,DeCrypt(XML_RetornaValor('te_hash_chksis'                    , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_ANVI_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_anvi_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_ANVI'               ,DeCrypt(XML_RetornaValor('te_hash_col_anvi'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_COMP_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_comp_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_COMP'               ,DeCrypt(XML_RetornaValor('te_hash_col_comp'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_HARD_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_hard_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_HARD'               ,DeCrypt(XML_RetornaValor('te_hash_col_hard'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_MONI_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_moni_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_MONI'               ,DeCrypt(XML_RetornaValor('te_hash_col_moni'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_PATR_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_patr_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_PATR'               ,DeCrypt(XML_RetornaValor('te_hash_col_patr'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_SOFT_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_soft_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_SOFT'               ,DeCrypt(XML_RetornaValor('te_hash_col_soft'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_UNDI_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_undi_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_UNDI'               ,DeCrypt(XML_RetornaValor('te_hash_col_undi'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_INI_COLS_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_ini_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_INI_COLS'               ,DeCrypt(XML_RetornaValor('te_hash_ini_cols'                  , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_INI_COLS_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_ini_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_SRCACICSRV'             ,DeCrypt(XML_RetornaValor('te_hash_srcacicsrv'                , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_SRCACICSRV_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_srcacicsrv_disponivel'   , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_'+StringReplace(v_scripter,'.exe','',[rfReplaceAll]),DeCrypt(XML_RetornaValor('te_hash_'+StringReplace(v_scripter,'.exe','',[rfReplaceAll]),strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_SERV_UPDATES'                ,DeCrypt(XML_RetornaValor('te_serv_updates'                   , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'          ,DeCrypt(XML_RetornaValor('nu_porta_serv_updates'             , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'           ,DeCrypt(XML_RetornaValor('te_path_serv_updates'              , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES'  ,DeCrypt(XML_RetornaValor('nm_usuario_login_serv_updates'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'    ,DeCrypt(XML_RetornaValor('te_senha_login_serv_updates'       , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.IN_EXIBE_ERROS_CRITICOS'        ,UpperCase(DeCrypt(XML_RetornaValor('in_exibe_erros_criticos' , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE'            ,DeCrypt(XML_RetornaValor('te_senha_adm_agente'               , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_INTERVALO_RENOVACAO_PATRIM'  ,DeCrypt(XML_RetornaValor('nu_intervalo_renovacao_patrim'     , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_INTERVALO_EXEC'              ,DeCrypt(XML_RetornaValor('nu_intervalo_exec'                 , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_EXEC_APOS'                   ,DeCrypt(XML_RetornaValor('nu_exec_apos'                      , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.IN_EXIBE_BANDEJA'               ,UpperCase(DeCrypt(XML_RetornaValor('in_exibe_bandeja'        , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'             ,DeCrypt(XML_RetornaValor('te_janelas_excecao'                , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'       ,DeCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno),true) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA'           ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada'     , strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_anvi', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_COMP'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_comp', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_HARD'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_hard', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_MONI'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_moni', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_PATR'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_patr', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_SOFT'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_soft', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_UNDI'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_undi', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
               end;
 
@@ -2622,13 +2672,21 @@ Begin
                       if (v_CS_AUTO_UPDATE) then
                           Begin
                             log_DEBUG('Indicador CS_AUTO_UPDATE=S encontrado.');
-                            log_diario('Verificando nova versão para módulo Agente Principal.');
+                            log_diario('Verificando Agente Principal, Gerente de Coletas e Suporte Remoto.');
+
                             // Caso encontre nova versão de cacic2.exe esta será gravada em temp e ocorrerá o autoupdate em sua próxima tentativa de chamada ao Ger_Cols.
                             v_acao_gercols := 'Verificando versão do Agente Principal';
+                            log_diario('Verificando nova versão para módulo Principal.');
                             Ver_UPD('cacic2','Agente Principal',p_path_cacic,'Temp',false);
+
                             log_diario('Verificando nova versão para módulo Gerente de Coletas.');
                             // Caso encontre nova versão de Ger_Cols esta será gravada em temp e ocorrerá o autoupdate.
                             Ver_UPD('ger_cols','Gerente de Coletas',p_path_cacic + 'modulos\','Temp',false);
+
+                            log_diario('Verificando nova versão para módulo Suporte Remoto Seguro.');
+                            // Caso encontre nova versão de srCACICsrv esta será gravada em modulos.
+                            Ver_UPD('srcacicsrv','Suporte Remoto Seguro',p_path_cacic + 'modulos\','Modulos',false);
+
                             if (FileExists(p_path_cacic + 'Temp\ger_cols.exe')) or
                                (FileExists(p_path_cacic + 'Temp\cacic2.exe'))  then
                                 Begin

@@ -1059,8 +1059,8 @@ end;
 
 procedure TFormPatrimonio.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-   //SetValorDatMemoria('Col_Patr.nada', 'nada', v_tstrCipherOpened1);
-   //CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
+   SetValorDatMemoria('Col_Patr.nada', 'nada', v_tstrCipherOpened1);
+   CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
    Application.Terminate;
 end;
 // Função adaptada de http://www.latiumsoftware.com/en/delphi/00004.php

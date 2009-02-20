@@ -14,9 +14,9 @@ Você deve ter recebido uma cópia da Licença Pública Geral GNU, sob o título "LIC
 Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-=====================================================================================================
-ChkCacic.exe : Verificador/Instalador dos agentes principais Cacic2.exe e Ger_Cols.exe
-=====================================================================================================
+======================================================================================================
+ChkCacic.exe : Verificador/Instalador dos agentes principais Cacic2.exe, Ger_Cols.exe e SrCacicSrv.exe
+======================================================================================================
 
 v 2.2.0.38
 + Acrescentado a obtenção de versão interna do S.O.
@@ -233,6 +233,7 @@ var IdHTTP2: TIdHTTP;
     Request_Config  : TStringList;
     Response_Config : TStringStream;
 begin
+  
   // Envio notificação de insucesso para o Módulo Gerente Centralizado
   Request_Config                                 := TStringList.Create;
   Request_Config.Values['cs_indicador']          := strIndicador;
@@ -828,6 +829,7 @@ begin
        Writeln(chkcacic_ini,'# de módulo, o arquivo será apenas copiado e não será necessário o FTP:');
        Writeln(chkcacic_ini,'# cacic2.exe ............=> Agente Principal');
        Writeln(chkcacic_ini,'# ger_cols.exe ..........=> Gerente de Coletas');
+       Writeln(chkcacic_ini,'# srcacicsrv.exe ........=> Suporte Remoto Seguro');
        Writeln(chkcacic_ini,'# chksis.exe ............=> Check System Routine (chkcacic residente)');
        Writeln(chkcacic_ini,'# ini_cols.exe ..........=> Inicializador de Coletas');
        Writeln(chkcacic_ini,'# wscript.exe ...........=> Motor de Execução de Scripts VBS');
@@ -857,6 +859,7 @@ begin
        Writeln(chkcacic_ini,'#             col_soft.exe');
        Writeln(chkcacic_ini,'#             col_undi.exe');
        Writeln(chkcacic_ini,'#             ger_cols.exe');
+       Writeln(chkcacic_ini,'#             srcacicsrv.exe');
        Writeln(chkcacic_ini,'#             ini_cols.exe');
        Writeln(chkcacic_ini,'#             wscript.exe');
        Writeln(chkcacic_ini,'# ===================================================================================================================');
@@ -1140,8 +1143,10 @@ var bool_configura,
     strAux,
     strDataHoraCACIC2_INI,
     strDataHoraGERCOLS_INI,
+    strDataHoraSRCACICSRV_INI,
     strDataHoraCACIC2_FIM,
-    strDataHoraGERCOLS_FIM : String;
+    strDataHoraGERCOLS_FIM,
+    strDataHoraSRCACICSRV_FIM : String;
 
     Request_Config  : TStringList;
     v_array_modulos : TStrings;
@@ -1262,6 +1267,10 @@ begin
                     // Liberando as conexões de Saída para o Ger_Cols
                     SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+Dir+'\modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
                     SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+Dir+'\modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
+
+                    // Liberando as conexões de Saída para o SrCACICsrv
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+Dir+'\modulos\\srcacicsrv.exe|Name=Módulo Suporte Remoto Seguro do Sistema CACIC|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+Dir+'\modulos\\srcacicsrv.exe|Name=Módulo Suporte Remoto Seguro do Sistema CACIC|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
 
                     // Liberando as conexões de Saída para o ChkCacic
                     SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkcacic.exe|Desc=chkcacic.exe|Edge=FALSE|');
@@ -1387,6 +1396,7 @@ begin
         LogDebug('------------------------------');
         LogDebug('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno));
         LogDebug('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno));
+        LogDebug('SrCACIC  - Suporte Remoto Seguro.....: '+XML_RetornaValor('SRCACICSRV', v_retorno));
         LogDebug('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno));
         LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
       Except
@@ -1419,6 +1429,7 @@ begin
 
           // Atribuição de acesso aos módulos de gerenciamento de coletas e coletas para permissão de atualizações de versões
           Form1.FS_SetSecurity(Dir + '\modulos\ger_cols.exe');
+          Form1.FS_SetSecurity(Dir + '\modulos\srcacicsrv.exe');
           Form1.FS_SetSecurity(Dir + '\modulos\col_anvi.exe');
           Form1.FS_SetSecurity(Dir + '\modulos\col_comp.exe');
           Form1.FS_SetSecurity(Dir + '\modulos\col_hard.exe');
@@ -1480,6 +1491,27 @@ begin
           if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
              (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
              Matar(Dir + '\modulos\', 'ger_cols.exe');
+        End;
+
+      // Verificação de versão do srcacicsrv.exe e exclusão em caso de versão antiga/diferente da atual
+      If (FileExists(Dir + '\modulos\srcacicsrv.exe')) Then
+        Begin
+          // Pego as informações de dia/mês/ano/horas/minutos/segundos/milésimos que identificam o agente SrCACIC
+          strDataHoraSRCACICSRV_INI := FormatDateTime('ddmmyyyyhhnnsszzz', GetFolderDate(Dir + '\modulos\srcacicsrv.exe'));
+
+          intAux := ChecaVersoesAgentes(Dir + '\modulos\srcacicsrv.exe');
+          // 0 => Arquivo de versões ou informação inexistente
+          // 1 => Versões iguais
+          // 2 => Versões diferentes
+          if (intAux = 0) then
+            Begin
+              v_versao_local  := StringReplace(trim(GetVersionInfo(Dir + '\modulos\srcacicsrv.exe')),'.','',[rfReplaceAll]);
+              v_versao_remota := StringReplace(XML_RetornaValor('SRCACICSRV' , v_retorno),'0103','',[rfReplaceAll]);
+            End;
+
+          if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
+             (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
+             Matar(Dir + '\modulos\', 'srcacicsrv.exe');
         End;
 
 
@@ -1549,7 +1581,16 @@ begin
                    v_te_path_serv_updates,
                    v_exibe_informacoes);
 
-        // Caso exista a pasta "modulos", copio todos os executáveis para a pasta Cacic\modulos, exceto cacic2.exe, ger_cols.exe e chksis.exe
+      verifyAndGet('srcacicsrv.exe',
+                   Dir + '\modulos',
+                   v_te_serv_updates,
+                   v_nu_porta_serv_updates,
+                   v_nm_usuario_login_serv_updates,
+                   v_te_senha_login_serv_updates,
+                   v_te_path_serv_updates,
+                   v_exibe_informacoes);
+
+        // Caso exista a pasta "modulos", copio todos os executáveis para a pasta Cacic\modulos, exceto cacic2.exe, ger_cols.exe, srcacicsrv.exe e chksis.exe
         if (v_modulos <> '') then
           Begin
             v_array_modulos := explode(v_modulos,'#');
@@ -1557,6 +1598,7 @@ begin
               Begin
                 if (v_array_modulos[intAux]<>'cacic2.exe') and
                    (v_array_modulos[intAux]<>'ger_cols.exe') and
+                   (v_array_modulos[intAux]<>'srcacicsrv.exe') and
                    (v_array_modulos[intAux]<>'chksis.exe') then
                   Begin
                     LogDiario('Copiando '+v_array_modulos[intAux]+' de '+ExtractFilePath(Application.Exename)+'modulos\');
@@ -1599,7 +1641,17 @@ begin
                    v_te_path_serv_updates,
                    v_exibe_informacoes);
 
-      if (g_oCacic.isWindowsGEXP()) then // Se >= WinXP...
+      verifyAndGet('srcacicsrv.exe',
+                   Dir + '\modulos',
+                   v_te_serv_updates,
+                   v_nu_porta_serv_updates,
+                   v_nm_usuario_login_serv_updates,
+                   v_te_senha_login_serv_updates,
+                   v_te_path_serv_updates,
+                   v_exibe_informacoes);
+
+      if ((intWinVer <> 0) and (intWinVer >= 8)) or
+         (abstraiCSD(v_te_so) >= 250) then // Se >= WinXP...
         Begin
           Try
             // Acrescento o ChkSis e o Ger_Cols às exceções do FireWall nativo...
@@ -1611,6 +1663,11 @@ begin
             {ger_cols}
             LogDebug('Inserindo "'+Dir + '\modulos\ger_cols" nas exceções do FireWall!');
             LiberaFireWall(Dir + '\modulos\ger_cols');
+
+            {srcacicsrv}
+            LogDebug('Inserindo "'+Dir + '\modulos\srcacicsrv" nas exceções do FireWall!');
+            LiberaFireWall(Dir + '\modulos\srcacicsrv');
+
           Except
           End;
         End;
@@ -1649,6 +1706,10 @@ begin
       LogDebug('Resgatando informações para identificação de alteração do agente GER_COLS');
       strDataHoraGERCOLS_FIM := FormatDateTime('ddmmyyyyhhnnsszzz', GetFolderDate(Dir + '\modulos\ger_cols.exe'));
       LogDebug('Inicial => "' + strDataHoraGERCOLS_INI + '" Final => "' + strDataHoraGERCOLS_FIM + '"');
+
+      LogDebug('Resgatando informações para identificação de alteração do agente SRCACIC');
+      strDataHoraSRCACICSRV_FIM := FormatDateTime('ddmmyyyyhhnnsszzz', GetFolderDate(Dir + '\modulos\srcacicsrv.exe'));
+      LogDebug('Inicial => "' + strDataHoraSRCACICSRV_INI + '" Final => "' + strDataHoraSRCACICSRV_FIM + '"');
 
       // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
       if ((strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) OR

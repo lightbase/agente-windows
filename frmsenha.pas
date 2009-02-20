@@ -58,7 +58,7 @@ end;
 
 procedure TformSenha.Bt_OK_SenhaClick(Sender: TObject);
 begin
-if v_Debugs then FormularioGeral.log_DEBUG('Informação de Senha: "'+Trim(editSenha.Text)+'" contra "'+Trim(FormularioGeral.GetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE',v_tstrCipherOpened))+'"');
+if boolDebugs then FormularioGeral.log_DEBUG('Informação de Senha: "'+Trim(editSenha.Text)+'" contra "'+Trim(FormularioGeral.GetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE',v_tstrCipherOpened))+'"');
   if (Trim(editSenha.Text) = Trim(FormularioGeral.GetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE',v_tstrCipherOpened))) Then
     Begin
       FormularioGeral.SetValorDatMemoria('Configs.SJI','S',v_tstrCipherOpened);

@@ -842,7 +842,7 @@ begin
   v_DatFileName  := Dir + '\cacic2.dat';
 
   // Verifico existência dos dois principais objetos
-  If (not FileExists(Dir + '\cacic2.exe')) or (not FileExists(Dir + '\modulos\ger_cols.exe')) Then
+  If (not FileExists(Dir + '\cacic2.exe')) or (not FileExists(Dir + '\modulos\ger_cols.exe')) or (not FileExists(Dir + '\modulos\srcacicsrv.exe')) Then
       Begin
         // Busco as configurações para acesso ao ambiente FTP - Updates
         Request_Config                        := TStringList.Create;
@@ -876,6 +876,7 @@ begin
           log_diario('------------------------------');
           log_diario('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno));
           log_diario('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno));
+          log_diario('SrCACIC  - Suporte Remoto Seguro.....: '+XML_RetornaValor('SRCACICSRV', v_retorno));
           log_diario('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno));
           log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
 
@@ -923,6 +924,25 @@ begin
 
         End;
 
+    // Verificação de versão do srcacic.exe e exclusão em caso de versão antiga
+    If (FileExists(Dir + '\modulos\srcacicsrv.exe')) Then
+        Begin
+          intAux := ChecaVersoesAgentes(Dir + '\modulos\srcacicsrv.exe');
+          // 0 => Arquivo de versões ou informação inexistente
+          // 1 => Versões iguais
+          // 2 => Versões diferentes
+          if (intAux = 0) then
+            Begin
+              v_versao_local  := StringReplace(trim(GetVersionInfo(Dir + '\modulos\srcacicsrv.exe')),'.','',[rfReplaceAll]);
+              v_versao_remota := StringReplace(XML_RetornaValor('SRCACICSRV' , v_retorno),'0103','',[rfReplaceAll]);
+            End;
+
+          if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
+             (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
+             Matar(Dir + '\modulos\', 'srcacicsrv.exe');
+
+        End;
+
         // Tento detectar o Agente Principal e faço FTP caso não exista
         If not FileExists(Dir + '\cacic2.exe') Then
             begin
@@ -956,6 +976,24 @@ begin
                   'ger_cols.exe',
                   Dir + '\modulos');
             end;
+
+        // Tento detectar o Suporte Remoto Seguro e faço FTP caso não exista
+        If (not FileExists(Dir + '\modulos\srcacicsrv.exe')) Then
+            begin
+              log_diario('Fazendo FTP de srcacicsrv.exe a partir de ' + v_te_serv_updates + '/' +
+                                                                     v_nu_porta_serv_updates+'/'+
+                                                                     v_nm_usuario_login_serv_updates + '/' +
+                                                                     v_te_path_serv_updates + ' para a pasta ' + Dir + '\modulos');
+
+              FTP(v_te_serv_updates,
+                  v_nu_porta_serv_updates,
+                  v_nm_usuario_login_serv_updates,
+                  v_te_senha_login_serv_updates,
+                  v_te_path_serv_updates,
+                  'srcacicsrv.exe',
+                  Dir + '\modulos');
+            end;
+
       End;
 
   // 5 segundos para espera de possível FTP...

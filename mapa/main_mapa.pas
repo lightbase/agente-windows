@@ -1297,25 +1297,48 @@ var strIdUON1,
     tstrListAux    : TStringList;
     tstrAux    : TStrings;
 begin
-     tstrAux := TStrings.Create;
-     tstrAux := explode(VetorUON2Filtrado[cb_id_unid_organizacional_nivel2.ItemIndex],'#');
-     Try
-        strIdUON1  := VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].id1;
-        strIdUON2  := tstrAux[0];
-        strIdLocal := tstrAux[1];
-     Except
-     end;
+  Matar(strPathCacic,'aguarde_CACIC.txt');
 
-     tstrAux := explode(VetorUON1aFiltrado[cb_id_unid_organizacional_nivel1a.ItemIndex],'#');
-     Try
-        strIdUON1a  := tstrAux[0];
-     Except
-     end;
+  if FileExists(strPathCacic + 'aguarde_CACIC.txt') then
+    MessageDLG(#13#10+'ATENÇÃO!'+#13#10#13#10+
+                'Para o envio das informações, é necessário finalizar o Agente Principal do CACIC.',mtError,[mbOK],0)
+  else
+    Begin
+         tstrAux := TStrings.Create;
+         tstrAux := explode(VetorUON2Filtrado[cb_id_unid_organizacional_nivel2.ItemIndex],'#');
+         Try
+            strIdUON1  := VetorUON1[cb_id_unid_organizacional_nivel1.ItemIndex].id1;
+            strIdUON2  := tstrAux[0];
+            strIdLocal := tstrAux[1];
+         Except
+         end;
 
-     tstrAux.Free;
+         tstrAux := explode(VetorUON1aFiltrado[cb_id_unid_organizacional_nivel1a.ItemIndex],'#');
+         Try
+            strIdUON1a  := tstrAux[0];
+         Except
+         end;
 
-          Mensagem('Enviando Informações Coletadas ao Banco de Dados...',false,intPausaPadrao div 3);
+<<<<<<< .mine
+         tstrAux.Free;
 
+=======
+>>>>>>> .r729
+    // Assim, o envio será incondicional!  -  01/12/2006 - Anderson Peterle
+    //     if (strAux1 <> strId_unid_organizacional_nivel1) or
+    //        (strAux2 <> strId_unid_organizacional_nivel2) or
+    //         (ed_te_localizacao_complementar.Text <> strTe_localizacao_complementar) or
+    //         (ed_te_info_patrimonio1.Text <> strTe_info_patrimonio1) or
+    //         (ed_te_info_patrimonio2.Text <> strTe_info_patrimonio2) or
+    //         (ed_te_info_patrimonio3.Text <> strTe_info_patrimonio3) or
+    //         (ed_te_info_patrimonio4.Text <> strTe_info_patrimonio4) or
+    //         (ed_te_info_patrimonio5.Text <> strTe_info_patrimonio5) or
+    //         (ed_te_info_patrimonio6.Text <> strTe_info_patrimonio6) then
+    //      begin
+
+<<<<<<< .mine
+              Mensagem('Enviando Informações Coletadas ao Banco de Dados...',false,intPausaPadrao div 3);
+=======
           // Envio dos Dados Coletados ao Banco de Dados
           tstrListAux := TStringList.Create;
           tstrListAux.Values['te_node_address']               := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'                    , frmMapaCacic.tStringsCipherOpened));
@@ -1326,54 +1349,67 @@ begin
           tstrListAux.Values['te_nome_computador']            := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR'                 , frmMapaCacic.tStringsCipherOpened));
           tstrListAux.Values['te_workgroup']                  := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_WORKGROUP'                       , frmMapaCacic.tStringsCipherOpened));
           tstrListAux.Values['id_usuario']                    := frmMapaCacic.EnCrypt(frmMapaCacic.strId_usuario);
+>>>>>>> .r729
 
-          tstrListAux.Values['id_unid_organizacional_nivel1'] := frmMapaCacic.EnCrypt(strIdUON1);
-          tstrListAux.Values['id_unid_organizacional_nivel1a']:= frmMapaCacic.EnCrypt(strIdUON1A);
-          tstrListAux.Values['id_unid_organizacional_nivel2'] := frmMapaCacic.EnCrypt(strIdUON2);
-          tstrListAux.Values['te_localizacao_complementar'  ] := frmMapaCacic.EnCrypt(ed_te_localizacao_complementar.Text);
-          tstrListAux.Values['te_info_patrimonio1'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio1.Text);
-          tstrListAux.Values['te_info_patrimonio2'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio2.Text);
-          tstrListAux.Values['te_info_patrimonio3'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio3.Text);
-          tstrListAux.Values['te_info_patrimonio4'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio4.Text);
-          tstrListAux.Values['te_info_patrimonio5'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio5.Text);
-          tstrListAux.Values['te_info_patrimonio6'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio6.Text);
+              // Envio dos Dados Coletados ao Banco de Dados
+              tstrListAux := TStringList.Create;
+              tstrListAux.Values['te_node_address']               := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'                    , frmMapaCacic.tStringsCipherOpened));
+              tstrListAux.Values['id_so']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Configs.ID_SO'                            , frmMapaCacic.tStringsCipherOpened));
+              tstrListAux.Values['te_so']                         := frmMapaCacic.EnCrypt(str_te_so);
+              tstrListAux.Values['id_ip_rede']                    := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.ID_IP_REDE'                         , frmMapaCacic.tStringsCipherOpened));
+              tstrListAux.Values['te_ip']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_IP'                              , frmMapaCacic.tStringsCipherOpened));
+              tstrListAux.Values['te_nome_computador']            := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR'                 , frmMapaCacic.tStringsCipherOpened));
+              tstrListAux.Values['te_workgroup']                  := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_WORKGROUP'                       , frmMapaCacic.tStringsCipherOpened));
+              tstrListAux.Values['id_usuario']                    := frmMapaCacic.EnCrypt(frmMapaCacic.strId_usuario);
 
-          log_DEBUG('Informações para contato com mapa_set_patrimonio:');
-          log_DEBUG('te_node_address: '+tstrListAux.Values['te_node_address']);
-          log_DEBUG('id_so: '+tstrListAux.Values['id_so']);
-          log_DEBUG('te_so: '+tstrListAux.Values['te_so']);
-          log_DEBUG('id_ip_rede: '+tstrListAux.Values['id_ip_rede']);
-          log_DEBUG('te_ip: '+tstrListAux.Values['te_ip']);
-          log_DEBUG('te_nome_computador: '+tstrListAux.Values['te_nome_computador']);
-          log_DEBUG('te_workgroup: '+tstrListAux.Values['te_workgroup']);
+              tstrListAux.Values['id_unid_organizacional_nivel1'] := frmMapaCacic.EnCrypt(strIdUON1);
+              tstrListAux.Values['id_unid_organizacional_nivel1a']:= frmMapaCacic.EnCrypt(strIdUON1A);
+              tstrListAux.Values['id_unid_organizacional_nivel2'] := frmMapaCacic.EnCrypt(strIdUON2);
+              tstrListAux.Values['te_localizacao_complementar'  ] := frmMapaCacic.EnCrypt(ed_te_localizacao_complementar.Text);
+              tstrListAux.Values['te_info_patrimonio1'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio1.Text);
+              tstrListAux.Values['te_info_patrimonio2'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio2.Text);
+              tstrListAux.Values['te_info_patrimonio3'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio3.Text);
+              tstrListAux.Values['te_info_patrimonio4'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio4.Text);
+              tstrListAux.Values['te_info_patrimonio5'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio5.Text);
+              tstrListAux.Values['te_info_patrimonio6'          ] := frmMapaCacic.EnCrypt(ed_te_info_patrimonio6.Text);
 
-          strRetorno := frmMapaCacic.ComunicaServidor('mapa_set_patrimonio.php', tstrListAux, '');
-          tstrListAux.Free;
+              log_DEBUG('Informações para contato com mapa_set_patrimonio:');
+              log_DEBUG('te_node_address: '+tstrListAux.Values['te_node_address']);
+              log_DEBUG('id_so: '+tstrListAux.Values['id_so']);
+              log_DEBUG('te_so: '+tstrListAux.Values['te_so']);
+              log_DEBUG('id_ip_rede: '+tstrListAux.Values['id_ip_rede']);
+              log_DEBUG('te_ip: '+tstrListAux.Values['te_ip']);
+              log_DEBUG('te_nome_computador: '+tstrListAux.Values['te_nome_computador']);
+              log_DEBUG('te_workgroup: '+tstrListAux.Values['te_workgroup']);
 
-          if not (frmMapaCacic.XML_RetornaValor('STATUS', strRetorno)='OK') then
-              Mensagem('ATENÇÃO: PROBLEMAS NO ENVIO DAS INFORMAÇÕES COLETADAS AO BANCO DE DADOS...',true,intPausaPadrao);
-//          else
-//            Begin
-              Mensagem('Salvando Informações Coletadas em Base Local...',false,intPausaPadrao div 3);
-              SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1', strIdUON1, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a', strIdUON1a, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2' , strIdUON2, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.id_local'                      , strIdLocal, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.te_localizacao_complementar'  , ed_te_localizacao_complementar.Text, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.te_info_patrimonio1'          , ed_te_info_patrimonio1.Text, tStringsCipherOpened);
-              SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio1', ed_te_info_patrimonio1.Text);
-              SetValorDatMemoria('Patrimonio.te_info_patrimonio2'          , ed_te_info_patrimonio2.Text, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.te_info_patrimonio3'          , ed_te_info_patrimonio3.Text, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.te_info_patrimonio4'          , ed_te_info_patrimonio4.Text, tStringsCipherOpened);
-              SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio4', ed_te_info_patrimonio4.Text);
-              SetValorDatMemoria('Patrimonio.te_info_patrimonio5'          , ed_te_info_patrimonio5.Text, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.te_info_patrimonio6'          , ed_te_info_patrimonio6.Text, tStringsCipherOpened);
-              SetValorDatMemoria('Patrimonio.ultima_rede_obtida'           , GetValorDatMemoria('TcpIp.ID_IP_REDE',frmMapaCacic.tStringsCipherOpened),tStringsCipherOpened);
-//            End;
-//      end
-//    else
-//      Mensagem('NÃO HÁ COLETA ATENÇÃO: PROBLEMAS NO ENVIO DAS INFORMAÇÕES COLETADAS AO BANCO DE DADOS...',true);
-    Finalizar(true);
+              strRetorno := frmMapaCacic.ComunicaServidor('mapa_set_patrimonio.php', tstrListAux, '');
+              tstrListAux.Free;
+
+              if not (frmMapaCacic.XML_RetornaValor('STATUS', strRetorno)='OK') then
+                  Mensagem('ATENÇÃO: PROBLEMAS NO ENVIO DAS INFORMAÇÕES COLETADAS AO BANCO DE DADOS...',true,intPausaPadrao);
+    //          else
+    //            Begin
+                  Mensagem('Salvando Informações Coletadas em Base Local...',false,intPausaPadrao div 3);
+                  SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1', strIdUON1, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a', strIdUON1a, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2' , strIdUON2, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.id_local'                      , strIdLocal, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.te_localizacao_complementar'  , ed_te_localizacao_complementar.Text, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.te_info_patrimonio1'          , ed_te_info_patrimonio1.Text, tStringsCipherOpened);
+                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio1', ed_te_info_patrimonio1.Text);
+                  SetValorDatMemoria('Patrimonio.te_info_patrimonio2'          , ed_te_info_patrimonio2.Text, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.te_info_patrimonio3'          , ed_te_info_patrimonio3.Text, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.te_info_patrimonio4'          , ed_te_info_patrimonio4.Text, tStringsCipherOpened);
+                  SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio4', ed_te_info_patrimonio4.Text);
+                  SetValorDatMemoria('Patrimonio.te_info_patrimonio5'          , ed_te_info_patrimonio5.Text, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.te_info_patrimonio6'          , ed_te_info_patrimonio6.Text, tStringsCipherOpened);
+                  SetValorDatMemoria('Patrimonio.ultima_rede_obtida'           , GetValorDatMemoria('TcpIp.ID_IP_REDE',frmMapaCacic.tStringsCipherOpened),tStringsCipherOpened);
+    //            End;
+    //      end
+    //    else
+    //      Mensagem('NÃO HÁ COLETA ATENÇÃO: PROBLEMAS NO ENVIO DAS INFORMAÇÕES COLETADAS AO BANCO DE DADOS...',true);
+        Finalizar(true);
+    End;
 end;
 
 procedure TfrmMapaCacic.MontaInterface(p_strConfigs : String);
@@ -1691,6 +1727,14 @@ begin
 
       if not (strPathCacic = '') then
         Begin
+          Matar(strPathCacic,'aguarde_CACIC.txt');
+
+          if FileExists(strPathCacic + 'aguarde_CACIC.txt') then
+            Begin
+              MessageDLG(#13#10+'ATENÇÃO! É necessário finalizar o Agente Principal do CACIC.',mtError,[mbOK],0);
+              Sair;
+            End;
+
           strDatFileName := strPathCacic + 'cacic2.dat'; // Algo como X:\Cacic\cacic2.dat
 
           boolDebugs := false;

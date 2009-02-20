@@ -17,7 +17,7 @@ uses
   StdCtrls,
   WinSock,
   NB30,
-  ComCtrls;
+  ComCtrls, PJVersionInfo, JvExComCtrls, JvStatusBar;
 
 type
   TForm1 = class(TForm)
@@ -47,7 +47,8 @@ type
     Edit_FraseDecriptografadaDevolvidaServidor: TEdit;
     Label_OperacaoRecebidaServidor: TLabel;
     Edit_OperacaoRecebidaServidor: TEdit;
-    StatusBar_Mensagens: TStatusBar;
+    PJVersionInfo1: TPJVersionInfo;
+    StatusBar_Mensagens: TJvStatusBar;
     procedure Button_EfetuaTesteClick(Sender: TObject);
     function PadWithZeros(const str : string; size : integer) : string;
     function EnCrypt(p_Data : String) : String;
@@ -63,6 +64,15 @@ type
     procedure Edit_OperacaoRecebidaServidorChange(Sender: TObject);
     procedure ProcessaPausa;
     procedure Edit_CipherKeyStationChange(Sender: TObject);
+    procedure Edit_FraseOriginalExit(Sender: TObject);
+    procedure CriptografaPalavra;
+    procedure Edit_IVStationExit(Sender: TObject);
+    procedure Edit_CipherKeyStationExit(Sender: TObject);
+    function  VerFmt(const MS, LS: DWORD): string;
+    function  GetVersionInfo(p_File: string):string;
+    procedure Edit_ScriptPathChange(Sender: TObject);
+    procedure DesfazCriticas;
+    procedure Edit_IVStationChange(Sender: TObject);
   private
     { Private declarations }
   public
@@ -72,6 +82,7 @@ type
 var   Form1: TForm1;
       v_CipherKey,
       v_IV : String;
+      boolProcessaPausa : boolean;
 
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
@@ -81,29 +92,10 @@ const KeySize = 32; // 32 bytes = 256 bits
 implementation
 
 {$R *.dfm}
-procedure TForm1.InicializaCampos;
+procedure TForm1.CriptografaPalavra;
 Begin
-  form1.GroupBox_TesteServidor.Visible                        := false;
-  form1.GroupBox_Resultado.Visible                            := false;
-//  Form1.Edit_FraseDecriptografadaDevolvidaServidor.Visible    := false;
-//  form1.Edit_FraseCriptografadaRecebidaServidor.Visible       := false;
-//  form1.Edit_FraseCriptografadaEnviadaEstacao.Visible         := false;
-//  form1.Edit_FraseDecriptografadaDevolvidaServidor.Visible    := false;
-//  form1.Edit_OperacaoRecebidaServidor.Visible                 := false;
-//  form1.Edit_IVServer.Visible                                 := false;
-//  form1.Edit_CipherKeyServer.Visible                          := false;
-
-  Form1.Edit_FraseDecriptografadaDevolvidaServidor.Text       := '';
-  form1.Edit_FraseCriptografadaRecebidaServidor.Text          := '';
-  form1.Edit_FraseCriptografadaEnviadaEstacao.Text            := '';
-  form1.Edit_FraseDecriptografadaDevolvidaServidor.Text       := '';
-  form1.Edit_OperacaoRecebidaServidor.Text                    := '';
-  form1.Edit_IVServer.Text                                    := '';
-  form1.Edit_CipherKeyServer.Text                             := '';
-  form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Style := [];
-  form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Color := clBlack;
-
-  Application.ProcessMessages;
+  if (trim(form1.Edit_FraseOriginal.Text)<>'') then
+    Form1.Edit_FraseCriptografadaEnviadaEstacao.Text := form1.EnCrypt(trim(form1.Edit_FraseOriginal.Text));
 End;
 
 procedure TForm1.Button_EfetuaTesteClick(Sender: TObject);
@@ -114,85 +106,112 @@ var v_retorno,
     Request_Config  : TStringList;
     Response_Config : TStringStream;
     IdHTTP1: TIdHTTP;
+    intAux : integer;
 begin
 
-  InicializaCampos;
-
-  Form1.Edit_FraseCriptografadaEnviadaEstacao.Text      := form1.EnCrypt(trim(form1.Edit_FraseOriginal.Text));
-
-  Request_Config                            := TStringList.Create;
-  Request_Config.Values['cs_operacao']      := 'TestaCrypt';
-  Request_Config.Values['cs_cipher']        := '1';
-  Request_Config.Values['te_CipheredText']  := trim(Form1.Edit_FraseCriptografadaEnviadaEstacao.Text);
-  Response_Config                           := TStringStream.Create('');
-
-  Try
-       idHTTP1 := TIdHTTP.Create(nil);
-       idHTTP1.AllowCookies                     := true;
-       idHTTP1.ASCIIFilter                      := false;
-       idHTTP1.AuthRetries                      := 1;
-       idHTTP1.BoundPort                        := 0;
-       idHTTP1.HandleRedirects                  := false;
-       idHTTP1.ProxyParams.BasicAuthentication  := false;
-       idHTTP1.ProxyParams.ProxyPort            := 0;
-       idHTTP1.ReadTimeout                      := 0;
-       idHTTP1.RecvBufferSize                   := 32768;
-       idHTTP1.RedirectMaximum                  := 15;
-       idHTTP1.Request.Accept                   := 'text/html, */*';
-       idHTTP1.Request.BasicAuthentication      := true;
-       idHTTP1.Request.ContentLength            := -1;
-       idHTTP1.Request.ContentRangeStart        := 0;
-       idHTTP1.Request.ContentRangeEnd          := 0;
-       idHTTP1.Request.ContentType              := 'text/html';
-       idHTTP1.SendBufferSize                   := 32768;
-       idHTTP1.Tag                              := 0;
-
-  Form1.StatusBar_Mensagens.SimpleText := 'Fazendo comunicação com "'+form1.Edit_ScriptPath.Text+'"';
-  Sleep(1000);
-
-    IdHTTP1.Post(trim(Form1.Edit_ScriptPath.Text), Request_Config, Response_Config);
-
-    //ShowMessage('Retorno: '+Response_Config.DataString);
-    idHTTP1.Free;
-    v_retorno := Response_Config.DataString;
-    v_Status := XML_RetornaValor('STATUS',v_retorno);
-  Except
+  intAux := POS('255.255.255.255',Edit_ScriptPath.Text);
+  if (intAux > 0) then
     Begin
-      Form1.StatusBar_Mensagens.SimpleText := 'Problemas na comunicação...';
-      Sleep(1000);
-    End;
-  End;
-  Request_Config.Free;
-  Response_Config.Free;
-
-  if (v_Status <> '') then
-    Begin
-      v_strAux := XML_RetornaValor('UnCipheredText',v_retorno);
-      form1.Edit_IVServer.Text                              := XML_RetornaValor('IVServer',v_retorno);
-      form1.Edit_CipherKeyServer.Text                       := XML_RetornaValor('CipherKeyServer',v_retorno);
-      form1.Edit_FraseCriptografadaRecebidaServidor.Text    := XML_RetornaValor('CipheredTextRecepted',v_retorno);
-      form1.Edit_OperacaoRecebidaServidor.Text              := XML_RetornaValor('CS_OPERACAO',v_retorno);
-      if (v_strAux <> '') then
-        Begin
-          form1.Edit_FraseDecriptografadaDevolvidaServidor.Text    := v_strAux;
-          if (trim(form1.Edit_FraseDecriptografadaDevolvidaServidor.Text) <> trim(form1.Edit_FraseOriginal.Text)) then
-            form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Color := clRed
-          else
-            form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Color := clBlue;
-        End
-      else
-        Begin
-          form1.Edit_FraseDecriptografadaDevolvidaServidor.Text := 'NÃO FOI POSSÍVEL DECRIPTOGRAFAR!!!';
-          form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Style := [fsBold];
-          form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Color := clRed;
-        End;
-      Form1.StatusBar_Mensagens.SimpleText := 'Teste Concluído!';
+      StatusBar_Mensagens.Panels[0].Text := 'ATENÇÃO: Informe um endereço válido para o teste';
+      StatusBar_Mensagens.Color := clYellow;
+      Edit_ScriptPath.SetFocus;
     End
   else
     Begin
-      Form1.StatusBar_Mensagens.SimpleText := 'Problemas na comunicação...';
-      Sleep(1000);
-    End
+      boolProcessaPausa := true;
+      InicializaCampos;
+      CriptografaPalavra;
+
+      Request_Config                            := TStringList.Create;
+      Request_Config.Values['cs_operacao']      := 'TestaCrypt';
+      Request_Config.Values['cs_cipher']        := '1';
+      Request_Config.Values['te_CipheredText']  := trim(Form1.Edit_FraseCriptografadaEnviadaEstacao.Text);
+      Response_Config                           := TStringStream.Create('');
+
+      Try
+           idHTTP1 := TIdHTTP.Create(nil);
+           idHTTP1.AllowCookies                     := true;
+           idHTTP1.ASCIIFilter                      := false;
+           idHTTP1.AuthRetries                      := 1;
+           idHTTP1.BoundPort                        := 0;
+           idHTTP1.HandleRedirects                  := false;
+           idHTTP1.ProxyParams.BasicAuthentication  := false;
+           idHTTP1.ProxyParams.ProxyPort            := 0;
+           idHTTP1.ReadTimeout                      := 0;
+           idHTTP1.RecvBufferSize                   := 32768;
+           idHTTP1.RedirectMaximum                  := 15;
+           idHTTP1.Request.Accept                   := 'text/html, */*';
+           idHTTP1.Request.BasicAuthentication      := true;
+           idHTTP1.Request.ContentLength            := -1;
+           idHTTP1.Request.ContentRangeStart        := 0;
+           idHTTP1.Request.ContentRangeEnd          := 0;
+           idHTTP1.Request.ContentType              := 'text/html';
+           idHTTP1.SendBufferSize                   := 32768;
+           idHTTP1.Tag                              := 0;
+
+           Form1.StatusBar_Mensagens.Panels[0].Text := 'Fazendo comunicação com "'+form1.Edit_ScriptPath.Text+'"';
+           Sleep(1000);
+           Form1.StatusBar_Mensagens.Panels[0].Text := '';
+
+        IdHTTP1.Post(trim(Form1.Edit_ScriptPath.Text), Request_Config, Response_Config);
+
+        //ShowMessage('Retorno: '+Response_Config.DataString);
+        idHTTP1.Free;
+        v_retorno := Response_Config.DataString;
+        v_Status := XML_RetornaValor('STATUS',v_retorno);
+      Except
+        Begin
+          Form1.StatusBar_Mensagens.Panels[0].Text := 'Problemas na comunicação...';
+          Sleep(1000);
+          Form1.StatusBar_Mensagens.Panels[0].Text := '';          
+        End;
+      End;
+      Request_Config.Free;
+      Response_Config.Free;
+
+      if (v_Status <> '') then
+        Begin
+          v_strAux := XML_RetornaValor('UnCipheredText',v_retorno);
+          form1.Edit_IVServer.Text                              := XML_RetornaValor('IVServer',v_retorno);
+          form1.Edit_CipherKeyServer.Text                       := XML_RetornaValor('CipherKeyServer',v_retorno);
+          form1.Edit_FraseCriptografadaRecebidaServidor.Text    := XML_RetornaValor('CipheredTextRecepted',v_retorno);
+          form1.Edit_OperacaoRecebidaServidor.Text              := XML_RetornaValor('CS_OPERACAO',v_retorno);
+          if (v_strAux <> '') then
+            Begin
+              form1.Edit_FraseDecriptografadaDevolvidaServidor.Text    := v_strAux;
+              if (trim(form1.Edit_FraseDecriptografadaDevolvidaServidor.Text) <> trim(form1.Edit_FraseOriginal.Text)) then
+                Begin
+                  form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Color := clRed;
+                  if (Edit_CipherKeyStation.Text <> Edit_CipherKeyServer.Text) then
+                    Begin
+                      Edit_CipherKeyStation.Color := clYellow;
+                      Edit_CipherKeyServer.Color := clYellow;
+                    End;
+                  if (Edit_IVStation.Text <> Edit_IVServer.Text) then
+                    Begin
+                      Edit_IVStation.Color := clYellow;
+                      Edit_IVServer.Color := clYellow;
+                    End;
+
+                End
+              else
+                form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Color := clBlue;
+            End
+          else
+            Begin
+              form1.Edit_FraseDecriptografadaDevolvidaServidor.Text := 'NÃO FOI POSSÍVEL DECRIPTOGRAFAR!!!';
+              form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Style := [fsBold];
+              form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Color := clRed;
+            End;
+          Form1.StatusBar_Mensagens.Panels[0].Text := 'Teste Concluído!';
+        End
+      else
+        Begin
+          Form1.StatusBar_Mensagens.Panels[0].Text := 'Problemas na comunicação...';
+          Sleep(1000);
+          Form1.StatusBar_Mensagens.Panels[0].Text := '';          
+        End;
+    End;
 end;
 // Pad a string with zeros so that it is a multiple of size
 function TForm1.PadWithZeros(const str : string; size : integer) : string;
@@ -215,9 +234,14 @@ var
   l_Cipher : TDCP_rijndael;
   l_Data, l_Key, l_IV : string;
 begin
-  Form1.StatusBar_Mensagens.SimpleText := 'Criptografando "'+p_Data+'"';
-  Sleep(1000);
+  Form1.StatusBar_Mensagens.Panels[0].Text := 'Criptografando "'+p_Data+'"';
 
+  if boolProcessaPausa then
+    Begin
+      boolProcessaPausa := false;
+      Sleep(1000);
+    End;
+  Form1.StatusBar_Mensagens.Panels[0].Text := '';
   Try
     // Pad Key, IV and Data with zeros as appropriate
     l_Key   := form1.PadWithZeros(trim(form1.Edit_CipherKeyStation.Text),KeySize);
@@ -261,6 +285,21 @@ begin
     End;
 
 end;
+function TForm1.VerFmt(const MS, LS: DWORD): string;
+  // Format the version number from the given DWORDs containing the info
+begin
+  Result := Format('%d.%d.%d.%d',
+    [HiWord(MS), LoWord(MS), HiWord(LS), LoWord(LS)])
+end;
+
+function TForm1.GetVersionInfo(p_File: string):string;
+var PJVersionInfo1: TPJVersionInfo;
+begin
+  PJVersionInfo1 := TPJVersionInfo.Create(nil);
+  PJVersionInfo1.FileName := PChar(p_File);
+  Result := VerFmt(PJVersionInfo1.FixedFileInfo.dwFileVersionMS, PJVersionInfo1.FixedFileInfo.dwFileVersionLS);
+  PJVersionInfo1.Free;
+end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
@@ -270,6 +309,8 @@ begin
 
   form1.Edit_IVStation.Text        := v_IV;
   form1.Edit_CipherKeyStation.Text := v_CipherKey;
+  Form1.StatusBar_Mensagens.Panels[1].Text := 'v: '+getVersionInfo(ParamStr(0));
+  boolProcessaPausa := false;
 end;
 
 procedure TForm1.FormActivate(Sender: TObject);
@@ -322,12 +363,80 @@ end;
 
 procedure TForm1.ProcessaPausa;
 Begin
-  sleep(500);
+  if boolProcessaPausa then
+    Begin
+      boolProcessaPausa := false;
+      sleep(500);
+    End;
   Application.ProcessMessages;
 End;
 procedure TForm1.Edit_CipherKeyStationChange(Sender: TObject);
 begin
   Form1.InicializaCampos;
+  DesfazCriticas;
+end;
+
+procedure TForm1.Edit_FraseOriginalExit(Sender: TObject);
+begin
+  CriptografaPalavra;
+end;
+
+procedure TForm1.Edit_IVStationExit(Sender: TObject);
+begin
+  CriptografaPalavra;
+end;
+
+procedure TForm1.Edit_CipherKeyStationExit(Sender: TObject);
+begin
+  CriptografaPalavra;
+end;
+
+procedure TForm1.DesfazCriticas;
+Begin
+  Form1.StatusBar_Mensagens.Color                             := clBtnFace;
+  Form1.Edit_CipherKeyStation.Color                           := clWindow;
+  Form1.Edit_CipherKeyServer.Color                            := clWindow;
+  Form1.Edit_IVStation.Color                                  := clWindow;
+  Form1.Edit_IVServer.Color                                   := clWindow;
+
+  Application.ProcessMessages;
+End;
+
+procedure TForm1.InicializaCampos;
+Begin
+  form1.GroupBox_TesteServidor.Visible                        := false;
+  form1.GroupBox_Resultado.Visible                            := false;
+//  Form1.Edit_FraseDecriptografadaDevolvidaServidor.Visible    := false;
+//  form1.Edit_FraseCriptografadaRecebidaServidor.Visible       := false;
+//  form1.Edit_FraseCriptografadaEnviadaEstacao.Visible         := false;
+//  form1.Edit_FraseDecriptografadaDevolvidaServidor.Visible    := false;
+//  form1.Edit_OperacaoRecebidaServidor.Visible                 := false;
+//  form1.Edit_IVServer.Visible                                 := false;
+//  form1.Edit_CipherKeyServer.Visible                          := false;
+
+  Form1.Edit_FraseDecriptografadaDevolvidaServidor.Text       := '';
+  form1.Edit_FraseCriptografadaRecebidaServidor.Text          := '';
+//  form1.Edit_FraseCriptografadaEnviadaEstacao.Text            := '';
+  form1.Edit_FraseDecriptografadaDevolvidaServidor.Text       := '';
+  form1.Edit_OperacaoRecebidaServidor.Text                    := '';
+  form1.Edit_IVServer.Text                                    := '';
+  form1.Edit_CipherKeyServer.Text                             := '';
+  form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Style := [];
+  form1.Edit_FraseDecriptografadaDevolvidaServidor.Font.Color := clBlack;
+
+  Application.ProcessMessages;
+
+End;
+
+procedure TForm1.Edit_ScriptPathChange(Sender: TObject);
+begin
+  InicializaCampos;
+  DesfazCriticas;
+end;
+
+procedure TForm1.Edit_IVStationChange(Sender: TObject);
+begin
+  DesfazCriticas;
 end;
 
 end.

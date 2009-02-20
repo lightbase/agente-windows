@@ -1,13 +1,13 @@
 object FormularioGeral: TFormularioGeral
-  Left = 129
-  Top = 26
+  Left = 300
+  Top = 107
   HorzScrollBar.Visible = False
   VertScrollBar.Visible = False
   BiDiMode = bdLeftToRight
   BorderIcons = []
   BorderStyle = bsSingle
   Caption = 'CACIC - Informa'#231#245'es Gerais'
-  ClientHeight = 600
+  ClientHeight = 597
   ClientWidth = 716
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -141,59 +141,104 @@ object FormularioGeral: TFormularioGeral
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
-  object Pn_InfosGerais: TPanel
-    Left = 0
-    Top = 0
-    Width = 716
-    Height = 600
-    Align = alClient
-    TabOrder = 0
-    object lbServidorWEB: TLabel
-      Left = 1
-      Top = 1
-      Width = 641
-      Height = 13
-      Alignment = taCenter
-      AutoSize = False
-      Caption = 'Servidor de Aplica'#231#227'o'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clHotLight
-      Font.Height = -11
-      Font.Name = 'MS Sans Serif'
-      Font.Style = [fsBold, fsUnderline]
-      ParentFont = False
-    end
-    object teServidorWEB: TLabel
-      Left = 1
-      Top = 14
-      Width = 641
+  object Panel3: TPanel
+    Left = 648
+    Top = 3
+    Width = 68
+    Height = 593
+    Color = clCaptionText
+    TabOrder = 3
+    object pnVersao: TPanel
+      Left = 6
+      Top = 578
+      Width = 61
       Height = 16
-      Alignment = taCenter
-      AutoSize = False
-      Caption = 'ASDFASDFD'
+      BevelInner = bvLowered
+      BevelOuter = bvLowered
+      Caption = 'v. 2.4.0.xxx'
+      Color = clBackground
       Font.Charset = DEFAULT_CHARSET
-      Font.Color = clBlack
-      Font.Height = -13
+      Font.Color = clWhite
+      Font.Height = -9
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
-    end
-    object Bt_Fechar_InfosGerais: TButton
-      Left = 649
-      Top = 248
-      Width = 64
-      Height = 42
-      Caption = 'Fechar'
       TabOrder = 0
-      OnClick = Bt_Fechar_InfosGeraisClick
     end
+    object bt_Fechar_Infos_Gerais: TBitBtn
+      Left = 6
+      Top = 252
+      Width = 60
+      Height = 27
+      Caption = 'Fechar'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -9
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 1
+      TabStop = False
+      OnClick = Bt_Fechar_InfosGeraisClick
+      Glyph.Data = {
+        E6040000424DE604000000000000360000002800000014000000140000000100
+        180000000000B0040000120B0000120B00000000000000000000FFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFA39C989C969D96909D918B98928B908C827AFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFC0BCBCB4B4D19B9AD85657CD6364D96364D95657CD9998D2ADA9BE9D958EFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB7B4C18B8BD5
+        5A5AD88081E48B8BE58D8DE48D8DE48B8BE57777E24646C98E8DC8A7A0A1FFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB6B4C27D7DCB9B9BE26E6ED254
+        54D35A5AD55959D55959D55959D55454D39B9BE26868CC6262B5A8A2A3FFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4848A78888D8F0F0FBBCBCE64242BA2525
+        C42E2EC62E2EC62525C48888D8E2E2F5DBDBF13939B07574ADA59E98FFFFFFFF
+        FFFFFFFFFFFFFFFF9291B52020943332A6BCBCE6DEDEF4B2B2DF2625B10000AE
+        0000AE6E6ED2D8D8F1DBDBF38080CC10109505068DA8A5B3FFFFFFFFFFFFFFFF
+        FFFFFFFF37378A00007D0000852828A2BCBCE6DEDEF4B2B2DF1F1FAA5A5AC8D4
+        D4F0DBDBF38080CC01019100008800007D7C7AA8FFFFFFFFFFFFFFFFFFD0CFD6
+        20207300007200007F0000852828A2BBBBE3D8D8F1BBBBE3CBCBECD9D9F28080
+        CC01018F00008600007F000070515193BCB8B7FFFFFFFFFFFFBBBAC60E0E611D
+        1D7B0E0E7C03037D00007B272799C3C3E5D3D3EBD6D6ED8484C300008300007F
+        0000790000700000640A0A61C1BEC0FFFFFFFFFFFFBBBAC63838786564A06564
+        A056569E4242977A7ABBD3D3EBD9D9EED9D9EEAFAFD12E2E8A14148116167B0C
+        0C6D000058060751CAC8C9FFFFFFFFFFFFCECDD38383A48A8AAE8383AD8181B2
+        B8B8D4F1F1F7EDEDF2CBCBE1DADAEAF1F1F7D3D3E48181B27E7EAD7E7EAD5454
+        871B1B53CFCCCBFFFFFFFFFFFFFFFFFF7D7D929F9FB79D9DBAC3C3D5F3F3F4F1
+        F1F7D3D3E49999C0ABABCCE6E6EEF6F6F8DDDDE79D9DBAA2A2BB8A8BA2848295
+        DBD8D8FFFFFFFFFFFFFFFFFF8B8B96D8D8DDD5D5DEF6F6F8F5F5F6DDDDE7B4B4
+        CBB4B4CBB1B1C9C3C3D5EDEDF2F9F8F8E3E3EABEBECCB5B5BFADABB1FFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFF898896FEFEFEFBFBFBE6E6EEC9C9D5CAC9D5CBCBD6
+        CBCBD6C8C7D3D5D5DEF3F2F3F9F9FAF0F0F2848290FFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFAEAEB8FFFFFFE5E3E8DBDBE0DBDADFDBDADFDBDADFDC
+        DBDFDCDBE0EBEAECF9F9FA858594FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFA4A4AFF4F4F5ECECEEF3F3F4F4F3F4F3F3F4F3F2F3E4E3
+        E7E6E6E99493A0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFB1B1BAB1B1BAD8D8DDE3E3E7E3E3E7D2D2D7A9A9B3C0C0C6
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFC8C8CDCAC9CEFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFF}
+      Spacing = 1
+    end
+  end
+  object Pn_InfosGerais: TPanel
+    Left = 0
+    Top = 0
+    Width = 647
+    Height = 597
+    BevelOuter = bvNone
+    Color = clHighlight
+    TabOrder = 0
     object Pn_SisMoni: TPanel
-      Left = 1
-      Top = 192
+      Left = 4
+      Top = 200
       Width = 640
       Height = 133
       Caption = 'Pn_SisMoni'
-      TabOrder = 1
+      TabOrder = 0
       DesignSize = (
         640
         133)
@@ -214,7 +259,7 @@ object FormularioGeral: TFormularioGeral
       object listSistemasMonitorados: TListView
         Left = 5
         Top = 19
-        Width = 631
+        Width = 632
         Height = 110
         Anchors = [akLeft, akTop, akRight, akBottom]
         BiDiMode = bdLeftToRight
@@ -250,14 +295,14 @@ object FormularioGeral: TFormularioGeral
       end
     end
     object Pn_TCPIP: TPanel
-      Left = 1
-      Top = 39
+      Left = 4
+      Top = 49
       Width = 640
       Height = 149
       Caption = 'Pn_TCPIP'
-      TabOrder = 2
+      TabOrder = 1
       object Lb_TCPIP: TLabel
-        Left = 4
+        Left = 5
         Top = 4
         Width = 136
         Height = 14
@@ -288,7 +333,7 @@ object FormularioGeral: TFormularioGeral
           631
           126)
         object ST_VL_MacAddress: TStaticText
-          Left = 441
+          Left = 436
           Top = 23
           Width = 16
           Height = 18
@@ -304,7 +349,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 29
         end
         object ST_LB_MacAddress: TStaticText
-          Left = 290
+          Left = 350
           Top = 23
           Width = 88
           Height = 18
@@ -318,7 +363,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 28
         end
         object ST_LB_NomeHost: TStaticText
-          Left = 5
+          Left = 60
           Top = 8
           Width = 88
           Height = 18
@@ -332,7 +377,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 0
         end
         object ST_VL_NomeHost: TStaticText
-          Left = 156
+          Left = 145
           Top = 8
           Width = 10
           Height = 18
@@ -348,7 +393,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 1
         end
         object ST_LB_IpEstacao: TStaticText
-          Left = 5
+          Left = 15
           Top = 23
           Width = 133
           Height = 18
@@ -362,7 +407,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 2
         end
         object ST_LB_IpRede: TStaticText
-          Left = 5
+          Left = 29
           Top = 40
           Width = 119
           Height = 18
@@ -390,7 +435,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 4
         end
         object ST_LB_DnsPrimario: TStaticText
-          Left = 5
+          Left = 20
           Top = 73
           Width = 128
           Height = 18
@@ -404,7 +449,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 5
         end
         object ST_LB_DnsSecundario: TStaticText
-          Left = 290
+          Left = 295
           Top = 73
           Width = 143
           Height = 18
@@ -418,7 +463,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 6
         end
         object ST_LB_Gateway: TStaticText
-          Left = 5
+          Left = 53
           Top = 89
           Width = 95
           Height = 18
@@ -432,7 +477,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 7
         end
         object ST_LB_Mascara: TStaticText
-          Left = 290
+          Left = 316
           Top = 40
           Width = 122
           Height = 18
@@ -446,7 +491,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 8
         end
         object ST_LB_ServidorDHCP: TStaticText
-          Left = 290
+          Left = 352
           Top = 89
           Width = 86
           Height = 18
@@ -460,7 +505,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 9
         end
         object ST_LB_WinsPrimario: TStaticText
-          Left = 5
+          Left = 14
           Top = 106
           Width = 134
           Height = 18
@@ -474,7 +519,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 10
         end
         object ST_LB_WinsSecundario: TStaticText
-          Left = 290
+          Left = 289
           Top = 106
           Width = 149
           Height = 18
@@ -488,7 +533,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 11
         end
         object ST_VL_IpEstacao: TStaticText
-          Left = 156
+          Left = 145
           Top = 23
           Width = 10
           Height = 18
@@ -504,7 +549,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 12
         end
         object ST_VL_DNSPrimario: TStaticText
-          Left = 156
+          Left = 145
           Top = 73
           Width = 10
           Height = 18
@@ -520,7 +565,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 13
         end
         object ST_VL_DNSSecundario: TStaticText
-          Left = 441
+          Left = 436
           Top = 73
           Width = 10
           Height = 18
@@ -536,7 +581,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 14
         end
         object ST_VL_Gateway: TStaticText
-          Left = 156
+          Left = 145
           Top = 89
           Width = 10
           Height = 18
@@ -552,7 +597,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 15
         end
         object ST_VL_Mascara: TStaticText
-          Left = 441
+          Left = 436
           Top = 40
           Width = 10
           Height = 18
@@ -568,7 +613,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 16
         end
         object ST_VL_ServidorDHCP: TStaticText
-          Left = 441
+          Left = 436
           Top = 89
           Width = 10
           Height = 18
@@ -584,7 +629,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 17
         end
         object ST_VL_WinsPrimario: TStaticText
-          Left = 156
+          Left = 145
           Top = 106
           Width = 16
           Height = 18
@@ -600,7 +645,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 18
         end
         object ST_VL_WinsSecundario: TStaticText
-          Left = 441
+          Left = 436
           Top = 106
           Width = 16
           Height = 18
@@ -616,7 +661,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 19
         end
         object ST_VL_DominioDNS: TStaticText
-          Left = 156
+          Left = 145
           Top = 57
           Width = 10
           Height = 18
@@ -632,7 +677,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 20
         end
         object ST_VL_IpRede: TStaticText
-          Left = 156
+          Left = 145
           Top = 40
           Width = 10
           Height = 18
@@ -698,15 +743,15 @@ object FormularioGeral: TFormularioGeral
       end
     end
     object pnColetasRealizadasNestaData: TPanel
-      Left = 1
-      Top = 329
+      Left = 4
+      Top = 335
       Width = 640
-      Height = 134
+      Height = 129
       Caption = 'Pn_SisMoni'
-      TabOrder = 3
+      TabOrder = 2
       DesignSize = (
         640
-        134)
+        129)
       object lbColetasRealizadasNestaData: TLabel
         Left = 5
         Top = 4
@@ -739,7 +784,7 @@ object FormularioGeral: TFormularioGeral
         Left = 5
         Top = 19
         Width = 631
-        Height = 110
+        Height = 105
         Anchors = [akLeft, akTop, akRight, akBottom]
         BiDiMode = bdLeftToRight
         Color = clSilver
@@ -777,53 +822,13 @@ object FormularioGeral: TFormularioGeral
         ViewStyle = vsReport
       end
     end
-    object Panel2: TPanel
-      Tag = 36
-      Left = 1
-      Top = 189
-      Width = 642
-      Height = 2
-      TabOrder = 4
-    end
-    object Panel3: TPanel
-      Tag = 36
-      Left = 1
-      Top = 326
-      Width = 640
-      Height = 2
-      TabOrder = 5
-    end
-    object pnVersao: TPanel
-      Left = 648
-      Top = 580
-      Width = 66
-      Height = 18
-      BevelInner = bvLowered
-      BevelOuter = bvLowered
-      Caption = 'V. x.x.x.x'
-      Color = clWhite
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -9
-      Font.Name = 'Arial'
-      Font.Style = []
-      ParentFont = False
-      TabOrder = 6
-    end
-    object Panel5: TPanel
-      Left = 641
-      Top = 2
-      Width = 6
-      Height = 596
-      TabOrder = 7
-    end
     object pnInformacoesPatrimoniais: TPanel
-      Left = 1
-      Top = 467
+      Left = 4
+      Top = 466
       Width = 640
-      Height = 131
+      Height = 128
       Caption = 'Pn_TCPIP'
-      TabOrder = 8
+      TabOrder = 3
       object lbInformacoesPatrimoniais: TLabel
         Left = 5
         Top = 4
@@ -837,6 +842,21 @@ object FormularioGeral: TFormularioGeral
         Font.Name = 'Arial'
         Font.Style = [fsBold, fsUnderline]
         ParentFont = False
+      end
+      object lbSemInformacoesPatrimoniais: TLabel
+        Left = 157
+        Top = 4
+        Width = 228
+        Height = 14
+        Alignment = taCenter
+        Caption = '(Informa'#231#245'es Patrimoniais ainda n'#227'o coletadas)'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clRed
+        Font.Height = -11
+        Font.Name = 'Arial'
+        Font.Style = []
+        ParentFont = False
+        Visible = False
       end
       object gpInfosPatrimoniais: TGroupBox
         Left = 5
@@ -855,12 +875,73 @@ object FormularioGeral: TFormularioGeral
         DesignSize = (
           631
           106)
+        object st_vl_etiqueta9: TStaticText
+          Left = 510
+          Top = 90
+          Width = 16
+          Height = 18
+          Anchors = [akRight]
+          Caption = '10'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 24
+        end
+        object st_lb_Etiqueta9: TStaticText
+          Left = 355
+          Top = 90
+          Width = 150
+          Height = 13
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'S'#233'rie da Impressora:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+          TabOrder = 18
+        end
+        object st_vl_Etiqueta3: TStaticText
+          Left = 146
+          Top = 58
+          Width = 10
+          Height = 18
+          Anchors = [akRight]
+          Caption = '4'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 17
+        end
+        object st_lb_Etiqueta3: TStaticText
+          Left = 3
+          Top = 57
+          Width = 140
+          Height = 18
+          Alignment = taRightJustify
+          AutoSize = False
+          Caption = 'Se'#231#227'o:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+          TabOrder = 16
+        end
         object st_vl_etiqueta4: TStaticText
-          Left = 489
+          Left = 510
           Top = 9
           Width = 10
           Height = 18
-          Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '5'
           Font.Charset = DEFAULT_CHARSET
@@ -872,11 +953,10 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 19
         end
         object st_vl_etiqueta5: TStaticText
-          Left = 489
+          Left = 510
           Top = 26
           Width = 10
           Height = 18
-          Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '6'
           Font.Charset = DEFAULT_CHARSET
@@ -888,11 +968,10 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 20
         end
         object st_vl_etiqueta6: TStaticText
-          Left = 489
+          Left = 510
           Top = 42
           Width = 10
           Height = 18
-          Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '7'
           Font.Charset = DEFAULT_CHARSET
@@ -904,11 +983,10 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 21
         end
         object st_vl_etiqueta7: TStaticText
-          Left = 489
+          Left = 510
           Top = 59
           Width = 10
           Height = 18
-          Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '8'
           Font.Charset = DEFAULT_CHARSET
@@ -920,11 +998,10 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 22
         end
         object st_vl_etiqueta8: TStaticText
-          Left = 489
+          Left = 510
           Top = 74
           Width = 10
           Height = 18
-          Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '9'
           Font.Charset = DEFAULT_CHARSET
@@ -935,27 +1012,13 @@ object FormularioGeral: TFormularioGeral
           ParentFont = False
           TabOrder = 23
         end
-        object st_vl_etiqueta9: TStaticText
-          Left = 489
-          Top = 90
-          Width = 16
+        object st_lb_Etiqueta6: TStaticText
+          Left = 355
+          Top = 42
+          Width = 150
           Height = 18
           Alignment = taRightJustify
-          Anchors = [akRight]
-          Caption = '10'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = []
-          ParentFont = False
-          TabOrder = 24
-        end
-        object st_lb_Etiqueta6: TStaticText
-          Left = 316
-          Top = 41
-          Width = 87
-          Height = 18
+          AutoSize = False
           Caption = 'PIB do Monitor:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -966,10 +1029,12 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 5
         end
         object st_lb_Etiqueta5: TStaticText
-          Left = 316
-          Top = 24
-          Width = 77
+          Left = 355
+          Top = 25
+          Width = 150
           Height = 18
+          Alignment = taRightJustify
+          AutoSize = False
           Caption = 'S'#233'rie da CPU:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -980,10 +1045,12 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 14
         end
         object st_lb_Etiqueta4: TStaticText
-          Left = 316
-          Top = 8
-          Width = 65
+          Left = 355
+          Top = 9
+          Width = 150
           Height = 18
+          Alignment = taRightJustify
+          AutoSize = False
           Caption = 'PIB da CPU:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -993,25 +1060,13 @@ object FormularioGeral: TFormularioGeral
           ParentFont = False
           TabOrder = 15
         end
-        object st_lb_Etiqueta9: TStaticText
-          Left = 316
-          Top = 89
-          Width = 120
-          Height = 18
-          Caption = 'S'#233'rie da Impressora:'
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -11
-          Font.Name = 'Arial'
-          Font.Style = [fsBold]
-          ParentFont = False
-          TabOrder = 18
-        end
         object st_lb_Etiqueta1: TStaticText
-          Left = 5
+          Left = 3
           Top = 8
-          Width = 54
+          Width = 140
           Height = 18
+          Alignment = taRightJustify
+          AutoSize = False
           Caption = 'Entidade:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -1022,11 +1077,10 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 0
         end
         object st_vl_Etiqueta1: TStaticText
-          Left = 120
+          Left = 146
           Top = 8
           Width = 10
           Height = 18
-          Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '1'
           Font.Charset = DEFAULT_CHARSET
@@ -1038,10 +1092,12 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 1
         end
         object st_lb_Etiqueta1a: TStaticText
-          Left = 5
-          Top = 23
-          Width = 101
+          Left = 3
+          Top = 24
+          Width = 140
           Height = 18
+          Alignment = taRightJustify
+          AutoSize = False
           Caption = 'Linha de Neg'#243'cio:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -1052,10 +1108,12 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 2
         end
         object st_lb_Etiqueta2: TStaticText
-          Left = 5
+          Left = 3
           Top = 41
-          Width = 40
+          Width = 140
           Height = 18
+          Alignment = taRightJustify
+          AutoSize = False
           Caption = #211'rg'#227'o:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -1066,10 +1124,12 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 3
         end
         object st_lb_Etiqueta7: TStaticText
-          Left = 316
-          Top = 57
-          Width = 99
+          Left = 355
+          Top = 58
+          Width = 150
           Height = 18
+          Alignment = taRightJustify
+          AutoSize = False
           Caption = 'S'#233'rie do Monitor:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -1080,10 +1140,12 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 4
         end
         object st_lb_Etiqueta8: TStaticText
-          Left = 316
+          Left = 355
           Top = 73
-          Width = 108
+          Width = 150
           Height = 18
+          Alignment = taRightJustify
+          AutoSize = False
           Caption = 'PIB da Impressora:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -1094,11 +1156,10 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 6
         end
         object st_vl_Etiqueta1a: TStaticText
-          Left = 120
+          Left = 146
           Top = 24
           Width = 10
           Height = 18
-          Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '2'
           Font.Charset = DEFAULT_CHARSET
@@ -1110,11 +1171,10 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 7
         end
         object st_vl_Etiqueta2: TStaticText
-          Left = 120
+          Left = 146
           Top = 42
           Width = 10
           Height = 18
-          Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '3'
           Font.Charset = DEFAULT_CHARSET
@@ -1165,46 +1225,133 @@ object FormularioGeral: TFormularioGeral
           Height = 2
           TabOrder = 13
         end
-        object st_lb_Etiqueta3: TStaticText
-          Left = 5
-          Top = 58
-          Width = 113
-          Height = 18
-          Caption = 'Se'#231#227'o / Sala / Ramal:'
+      end
+    end
+    object pnServidores: TPanel
+      Left = 4
+      Top = 3
+      Width = 640
+      Height = 44
+      TabOrder = 4
+      object lbServidores: TLabel
+        Left = 5
+        Top = 1
+        Width = 147
+        Height = 13
+        AutoSize = False
+        Caption = 'Servidores'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clHotLight
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold, fsUnderline]
+        ParentFont = False
+      end
+      object GroupBox1: TGroupBox
+        Left = 5
+        Top = 15
+        Width = 631
+        Height = 26
+        Color = clSilver
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clSilver
+        Font.Height = -11
+        Font.Name = 'Arial'
+        Font.Style = []
+        ParentColor = False
+        ParentFont = False
+        TabOrder = 0
+        DesignSize = (
+          631
+          26)
+        object staticNmServidorUpdates: TStaticText
+          Left = 289
+          Top = 8
+          Width = 140
+          Height = 14
+          AutoSize = False
+          Caption = 'Atualiza'#231#227'o de Vers'#245'es:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
-          TabOrder = 16
+          TabOrder = 3
         end
-        object st_vl_Etiqueta3: TStaticText
-          Left = 120
-          Top = 58
-          Width = 10
-          Height = 18
-          Alignment = taRightJustify
+        object staticVlServidorUpdates: TStaticText
+          Left = 427
+          Top = 8
+          Width = 200
+          Height = 12
           Anchors = [akRight]
-          Caption = '4'
+          AutoSize = False
+          Caption = '2'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
           Font.Height = -11
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
-          TabOrder = 17
+          TabOrder = 4
+        end
+        object staticNmServidorAplicacao: TStaticText
+          Left = 3
+          Top = 8
+          Width = 86
+          Height = 14
+          AutoSize = False
+          Caption = 'Aplica'#231#227'o WEB:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+          TabOrder = 0
+        end
+        object staticVlServidorAplicacao: TStaticText
+          Left = 88
+          Top = 8
+          Width = 200
+          Height = 12
+          Anchors = [akRight]
+          AutoSize = False
+          Caption = '1'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -11
+          Font.Name = 'Arial'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 1
+        end
+        object Panel4: TPanel
+          Tag = 36
+          Left = 3
+          Top = 23
+          Width = 627
+          Height = 2
+          TabOrder = 2
         end
       end
     end
-    object Panel12: TPanel
-      Tag = 36
-      Left = 1
-      Top = 464
-      Width = 640
-      Height = 2
-      TabOrder = 9
-    end
+  end
+  object Panel1: TPanel
+    Left = 645
+    Top = 2
+    Width = 5
+    Height = 591
+    Color = clGreen
+    TabOrder = 1
+  end
+  object Panel2: TPanel
+    Left = 650
+    Top = 0
+    Width = 3
+    Height = 597
+    Color = clYellow
+    TabOrder = 2
   end
   object Timer_Nu_Intervalo: TTimer
     Enabled = False
@@ -1222,6 +1369,7 @@ object FormularioGeral: TFormularioGeral
   end
   object PopupMenu1: TPopupMenu
     MenuAnimation = [maLeftToRight, maRightToLeft, maTopToBottom, maBottomToTop]
+    OnPopup = PopupMenu1Popup
     Left = 674
     Top = 58
     object Mnu_LogAtividades: TMenuItem
@@ -1244,47 +1392,13 @@ object FormularioGeral: TFormularioGeral
       Caption = 'Informa'#231#245'es &Patrimoniais'
       OnClick = Mnu_InfosPatrimoniaisClick
     end
+    object Mnu_SuporteRemoto: TMenuItem
+      Caption = 'Ativar Suporte Remoto'
+      OnClick = Mnu_SuporteRemotoClick
+    end
     object Mnu_FinalizarCacic: TMenuItem
       Caption = 'Finalizar o CACIC'
       OnClick = Sair
     end
-  end
-  object IdHTTPServerCACIC: TIdHTTPServer
-    Active = True
-    Bindings = <>
-    CommandHandlers = <>
-    DefaultPort = 8123
-    Greeting.NumericCode = 0
-    MaxConnectionReply.NumericCode = 0
-    ReplyExceptionCode = 0
-    ReplyTexts = <>
-    ReplyUnknownCommand.NumericCode = 0
-    OnCommandGet = IdHTTPServerCACICCommandGet
-    Left = 672
-    Top = 112
-  end
-  object IdFTPServer1: TIdFTPServer
-    Bindings = <>
-    CommandHandlers = <>
-    DefaultPort = 21
-    Greeting.NumericCode = 220
-    Greeting.Text.Strings = (
-      'Indy FTP Server ready.')
-    Greeting.TextCode = '220'
-    MaxConnectionReply.NumericCode = 0
-    ReplyExceptionCode = 0
-    ReplyTexts = <>
-    ReplyUnknownCommand.NumericCode = 500
-    ReplyUnknownCommand.Text.Strings = (
-      'Syntax error, command unrecognized.')
-    ReplyUnknownCommand.TextCode = '500'
-    AnonymousAccounts.Strings = (
-      'anonymous'
-      'ftp'
-      'guest')
-    SystemType = 'WIN32'
-    OnUserLogin = IdFTPServer1UserLogin
-    Left = 672
-    Top = 144
   end
 end

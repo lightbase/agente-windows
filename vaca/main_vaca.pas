@@ -20,16 +20,18 @@ uses
 type
   TfrmVACA = class(TForm)
     List: TListView;
-    Bt_Fechar: TButton;
-    Bt_VAI: TButton;
     PJVersionInfo1: TPJVersionInfo;
     Label1: TLabel;
     Label2: TLabel;
     Label3: TLabel;
     ImageList1: TImageList;
-    Image1: TImage;
     Panel1: TPanel;
     Label4: TLabel;
+    pnComandos: TPanel;
+    Bt_VAI: TButton;
+    Bt_Fechar: TButton;
+    Image1: TImage;
+    Panel2: TPanel;
     procedure FormCreate(Sender: TObject);
     procedure Bt_FecharClick(Sender: TObject);
     function  GetVersionInfo(p_File: string):string;
@@ -45,7 +47,7 @@ type
     procedure ListAdvancedCustomDrawSubItem(Sender: TCustomListView;
       Item: TListItem; SubItem: Integer; State: TCustomDrawState;
       Stage:  TCustomDrawStage; var DefaultDraw: Boolean);
-    function  InsertItemLISTA(strName,strVerINI,strVerEXE,strSize,strDate : string; boolOK : boolean) : boolean;
+    function  InsertItemLISTA(strName,strVerINI,strVerEXE,strSize,strDate,strHashINI,strHashEXE : string; boolOK : boolean) : boolean;
     function  getDadosAgenteLinux(strNomeAgenteLinux:String) : TStrings;
     procedure RemontaINI(strTripaChavesValores,p_Path : String);
     function  GetFileHash(strFileName : String) : String;
@@ -146,7 +148,7 @@ end;
 // Anderson Peterle - Dataprev/ES - 08/Maio/2008
 function TfrmVACA.GetFileHash(strFileName : String) : String;
 Begin
-  Result := 'Arquivo "'+strFileName+'" Inexistente!';
+  Result := '0';
   if (FileExists(strFileName)) then
     Result := MD5Print(MD5File(strFileName));
 End;
@@ -178,23 +180,28 @@ begin
   Reg_Ini.Free;
 End;
 
-function TfrmVACA.InsertItemLISTA(strName,strVerINI,strVerEXE,strSize,strDate : string; boolOK : boolean) : boolean;
+function TfrmVACA.InsertItemLISTA(strName,strVerINI,strVerEXE,strSize,strDate,strHashINI,strHashEXE : string; boolOK : boolean) : boolean;
 var intAux : integer;
 Begin
-  intAux := frmVACA.List.Items.Count;
+  if (strHashEXE <> '0') then
+    Begin
+      intAux := frmVACA.List.Items.Count;
 
-  frmVACA.List.Items.Add;
-  frmVACA.List.Items[intAux].Caption := '';
-  frmVACA.List.Items[intAux].SubItems.Add(strName);
-  frmVACA.List.Items[intAux].SubItems.Add(strVerINI);
-  frmVACA.List.Items[intAux].SubItems.Add(strVerEXE);
-  frmVACA.List.Items[intAux].SubItems.Add(strSize);
-  frmVACA.List.Items[intAux].SubItems.Add(strDate);
+      frmVACA.List.Items.Add;
+      frmVACA.List.Items[intAux].Caption := '';
+      frmVACA.List.Items[intAux].SubItems.Add(strName);
+      frmVACA.List.Items[intAux].SubItems.Add(strVerINI);
+      frmVACA.List.Items[intAux].SubItems.Add(strVerEXE);
+      frmVACA.List.Items[intAux].SubItems.Add(strSize);
+      frmVACA.List.Items[intAux].SubItems.Add(strDate);
+      frmVACA.List.Items[intAux].SubItems.Add(strHashINI);
+      frmVACA.List.Items[intAux].SubItems.Add(strHashEXE);
 
-  if boolOK then
-    frmVACA.List.Items[intAux].ImageIndex := 1
-  else
-    frmVACA.List.Items[intAux].ImageIndex := 0;
+      if boolOK then
+        frmVACA.List.Items[intAux].ImageIndex := 1
+      else
+        frmVACA.List.Items[intAux].ImageIndex := 0;
+    End;        
 End;
 
 procedure TfrmVACA.Refresh;
@@ -238,6 +245,8 @@ begin
                             GetVersionInfo(v_array_modulos[intAux]),
                             Get_File_Size(v_array_modulos[intAux],true),
                             DateToStr(FileDateToDateTime(FileAge(v_array_modulos[intAux]))),
+                            GetFileHash(v_array_modulos[intAux]),
+                            GetFileHash(v_array_modulos[intAux]),                            
                             boolVersoesIguais);
 
             if (strTripaVersoesValidas <> '') then
@@ -276,6 +285,8 @@ begin
                               tstrDadosAgenteLinux[1],
                               Get_File_Size(ExtractFilePath(Application.Exename)+'agentes_linux\'+v_array_modulos[intAux],true),
                               DateToStr(FileDateToDateTime(FileAge(ExtractFilePath(Application.Exename)+'agentes_linux\'+v_array_modulos[intAux]))),
+                              GetFileHash(v_array_modulos[intAux]),
+                              GetFileHash(v_array_modulos[intAux]),
                               boolVersoesIguais);
 
               if (strTripaVersoesValidas <> '') then
@@ -352,17 +363,22 @@ var
     NumCaracteres, I : Integer;
 Begin
     ListaAuxUTILS := TStringList.Create;
-    strItem := '';
     NumCaracteres := Length(Texto);
-    For I := 0 To NumCaracteres Do
-    If (Texto[I] = Separador) or (I = NumCaracteres) Then
-    Begin
-       If (I = NumCaracteres) then strItem := strItem + Texto[I];
-       ListaAuxUTILS.Add(Trim(strItem));
-       strItem := '';
-    end
-    Else strItem := strItem + Texto[I];
-      Explode := ListaAuxUTILS;
+    if (NumCaracteres > 0) then
+      Begin
+        strItem := '';
+
+        For I := 0 To NumCaracteres Do
+        If (Texto[I] = Separador) or (I = NumCaracteres) Then
+        Begin
+           If (I = NumCaracteres) then strItem := strItem + Texto[I];
+           ListaAuxUTILS.Add(Trim(strItem));
+           strItem := '';
+        end
+        Else strItem := strItem + Texto[I];
+      End;
+
+  Explode := ListaAuxUTILS;
 end;
 
 procedure TfrmVACA.Bt_VAIClick(Sender: TObject);

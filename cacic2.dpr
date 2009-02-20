@@ -26,6 +26,7 @@ uses
   frmConfiguracoes in 'frmConfiguracoes.pas' {FormConfiguracoes},
   frmLog in 'frmLog.pas' {FormLog},
   LibXmlParser,
+  WinVNC in 'winvnc.pas',
   CACIC_Library in 'CACIC_Library.pas';
 
 {$R *.res}
