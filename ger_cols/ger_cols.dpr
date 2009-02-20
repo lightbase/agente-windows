@@ -330,12 +330,6 @@ Begin
       End;
     Implode := strAux;
 end;
-function abstraiCSD(p_te_so : String) : integer;
-  var tstrTe_so : tstrings;
-  Begin
-    tstrTe_so := Explode(p_te_so, '.');
-    Result := StrToInt(tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
-  End;
 
 Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String; p_tstrCipherOpened : TStrings);
 var v_Aux     : string;
@@ -458,89 +452,6 @@ begin
   End;
 end;
 
-function GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown = 0;
-  cOsWin95 = 1;
-  cOsWin95OSR2 = 2;  // Não implementado.
-  cOsWin98 = 3;
-  cOsWin98SE = 4;
-  cOsWinME = 5;
-  cOsWinNT = 6;
-  cOsWin2000 = 7;
-  cOsXP = 8;
-  cOsWinServer2003 = 13;
-var
-  osVerInfo: TOSVersionInfo;
-  platformID,
-  majorVer,
-  minorVer : Integer;
-  CSDVersion : String;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    platformId        :=      osVerInfo.dwPlatformId;
-    majorVer          :=      osVerInfo.dwMajorVersion;
-    minorVer          :=      osVerInfo.dwMinorVersion;
-    CSDVersion        := trim(osVerInfo.szCSDVersion);
-
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: {Windows NT Like}
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else if (majorVer = 5) and (minorVer = 2) then
-            Result := cOsWinServer2003
-          else
-            Result := cOsUnknown;
-
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-
-        end;
-
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-
-  // A partir da versão 2.2.0.24, defino o valor da ID Interna e atribuo-a sem o CSDVersion à versão externa
-  v_te_so := IntToStr(platformId) + '.' +
-             IntToStr(majorVer)   + '.' +
-             IntToStr(minorVer)   +
-             ifThen(CSDVersion='','','.'+CSDVersion);
-
-  {
-  Forço o envio do identificador interno
-  if (Result = 0) then
-  }
-  Result := abstraiCSD(v_te_so);
-end;
-
 procedure Matar(v_dir,v_files: string);
 var SearchRec: TSearchRec;
     Result: Integer;
@@ -639,7 +550,7 @@ begin
     if (trim(v_strCipherOpened)<>'') then
       Result := explode(v_strCipherOpened,'=CacicIsFree=')
     else
-      Result := explode('Configs.ID_SO=CacicIsFree='+inttostr(GetWinVer)+'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
+      Result := explode('Configs.ID_SO=CacicIsFree='+g_oCacic.getWindowsStrId()+'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
 
     if Result.Count mod 2 = 0 then
         Result.Add('');
@@ -1215,8 +1126,6 @@ Function ComunicaServidor(URL : String; Request : TStringList; MsgAcao: String) 
 var Response_CS     : TStringStream;
     strEndereco,
     v_Endereco_WS,
-    v_Aux,
-    v_Aux1,
     strAux          : String;
     idHTTP1         : TIdHTTP;
     intAux          : integer;
@@ -1231,13 +1140,12 @@ Begin
     // A partir da versão 2.0.2.18+ envio um Classificador indicativo de dados compactados...
     v_AuxRequest.Values['cs_compress']   := GetValorDatMemoria('Configs.CS_COMPRESS',v_tstrCipherOpened);
 
-    intAux := GetWinVer;
     strAux := GetValorDatMemoria('TcpIp.TE_IP', v_tstrCipherOpened);
     if (strAux = '') then
         strAux := 'A.B.C.D'; // Apenas para forçar que o Gerente extraia via _SERVER[REMOTE_ADDR]
 
     v_AuxRequest.Values['te_node_address']   := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['id_so']             := StringReplace(EnCrypt(IntToStr(intAux)                                                  ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['id_so']             := StringReplace(EnCrypt(g_oCacic.getWindowsStrId()                   , l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     // Tratamentos de valores para tráfego POST:
     // v_te_so => transformar ' ' em <ESPACE> Razão: o mmcrypt se perde quando encontra ' ' (espaço)
     //v_te_so := StringReplace(v_te_so,' ','<ESPACE>',[rfReplaceAll]);
@@ -1792,7 +1700,8 @@ procedure Patrimnio1Click(Sender: TObject);
 begin
   SetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim','', v_tstrCipherOpened);
   if ChecaAgente(p_path_cacic + 'modulos', 'ini_cols.exe') then
-    WinExec(PChar(p_path_cacic + 'modulos\ini_cols.exe /p_CipherKey='+v_CipherKey+ ' /p_ModulosOpcoes=col_patr,wait,user#'),SW_HIDE);
+    g_oCacic.createSampleProcess( p_path_cacic + 'modulos\ini_cols.exe /p_CipherKey=' + v_CipherKey +
+                                           ' /p_ModulosOpcoes=col_patr,wait,user#', CACIC_PROCESS_WAIT );
 end;
 
 procedure ChecaCipher;
@@ -2929,8 +2838,8 @@ Begin
                                      Finalizar(false);
                                      Matar(p_path_cacic + 'temp\','*.dat');
                                      CriaTXT(p_path_cacic+'temp','coletas');
-                                     WinExec(PChar(p_path_cacic + 'modulos\ini_cols.exe /p_CipherKey='+v_CipherKey+' /p_ModulosOpcoes='+v_ModulosOpcoes), SW_HIDE);
-                                     Sair;
+                                     g_oCacic.createSampleProcess( p_path_cacic + 'modulos\ini_cols.exe /p_CipherKey=' + v_CipherKey +
+                                                                     ' /p_ModulosOpcoes=' + v_ModulosOpcoes, CACIC_PROCESS_WAIT );
                                 End;
 
                           end
@@ -3326,9 +3235,11 @@ Begin
 
               if (intAux = 0) then
                   log_diario('Sem informações para envio ao Gerente WEB.')
-                  // Atualizo a data de última coleta
-              else
+              else begin
+                  // Atualiza a data de última coleta
                   SetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA',FormatDateTime('YYYYmmddHHnnss', Now), v_tstrCipherOpened);
+                  log_diario('Todos os dados coletados foram enviados ao Gerente WEB.');
+              end;
             end;
   Except
     Begin
@@ -3398,7 +3309,7 @@ begin
            v_tstrCipherOpened := CipherOpen(v_DatFileName);
 
            // Não tirar desta posição
-           SetValorDatMemoria('Configs.ID_SO',IntToStr(GetWinVer), v_tstrCipherOpened);
+           SetValorDatMemoria('Configs.ID_SO',g_oCacic.getWindowsStrId(), v_tstrCipherOpened);
 
            v_scripter := 'wscript.exe';
            // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento

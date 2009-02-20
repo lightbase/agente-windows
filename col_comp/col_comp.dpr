@@ -37,6 +37,8 @@ var  p_path_cacic : string;
 var v_tstrCipherOpened,
     v_tstrCipherOpened1        : TStrings;
 
+var g_oCacic : TCACIC;
+
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
 const KeySize = 32; // 32 bytes = 256 bits
@@ -91,7 +93,6 @@ begin
        Append(HistoricoLog);
        Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now)+ '[Coletor COMP] '+strMsg); {Grava a string Texto no arquivo texto}
        CloseFile(HistoricoLog); {Fecha o arquivo texto}
-//       FileSetAttr (ExtractFilePath(Application.Exename) + '\cacic2.log',6); // Muda o atributo para arquivo de SISTEMA e OCULTO
 
    except
      log_diario('Erro na gravação do log!');
@@ -196,77 +197,14 @@ begin
        Rewrite (v_DatFile);
        Append(v_DatFile);
 
-       //v_Cipher  := TDCP_rijndael.Create(nil);
-       //v_Cipher.InitStr(v_CipherKey,TDCP_md5);
        v_strCipherOpenImploded := Implode(p_tstrCipherOpened,'=CacicIsFree=');
-       //v_strCipherClosed := v_Cipher.EncryptString(v_strCipherOpenImploded);
        v_strCipherClosed := EnCrypt(v_strCipherOpenImploded);
-       //v_Cipher.Burn;
-       //v_Cipher.Free;
        Writeln(v_DatFile,v_strCipherClosed); {Grava a string Texto no arquivo texto}
        CloseFile(v_DatFile);
    except
    end;
 end;
 
-function GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown = 0;
-  cOsWin95 = 1;
-  cOsWin95OSR2 = 2;  // Não implementado.
-  cOsWin98 = 3;
-  cOsWin98SE = 4;
-  cOsWinME = 5;
-  cOsWinNT = 6;
-  cOsWin2000 = 7;
-  cOsXP = 8;
-var
-  osVerInfo: TOSVersionInfo;
-  majorVer, minorVer: Integer;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    majorVer := osVerInfo.dwMajorVersion;
-    minorVer := osVerInfo.dwMinorVersion;
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else
-            Result := cOsUnknown;
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-        end;
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-end;
 Function Explode(Texto, Separador : String) : TStrings;
 var
     strItem       : String;
@@ -324,7 +262,7 @@ begin
     if (trim(v_strCipherOpened)<>'') then
       Result := explode(v_strCipherOpened,'=CacicIsFree=')
     else
-      Result := explode('Configs.ID_SO=CacicIsFree='+inttostr(GetWinVer)+'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
+      Result := explode('Configs.ID_SO=CacicIsFree='+ g_oCacic.getWindowsStrId() +'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
 
 
     if Result.Count mod 2 <> 0 then
@@ -333,7 +271,6 @@ end;
 
 Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String; p_tstrCipherOpened : TStrings);
 begin
-//log_diario('Gravando: '+p_Chave+' Valor: '+p_Valor);
     // Exemplo: p_Chave => Configs.nu_ip_servidor  :  p_Valor => 10.71.0.120
     if (p_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
         p_tstrCipherOpened[v_tstrCipherOpened.IndexOf(p_Chave)+1] := p_Valor
@@ -351,7 +288,6 @@ begin
       Result := v_tstrCipherOpened[v_tstrCipherOpened.IndexOf(p_Chave)+1]
     else
       Result := '';
-//log_diario('Buscando: '+p_Chave+' Resultado: '+Result);
 end;
 
 
@@ -420,18 +356,17 @@ begin
     end;
 end;
 
-
-
-
 procedure Executa_Col_comp;
-function RetornaValorShareNT(ValorReg : String; LimiteEsq : String; LimiteDir : String) : String;
-var intAux, intAux2 : Integer;
-Begin
-    intAux := Pos(LimiteEsq, ValorReg) + Length(LimiteEsq);
-    if (LimiteDir = 'Fim') Then intAux2 := Length(ValorReg) - 1
-    Else intAux2 := Pos(LimiteDir, ValorReg) - intAux - 1;
-    result := Trim(Copy(ValorReg, intAux, intAux2));
-end;
+
+	function RetornaValorShareNT(ValorReg : String; LimiteEsq : String; LimiteDir : String) : String;
+	var intAux, intAux2 : Integer;
+	Begin
+	    intAux := Pos(LimiteEsq, ValorReg) + Length(LimiteEsq);
+	    if (LimiteDir = 'Fim') Then intAux2 := Length(ValorReg) - 1
+	    Else intAux2 := Pos(LimiteDir, ValorReg) - intAux - 1;
+	    result := Trim(Copy(ValorReg, intAux, intAux2));
+	end;
+  
 var Reg_RCC : TRegistry;
     ChaveRegistro, ValorChaveRegistro, nm_compartilhamento, nm_dir_compart,
     in_senha_escrita,	in_senha_leitura, te_comentario, strTripaDados, strAux,
@@ -453,16 +388,6 @@ Begin
       Reg_RCC.LazyWrite := False;
       Lista_RCC := TStringList.Create;
       Reg_RCC.Rootkey := HKEY_LOCAL_MACHINE;
-      {
-      strXML := '<?xml version="1.0" encoding="ISO-8859-1"?>' +
-                '<comparts>'           +
-                '<te_node_address>'    + GetValorChaveRegIni('TcpIp'  ,'TE_NODE_ADDRESS'   ,p_path_cacic_ini) + '</te_node_address>'    +
-                '<te_nome_computador>' + GetValorChaveRegIni('TcpIp'  ,'TE_NOME_COMPUTADOR',p_path_cacic_ini) + '</te_nome_computador>' +
-                '<te_workgroup>'       + GetValorChaveRegIni('TcpIp'  ,'TE_WORKGROUP'      ,p_path_cacic_ini) + '</te_workgroup>'       +
-                '<id_so>'              + GetValorChaveRegIni('Configs','ID_SO'             ,p_path_cacic_ini) + '</id_so>';
-      }
-
-      //strXML := '<?xml version="1.0" encoding="ISO-8859-1"?><comparts>';
       strTripaDados := '';
 
       if Win32Platform = VER_PLATFORM_WIN32_NT then
@@ -573,11 +498,10 @@ const
 
 var
   hwind:HWND;
-  oCacic : TCACIC;
 
 begin
-  oCacic := TCACIC.Create();
-  if( not oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+  g_oCacic := TCACIC.Create();
+  if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then
     if (ParamCount>0) then
     Begin
       For intAux := 1 to ParamCount do
@@ -614,5 +538,5 @@ begin
              Halt(0);
           End;
     End;
-   oCacic.Free();
+   g_oCacic.Free();
 end.

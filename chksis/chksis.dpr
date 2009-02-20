@@ -54,9 +54,10 @@ var PJVersionInfo1: TPJVersionInfo;
     v_versao_remota,
     v_retorno,
     v_te_so             : String;
-    intWinVer    : integer;
     v_Debugs                  : Boolean;
 var v_tstrCipherOpened        : TStrings;
+
+var g_oCacic : TCACIC;
 
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
@@ -269,14 +270,8 @@ begin
          Append(v_DatFile);
         End;
 
-       //v_Cipher  := TDCP_rijndael.Create(nil);
-       //v_Cipher.InitStr(v_CipherKey,TDCP_md5);
        v_strCipherOpenImploded := Implode(v_tstrCipherOpened,v_SeparatorKey);
        v_strCipherClosed := EnCrypt(v_strCipherOpenImploded);
-       //log_diario('Finalizando o Arquivo de Configurações com criptografia de: '+v_strCipherOpenImploded,ExtractFilePath(ParamStr(0)));
-       //v_strCipherClosed := v_Cipher.EncryptString(v_strCipherOpenImploded);
-       //v_Cipher.Burn;
-       //v_Cipher.Free;
 
        Writeln(v_DatFile,v_strCipherClosed); {Grava a string Texto no arquivo texto}
 
@@ -284,90 +279,6 @@ begin
    except
         log_diario('Problema na gravação do arquivo de configurações.');
    end;
-end;
-
-function abstraiCSD(p_te_so : String) : integer;
-  var tstrTe_so : tstrings;
-  Begin
-    tstrTe_so := Explode(p_te_so, '.');
-    Result := StrToInt(tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
-  End;
-
-function GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown    = 0;
-  cOsWin95      = 1;
-  cOsWin95OSR2  = 2;  // Não implementado.
-  cOsWin98      = 3;
-  cOsWin98SE    = 4;
-  cOsWinME      = 5;
-  cOsWinNT      = 6;
-  cOsWin2000    = 7;
-  cOsXP         = 8;
-  cOsServer2003 = 13;
-var
-  osVerInfo: TOSVersionInfo;
-  platformID,
-  majorVer,
-  minorVer: Integer;
-  CSDVersion : String;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    platformId        :=      osVerInfo.dwPlatformId;
-    majorVer          :=      osVerInfo.dwMajorVersion;
-    minorVer          :=      osVerInfo.dwMinorVersion;
-    CSDVersion        := trim(osVerInfo.szCSDVersion);
-
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else if (majorVer = 5) and (minorVer = 2) then
-            Result := cOsServer2003
-          else
-            Result := cOsUnknown;
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-        end;
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-
-  // A partir da versão 2.2.0.24, defino o valor da ID Interna e atribuo-a sem o CSDVersion à versão externa
-  v_te_so := IntToStr(platformId) + '.' +
-             IntToStr(majorVer)   + '.' +
-             IntToStr(minorVer)   +
-             IfThen(CSDVersion='','','.'+CSDVersion);
-  if (Result = 0) then
-    Result := abstraiCSD(v_te_so);
-
 end;
 
 Function CipherOpen(p_DatFileName : string) : TStrings;
@@ -396,7 +307,7 @@ begin
     if (trim(v_strCipherOpened)<>'') then
       Result := explode(v_strCipherOpened,v_SeparatorKey)
     else
-      Result := explode('Configs.ID_SO' + v_SeparatorKey + inttostr(intWinVer)+v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
+      Result := explode('Configs.ID_SO' + v_SeparatorKey + g_oCacic.getWindowsStrId() +v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
 
     if Result.Count mod 2 <> 0 then
         Result.Add('');
@@ -404,7 +315,6 @@ end;
 
 Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String);
 begin
-    //log_diario('Setando chave: '+p_Chave+' com valor: '+p_Valor,ExtractFilePath(ParamStr(0)));
     // Exemplo: p_Chave => Configs.nu_ip_servidor  :  p_Valor => 10.71.0.120
     if (v_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
         v_tstrCipherOpened[v_tstrCipherOpened.IndexOf(p_Chave)+1] := p_Valor
@@ -615,7 +525,9 @@ end;
 
 Function FTP(p_Host : String; p_Port : String; p_Username : String; p_Password : String; p_PathServer : String; p_File : String; p_Dest : String) : Boolean;
 var IdFTP : TIdFTP;
+    msg_error : string;
 begin
+  msg_error := '';
   Try
     IdFTP               := TIdFTP.Create(IdFTP);
     IdFTP.Host          := p_Host;
@@ -629,21 +541,25 @@ begin
         begin
           IdFTP.Disconnect;
         end;
+      msg_error := 'Falha ao tentar conexão com o servidor FTP: "' + p_Host + '"';
       IdFTP.Connect(true);
+      msg_error := 'Falha ao tentar mudar diretório no servidor FTP: "' + p_PathServer + '"';
       IdFTP.ChangeDir(p_PathServer);
       Try
         log_DEBUG('Size de "'+p_File+'" Antes do FTP => '+IntToSTR(IdFTP.Size(p_File)));
+        msg_error := 'Falha ao tentar obter arquivo no servidor FTP: "' + p_File + '"';
         IdFTP.Get(p_File, p_Dest + '\' + p_File, True);
         log_DEBUG('Size de "'+p_Dest + '\' + p_File +'" Após o FTP   => '+Get_File_Size(p_Dest + '\' + p_File,true));
       Finally
         log_DEBUG('Size de "'+p_Dest + '\' + p_File +'" Após o FTP em Finally   => '+Get_File_Size(p_Dest + '\' + p_File,true));
         idFTP.Disconnect;
-        idFTP.Free;
         result := true;
       End;
     Except
+        log_diario(msg_error);
         result := false;
     end;
+    idFTP.Free;
   Except
     result := false;
   End;
@@ -772,12 +688,10 @@ begin
 
       if not DeleteFile(strFileName) then
         Begin
-          if ((intWinVer <> 0) and (intWinVer <= 5))  or
-             (abstraiCSD(v_te_so) < 250) then // Menor que NT Like
+          if (not g_oCacic.isWindowsNTPlataform()) then // Menor que NT Like
             KillTask(SearchRec.Name)
           else
             KillProcess(FindWindow(PChar(SearchRec.Name),nil));
-
             DeleteFile(strFileName);
         End;
 
@@ -891,8 +805,6 @@ begin
          End;
       End;
 
-  intWinVer := GetWinVer;
-
   // Caso o parâmetro rem_cacic_v0x seja "S/s" removo a chave/valor de execução do Cacic antigo
   if (LowerCase(v_rem_cacic_v0x)='s') then
       begin
@@ -923,25 +835,12 @@ begin
         ForceDirectories(Dir + '\temp');
       end;
 
-
-  // Igualo as chaves ip_serv_cacic e cacic dos arquivos chksis.ini e cacic2.ini!
-//  log_diario('Setando chave Configs/EnderecoServidor=' + v_ip_serv_cacic + ' em '+Dir + '\cacic2.dat',ExtractFilePath(ParamStr(0)));
-//  SetValorChaveRegIni('Configs', 'EnderecoServidor', v_ip_serv_cacic, Dir + '\cacic2.ini');
-
   //chave AES. Recomenda-se que cada empresa altere a sua chave.
   v_CipherKey    := 'CacicBrasil';
   v_IV           := 'abcdefghijklmnop';
   v_SeparatorKey := '=CacicIsFree=';
   v_DatFileName  := Dir + '\cacic2.dat';
-  //v_tstrCipherOpened := CipherOpen(v_DatFileName);
 
-  //SetValorDatMemoria('Configs.EnderecoServidor', v_ip_serv_cacic);
-
-//  log_diario('Setando chave Configs/cacic_dir=' + v_cacic_dir + ' em '+Dir + '\cacic2.ini',ExtractFilePath(ParamStr(0)));
-//  SetValorChaveRegIni('Configs', 'cacic_dir', v_cacic_dir, Dir + '\cacic2.ini');
-  //SetValorDatMemoria('Configs.cacic_dir', v_cacic_dir);
-
-  //CipherClose(v_DatFileName);
   // Verifico existência dos dois principais objetos
   If (not FileExists(Dir + '\cacic2.exe')) or (not FileExists(Dir + '\modulos\ger_cols.exe')) Then
       Begin
@@ -1083,10 +982,6 @@ begin
     End;
 
   // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
-  //if (bool_download_CACIC2) then
-      //Begin
-         //if not bool_ExistsAutoRun then
-         // Begin
       if Posso_Rodar_CACIC or not bool_ExistsAutoRun then
         Begin
           log_diario('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
@@ -1097,23 +992,16 @@ begin
           else
             WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             ), SW_HIDE);
         End;
-        //  End
-        // else
       log_diario('Não Executei. Chave de AutoExecução já existente...');
-      //End
-      Application.Terminate;
 end;
 
 const
   CACIC_APP_NAME = 'chksis';
 
-var
-  oCacic : TCACIC;
-
 begin
-   oCacic := TCACIC.Create();
+   g_oCacic := TCACIC.Create();
 
-   if( not oCacic.isAppRunning( CACIC_APP_NAME ) )
+   if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) )
      then begin
        if (FindWindowByTitle('chkcacic') = 0) and (FindWindowByTitle('cacic2') = 0)
          then
@@ -1122,7 +1010,7 @@ begin
               else log_diario('Não executei devido execução em paralelo de "chkcacic" ou "cacic2"!');
      end;
 
-   oCacic.Free();
+   g_oCacic.Free();
 
 end.
 

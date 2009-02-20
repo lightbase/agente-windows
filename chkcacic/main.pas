@@ -87,7 +87,6 @@ uses  Windows,
 
 var   v_ip_serv_cacic,
       v_cacic_dir,
-//      v_rem_cacic_v0x,
       v_te_instala_frase_sucesso,
       v_te_instala_frase_insucesso,
       v_te_instala_informacoes_extras,
@@ -105,7 +104,6 @@ var   v_ip_serv_cacic,
       v_versao_LOC,
       v_te_so        : String;
 
-      intWinVer    : integer;
       v_Debugs     : boolean;
 
 var   v_tstrCipherOpened        : TStrings;
@@ -135,7 +133,6 @@ procedure LogDiario(strMsg : String);
 procedure Matar(v_dir,v_files: string); // 2.2.0.16
 Procedure MostraFormConfigura;
 
-function abstraiCSD(p_te_so : String) : integer;
 Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer; // 2.2.0.16
 Function Explode(Texto, Separador : String) : TStrings;
 Function FindWindowByTitle(WindowTitle: string): Hwnd;
@@ -147,7 +144,6 @@ Function GetRootKey(strRootKey: String): HKEY;
 Function GetValorChaveRegEdit(Chave: String): Variant;
 Function GetValorChaveRegIni(p_Secao, p_Chave, p_File : String): String;
 Function GetVersionInfo(p_File: string):string;
-Function GetWinVer: Integer;
 Function HomeDrive : string;
 Function KillTask(ExeFileName: string): Integer;
 Function ListFileDir(Path: string):string;
@@ -175,83 +171,7 @@ implementation
 uses FormConfig;
 
 {$R *.dfm}
-function GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown    = 0;
-  cOsWin95      = 1;
-  cOsWin95OSR2  = 2;  // Não implementado.
-  cOsWin98      = 3;
-  cOsWin98SE    = 4;
-  cOsWinME      = 5;
-  cOsWinNT      = 6;
-  cOsWin2000    = 7;
-  cOsXP         = 8;
-  cOsServer2003 = 13;
-var
-  osVerInfo: TOSVersionInfo;
-  platformID,
-  majorVer,
-  minorVer: Integer;
-  CSDVersion : String;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    platformId        :=      osVerInfo.dwPlatformId;
-    majorVer          :=      osVerInfo.dwMajorVersion;
-    minorVer          :=      osVerInfo.dwMinorVersion;
-    CSDVersion        := trim(osVerInfo.szCSDVersion);
 
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else if (majorVer = 5) and (minorVer = 2) then
-            Result := cOsServer2003
-          else
-            Result := cOsUnknown;
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-        end;
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-
-  // A partir da versão 2.2.0.24, defino o valor da ID Interna e atribuo-a sem o CSDVersion à versão externa
-  v_te_so := IntToStr(platformId) + '.' +
-             IntToStr(majorVer)   + '.' +
-             IntToStr(minorVer)   +
-             IfThen(CSDVersion='','','.'+CSDVersion);
-  if (Result = 0) then
-    Result := abstraiCSD(v_te_so);
-
-  LogDebug('GetWinVer => ID_interna: '+ v_te_so + ' ID_Externa: ' + IntToStr(Result));
-end;
 function GetNetworkUserName : String;
   //  Gets the name of the user currently logged into the network on
   //  the local PC
@@ -360,7 +280,6 @@ begin
        CloseFile(HistoricoLog); {Fecha o arquivo texto}
    except
        //Erro na gravação do log!
-       //Application.Terminate;
    end;
 end;
 
@@ -368,10 +287,6 @@ procedure LogDebug(p_msg:string);
 Begin
   if v_Debugs then
     Begin
-
-      //if FileExists(Dir + '\Temp\Debugs\show.txt') then
-      //    ShowMessage('DEBUG - '+p_msg);
-
       LogDiario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
     End;
 End;
@@ -525,7 +440,7 @@ begin
     if (trim(v_strCipherOpened)<>'') then
       Result := explode(v_strCipherOpened,v_SeparatorKey)
     else
-      Result := explode('Configs.ID_SO'+v_SeparatorKey+inttostr(intWinVer)+v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
+      Result := explode('Configs.ID_SO'+v_SeparatorKey+ g_oCacic.getWindowsStrId() +v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
 
 
     if Result.Count mod 2 <> 0 then
@@ -563,14 +478,6 @@ begin
 end;
 
 
-
-function abstraiCSD(p_te_so : String) : integer;
-  var tstrTe_so : tstrings;
-  Begin
-    tstrTe_so := Explode(p_te_so, '.');
-    Result := StrToInt(tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
-    LogDebug('abstraiCSD=> '+ tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
-  End;
 
 function GetVersionInfo(p_File: string):string;
 begin
@@ -1041,31 +948,6 @@ begin
   End;
 end;
 
-{
-// Dica obtida em http://www.webmundi.com/delphi/dfuncaof.asp?SubTipo=Sistema
-Function DriveType(Unidade: String):String;
-Var StrDrive,
-    StrDriveType : String;
-    intDriveType : Integer;
-begin
-  StrDrive := Unidade;
-  If StrDrive[Length(StrDrive)] <> '\' Then
-     StrDrive := StrDrive + ':\';
-
-  intDriveType := GetDriveType(PChar(StrDrive));
-  Case intDriveType Of
-     0                : StrDriveType := 'ERRO';
-     1                : StrDriveType := 'ERRO';
-     DRIVE_REMOVABLE  : StrDriveType := 'FLOPPY';
-     DRIVE_FIXED      : StrDriveType := 'HD';
-     DRIVE_REMOTE     : StrDriveType := 'REDE';
-     DRIVE_CDROM      : StrDriveType := 'CDROM';
-     DRIVE_RAMDISK    : StrDriveType := 'RAM';
-  end;
-  Result := StrDriveType;
-End;
-}
-
 Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer; // 2.2.0.16
 var strNomeAgente : String;
     v_array_NomeAgente : TStrings;
@@ -1341,12 +1223,11 @@ begin
        End;
     End;
 
-  intWinVer := GetWinVer;
-
   // Verifica se o S.O. é NT Like e se o Usuário está com privilégio administrativo...
   if (g_oCacic.isWindowsNTPlataform()) and (not g_oCacic.isWindowsAdmin()) then begin // Se NT/2000/XP/...
       if (v_exibe_informacoes = 'S') then
         MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
+      LogDiario('Sem Privilégios: Necessário ser administrador "local" da estação');
       ComunicaInsucesso('0'); // O indicador "0" (zero) sinalizará falta de privilégio na estação
   end
   else begin

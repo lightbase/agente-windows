@@ -23,6 +23,7 @@
       - start with "g" character for global
       - start with "v" character for local
       - start with "p" character for methods parameters
+      - start with "P" character for pointers
       - use underscore for better read
       e.g.
         var g_global : string;
@@ -49,6 +50,25 @@ uses
    Windows, SysUtils, StrUtils;
 
 type
+
+{ ------------------------------------------------------------------------------
+  Tipo de dados para obter informacoes extendidas dos Sistema Operacional
+  ver MSDN: http://msdn.microsoft.com/en-us/library/ms724833(VS.85).aspx
+-------------------------------------------------------------------------------}
+  TOSVersionInfoEx = packed record
+    dwOSVersionInfoSize: DWORD;
+    dwMajorVersion: DWORD;
+    dwMinorVersion: DWORD;
+    dwBuildNumber: DWORD;
+    dwPlatformId: DWORD;
+    szCSDVersion: array[0..127] of AnsiChar;
+    wServicePackMajor: WORD;
+    wServicePackMinor: WORD;
+    wSuiteMask: WORD;
+    wProductType: Byte;
+    wReserved: Byte;
+  end;
+
 {*------------------------------------------------------------------------------
  Classe para obter informações do sistema windows
 -------------------------------------------------------------------------------}
@@ -57,7 +77,11 @@ type
 
        protected
          /// Mantem a identificação do sistema operacional
-         g_osVerInfo: TOSVersionInfo;
+         g_osVersionInfo: TOSVersionInfo;
+         /// Mantem a identificação extendida do sistema operacional
+         g_osVersionInfoEx: TOSVersionInfoEx;
+         /// TRUE se houver informação extendida do SO, FALSE caso contrário
+         g_osVersionInfoExtended: boolean;
 
        public
          function isWindowsVista() : boolean;
@@ -94,6 +118,7 @@ type
 -------------------------------------------------------------------------------}
    TCACIC = class(TCACIC_Windows)
        constructor Create();
+       destructor Destroy; override;
        private
 
        protected
@@ -112,6 +137,8 @@ type
 // Declaração de constantes para a biblioteca
 const CACIC_PROCESS_WAIT = true; // aguardar fim do processo
 const CACIC_PROCESS_NOWAIT = false; // não aguardar o fim do processo
+var
+  P_OSVersionInfo: POSVersionInfo;
 
 implementation
 
@@ -123,10 +150,30 @@ implementation
 -------------------------------------------------------------------------------}
 constructor TCACIC.Create();
 begin
-  Self.g_osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  GetVersionEx(Self.g_osVerInfo);
+  FillChar(Self.g_osVersionInfoEx, SizeOf(Self.g_osVersionInfoEx), 0);
+  {$TYPEDADDRESS OFF}
+  P_OSVersionInfo := @Self.g_osVersionInfoEx;
+  {$TYPEDADDRESS ON}
+
+  Self.g_osVersionInfoEx.dwOSVersionInfoSize:= SizeOf(TOSVersionInfoEx);
+  Self.g_osVersionInfoExtended := GetVersionEx(P_OSVersionInfo^);
+  if (not Self.g_osVersionInfoExtended) then begin
+     Self.g_osVersionInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
+     GetVersionEx(Self.g_osVersionInfo);
+  end;
   Self.Windows := TCACIC_Windows.Create();
   Self.Debug := TCACIC_Debug.Create();
+end;
+
+{*------------------------------------------------------------------------------
+  Destrutor para a classe
+
+  Objetiva finalizar valores usados pelos objetos da classe.
+-------------------------------------------------------------------------------}
+destructor TCACIC.Destroy();
+begin
+   FreeMemory(P_OSVersionInfo);
+   inherited;
 end;
 
 {*------------------------------------------------------------------------------
@@ -219,8 +266,13 @@ end;
 function TCACIC_Windows.isWindowsGEVista() : boolean;
 begin
    Result := false;
-   if((g_osVerInfo.dwMajorVersion >= 6) and (g_osVerInfo.dwMinorVersion >= 0)) then
-      Result := true;
+   if(Self.g_osVersionInfoExtended) then begin
+      if((g_osVersionInfoEx.dwMajorVersion >= 6) and (g_osVersionInfoEx.dwMinorVersion >= 0)) then
+         Result := true;
+   end
+   else
+      if((g_osVersionInfo.dwMajorVersion >= 6) and (g_osVersionInfo.dwMinorVersion >= 0)) then
+         Result := true;
 end;
 
 {*------------------------------------------------------------------------------
@@ -233,8 +285,13 @@ end;
 function TCACIC_Windows.isWindowsVista() : boolean;
 begin
    Result := false;
-   if((g_osVerInfo.dwMajorVersion = 6) and (g_osVerInfo.dwMinorVersion = 0)) then
-      Result := true;
+   if(Self.g_osVersionInfoExtended) then begin
+     if((g_osVersionInfoEx.dwMajorVersion = 6) and (g_osVersionInfoEx.dwMinorVersion = 0)) then
+        Result := true;
+   end
+   else
+     if((g_osVersionInfo.dwMajorVersion = 6) and (g_osVersionInfo.dwMinorVersion = 0)) then
+        Result := true;
 end;
 
 {*------------------------------------------------------------------------------
@@ -247,8 +304,13 @@ end;
 function TCACIC_Windows.isWindowsGEXP() : boolean;
 begin
    Result := false;
-   if((g_osVerInfo.dwMajorVersion >= 5) and (g_osVerInfo.dwMinorVersion >= 1)) then
-      Result := true;
+   if(Self.g_osVersionInfoExtended) then begin
+     if((g_osVersionInfoEx.dwMajorVersion >= 5) and (g_osVersionInfoEx.dwMinorVersion >= 1)) then
+        Result := true;
+   end
+   else
+     if((g_osVersionInfo.dwMajorVersion >= 5) and (g_osVersionInfo.dwMinorVersion >= 1)) then
+        Result := true;
 end;
 
 {*------------------------------------------------------------------------------
@@ -261,8 +323,13 @@ end;
 function TCACIC_Windows.isWindowsXP() : boolean;
 begin
    Result := false;
-   if((g_osVerInfo.dwMajorVersion = 5) and (g_osVerInfo.dwMinorVersion = 1)) then
-      Result := true;
+   if(Self.g_osVersionInfoExtended) then begin
+     if((g_osVersionInfoEx.dwMajorVersion = 5) and (g_osVersionInfoEx.dwMinorVersion = 1)) then
+        Result := true;
+   end
+   else
+     if((g_osVersionInfo.dwMajorVersion = 5) and (g_osVersionInfo.dwMinorVersion = 1)) then
+        Result := true;
 end;
 
 {*------------------------------------------------------------------------------
@@ -275,8 +342,13 @@ end;
 function TCACIC_Windows.isWindows2000() : boolean;
 begin
    Result := false;
-   if((g_osVerInfo.dwMajorVersion = 5) and (g_osVerInfo.dwMinorVersion = 0)) then
-      Result := true;
+   if(Self.g_osVersionInfoExtended) then begin
+     if((g_osVersionInfoEx.dwMajorVersion = 5) and (g_osVersionInfoEx.dwMinorVersion = 0)) then
+        Result := true;
+   end
+   else
+     if((g_osVersionInfo.dwMajorVersion = 5) and (g_osVersionInfo.dwMinorVersion = 0)) then
+        Result := true;
 end;
 
 {*------------------------------------------------------------------------------
@@ -289,8 +361,13 @@ end;
 function TCACIC_Windows.isWindowsNT() : boolean;
 begin
    Result := false;
-   if((g_osVerInfo.dwMajorVersion = 4) and (g_osVerInfo.dwMinorVersion = 0)) then
-      Result := true;
+   if(Self.g_osVersionInfoExtended) then begin
+      if((g_osVersionInfoEx.dwMajorVersion = 4) and (g_osVersionInfoEx.dwMinorVersion = 0)) then
+         Result := true;
+   end
+   else
+      if((g_osVersionInfo.dwMajorVersion = 4) and (g_osVersionInfo.dwMinorVersion = 0)) then
+         Result := true;
 end;
 
 {*------------------------------------------------------------------------------
@@ -302,7 +379,10 @@ end;
 -------------------------------------------------------------------------------}
 function TCACIC_Windows.isWindows9xME() : boolean;
 begin
-  Result := (Self.g_osVerInfo.dwPlatformId = VER_PLATFORM_WIN32_WINDOWS);
+  if (Self.g_osVersionInfoExtended) then
+     Result := (Self.g_osVersionInfoEx.dwPlatformId = VER_PLATFORM_WIN32_WINDOWS)
+  else
+     Result := (Self.g_osVersionInfo.dwPlatformId = VER_PLATFORM_WIN32_WINDOWS);
 end;
 
 {*------------------------------------------------------------------------------
@@ -312,13 +392,35 @@ end;
   @example 1.4.10.A
 -------------------------------------------------------------------------------}
 function TCACIC_Windows.getWindowsStrId() : string;
+var
+   v_version_id: string;
 begin
-  Result := IntToStr(Self.g_osVerInfo.dwPlatformId) + '.' +
-            IntToStr(Self.g_osVerInfo.dwMajorVersion) + '.' +
-            IntToStr(Self.g_osVerInfo.dwMinorVersion) +
-            ifThen(trim(Self.g_osVerInfo.szCSDVersion)='',
-                     '',
-                     '.'+Self.g_osVerInfo.szCSDVersion);
+  v_version_id := 'S.O.unknown';
+  try
+	  if (Self.g_osVersionInfoExtended) then
+		 if(Self.isWindows9xME) then
+			v_version_id := IntToStr(Self.g_osVersionInfoEx.dwPlatformId) + '.' +
+				   IntToStr(Self.g_osVersionInfoEx.dwMajorVersion) + '.' +
+				   IntToStr(Self.g_osVersionInfoEx.dwMinorVersion) +
+				   ifThen(trim(Self.g_osVersionInfoEx.szCSDVersion)='',
+						 '',
+						 '.'+trim(Self.g_osVersionInfoEx.szCSDVersion))
+		 else
+			v_version_id := IntToStr(Self.g_osVersionInfoEx.dwPlatformId) + '.' +
+				   IntToStr(Self.g_osVersionInfoEx.dwMajorVersion) + '.' +
+				   IntToStr(Self.g_osVersionInfoEx.dwMinorVersion) + '.' +
+				   IntToStr(Self.g_osVersionInfoEx.wProductType) + '.' +
+				   IntToStr(Self.g_osVersionInfoEx.wSuiteMask)
+	  else
+		 v_version_id := IntToStr(Self.g_osVersionInfo.dwPlatformId) + '.' +
+				   IntToStr(Self.g_osVersionInfo.dwMajorVersion) + '.' +
+				   IntToStr(Self.g_osVersionInfo.dwMinorVersion) +
+				   ifThen(trim(Self.g_osVersionInfo.szCSDVersion)='',
+						 '',
+						 '.'+trim(Self.g_osVersionInfo.szCSDVersion));
+  except
+  end;
+  Result := v_version_id;
 
 end;
 
@@ -330,7 +432,9 @@ end;
 -------------------------------------------------------------------------------}
 function TCACIC_Windows.isWindowsNTPlataform() : boolean;
 begin
-  Result := (Self.g_osVerInfo.dwPlatformId = VER_PLATFORM_WIN32_NT);
+  if(Self.g_osVersionInfoExtended)
+    then Result := (Self.g_osVersionInfoEx.dwPlatformId = VER_PLATFORM_WIN32_NT)
+    else Result := (Self.g_osVersionInfo.dwPlatformId = VER_PLATFORM_WIN32_NT);
 end;
 
 {*------------------------------------------------------------------------------

@@ -518,36 +518,8 @@ begin
                       v_Aux := v_tstrModuloOpcao[0]+'.exe /p_CipherKey='+v_CipherKey+ ' /p_Option='+v_tstrModuloOpcao[2];
                       log_DEBUG('Chamando "' + v_tstrModuloOpcao[0]+'.exe /p_CipherKey=*****" /p_Option='+v_tstrModuloOpcao[2]);
 
-                      WinExec(PChar(v_Aux), SW_HIDE);
+                      oCacic.createSampleProcess( p_path_cacic + '\modulos\' + v_aux, CACIC_PROCESS_WAIT );
 
-                      if (v_tstrModuloOpcao[1]='wait') then
-                          while not FileExists(p_path_cacic + 'temp\'+v_tstrModuloOpcao[0]+'.dat') do
-                              Sleep(2000)
-                      else
-                        Begin
-                          v_ContaTempo := 0;
-                          while not FileExists(p_path_cacic + 'temp\'+v_tstrModuloOpcao[0]+'.dat') and
-                                    ((v_ContaTempo/60)< v_Tolerancia) do // Tolerância para a coleta
-                            Begin
-                              Sleep(2000);
-                              v_ContaTempo := v_ContaTempo + 2;
-                            End;
-                        End;
-                    End;
-
-                  For intAux := 0 to v_tstrModulosOpcoes.Count -1 do
-                    Begin
-                      v_tstrModuloOpcao := explode(v_tstrModulosOpcoes[intAux],',');
-                      v_Aux := p_path_cacic + 'temp\'+v_tstrModuloOpcao[0]+'.dat';
-                      if (FileExists(v_Aux)) then
-                        Begin
-                          log_DEBUG('Chamando "'+'ger_cols.exe /p_CipherKey=*****');
-                          WinExec(PChar('ger_cols.exe /p_CipherKey='+v_CipherKey), SW_HIDE);
-                          // Fecha o arquivo temp\aguarde_INI.txt
-                          CloseFile(v_Aguarde);
-                          Matar(p_path_cacic+'temp\','aguarde_INI');
-                          break;
-                        End;
                     End;
              except
              end;

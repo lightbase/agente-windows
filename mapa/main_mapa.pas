@@ -43,17 +43,18 @@ uses  IniFiles,
       DCPbase64,
       ExtCtrls,
       Graphics,
-      Dialogs;
+      Dialogs,
+      CACIC_Library;
 
 var  strCipherClosed,
      strCipherOpened,
-     strPathCacic,
-     str_te_so                 : string;
+     strPathCacic              : string;
 
 var  intPausaPadrao            : integer;
 
 var  boolDebugs                : boolean;
 
+var  g_oCacic : TCACIC;
 
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
@@ -111,7 +112,6 @@ type
     function  HomeDrive : string;
     Function  Implode(p_Array : TStrings ; p_Separador : String) : String;
     Function  CipherClose(p_DatFileName : string; p_tstrCipherOpened : TStrings) : String;
-    function  GetWinVer: Integer;
     Function  Explode(Texto, Separador : String) : TStrings;
     Function  CipherOpen(p_DatFileName : string) : TStrings;
     Function  GetValorDatMemoria(p_Chave : String; p_tstrCipherOpened : TStrings) : String;
@@ -456,9 +456,8 @@ end;
 
 procedure TfrmMapaCacic.Sair;
 Begin
-  application.Terminate;
-//  FreeMemory(0);
-//  Halt(0);
+    g_oCacic.Free();
+    Application.Terminate;
 End;
 
 procedure TfrmMapaCacic.Finalizar(p_pausa:boolean);
@@ -818,79 +817,6 @@ begin
  except
  end;
 end;
-function TfrmMapaCacic.GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown = 0;
-  cOsWin95 = 1;
-  cOsWin95OSR2 = 2;  // Não implementado.
-  cOsWin98 = 3;
-  cOsWin98SE = 4;
-  cOsWinME = 5;
-  cOsWinNT = 6;
-  cOsWin2000 = 7;
-  cOsXP = 8;
-
-var
-  osVerInfo: TOSVersionInfo;
-  platformID,
-  majorVer,
-  minorVer: Integer;
-  CSDVersion : String;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    platformId        :=      osVerInfo.dwPlatformId;
-    majorVer          :=      osVerInfo.dwMajorVersion;
-    minorVer          :=      osVerInfo.dwMinorVersion;
-    CSDVersion        := trim(osVerInfo.szCSDVersion);
-
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else
-            Result := cOsUnknown;
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-        end;
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-
-  // Defino o valor da ID Interna
-  str_te_so := IntToStr(platformId) + '.' +
-               IntToStr(majorVer)   + '.' +
-               IntToStr(minorVer)   +
-               IfThen(CSDVersion='','','.'+CSDVersion);
-
-end;
-
 
 Function TfrmMapaCacic.CipherOpen(p_DatFileName : string) : TStrings;
 var v_DatFile         : TextFile;
@@ -919,7 +845,7 @@ begin
     if (trim(strCipherOpened)<>'') then
       Result := explode(strCipherOpened,'=CacicIsFree=')
     else
-      Result := explode('Configs.ID_SO=CacicIsFree='+inttostr(GetWinVer)+'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
+      Result := explode('Configs.ID_SO=CacicIsFree='+ g_oCacic.getWindowsStrId() +'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
 
     if Result.Count mod 2 = 0 then
         Result.Add('');
@@ -1388,25 +1314,13 @@ begin
 
      tstrAux.Free;
 
-// Assim, o envio será incondicional!  -  01/12/2006 - Anderson Peterle
-//     if (strAux1 <> strId_unid_organizacional_nivel1) or
-//        (strAux2 <> strId_unid_organizacional_nivel2) or
-//         (ed_te_localizacao_complementar.Text <> strTe_localizacao_complementar) or
-//         (ed_te_info_patrimonio1.Text <> strTe_info_patrimonio1) or
-//         (ed_te_info_patrimonio2.Text <> strTe_info_patrimonio2) or
-//         (ed_te_info_patrimonio3.Text <> strTe_info_patrimonio3) or
-//         (ed_te_info_patrimonio4.Text <> strTe_info_patrimonio4) or
-//         (ed_te_info_patrimonio5.Text <> strTe_info_patrimonio5) or
-//         (ed_te_info_patrimonio6.Text <> strTe_info_patrimonio6) then
-//      begin
-
           Mensagem('Enviando Informações Coletadas ao Banco de Dados...',false,intPausaPadrao div 3);
 
           // Envio dos Dados Coletados ao Banco de Dados
           tstrListAux := TStringList.Create;
           tstrListAux.Values['te_node_address']               := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'                    , frmMapaCacic.tStringsCipherOpened));
           tstrListAux.Values['id_so']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Configs.ID_SO'                            , frmMapaCacic.tStringsCipherOpened));
-          tstrListAux.Values['te_so']                         := frmMapaCacic.EnCrypt(str_te_so);
+          tstrListAux.Values['te_so']                         := frmMapaCacic.EnCrypt(g_oCacic.getWindowsStrId());
           tstrListAux.Values['id_ip_rede']                    := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.ID_IP_REDE'                         , frmMapaCacic.tStringsCipherOpened));
           tstrListAux.Values['te_ip']                         := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_IP'                              , frmMapaCacic.tStringsCipherOpened));
           tstrListAux.Values['te_nome_computador']            := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR'                 , frmMapaCacic.tStringsCipherOpened));
@@ -1746,9 +1660,10 @@ var intAux            : integer;
     strRetorno        : String;
     Request_mapa      : TStringList;
 begin
+  g_oCacic := TCACIC.Create();
   frmMapaCacic.lbVersao.Caption          := 'Versão: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
   log_DEBUG('Versão do MapaCacic: '+frmMapaCacic.lbVersao.Caption);
-  if (GetWinVer > 5) and not IsAdmin then
+  if (g_oCacic.isWindowsNTPlataform()) and (not g_oCacic.isWindowsAdmin()) then
     Begin
       MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
       Sair;
@@ -1805,7 +1720,7 @@ begin
               Request_mapa  :=  TStringList.Create;
               Request_mapa.Values['te_node_address']   := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , frmMapaCacic.tStringsCipherOpened));
               Request_mapa.Values['id_so']             := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('Configs.ID_SO'           , frmMapaCacic.tStringsCipherOpened));
-              Request_mapa.Values['te_so']             := frmMapaCacic.EnCrypt(str_te_so);
+              Request_mapa.Values['te_so']             := frmMapaCacic.EnCrypt(g_oCacic.getWindowsStrId());
               Request_mapa.Values['id_ip_rede']        := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.ID_IP_REDE'        , frmMapaCacic.tStringsCipherOpened));
               Request_mapa.Values['te_ip']             := frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_IP'             , frmMapaCacic.tStringsCipherOpened));
               Request_mapa.Values['te_nome_computador']:= frmMapaCacic.EnCrypt(frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', frmMapaCacic.tStringsCipherOpened));

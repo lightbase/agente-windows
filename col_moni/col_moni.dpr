@@ -42,6 +42,8 @@ var v_Debugs                   : boolean;
 var v_tstrCipherOpened,
     v_tstrCipherOpened1        : TStrings;
 
+var g_oCacic : TCACIC;
+
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
 const KeySize = 32; // 32 bytes = 256 bits
@@ -342,64 +344,7 @@ begin
    except
    end;
 end;
-function GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown = 0;
-  cOsWin95 = 1;
-  cOsWin95OSR2 = 2;  // Não implementado.
-  cOsWin98 = 3;
-  cOsWin98SE = 4;
-  cOsWinME = 5;
-  cOsWinNT = 6;
-  cOsWin2000 = 7;
-  cOsXP = 8;
-var
-  osVerInfo: TOSVersionInfo;
-  majorVer, minorVer: Integer;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    majorVer := osVerInfo.dwMajorVersion;
-    minorVer := osVerInfo.dwMinorVersion;
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else
-            Result := cOsUnknown;
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-        end;
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-end;
+
 Function Explode(Texto, Separador : String) : TStrings;
 var
     strItem       : String;
@@ -457,7 +402,7 @@ begin
     if (trim(v_strCipherOpened)<>'') then
       Result := explode(v_strCipherOpened,'=CacicIsFree=')
     else
-      Result := explode('Configs.ID_SO=CacicIsFree='+inttostr(GetWinVer)+'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
+      Result := explode('Configs.ID_SO=CacicIsFree='+ g_oCacic.getWindowsStrId() +'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
 
     if Result.Count mod 2 <> 0 then
         Result.Add('');
@@ -1081,12 +1026,11 @@ const
 
 var tstrTripa1 : TStrings;
     intAux     : integer;
-    oCacic : TCACIC;
 
 begin
-   oCacic := TCACIC.Create();
+   g_oCacic := TCACIC.Create();
 
-   if( not oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+   if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then
     if (ParamCount>0) then
     Begin
       For intAux := 1 to ParamCount do
@@ -1134,6 +1078,6 @@ begin
           End;
     End;
 
-    oCacic.Free();
+    g_oCacic.Free();
 
 end.
