@@ -181,66 +181,6 @@ Begin
     Explode := ListaAuxUTILS;
 end;
 
-
-function GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown = 0;
-  cOsWin95 = 1;
-  cOsWin95OSR2 = 2;  // Não implementado.
-  cOsWin98 = 3;
-  cOsWin98SE = 4;
-  cOsWinME = 5;
-  cOsWinNT = 6;
-  cOsWin2000 = 7;
-  cOsXP = 8;
-var
-  osVerInfo: TOSVersionInfo;
-  majorVer, minorVer: Integer;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    majorVer := osVerInfo.dwMajorVersion;
-    minorVer := osVerInfo.dwMinorVersion;
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else
-            Result := cOsUnknown;
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-        end;
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-end;
-
 Function GetValorDatMemoria(p_Chave : String) : String;
 begin
     if (v_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
@@ -337,8 +277,9 @@ Function CipherOpen(p_DatFileName : string) : TStrings;
 var v_DatFile         : TextFile;
     v_strCipherOpened,
     v_strCipherClosed : string;
-//    intLoop           : integer;
+    oCacic : TCACIC;
 begin
+  oCacic := TCACIC.Create();
   v_strCipherOpened    := '';
   if FileExists(p_DatFileName) then
     begin
@@ -358,10 +299,11 @@ begin
       v_strCipherOpened:= DeCrypt(v_strCipherClosed);
       log_DEBUG('Rotina de Abertura do cacic2.dat RESTAURANDO estado da criptografia.');
     end;
+
     if (trim(v_strCipherOpened)<>'') then
       Result := explode(v_strCipherOpened,v_SeparatorKey)
     else
-      Result := explode('Configs.ID_SO'+v_SeparatorKey+inttostr(GetWinVer)+v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
+      Result := explode('Configs.ID_SO'+v_SeparatorKey+ oCacic.getWindowsStrId() +v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
 
 
     if Result.Count mod 2 <> 0 then
@@ -369,14 +311,8 @@ begin
         log_DEBUG('Vetor MemoryDAT com tamanho IMPAR... Ajustando.');
         Result.Add('');
       End;
-
-    {
-    log_DEBUG(v_DatFileName+' aberto com sucesso!');
-    if v_Debugs then
-      for intLoop := 0 to (Result.Count-1) do
-        log_DEBUG('Posição ['+inttostr(intLoop)+'] do MemoryDAT: '+Result[intLoop]);
-    }
-
+      
+  oCacic.Free();
 end;
 
 Function FTP(p_Host : String; p_Port : String; p_Username : String; p_Password : String; p_PathServer : String; p_File : String; p_Dest : String) : Boolean;

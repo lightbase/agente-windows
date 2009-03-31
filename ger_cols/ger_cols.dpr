@@ -1748,6 +1748,69 @@ begin
   if ChecaAgente(p_path_cacic + 'modulos', 'ini_cols.exe') then
     g_oCacic.createSampleProcess( p_path_cacic + 'modulos\ini_cols.exe /p_CipherKey=' + v_CipherKey +
                                            ' /p_ModulosOpcoes=col_patr,wait,user#', CACIC_PROCESS_WAIT );
+
+  if (FileExists(p_path_cacic + 'Temp\col_patr.dat')) then
+	  Begin
+		log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_patr.dat encontrado.');
+		v_acao_gercols := '* Preparando envio de informações de Patrimônio.';
+		v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_patr.dat');
+
+		// Armazeno dados para informações de coletas na data, via menu popup do Systray
+		SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações Patrimoniais', v_tstrCipherOpened);
+
+		// Armazeno as horas de início e fim das coletas
+		SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Patr.Inicio',v_tstrCipherOpened1), v_tstrCipherOpened);
+		SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+','+GetValorDatMemoria('Col_Patr.Fim',v_tstrCipherOpened1), v_tstrCipherOpened);
+
+		if (GetValorDatMemoria('Col_Patr.nada',v_tstrCipherOpened1)='') then
+		  Begin
+			// Preparação para envio...
+			Request_Ger_Cols.Values['id_unid_organizacional_nivel1']  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1'  ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['id_unid_organizacional_nivel1a'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1a' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['id_unid_organizacional_nivel2']  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel2'  ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_localizacao_complementar'  ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_localizacao_complementar'    ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio1'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio1'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio2'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio2'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio3'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio3'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio4'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio4'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio5'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio5'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio6'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio6'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+
+			if v_Debugs then
+				For intLoop := 0 to Request_Ger_Cols.Count-1 do
+					log_DEBUG('Item "'+Request_Ger_Cols.Names[intLoop]+'" de Col_Patr: '+Request_Ger_Cols.ValueFromIndex[intLoop]);
+
+			if (ComunicaServidor('set_patrimonio.php', Request_Ger_Cols, '>> Enviando informações de Patrimônio para o Gerente WEB.') <> '0') Then
+				Begin
+				  // Armazeno o Status Positivo de Envio
+				  SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',1', v_tstrCipherOpened);
+
+				  // Somente atualizo o registro caso não tenha havido nenhum erro durante o envio das informações para o BD
+				  //Sobreponho a informação no registro para posterior comparação, na próxima execução.
+				  SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1' , GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1',v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a', GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1a',v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2' , GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel2',v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.te_localizacao_complementar'   , GetValorDatMemoria('Col_Patr.te_localizacao_complementar'  ,v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.te_info_patrimonio1'           , GetValorDatMemoria('Col_Patr.te_info_patrimonio1'          ,v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.te_info_patrimonio2'           , GetValorDatMemoria('Col_Patr.te_info_patrimonio2'          ,v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.te_info_patrimonio3'           , GetValorDatMemoria('Col_Patr.te_info_patrimonio3'          ,v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.te_info_patrimonio4'           , GetValorDatMemoria('Col_Patr.te_info_patrimonio4'          ,v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.te_info_patrimonio5'           , GetValorDatMemoria('Col_Patr.te_info_patrimonio5'          ,v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.te_info_patrimonio6'           , GetValorDatMemoria('Col_Patr.te_info_patrimonio6'          ,v_tstrCipherOpened1), v_tstrCipherOpened);
+				  SetValorDatMemoria('Patrimonio.ultima_rede_obtida'            , GetValorDatMemoria('TcpIp.ID_IP_REDE'                      ,v_tstrCipherOpened) , v_tstrCipherOpened);
+				  intAux := 1;
+				End
+			else
+			  // Armazeno o Status Negativo de Envio
+			  SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',-1', v_tstrCipherOpened);
+		  End
+		else
+		  // Armazeno o Status Nulo de Envio
+		  SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
+
+		Request_Ger_Cols.Clear;
+		Matar(p_path_cacic+'Temp\','col_patr.dat');
+	  End;
 end;
 
 procedure ChecaCipher;

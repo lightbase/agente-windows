@@ -63,6 +63,9 @@ var p_path_cacic,
     boolCrypt,
     boolDebugs                : Boolean;
 
+var
+    g_oCacic: TCACIC;
+
 type
   TFormularioGeral = class(TForm)
     Pn_InfosGerais: TPanel;
@@ -179,7 +182,6 @@ type
     Procedure DelValorReg(Chave: String);
 
     function  GetRootKey(strRootKey: String): HKEY;
-    function  GetWinVer: Integer;
     function  FindWindowByTitle(WindowTitle: string): Hwnd;
     function  GetValorChaveRegIni(p_SectionName, p_KeyName, p_IniFileName : String) : String;
     Function  RemoveZerosFimString(Texto : String) : String;
@@ -187,7 +189,6 @@ type
     procedure Bt_Fechar_InfosGeraisClick(Sender: TObject);
     function  Get_File_Size(sFileToExamine: string; bInKBytes: Boolean): string;
     function  Posso_Rodar : boolean;
-    function  abstraiCSD(p_te_so : String) : integer;
 {
     procedure IdHTTPServerCACICCommandGet(AThread: TIdPeerThread;
       ARequestInfo: TIdHTTPRequestInfo;
@@ -792,7 +793,7 @@ begin
           v_tstrCipherOpened := explode(v_strCipherOpened,v_SeparatorKey)
         else
           Begin
-            v_tstrCipherOpened := explode('Configs.ID_SO'+v_SeparatorKey+inttostr(GetWinVer)+v_SeparatorKey+
+            v_tstrCipherOpened := explode('Configs.ID_SO'+v_SeparatorKey+ g_oCacic.getWindowsStrId() +v_SeparatorKey+
                                           'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
             log_DEBUG(v_DatFileName+' Inexistente. Criado o DAT em memória.');
           End;
@@ -1141,85 +1142,6 @@ var
     log_DEBUG('Resgatei '+p_SectionName+'/'+p_KeyName+' de '+p_IniFileName+' => "'+Result+'"');
   end;
 
-
-function TFormularioGeral.GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown = 0;
-  cOsWin95 = 1;
-  cOsWin95OSR2 = 2;  // Não implementado.
-  cOsWin98 = 3;
-  cOsWin98SE = 4;
-  cOsWinME = 5;
-  cOsWinNT = 6;
-  cOsWin2000 = 7;
-  cOsXP = 8;
-var
-  osVerInfo: TOSVersionInfo;
-  platformID,
-  majorVer,
-  minorVer : Integer;
-  CSDVersion : String;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    platformId        :=      osVerInfo.dwPlatformId;
-    majorVer          :=      osVerInfo.dwMajorVersion;
-    minorVer          :=      osVerInfo.dwMinorVersion;
-    CSDVersion        := trim(osVerInfo.szCSDVersion);
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else
-            Result := cOsUnknown;
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-        end;
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-  // A partir da versão 2.2.0.24, defino o valor da ID Interna e atribuo-a sem o CSDVersion à versão externa
-  v_te_so := IntToStr(platformId) + '.' +
-             IntToStr(majorVer)   + '.' +
-             IntToStr(minorVer)   +
-             IfThen(CSDVersion='','','.'+CSDVersion);
-  if (Result = 0) then
-    Result := abstraiCSD(v_te_so);
-
-end;
-function TFormularioGeral.abstraiCSD(p_te_so : String) : integer;
-  var tstrTe_so : tstrings;
-  Begin
-    tstrTe_so := Explode(p_te_so, '.');
-    Result := StrToInt(tstrTe_so[0] + tstrTe_so[1] + tstrTe_so[2]);
-  End;
-
 procedure TFormularioGeral.log_DEBUG(p_msg:string);
 Begin
   if boolDebugs then log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
@@ -1258,17 +1180,16 @@ var strAux,
     intAux : integer;
     v_Aguarde : TextFile;
     v_SystemDrive : TStrings;
-    oCacic : TCACIC;
 begin
       // Não mostrar o formulário...
       Application.ShowMainForm:=false;
-      oCacic := TCACIC.Create;
-      oCacic.showTrayIcon(false);
+      g_oCacic := TCACIC.Create;
+      g_oCacic.showTrayIcon(false);
 	  boolCrypt := true;
 
       Try
          // De acordo com a versão do OS, determino o ShellCommand para chamadas externas.
-         if (oCacic.isWindowsNTPlataform()) then //Se NT/2K/XP... then
+         if (g_oCacic.isWindowsNTPlataform()) then //Se NT/2K/XP... then
           Begin
             p_Shell_Path    := HomeDrive + '\system32\'; //NT/2K/XP
             p_Shell_Command := 'cmd.exe'; //NT/2K/XP
@@ -1420,23 +1341,12 @@ begin
             Begin
               log_DEBUG('Agente finalizado devido a concomitância de sessões...');
 
-              // Libera memoria referente ao objeto oCacic
-              try
-                oCacic.Free;
-              except
-              end;
-
               Finaliza;
             End;
       Except
         log_diario('PROBLEMAS NA INICIALIZAÇÃO (2)');
       End;
 
-      // Libera memoria referente ao objeto oCacic
-      try
-         oCacic.Free;
-      except
-      end;
 end;
 
 procedure TFormularioGeral.SetaVariaveisGlobais;
@@ -1533,8 +1443,8 @@ Begin
   Except
     log_diario('PROBLEMAS NA FINALIZAÇÃO');
   End;
+  g_oCacic.Free();
   FreeMemory(0);
-  Halt(0);
   Application.Terminate;
 End;
 
@@ -1601,7 +1511,7 @@ var intAux,
     v_Repete        : boolean;
 begin
 
-   log_DEBUG('Execução - Resgate de possíveis novos valores no DAT.');
+   log_DEBUG('Execução - Resgate de possíveis novos valores no DAT.' + g_oCacic.getWindowsStrId());
 
    CipherOpen;
 

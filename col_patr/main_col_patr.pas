@@ -35,7 +35,8 @@ uses  IniFiles,
       DCPrijndael,
       DCPbase64,
       ExtCtrls,
-      Math;
+      Math,
+      CACIC_Library;
 
 var  p_path_cacic       : String;
      v_Dados_Patrimonio : TStrings;
@@ -50,6 +51,9 @@ var  p_path_cacic       : String;
 
 var v_tstrCipherOpened,
     v_tstrCipherOpened1             : TStrings;
+
+var
+    g_oCacic : TCACIC;
 
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
@@ -93,7 +97,6 @@ type
     function  HomeDrive : string;
     Function  Implode(p_Array : TStrings ; p_Separador : String) : String;
     Function  CipherClose(p_DatFileName : string; p_tstrCipherOpened : TStrings) : String;
-    function  GetWinVer: Integer;
     Function  Explode(Texto, Separador : String) : TStrings;
     Function  CipherOpen(p_DatFileName : string) : TStrings;
     Function  GetValorDatMemoria(p_Chave : String; p_tstrCipherOpened : TStrings) : String;
@@ -344,64 +347,7 @@ begin
    except
    end;
 end;
-function TFormPatrimonio.GetWinVer: Integer;
-const
-  { operating system (OS)constants }
-  cOsUnknown = 0;
-  cOsWin95 = 1;
-  cOsWin95OSR2 = 2;  // Não implementado.
-  cOsWin98 = 3;
-  cOsWin98SE = 4;
-  cOsWinME = 5;
-  cOsWinNT = 6;
-  cOsWin2000 = 7;
-  cOsXP = 8;
-var
-  osVerInfo: TOSVersionInfo;
-  majorVer, minorVer: Integer;
-begin
-  Result := cOsUnknown;
-  { set operating system type flag }
-  osVerInfo.dwOSVersionInfoSize := SizeOf(TOSVersionInfo);
-  if GetVersionEx(osVerInfo) then
-  begin
-    majorVer := osVerInfo.dwMajorVersion;
-    minorVer := osVerInfo.dwMinorVersion;
-    case osVerInfo.dwPlatformId of
-      VER_PLATFORM_WIN32_NT: { Windows NT/2000 }
-        begin
-          if majorVer <= 4 then
-            Result := cOsWinNT
-          else if (majorVer = 5) and (minorVer = 0) then
-            Result := cOsWin2000
-          else if (majorVer = 5) and (minorVer = 1) then
-            Result := cOsXP
-          else
-            Result := cOsUnknown;
-        end;
-      VER_PLATFORM_WIN32_WINDOWS:  { Windows 9x/ME }
-        begin
-          if (majorVer = 4) and (minorVer = 0) then
-            Result := cOsWin95
-          else if (majorVer = 4) and (minorVer = 10) then
-          begin
-            if osVerInfo.szCSDVersion[1] = 'A' then
-              Result := cOsWin98SE
-            else
-              Result := cOsWin98;
-          end
-          else if (majorVer = 4) and (minorVer = 90) then
-            Result := cOsWinME
-          else
-            Result := cOsUnknown;
-        end;
-      else
-        Result := cOsUnknown;
-    end;
-  end
-  else
-    Result := cOsUnknown;
-end;
+
 Function TFormPatrimonio.Explode(Texto, Separador : String) : TStrings;
 var
     strItem       : String;
@@ -466,7 +412,7 @@ begin
     if (trim(v_strCipherOpened)<>'') then
       Result := explode(v_strCipherOpened,'=CacicIsFree=')
     else
-      Result := explode('Configs.ID_SO=CacicIsFree='+inttostr(GetWinVer)+'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
+      Result := explode('Configs.ID_SO=CacicIsFree='+ g_oCacic.getWindowsStrId() +'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
 
     if Result.Count mod 2 = 0 then
         Result.Add('');
@@ -1128,6 +1074,7 @@ var boolColeta  : boolean;
     i,intAux    : integer;
     v_Aux       : String;
 Begin
+  g_oCacic := TCACIC.Create();
 
   if (ParamCount>0) then
     Begin
@@ -1216,6 +1163,7 @@ Begin
               SetValorDatMemoria('Col_Patr.nada','nada', v_tstrCipherOpened1);
               SetValorDatMemoria('Col_Patr.Fim', '99999999', v_tstrCipherOpened1);
               CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
+              g_oCacic.Free();
               Application.Terminate;
             End;
           End;

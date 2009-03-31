@@ -936,18 +936,24 @@ begin
                             v_te_mem_ram_desc := v_te_mem_ram_desc + ' - ';
                          v_te_mem_ram_desc := v_te_mem_ram_desc + 'Slot '+ inttostr(i) + ': '
                                                                 + v_SMBIOS.MemoryDevice[i].Manufacturer + ' '
-                                                                //+ v_SMBIOS.MemoryDevice[i].Device + ' '
                                                                 + inttostr(v_SMBIOS.MemoryModule[i].Size) + 'Mb '
                                                                 + '(' + v_te_mem_ram_tipo +')';
                       end;
                     end;
                   end;
 
-                if (trim(v_te_placa_mae_fabricante)='') then
-                    v_te_placa_mae_fabricante := v_SMBIOS.MainBoardManufacturer;
+                if (trim(v_te_placa_mae_fabricante)='') then begin
+                   v_te_placa_mae_fabricante := v_SMBIOS.MainBoardManufacturer;
+                   if (trim(v_te_placa_mae_fabricante)='') then
+                      v_te_placa_mae_fabricante := v_SMBIOS.SystemManufacturer;
+                end;
 
-                if (trim(v_te_placa_mae_desc)='')       then
-                    v_te_placa_mae_desc       := v_SMBIOS.MainBoardModel;
+                if (trim(v_te_placa_mae_desc)='') then begin
+                   v_te_placa_mae_desc := v_SMBIOS.MainBoardModel;
+                   if (trim(v_te_placa_mae_desc)='')       then
+                      v_te_placa_mae_desc := v_SMBIOS.SystemModel;
+                end;
+
 
                 v_te_bios_data            := v_SMBIOS.BIOSDate;
                 v_te_bios_fabricante      := v_SMBIOS.BIOSVendor;
