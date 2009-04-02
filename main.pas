@@ -37,8 +37,11 @@ uses  Windows,
       DCPbase64,
       ComCtrls,
       IdBaseComponent,
-      IdComponent, Buttons,
-	  CACIC_Library;
+      IdComponent,
+      Buttons,
+  	  CACIC_Library,
+      ImgList,
+      Graphics;
       //IdTCPServer;
       //IdFTPServer;
 
@@ -49,16 +52,16 @@ var p_path_cacic,
     p_path_cacic_ini,
     p_Shell_Command,
     p_Shell_Path,
-    v_versao        : string;
-    BatchFile : TStringList;
+    v_versao,
+    g_te_so,
     v_CipherKey,
     v_SeparatorKey,
     v_IV,
     v_DatFileName,
     v_DataCacic2DAT,
     v_Tamanho_Arquivo,
-    v_te_so,
     strConfigsPatrimonio      : string;
+    BatchFile                 : TStringList;
     v_tstrCipherOpened        : TStrings;
     boolCrypt,
     boolDebugs                : Boolean;
@@ -106,7 +109,7 @@ type
     Pn_Linha5_TCPIP: TPanel;
     Timer_Nu_Intervalo: TTimer;
     Timer_Nu_Exec_Apos: TTimer;
-    PopupMenu1: TPopupMenu;
+    Popup_Menu_Contexto: TPopupMenu;
     Mnu_LogAtividades: TMenuItem;
     Mnu_Configuracoes: TMenuItem;
     Mnu_ExecutarAgora: TMenuItem;
@@ -161,6 +164,8 @@ type
     Panel3: TPanel;
     pnVersao: TPanel;
     bt_Fechar_Infos_Gerais: TBitBtn;
+    Timer_InicializaTray: TTimer;
+    imgList_Icones: TImageList;
     procedure RemoveIconesMortos;
     procedure ChecaCONFIGS;
     procedure CriaFormSenha(Sender: TObject);
@@ -178,6 +183,7 @@ type
     procedure Mnu_InfosPatrimoniaisClick(Sender: TObject);
     procedure HabilitaTCP;
     procedure HabilitaPatrimonio;
+    procedure HabilitaSuporteRemoto;    
     procedure Matar(v_dir,v_files: string);
     Procedure DelValorReg(Chave: String);
 
@@ -198,13 +204,13 @@ type
       const AUsername, APassword: String; var AAuthenticated: Boolean);
 }
     procedure Mnu_SuporteRemotoClick(Sender: TObject);
-//    procedure StartVNCServer;
-    procedure PopupMenu1Popup(Sender: TObject);
+    procedure Popup_Menu_ContextoPopup(Sender: TObject);
+    procedure Timer_InicializaTrayTimer(Sender: TObject);
   private
     ShutdownEmExecucao : Boolean;
     IsMenuOpen : Boolean;
     NotifyStruc : TNotifyIconData; {Estrutura do tray icon}
-    procedure InicializaTray(v_Hint:string);
+    procedure InicializaTray;
     procedure Finaliza;
     procedure VerificaDebugs;
     procedure MontaVetoresPatrimonio(p_strConfigs : String);
@@ -220,7 +226,6 @@ type
     // Shutdown do Windows e "derrubar" o Cacic.
     procedure WMQueryEndSession(var Msg : TWMQueryEndSession); Message WM_QUERYENDSESSION;
     procedure WMMENUSELECT(var msg: TWMMENUSELECT); message WM_MENUSELECT;
-    function  GetFileHash(strFileName : String) : String;
   public
     Function  Implode(p_Array : TStrings ; p_Separador : String) : String;
     function  HomeDrive : string;
@@ -239,15 +244,6 @@ type
 
 var FormularioGeral             : TFormularioGeral;
     boolServerON                : Boolean;
-    handleStartServerThreadID,
-    handleStartVNCThreadID,
-    handleCacicRC               : THandle;
-    dwordStartServerID,
-    dwordStartVNCID             : dword;
-    procStartServer             : procedure; stdcall;
-    procStopServer              : procedure; stdcall;
-    threadCacicRC               : TThread;
-
 
 // Some constants that are dependant on the cipher being used
 // Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
@@ -260,7 +256,7 @@ implementation
 {$R *.dfm}
 
 Uses StrUtils, Inifiles, frmConfiguracoes, frmSenha, frmLog,
-     Math,md5,LibXmlParser,WinVNC;
+     Math,LibXmlParser,WinVNC;
 
 // Estruturas de dados para armazenar os itens da uon1, uon1a e uon2
 type
@@ -290,16 +286,6 @@ type
 var VetorUON1  : TVetorUON1;
     VetorUON1a : TVetorUON1a;
     VetorUON2  : TVetorUON2;
-
-// Para cálculo de HASH de determinado arquivo.
-// Objetivo principal: Verificar autenticidade de agentes quando em trabalho cooperativo
-// Anderson Peterle - Dataprev/ES - 08/Maio/2008
-function TFormularioGeral.GetFileHash(strFileName : String) : String;
-Begin
-  Result := 'Arquivo "'+strFileName+'" Inexistente!';
-  if (FileExists(strFileName)) then
-    Result := MD5Print(MD5File(strFileName));
-End;
 
 // Pad a string with zeros so that it is a multiple of size
 function TFormularioGeral.PadWithZeros(const str : string; size : integer) : string;
@@ -930,7 +916,6 @@ end;
 
 // Verifico a existência do Gerente de Coletas, caso não exista, o chksis.exe fará download!
 function TFormularioGeral.ChecaGERCOLS : boolean;
-var strFraseVersao : String;
 Begin
   Result := true;
 
@@ -945,11 +930,8 @@ Begin
 
       Matar(p_path_cacic + 'modulos\','ger_cols.exe');
 
-      strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
-      if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
-        strFraseVersao := strFraseVersao + #13#10 + 'IP: '+getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
+      InicializaTray;
 
-      InicializaTray(strFraseVersao);
       log_diario('Acionando recuperador de Módulo Gerente de Coletas.');
       log_DEBUG('Recuperador de Módulo Gerente de Coletas: '+HomeDrive + '\chksis.exe');
       WinExec(PChar(HomeDrive + '\chksis.exe'),SW_HIDE);
@@ -959,7 +941,7 @@ Begin
       if not(v_Tamanho_Arquivo = '0') and not(v_Tamanho_Arquivo = '-1') then
         Begin
           log_diario('Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
-          InicializaTray('');
+          InicializaTray;
           Result := True;
         End
       else
@@ -1099,6 +1081,13 @@ Begin
   if (getValorDatMemoria('Configs.CS_COLETA_PATRIMONIO',v_tstrCipherOpened) = 'S') then Mnu_InfosPatrimoniais.Enabled := True;
 End;
 
+procedure TFormularioGeral.HabilitaSuporteRemoto;
+Begin
+  // Desabilita/Habilita a opção de Suporte Remoto
+  Mnu_SuporteRemoto.Enabled := False;
+  if (getValorDatMemoria('Configs.CS_SUPORTE_REMOTO',v_tstrCipherOpened) = 'S') then Mnu_SuporteRemoto.Enabled := True;
+End;
+
 
 //Para buscar do Arquivo INI...
 // Marreta devido a limitações do KERNEL w9x no tratamento de arquivos texto e suas seções
@@ -1184,7 +1173,7 @@ begin
       // Não mostrar o formulário...
       Application.ShowMainForm:=false;
       g_oCacic := TCACIC.Create;
-      g_oCacic.showTrayIcon(false);
+      //g_oCacic.showTrayIcon(false);
 	  boolCrypt := true;
 
       Try
@@ -1329,12 +1318,7 @@ begin
                 log_diario('PROBLEMAS SETANDO VARIÁVEIS GLOBAIS!');
               End;
 
-              // Envia o ícone para a bandeja com HINT mostrando Versão...
-              strFraseVersao := 'CACIC  v:' + getVersionInfo(ParamStr(0));
-              if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
-                strFraseVersao := strFraseVersao + char(13) + char(10) + 'IP: '+ getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
-              pnVersao.Caption := 'V. ' + getVersionInfo(ParamStr(0));
-              InicializaTray(strFraseVersao);
+              InicializaTray;
               CipherClose;
             End
          else
@@ -1391,6 +1375,8 @@ Begin
     // Desabilita/Habilita a opção de Informações Gerais
     HabilitaTCP;
 
+    // Desabilita/Habilita a opção de Suporte Remoto
+    HabilitaSuporteRemoto;
   Except
     log_diario('PROBLEMAS NA INICIALIZAÇÃO (1)');
   End;
@@ -1515,6 +1501,8 @@ begin
 
    CipherOpen;
 
+   SetValorDatMemoria('Configs.TE_SO',g_te_so,v_tstrCipherOpened);
+
    try
      if FindCmdLineSwitch('execute', True) or
         FindCmdLineSwitch('atualizacao', True) or
@@ -1546,7 +1534,7 @@ begin
               intContaExec := 2;
 
           // Muda HINT
-          InicializaTray('');
+          InicializaTray;
 
           // Loop para possível necessidade de updates de Agente Principal e/ou Gerente de Coletas
           For intAux := intContaExec to 2 do
@@ -1575,11 +1563,14 @@ begin
                       Invoca_GerCols(nil,'coletas');
                       sleep(3000); // Pausa para início do Gerente de Coletas e criação do arquivo temp\aguarde_GER.txt
 
-                      // Pausas de 10 segundos para o caso de ser(em) baixada(s) nova(s) versão(ões) de Ger_Cols e/ou Cacic2.
+                      InicializaTray;
+
+                      // Pausas de 15 segundos para o caso de ser(em) baixada(s) nova(s) versão(ões) de Ger_Cols e/ou Cacic2.
                       while not Pode_Coletar do
                         Begin
                           log_DEBUG('Aguardando mais 15 segundos...');
                           sleep(15000);
+                          InicializaTray;
                         End;
                       Mnu_InfosPatrimoniais.Caption := v_Aux1;
                       Mnu_InfosTCP.Caption          := v_Aux2;
@@ -1632,6 +1623,9 @@ begin
 
                   // Desabilita/Habilita a opção de Informações de TCP/IP
                   HabilitaTCP;
+
+                  // Desabilita/Habilita a opção de Suporte Remoto
+                  HabilitaSuporteRemoto;
 
                   // Para evitar uma reexecução de Ger_Cols sem necessidade...
                   intContaExec := 3;
@@ -1692,12 +1686,8 @@ begin
 
             End;
         End;
-        // Volta a mostrar a versão no HINT...
-        strFraseVersao := 'CACIC  V:' + getVersionInfo(ParamStr(0));
-        if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
-          strFraseVersao := strFraseVersao + #13#10 + 'IP: '+getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
 
-        InicializaTray(strFraseVersao);
+        InicializaTray;
 
     except
       log_diario('PROBLEMAS AO TENTAR ATIVAR COLETAS.');
@@ -1768,35 +1758,77 @@ end;
 // Todo o código deste ponto em diante está relacionado às rotinas de
 // de inclusão do ícone do programa na bandeja do sistema
 //=======================================================================
-procedure TFormularioGeral.InicializaTray(v_Hint:string);
+procedure TFormularioGeral.InicializaTray;
+var Icon              : TIcon;
+    v_intStatus       : integer;
+    v_strHint         : String;
+const NORMAL          = 0;
+      OCUPADO         = 1;
+      DESCONFIGURADO  = 2;
 begin
+    Icon := TIcon.Create;
 
-     {Estrutura do tray icon sendo criada.}
-     NotifyStruc.cbSize := SizeOf(NotifyStruc);
-     NotifyStruc.Wnd := Handle;
-     NotifyStruc.uID := 1;
-     NotifyStruc.uFlags := NIF_ICON or NIF_TIP or NIF_MESSAGE;
-     NotifyStruc.uCallbackMessage := WM_MYMESSAGE; {User defined message}
-     NotifyStruc.hIcon :=  Application.Icon.Handle;
+    // Monto a frase a ser colocada no Hint
+    v_strHint := 'CACIC  v:' + getVersionInfo(ParamStr(0));
+    if not (getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened) = '') then
+      v_strHint := v_strHint + char(13) + char(10);
+    v_strHint := v_strHint + 'IP: '+ getValorDatMemoria('TcpIp.TE_IP',v_tstrCipherOpened);
 
-     if (v_Hint = '') then
-        v_Hint := 'Aguarde...';
+    // Mostro a versão no painel de Informações Gerais
+    pnVersao.Caption := 'V. ' + getVersionInfo(ParamStr(0));
 
-     log_DEBUG('Setando o HINT do Systray para: "'+v_Hint+'"');
+    // Estrutura do tray icon sendo criada.
+    NotifyStruc.cbSize := SizeOf(NotifyStruc);
+    NotifyStruc.Wnd := Handle;
+    NotifyStruc.uID := 1;
+    NotifyStruc.uFlags := NIF_ICON or NIF_TIP or NIF_MESSAGE;
+    NotifyStruc.uCallbackMessage := WM_MYMESSAGE; //User defined message
 
-     // Atualiza o conteúdo do tip da bandeja
-     StrPCopy(NotifyStruc.szTip, v_Hint);
+    // Tento apagar os arquivos indicadores de ações de coletas
+    FormularioGeral.Matar(p_path_cacic+'temp\','aguarde_GER.txt');
+    FormularioGeral.Matar(p_path_cacic+'temp\','aguarde_INI.txt');
 
-     if (getValorDatMemoria('Configs.IN_EXIBE_BANDEJA',v_tstrCipherOpened) <> 'N') Then
+    v_intStatus := NORMAL;
+
+    // Caso os indicadores de ações de coletas não existam, ativo o ícone normal/desconectado...
+    if not FileExists(p_path_cacic+'temp\aguarde_GER.txt') and
+      not FileExists(p_path_cacic+'temp\aguarde_INI.txt') then
       Begin
-       Shell_NotifyIcon(NIM_ADD, @NotifyStruc);
+        if not (FormularioGeral.getValorDatMemoria('Configs.ConexaoOK',v_tstrCipherOpened)='S') then
+          Begin
+            v_strHint := v_strHint + '  SERVIDOR NÃO ENCONTRADO!';
+            v_intStatus := DESCONFIGURADO;
+          End;
       End
-     else
+    else
       Begin
-        Shell_NotifyIcon(HIDE_WINDOW,@NotifyStruc);
-        Shell_NotifyIcon(NIM_Delete,@NotifyStruc);
+        v_intStatus := OCUPADO;
+        v_strHint := 'Aguarde...';
       End;
-     Shell_NotifyIcon(nim_Modify,@NotifyStruc);
+
+   imgList_Icones.GetIcon(v_intStatus,Icon);
+
+   NotifyStruc.hIcon := Icon.Handle;
+
+   log_DEBUG('Setando o HINT do Systray para: "'+v_strHint+'"');
+
+   // Atualiza o conteúdo do tip da bandeja
+   StrPCopy(NotifyStruc.szTip, v_strHint);
+
+   if (getValorDatMemoria('Configs.IN_EXIBE_BANDEJA',v_tstrCipherOpened) <> 'N') Then
+    Begin
+     Shell_NotifyIcon(NIM_ADD, @NotifyStruc);
+    End
+   else
+    Begin
+      Shell_NotifyIcon(HIDE_WINDOW,@NotifyStruc);
+      Shell_NotifyIcon(NIM_Delete,@NotifyStruc);
+    End;
+   Shell_NotifyIcon(nim_Modify,@NotifyStruc);
+
+   Application.ProcessMessages;
+
+   Icon.Free;
 end;
 
 procedure TFormularioGeral.WMSysCommand;
@@ -1817,9 +1849,13 @@ begin
        Mnu_InfosPatrimoniais.Enabled := False;
        // Habilita a opção de menu caso a coleta de patrimonio esteja habilitado.
        HabilitaPatrimonio;
+
+       // Habilita a opção de menu caso o suporte remoto esteja habilitado.
+       HabilitaSuporteRemoto;
+
        SetForegroundWindow(Handle);
        GetCursorPos(Posicao);
-       PopupMenu1.Popup(Posicao.X, Posicao.Y);
+       Popup_Menu_Contexto.Popup(Posicao.X, Posicao.Y);
     end;
 
 end;
@@ -2235,7 +2271,7 @@ begin
          (strCmd = 'Exit')      then
           AResponseinfo.ContentText := 'OK'
       else
-        AResponseinfo.ContentText := 'COMANDO NÃO PERMITIDO!';
+        AResponseinfo.ContentText := 'COMANDO NÃO RECONHECIDO!';
     End
   else
     AResponseinfo.ContentText := 'ACESSO NÃO PERMITIDO!';
@@ -2276,7 +2312,6 @@ begin
     End
   else
     Begin
-      GetWinVer;
       log_DEBUG('Invocando "'+p_path_cacic + 'modulos\srcacicsrv.exe"...');
       Log_Diario('Ativando Suporte Remoto Seguro.');
       boolAux   := boolCrypt;
@@ -2291,7 +2326,7 @@ begin
       strPalavraChave  := StringReplace(strPalavraChave,'\'     ,'<BarrInv>' ,[rfReplaceAll]);
       strPalavraChave  := StringReplace(EnCrypt(strPalavraChave),'+','<MAIS>',[rfReplaceAll]);
 
-      strTeSO          := StringReplace(v_te_so         ,' '     ,'<ESPACE>'  ,[rfReplaceAll]);
+      strTeSO          := StringReplace(FormularioGeral.getValorDatMemoria('Configs.TE_SO', v_tstrCipherOpened),' ','<ESPACE>',[rfReplaceAll]);
       strTeSO          := StringReplace(EnCrypt(strTeSO),'+','<MAIS>',[rfReplaceAll]);
 
       strTeNodeAddress := StringReplace(FormularioGeral.getValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),' ','<ESPACE>'  ,[rfReplaceAll]);
@@ -2333,48 +2368,13 @@ begin
       BoolServerON := true;
     End;
 
-  {
-  //handleCacicRC := LoadLibrary('modulos\cacicrc.dll');
-  threadCacicRC := WinVNCThread.Create(false);
-
-//  if (handleCacicRC > 0) then
-  if (threadCacicRC.Handle > 0) then
-    Begin
-      //procStartServer := GetProcAddress(handleCacicRC,'StartServer');
-      WinVNCThread.Synchronize(threadCacicRC,StartVNCServer);
-      if not boolServerON then
-        begin
-          handleStartVNCThreadID := CreateThread(nil, 0, @TFormularioGeral.StartVNCServer, nil, 0, dwordStartVNCID);
-          if (handleStartVNCThreadID <> 0) then
-              boolServerON := true;
-        end
-      else
-        begin
-          procStopServer := GetProcAddress(handleCacicRC,'StopServer');
-          procStopServer;
-          TerminateThread(dwordStartServerID, 0);
-          TerminateThread(handleStartServerThreadID, 0);
-          FreeProcInstance(@procStartServer);
-          FreeProcInstance(@procStopServer);
-          FreeLibrary(handleCacicRC);
-          boolServerON := false;
-        end;
-    End
-  else
-    MessageBox(0, 'Não foi possivel carregar a biblioteca de acesso remoto!', 'Erro', MB_ICONERROR);
-
-  }
 end;
-{
-procedure TFormularioGeral.StartVNCServer;
-begin
-  handleStartServerThreadID := CreateThread(nil, 0, @procStartServer, nil, 0, dwordStartServerID);
-end;
-}
-procedure TFormularioGeral.PopupMenu1Popup(Sender: TObject);
+
+procedure TFormularioGeral.Popup_Menu_ContextoPopup(Sender: TObject);
 begin
   VerificaDebugs;
-  if FileExists(p_path_cacic + 'modulos\srcacicsrv.exe') then
+  if (getValorDatMemoria('Configs.CS_SUPORTE_REMOTO',v_tstrCipherOpened) = 'S') and
+     (FileExists(p_path_cacic + 'modulos\srcacicsrv.exe')) then
     Mnu_SuporteRemoto.Enabled := true
   else
     Mnu_SuporteRemoto.Enabled := false;
@@ -2389,6 +2389,13 @@ begin
   else
     Mnu_SuporteRemoto.Caption := 'Ativar Suporte Remoto';
 
+end;
+
+procedure TFormularioGeral.Timer_InicializaTrayTimer(Sender: TObject);
+begin
+ Timer_InicializaTray.Enabled := false;
+ InicializaTray;
+ Timer_InicializaTray.Enabled := true;
 end;
 
 end.

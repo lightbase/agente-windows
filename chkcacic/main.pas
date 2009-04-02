@@ -81,9 +81,10 @@ uses  Windows,
       NTFileSecurity,
       IdFTP,
       Tlhelp32,
-      dialogs,
       ExtCtrls,
-      CACIC_Library;
+      CACIC_Library,
+      WinSvc,
+      dialogs;
 
 var   v_ip_serv_cacic,
       v_cacic_dir,
@@ -137,7 +138,6 @@ Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer; // 2.2.0.16
 Function Explode(Texto, Separador : String) : TStrings;
 Function FindWindowByTitle(WindowTitle: string): Hwnd;
 Function FTP(p_Host : String; p_Port : String; p_Username : String; p_Password : String; p_PathServer : String; p_File : String; p_Dest : String) : Boolean;
-function Get_File_Size(sFileToExamine: string): integer; // 2.2.0.31
 function GetFolderDate(Folder: string): TDateTime;
 function GetNetworkUserName : String; // 2.2.0.32
 Function GetRootKey(strRootKey: String): HKEY;
@@ -152,6 +152,9 @@ Function SetValorChaveRegEdit(Chave: String; Dado: Variant): Variant;
 Function SetValorChaveRegIni(p_Secao, p_Chave, p_Valor, p_File : String): String;
 Function RemoveCaracteresEspeciais(Texto : String) : String;
 Function VerFmt(const MS, LS: DWORD): string;
+function ServiceStart(sService : string ) : boolean;
+function ServiceRunning(sMachine, sService: PChar): Boolean;
+function ServiceStopped(sMachine, sService: PChar): Boolean;
 
 type
   TForm1 = class(TForm)
@@ -171,6 +174,130 @@ implementation
 uses FormConfig;
 
 {$R *.dfm}
+
+function ServiceGetStatus(sMachine, sService: PChar): DWORD;
+  {******************************************}
+  {*** Parameters: ***}
+  {*** sService: specifies the name of the service to open
+  {*** sMachine: specifies the name of the target computer
+  {*** ***}
+  {*** Return Values: ***}
+  {*** -1 = Error opening service ***}
+  {*** 1 = SERVICE_STOPPED ***}
+  {*** 2 = SERVICE_START_PENDING ***}
+  {*** 3 = SERVICE_STOP_PENDING ***}
+  {*** 4 = SERVICE_RUNNING ***}
+  {*** 5 = SERVICE_CONTINUE_PENDING ***}
+  {*** 6 = SERVICE_PAUSE_PENDING ***}
+  {*** 7 = SERVICE_PAUSED ***}
+  {******************************************}
+var
+  SCManHandle, SvcHandle: SC_Handle;
+  SS: TServiceStatus;
+  dwStat: DWORD;
+begin
+  dwStat := 0;
+  // Open service manager handle.
+  LogDEBUG('Executando OpenSCManager.SC_MANAGER_CONNECT');
+  SCManHandle := OpenSCManager(sMachine, nil, SC_MANAGER_CONNECT);
+  if (SCManHandle > 0) then
+  begin
+    LogDEBUG('Executando OpenService.SERVICE_QUERY_STATUS');
+    SvcHandle := OpenService(SCManHandle, sService, SERVICE_QUERY_STATUS);
+    // if Service installed
+    if (SvcHandle > 0) then
+    begin
+      LogDEBUG('O serviço "'+ sService +'" já está instalado.');
+      // SS structure holds the service status (TServiceStatus);
+      if (QueryServiceStatus(SvcHandle, SS)) then
+        dwStat := ss.dwCurrentState;
+      CloseServiceHandle(SvcHandle);
+    end;
+    CloseServiceHandle(SCManHandle);
+  end;
+  Result := dwStat;
+end;
+
+// start service
+//
+// return TRUE if successful
+//
+// sService
+//   service name, ie: Alerter
+//
+function ServiceStart(sService : string ) : boolean;
+var schm,
+    schs   : SC_Handle;
+
+    ss     : TServiceStatus;
+    psTemp : PChar;
+    dwChkP : DWord;
+begin
+  ss.dwCurrentState := 0;
+
+  logDEBUG('Executando Service Start');
+
+  // connect to the service control manager
+  schm := OpenSCManager(Nil,Nil,SC_MANAGER_CONNECT);
+
+  // if successful...
+  if(schm > 0)then
+    begin
+      // open a handle to the specified service
+      schs := OpenService(schm,PChar(sService),SERVICE_START or SERVICE_QUERY_STATUS);
+
+      // if successful...
+    if(schs > 0)then
+      begin
+        logDEBUG('Open Service OK');
+        psTemp := Nil;
+        if(StartService(schs,0,psTemp)) then
+          begin
+            logDEBUG('Entrando em Start Service');
+            // check status
+            if(QueryServiceStatus(schs,ss))then
+              begin
+                while(SERVICE_RUNNING <> ss.dwCurrentState)do
+                  begin
+                  // dwCheckPoint contains a value that the service increments periodically
+                  // to report its progress during a lengthy operation.
+                  dwChkP := ss.dwCheckPoint;
+
+                  // wait a bit before checking status again
+                  // dwWaitHint is the estimated amount of time the calling program should wait before calling
+                  // QueryServiceStatus() again idle events should be handled here...
+
+                  Sleep(ss.dwWaitHint);
+
+                  if(not QueryServiceStatus(schs,ss))then
+                    begin
+                      break;
+                    end;
+
+                  if(ss.dwCheckPoint < dwChkP)then
+                    begin
+                      // QueryServiceStatus didn't increment dwCheckPoint as it should have.
+                      // avoid an infinite loop by breaking
+                      break;
+                    end;
+                end;
+            end
+        else
+           logDEBUG('Oops! Problema com StartService!');
+        end;
+
+        // close service handle
+        CloseServiceHandle(schs);
+      end;
+
+      // close service control manager handle
+      CloseServiceHandle(schm);
+    end
+  else
+    Configs.Memo_te_instala_informacoes_extras.Lines.Add('Oops! Problema com o Service Control Manager!');
+    // return TRUE if the service status is running
+    Result := SERVICE_RUNNING = ss.dwCurrentState;
+end;
 
 function GetNetworkUserName : String;
   //  Gets the name of the user currently logged into the network on
@@ -281,6 +408,10 @@ begin
        CloseFile(HistoricoLog); {Fecha o arquivo texto}
    except
        //Erro na gravação do log!
+   end;
+   try
+      Configs.Memo_te_instala_informacoes_extras.Lines.Add(strMsg);
+   except
    end;
 end;
 
@@ -730,7 +861,7 @@ begin
     LogDebug('FTP: UserName   => "'+p_Username+'"');
     IdFTP.Username      := p_Username;
 
-    LogDebug('FTP: PassWord   => "'+p_Password+'"');
+    LogDebug('FTP: PassWord   => "**********"');
     IdFTP.Password      := p_Password;
 
     LogDebug('FTP: PathServer => "'+p_PathServer+'"');
@@ -755,18 +886,18 @@ begin
       IdFTP.ChangeDir(p_PathServer);
       Try
         LogDebug('Iniciando FTP de "'+p_Dest + '\' + p_File+'"');
-        LogDebug('Size de "'+p_File+'" Antes do FTP => '+IntToSTR(IdFTP.Size(p_File)));
+        LogDebug('HashCode de "'+p_File+'" Antes do FTP => '+g_oCacic.GetFileHash(p_File));
         IdFTP.Get(p_File, p_Dest + '\' + p_File, True, True);
-        LogDebug('Size de "'+p_Dest + '\' + p_File +'" Após o FTP   => '+IntToSTR(Get_File_Size(p_Dest + '\' + p_File)));
+        LogDebug('HashCode de "'+p_Dest + '\' + p_File +'" Após o FTP   => '+g_oCacic.GetFileHash(p_Dest + '\' + p_File));
       Finally
-          LogDebug('Size de "'+p_Dest + '\' + p_File +'" Após o FTP em Finally   => '+IntToStr(Get_File_Size(p_Dest + '\' + p_File)));
+          LogDebug('HashCode de "'+p_Dest + '\' + p_File +'" Após o FTP em Finally   => '+g_oCacic.GetFileHash(p_Dest + '\' + p_File));
           IdFTP.Disconnect;
           IdFTP.Free;
           result := true;
       End;
     Except
       Begin
-        LogDebug('Oops! Problemas Sem Início de Operação...');
+        LogDebug('Oops! Problemas Sem Início de FTP...');
         result := false;
       End;
     end;
@@ -1025,14 +1156,14 @@ end;
 
 function Posso_Rodar_CACIC : boolean;
 Begin
+  result := false;
+
+  // Se eu conseguir matar o arquivo abaixo é porque não há outra sessão deste agente aberta... (POG? Nããão!  :) )
+  Matar(v_cacic_dir,'aguarde_CACIC.txt');
+
   // Se o aguarde_CACIC.txt existir é porque refere-se a uma versão mais atual: 2.2.0.20 ou maior
-  if  (FileExists(g_oCacic.getCacicPath() + '\aguarde_CACIC.txt')) then
-    Begin
-      // Se eu conseguir matar o arquivo abaixo é porque não há outra sessão deste agente aberta... (POG? Nããão!  :) )
-      Matar(v_cacic_dir,'aguarde_CACIC.txt');
-      if  (not (FileExists(v_cacic_dir + 'aguarde_CACIC.txt'))) then
-        result := true;
-    End;
+  if  not (FileExists(g_oCacic.getCacicPath() + '\aguarde_CACIC.txt')) then
+    result := true;
 End;
 function GetFolderDate(Folder: string): TDateTime;
 var
@@ -1055,75 +1186,57 @@ begin
   end;
 end;
 
-function Get_File_Size(sFileToExamine: string): integer;
-var
-  SearchRec: TSearchRec;
-  sgPath: string;
-  inRetval, I1: Integer;
-begin
-  sgPath := ExpandFileName(sFileToExamine);
-  try
-    inRetval := FindFirst(ExpandFileName(sFileToExamine), faAnyFile, SearchRec);
-    if inRetval = 0 then
-      I1 := SearchRec.Size
-    else
-      I1 := -1;
-  finally
-    SysUtils.FindClose(SearchRec);
-  end;
-  Result := I1;
-end;
-
-procedure verifyAndGet(strModuleName,
-                       strDestinationFolderName,
-                       strServUpdates,
-                       strPortaServUpdates,
-                       strNomeUsuarioLoginServUpdates,
-                       strSenhaLoginServUpdates,
-                       strPathServUpdates,
-                       strExibeInformacoes : String);
-  var intFileSize : integer;
+procedure verifyAndGet(p_strModuleName,
+                       p_strFileHash,
+                       p_strDestinationFolderName,
+                       p_strServUpdates,
+                       p_strPortaServUpdates,
+                       p_strNomeUsuarioLoginServUpdates,
+                       p_strSenhaLoginServUpdates,
+                       p_strPathServUpdates,
+                       p_strExibeInformacoes : String);
+  var v_strFileHash : String;
   Begin
 
     // Verifico validade do Módulo e mato-o em caso negativo.
-    intFileSize := Get_File_Size(strDestinationFolderName + '\'+strModuleName);
+    v_strFileHash := g_oCacic.GetFileHash(p_strDestinationFolderName + '\'+p_strModuleName);
 
-    LogDebug('verifyAndGet - intFileSize de "'+strDestinationFolderName + '\'+strModuleName+'": ' + IntToStr(intFileSize));
+    LogDebug('verifyAndGet - strFileHash de "'+p_strDestinationFolderName + '\'+p_strModuleName+'": ' + v_strFileHash);
 
-    If (intFileSize <= 0) then
-      Matar(strDestinationFolderName, strModuleName);
+    If (v_strFileHash <> p_strFileHash) then
+      Matar(p_strDestinationFolderName, p_strModuleName);
 
-    If not FileExists(strDestinationFolderName + '\'+strModuleName) Then
+    If not FileExists(p_strDestinationFolderName + '\'+p_strModuleName) Then
       Begin
-        if (FileExists(ExtractFilePath(Application.Exename) + '\modulos\'+strModuleName)) then
+        if (FileExists(ExtractFilePath(Application.Exename) + '\modulos\'+p_strModuleName)) then
           Begin
-            LogDiario('Copiando '+strModuleName+' de '+ExtractFilePath(Application.Exename)+'modulos\');
-            CopyFile(PChar(ExtractFilePath(Application.Exename) + 'modulos\'+strModuleName), PChar(strDestinationFolderName + '\'+strModuleName),false);
-            FileSetAttr (PChar(strDestinationFolderName + '\' + strModuleName),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED
+            LogDiario('Copiando '+p_strModuleName+' de '+ExtractFilePath(Application.Exename)+'modulos\');
+            CopyFile(PChar(ExtractFilePath(Application.Exename) + 'modulos\'+p_strModuleName), PChar(p_strDestinationFolderName + '\'+p_strModuleName),false);
+            FileSetAttr (PChar(p_strDestinationFolderName + '\' + p_strModuleName),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED
           End
         else
           begin
             Try
-              if not FTP(strServUpdates,
-                         strPortaServUpdates,
-                         strNomeUsuarioLoginServUpdates,
-                         strSenhaLoginServUpdates,
-                         strPathServUpdates,
-                         strModuleName,
-                         strDestinationFolderName) and (strExibeInformacoes = 'S') then
-                  MessageDLG(#13#10+'ATENÇÃO! Não foi possível efetuar FTP para "'+strDestinationFolderName + '\'+strModuleName+'".'+#13#10+'Verifique o Servidor de Updates.',mtError,[mbOK],0);
+              if not FTP(p_strServUpdates,
+                         p_strPortaServUpdates,
+                         p_strNomeUsuarioLoginServUpdates,
+                         p_strSenhaLoginServUpdates,
+                         p_strPathServUpdates,
+                         p_strModuleName,
+                         p_strDestinationFolderName) then
+                  Configs.Memo_te_instala_informacoes_extras.Lines.add(#13#10+'ATENÇÃO! Não foi possível efetuar FTP para "'+p_strDestinationFolderName + '\'+p_strModuleName+'".'+#13#10+'Verifique o Servidor de Updates.');
             Except
-              LogDebug('FTP de "'+ strDestinationFolderName + '\' + strModuleName+'" Interrompido.');
+              LogDebug('FTP de "'+ p_strDestinationFolderName + '\' + p_strModuleName+'" Interrompido.');
             End;
 
-            if not FileExists(strDestinationFolderName + '\' + strModuleName) Then
+            if not FileExists(p_strDestinationFolderName + '\' + p_strModuleName) Then
               Begin
-                LogDebug('Problemas Efetuando Download de '+ strDestinationFolderName + '\' + strModuleName+' (FTP)');
+                LogDebug('Problemas Efetuando Download de '+ p_strDestinationFolderName + '\' + p_strModuleName+' (FTP)');
                 LogDebug('Conexão:');
-                LogDebug(strServUpdates+', '+strPortaServUpdates+', '+strNomeUsuarioLoginServUpdates+', '+strSenhaLoginServUpdates+', '+strPathServUpdates);
+                LogDebug(p_strServUpdates+', '+p_strPortaServUpdates+', '+p_strNomeUsuarioLoginServUpdates+', '+p_strSenhaLoginServUpdates+', '+p_strPathServUpdates);
               End
             else
-                LogDiario('Download Concluído de "'+strModuleName+'" (FTP)');
+                LogDiario('Download Concluído de "'+p_strModuleName+'" (FTP)');
           end;
       End;
   End;
@@ -1131,6 +1244,7 @@ procedure verifyAndGet(strModuleName,
 procedure chkcacic;
 var bool_configura,
     bool_ExistsAutoRun,
+    bool_ArquivoINI,
     bool_CommandLine : boolean;
 
     v_te_serv_updates,
@@ -1143,10 +1257,8 @@ var bool_configura,
     strAux,
     strDataHoraCACIC2_INI,
     strDataHoraGERCOLS_INI,
-    strDataHoraSRCACICSRV_INI,
     strDataHoraCACIC2_FIM,
-    strDataHoraGERCOLS_FIM,
-    strDataHoraSRCACICSRV_FIM : String;
+    strDataHoraGERCOLS_FIM : String;
 
     Request_Config  : TStringList;
     v_array_modulos : TStrings;
@@ -1155,6 +1267,8 @@ var bool_configura,
     intDownload_CACIC2,
     intDownload_GER_COLS,
     intAux : integer;
+
+    wordServiceStatus : DWORD;
 begin
   strDataHoraCACIC2_INI           := '';
   strDataHoraCACIC2_FIM           := '';
@@ -1163,6 +1277,7 @@ begin
   v_te_instala_frase_sucesso      := 'INSTALAÇÃO/ATUALIZAÇÃO EFETUADA COM SUCESSO!';
   v_te_instala_frase_insucesso    := '*****  INSTALAÇÃO/ATUALIZAÇÃO NÃO EFETUADA COM SUCESSO  *****';
   bool_CommandLine                := false;
+  bool_ArquivoINI                 := FileExists(ExtractFilePath(Application.Exename) + '\chkcacic.ini');
 
   Try
   v_home_drive                    := MidStr(HomeDrive,1,3); //x:\
@@ -1200,9 +1315,11 @@ begin
   //v_cacic_dir                     := 'Cacic';
   //v_exibe_informacoes             := 'N'; // Manter o "N", pois, esse mesmo ChkCacic será colocado em NetLogons!
 
+  // Se a chamada ao chkCACIC não passou parâmetros de IP do Servidor nem Pasta Padrão...
+  // Obs.: Normalmente a chamada com passagem de parâmetros é feita por script em servidor de domínio, para automatização do processo
   if not bool_CommandLine then
     Begin
-      If not (FileExists(ExtractFilePath(Application.Exename) + '\chkcacic.ini')) then
+      If not bool_ArquivoINI then
           Begin
               LogDiario('Abrindo formulário de configurações');
               CriaFormConfigura;
@@ -1228,14 +1345,51 @@ begin
        End;
     End;
 
+  LogDebug('Tipo de Drive: '+intToStr(GetDriveType(nil)));
+
+  if not (GetDriveType(nil) = DRIVE_REMOTE) then
+    Begin
+      CriaFormConfigura;
+      Configs.Visible := true;
+
+      Configs.gbObrigatorio.BringToFront;
+      Configs.gbOpcional.BringToFront;
+
+      Configs.Label_ip_serv_cacic.BringToFront;
+      Configs.Edit_ip_serv_cacic.Text                     := v_ip_serv_cacic;
+      Configs.Edit_ip_serv_cacic.ReadOnly                 := true;
+      Configs.Edit_ip_serv_cacic.BringToFront;
+
+      Configs.Label_cacic_dir.BringToFront;
+      Configs.Edit_cacic_dir.Text                         := v_cacic_dir;
+      Configs.Edit_cacic_dir.ReadOnly                     := true;
+      configs.Edit_cacic_dir.BringToFront;
+
+      Configs.Label_te_instala_informacoes_extras.Visible := false;
+
+      Configs.ckboxExibeInformacoes.Checked               := true;
+      Configs.ckboxExibeInformacoes.Visible               := false;
+
+      Configs.Height                                      := 357;
+      Configs.lbMensagemNaoAplicavel.Visible              := false;
+
+      Configs.Memo_te_instala_informacoes_extras.Clear;
+      Configs.Memo_te_instala_informacoes_extras.Top      := 15;
+      Configs.Memo_te_instala_informacoes_extras.Height   := 196;
+
+      Configs.gbObrigatorio.Caption          := 'Configuração';
+      Configs.gbObrigatorio.Visible          := true;
+
+      Configs.gbOpcional.Caption             := 'Andamento da Instalação/Atualização';
+      Configs.gbOpcional.Visible             := true;
+
+      Configs.Refresh;
+      Configs.Show;
+    End;
+
   // Verifica se o S.O. é NT Like e se o Usuário está com privilégio administrativo...
-  if (g_oCacic.isWindowsNTPlataform()) and (not g_oCacic.isWindowsAdmin()) then begin // Se NT/2000/XP/...
-      if (v_exibe_informacoes = 'S') then
-        MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
-      LogDiario('Sem Privilégios: Necessário ser administrador "local" da estação');
-      ComunicaInsucesso('0'); // O indicador "0" (zero) sinalizará falta de privilégio na estação
-  end
-  else begin
+  if (g_oCacic.isWindowsNTPlataform()) and (g_oCacic.isWindowsAdmin()) then
+    Begin
       LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
       LogDebug(':::::::::::::: OBTENDO VALORES DO "chkcacic.ini" ::::::::::::::');
       LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
@@ -1261,8 +1415,8 @@ begin
                 Try
                   Begin
                     // Liberando as conexões de Saída para o FTP
-                    SetValorChaveRegEdit('HKEY_LOCAL//_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App=C:\\windows\\system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App=C:\\windows\\system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+HomeDrive+'\system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+HomeDrive+'\system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
 
                     // Liberando as conexões de Saída para o Ger_Cols
                     SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+Dir+'\modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
@@ -1303,6 +1457,7 @@ begin
               LogDiario('Abrindo formulário de configurações');
               bool_configura := false;
               CriaFormConfigura;
+
               Configs.Edit_ip_serv_cacic.text                 := v_ip_serv_cacic;
               Configs.Edit_cacic_dir.text                     := v_cacic_dir;
               if v_exibe_informacoes = 'S' then
@@ -1352,7 +1507,7 @@ begin
       Response_Config                      := TStringStream.Create('');
 
       Try
-        LogDiario('Iniciando comunicação com '+'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php');
+        LogDiario('Iniciando comunicação com Servidor Gerente WEB do CACIC');
         IdHTTP1 := TIdHTTP.Create(IdHTTP1);
         idHTTP1.AllowCookies                     := true;
         idHTTP1.ASCIIFilter                      := false;
@@ -1372,7 +1527,7 @@ begin
         idHTTP1.Request.ContentType              := 'text/html';
         idHTTP1.SendBufferSize                   := 32768;
         idHTTP1.Tag                              := 0;
-        
+
         IdHTTP1.Post('http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php', Request_Config, Response_Config);
         idHTTP1.Disconnect;
         idHTTP1.Free;
@@ -1396,13 +1551,11 @@ begin
         LogDebug('------------------------------');
         LogDebug('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno));
         LogDebug('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno));
-        LogDebug('SrCACIC  - Suporte Remoto Seguro.....: '+XML_RetornaValor('SRCACICSRV', v_retorno));
         LogDebug('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno));
         LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
       Except
         Begin
-          if v_exibe_informacoes = 'S' then
-            MessageDLG(#13#10+'ATENÇÃO! Não foi possível estabelecer comunicação com o módulo Gerente WEB em "'+v_ip_serv_cacic+'".',mtError,[mbOK],0);
+          Configs.Memo_te_instala_informacoes_extras.Lines.Add(#13#10+'ATENÇÃO! Não foi possível estabelecer comunicação com o módulo Gerente WEB em "'+v_ip_serv_cacic+'".');
           LogDiario('**********************************************************');
           LogDiario('Oops! Não Foi Possível Comunicar com o Módulo Gerente WEB!');
           LogDiario('**********************************************************');
@@ -1493,63 +1646,63 @@ begin
              Matar(Dir + '\modulos\', 'ger_cols.exe');
         End;
 
-      // Verificação de versão do srcacicsrv.exe e exclusão em caso de versão antiga/diferente da atual
-      If (FileExists(Dir + '\modulos\srcacicsrv.exe')) Then
-        Begin
-          // Pego as informações de dia/mês/ano/horas/minutos/segundos/milésimos que identificam o agente SrCACIC
-          strDataHoraSRCACICSRV_INI := FormatDateTime('ddmmyyyyhhnnsszzz', GetFolderDate(Dir + '\modulos\srcacicsrv.exe'));
+        // Verificação de versão do chksis.exe e exclusão em caso de versão antiga/diferente da atual
+        If (FileExists(HomeDrive + '\chksis.exe')) Then
+          Begin
+            intAux := ChecaVersoesAgentes(HomeDrive + '\chksis.exe');
+            // 0 => Arquivo de versões ou informação inexistente
+            // 1 => Versões iguais
+            // 2 => Versões diferentes
+            if (intAux = 0) then
+              Begin
+                v_versao_local  := StringReplace(trim(GetVersionInfo(HomeDrive + '\chksis.exe')),'.','',[rfReplaceAll]);
+                v_versao_remota := StringReplace(XML_RetornaValor('CHKSIS' , v_retorno),'0103','',[rfReplaceAll]);
+              End;
 
-          intAux := ChecaVersoesAgentes(Dir + '\modulos\srcacicsrv.exe');
-          // 0 => Arquivo de versões ou informação inexistente
-          // 1 => Versões iguais
-          // 2 => Versões diferentes
-          if (intAux = 0) then
-            Begin
-              v_versao_local  := StringReplace(trim(GetVersionInfo(Dir + '\modulos\srcacicsrv.exe')),'.','',[rfReplaceAll]);
-              v_versao_remota := StringReplace(XML_RetornaValor('SRCACICSRV' , v_retorno),'0103','',[rfReplaceAll]);
-            End;
+            if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
+               (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
+              Matar(HomeDrive,'chksis.exe');
+          End;
 
-          if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
-             (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
-             Matar(Dir + '\modulos\', 'srcacicsrv.exe');
-        End;
-
-
-      // Verificação de versão do chksis.exe e exclusão em caso de versão antiga/diferente da atual
-      If (FileExists(HomeDrive + '\chksis.exe')) Then
-        Begin
-          intAux := ChecaVersoesAgentes(HomeDrive + '\chksis.exe');
-          // 0 => Arquivo de versões ou informação inexistente
-          // 1 => Versões iguais
-          // 2 => Versões diferentes
-          if (intAux = 0) then
-            Begin
-              v_versao_local  := StringReplace(trim(GetVersionInfo(HomeDrive + '\chksis.exe')),'.','',[rfReplaceAll]);
-              v_versao_remota := StringReplace(XML_RetornaValor('CHKSIS' , v_retorno),'0103','',[rfReplaceAll]);
-            End;
-
-          if (intAux = 2) or // Caso haja diferença na comparação de versões com "versoes_agentes.ini"...
-             (v_versao_local ='0000') then // Provavelmente versão muito antiga ou corrompida
-            Matar(HomeDrive,'chksis.exe');
-        End;
-
-      // Tento detectar o ChkSis.EXE e copio ou faço FTP caso não exista
-      verifyAndGet('chksis.exe',
-                    HomeDrive,
-                    v_te_serv_updates,
-                    v_nu_porta_serv_updates,
-                    v_nm_usuario_login_serv_updates,
-                    v_te_senha_login_serv_updates,
-                    v_te_path_serv_updates,
-                    v_exibe_informacoes);
+        // Tento detectar o ChkSis.EXE e copio ou faço FTP caso não exista
+        verifyAndGet('chksis.exe',
+                      XML_RetornaValor('CHKSIS_HASH', v_retorno),
+                      HomeDrive,
+                      v_te_serv_updates,
+                      v_nu_porta_serv_updates,
+                      v_nm_usuario_login_serv_updates,
+                      v_te_senha_login_serv_updates,
+                      v_te_path_serv_updates,
+                      v_exibe_informacoes);
 
       // Tento detectar o ChkSis.INI e crio-o caso necessário
       If not FileExists(HomeDrive + '\chksis.ini') Then
-          begin
-            LogDebug('Criando '+HomeDrive + '\chksis.ini');
-            GravaIni(HomeDrive + '\chksis.ini');
-            FileSetAttr ( PChar(HomeDrive + '\chksis.ini'),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-          end;
+        begin
+          LogDebug('Criando '+HomeDrive + '\chksis.ini');
+          GravaIni(HomeDrive + '\chksis.ini');
+          FileSetAttr ( PChar(HomeDrive + '\chksis.ini'),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+        end;
+
+
+      // Verificação de existência do CacicSvc.exe
+      If (g_oCacic.isWindowsNTPlataform()) then
+        Begin
+          // Tento detectar o CACICsvc.EXE e copio ou faço FTP caso não exista
+          verifyAndGet('cacicsvc.exe',
+                        XML_RetornaValor('CACICSVC_HASH', v_retorno),          
+                        HomeDrive,
+                        v_te_serv_updates,
+                        v_nu_porta_serv_updates,
+                        v_nm_usuario_login_serv_updates,
+                        v_te_senha_login_serv_updates,
+                        v_te_path_serv_updates,
+                        v_exibe_informacoes);
+
+          // O CACICsvc usará o arquivo de configurações \Windows\chksis.ini
+
+          //LogDebug('reCriando '+HomeDrive + '\cacicsvc.ini');
+          //GravaIni(HomeDrive + '\cacicsvc.ini');
+        End;
 
       // Tento detectar o cacic2.INI e crio-o caso necessário
       If not FileExists(Dir + '\cacic2.ini') Then
@@ -1564,6 +1717,7 @@ begin
 
       // Tento detectar o Agente Principal e copio ou faço FTP caso não exista
       verifyAndGet('cacic2.exe',
+                   XML_RetornaValor('CACIC2_HASH', v_retorno),      
                    Dir,
                    v_te_serv_updates,
                    v_nu_porta_serv_updates,
@@ -1573,6 +1727,7 @@ begin
                    v_exibe_informacoes);
 
       verifyAndGet('ger_cols.exe',
+                   XML_RetornaValor('GER_COLS_HASH', v_retorno),
                    Dir + '\modulos',
                    v_te_serv_updates,
                    v_nu_porta_serv_updates,
@@ -1581,16 +1736,7 @@ begin
                    v_te_path_serv_updates,
                    v_exibe_informacoes);
 
-      verifyAndGet('srcacicsrv.exe',
-                   Dir + '\modulos',
-                   v_te_serv_updates,
-                   v_nu_porta_serv_updates,
-                   v_nm_usuario_login_serv_updates,
-                   v_te_senha_login_serv_updates,
-                   v_te_path_serv_updates,
-                   v_exibe_informacoes);
-
-        // Caso exista a pasta "modulos", copio todos os executáveis para a pasta Cacic\modulos, exceto cacic2.exe, ger_cols.exe, srcacicsrv.exe e chksis.exe
+        // Caso exista a pasta "modulos", copio todos os executáveis para a pasta Cacic\modulos, exceto cacic2.exe, ger_cols.exe e chksis.exe
         if (v_modulos <> '') then
           Begin
             v_array_modulos := explode(v_modulos,'#');
@@ -1598,7 +1744,6 @@ begin
               Begin
                 if (v_array_modulos[intAux]<>'cacic2.exe') and
                    (v_array_modulos[intAux]<>'ger_cols.exe') and
-                   (v_array_modulos[intAux]<>'srcacicsrv.exe') and
                    (v_array_modulos[intAux]<>'chksis.exe') then
                   Begin
                     LogDiario('Copiando '+v_array_modulos[intAux]+' de '+ExtractFilePath(Application.Exename)+'modulos\');
@@ -1614,6 +1759,7 @@ begin
 
       // Tento detectar (de novo) o ChkSis.EXE e copio ou faço FTP caso não exista
       verifyAndGet('chksis.exe',
+                    XML_RetornaValor('CHKSIS_HASH', v_retorno),      
                     HomeDrive,
                     v_te_serv_updates,
                     v_nu_porta_serv_updates,
@@ -1624,6 +1770,7 @@ begin
 
       // Tento detectar (de novo) o Agente Principal e copio ou faço FTP caso não exista
       verifyAndGet('cacic2.exe',
+                   XML_RetornaValor('CACIC2_HASH', v_retorno),
                    Dir,
                    v_te_serv_updates,
                    v_nu_porta_serv_updates,
@@ -1633,6 +1780,7 @@ begin
                    v_exibe_informacoes);
 
       verifyAndGet('ger_cols.exe',
+                   XML_RetornaValor('GER_COLS_HASH', v_retorno),
                    Dir + '\modulos',
                    v_te_serv_updates,
                    v_nu_porta_serv_updates,
@@ -1641,20 +1789,16 @@ begin
                    v_te_path_serv_updates,
                    v_exibe_informacoes);
 
-      verifyAndGet('srcacicsrv.exe',
-                   Dir + '\modulos',
-                   v_te_serv_updates,
-                   v_nu_porta_serv_updates,
-                   v_nm_usuario_login_serv_updates,
-                   v_te_senha_login_serv_updates,
-                   v_te_path_serv_updates,
-                   v_exibe_informacoes);
 
+      {
       if ((intWinVer <> 0) and (intWinVer >= 8)) or
          (abstraiCSD(v_te_so) >= 250) then // Se >= WinXP...
+      }
+
+      if (g_oCacic.isWindowsNTPlataform) then
         Begin
           Try
-            // Acrescento o ChkSis e o Ger_Cols às exceções do FireWall nativo...
+            // Acrescento o Ger_Cols e srCacicSrv às exceções do FireWall nativo...
 
             {chksis}
             LogDebug('Inserindo "'+HomeDrive + '\chksis" nas exceções do FireWall!');
@@ -1674,15 +1818,24 @@ begin
 
       LogDebug('Gravando registros para auto-execução');
 
-      // Crio a chave/valor cacic2 para autoexecução do Cacic, caso não exista esta chave/valor
-      // Crio a chave/valor chksis para autoexecução do ChkSIS, caso não exista esta chave/valor
-      SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\CheckSystemRoutine', HomeDrive + '\chksis.exe');
+      // Somente para S.O. NOT NT LIKE
+      if NOT (g_oCacic.isWindowsNTPlataform) then
+        Begin
+          // Crio a chave/valor cacic2 para autoexecução do Cacic, caso não exista esta chave/valor
+          // Crio a chave/valor chksis para autoexecução do ChkSIS, caso não exista esta chave/valor
+          SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\CheckSystemRoutine', HomeDrive + '\chksis.exe');
 
-      bool_ExistsAutoRun := false;
-      if (GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2')=Dir + '\cacic2.exe') then
-        bool_ExistsAutoRun := true
+          bool_ExistsAutoRun := false;
+          if (GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2')=Dir + '\cacic2.exe') then
+            bool_ExistsAutoRun := true
+          else
+            SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Dir + '\cacic2.exe');
+        End
       else
-        SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Dir + '\cacic2.exe');
+        Begin
+          DelValorReg('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2');
+          DelValorReg('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\CheckSystemRoutine');
+        End;
 
       // Igualo as chaves ip_serv_cacic dos arquivos chksis.ini e cacic2.ini!
       SetValorDatMemoria('Configs.EnderecoServidor', v_ip_serv_cacic);
@@ -1707,24 +1860,21 @@ begin
       strDataHoraGERCOLS_FIM := FormatDateTime('ddmmyyyyhhnnsszzz', GetFolderDate(Dir + '\modulos\ger_cols.exe'));
       LogDebug('Inicial => "' + strDataHoraGERCOLS_INI + '" Final => "' + strDataHoraGERCOLS_FIM + '"');
 
-      LogDebug('Resgatando informações para identificação de alteração do agente SRCACIC');
-      strDataHoraSRCACICSRV_FIM := FormatDateTime('ddmmyyyyhhnnsszzz', GetFolderDate(Dir + '\modulos\srcacicsrv.exe'));
-      LogDebug('Inicial => "' + strDataHoraSRCACICSRV_INI + '" Final => "' + strDataHoraSRCACICSRV_FIM + '"');
-
       // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
       if ((strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) OR
           (strDataHoraGERCOLS_INI <> strDataHoraGERCOLS_FIM)) then
           Begin
             v_te_texto_janela_instalacao := v_te_instala_informacoes_extras;
-            if (GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2')=Dir + '\cacic2.exe') then
+
+            if (GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2')=Dir + '\cacic2.exe') and
+               (not g_oCacic.isWindowsNTPlataform()) or
+               (g_oCacic.isWindowsNTPlataform()) then
               Begin
-                if (v_exibe_informacoes = 'S') then
-                  MessageDlg(#13#10+#13#10+'Sistema CACIC'+#13#10+#13#10+v_te_instala_frase_sucesso+#13#10+#13#10+#13#10 + '======================================================' + #13#10 + v_te_texto_janela_instalacao+ #13#10 +'======================================================',mtInformation,[mbok],0);
+                configs.Memo_te_instala_informacoes_extras.Lines.Add(#13#10+#13#10+'Sistema CACIC'+#13#10+#13#10+v_te_instala_frase_sucesso);
               End
             else
               Begin
-                if (v_exibe_informacoes = 'S') then
-                  MessageDlg(#13#10+#13#10+'Sistema CACIC'+#13#10+#13#10+v_te_instala_frase_insucesso+#13#10+#13#10+#13#10 + '======================================================' + #13#10 +  v_te_texto_janela_instalacao+ #13#10 +'======================================================',mtInformation,[mbok],0);
+                Configs.Memo_te_instala_informacoes_extras.Lines.Add(#13#10+#13#10+'Sistema CACIC'+#13#10+#13#10+v_te_instala_frase_insucesso);
                 ComunicaInsucesso('1'); // O indicador "1" sinalizará que não foi devido a privilégio na estação
               End;
           End
@@ -1735,25 +1885,76 @@ begin
          not bool_ExistsAutoRun or
          (strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) then
         Begin
-          LogDebug('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
-
-          // Caso tenha havido download de agentes principais, executar coletas imediatamente...
-          if (strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) then
-            WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute'), SW_HIDE)
+          // Se não for plataforma NT executo o agente principal
+          if not (g_oCacic.isWindowsNTPlataform()) then
+            Begin
+              LogDebug('Executando '+Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
+              if (strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) then
+                WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute'), SW_HIDE)
+              else
+                WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             ), SW_HIDE);
+            End
           else
-            WinExec(PChar(Dir + '\cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             ), SW_HIDE);
+            Begin
+
+              {*** 1 = SERVICE_STOPPED ***}
+              {*** 2 = SERVICE_START_PENDING ***}
+              {*** 3 = SERVICE_STOP_PENDING ***}
+              {*** 4 = SERVICE_RUNNING ***}
+              {*** 5 = SERVICE_CONTINUE_PENDING ***}
+              {*** 6 = SERVICE_PAUSE_PENDING ***}
+              {*** 7 = SERVICE_PAUSED ***}
+
+              // Verifico se o serviço está instalado/rodando,etc.
+              wordServiceStatus := ServiceGetStatus(nil,'cacicservice');
+              if (wordServiceStatus = 0) then
+                Begin
+                  // Instalo e Habilito o serviço
+                  LogDiario('Instalando CACICservice...');
+                  WinExec(PChar(HomeDrive + '\cacicsvc.exe -install'), SW_NORMAL);
+                End
+              else if ((wordServiceStatus < 4) or
+                       (wordServiceStatus > 4))  then
+                Begin
+                  LogDiario('Iniciando CACICservice');
+                  WinExec(PChar(HomeDrive + '\cacicsvc.exe -start'), SW_NORMAL);
+                End
+              else
+                  LogDiario('Não instalei o CACICservice. Já está rodando...');
+            End;
         End
       else
         LogDebug('Chave de Auto-Execução já existente ou Execução já iniciada...');
+    End
+  else
+    Begin // Se NT/2000/XP/...
+      if (v_exibe_informacoes = 'S') and not bool_CommandLine then
+        MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
+      LogDiario('Sem Privilégios: Necessário ser administrador "local" da estação');
+      ComunicaInsucesso('0'); // O indicador "0" (zero) sinalizará falta de privilégio na estação
     End;
   Except
     LogDiario('Falha na Instalação/Atualização');
   End;
+
+  Application.Terminate;
+  {
+  Considerando-se que o objeto se libera ao fim da aplicação
   try
     g_oCacic.Free();
   except
   end;
-  Application.Terminate;
+  }
+end;
+
+function ServiceRunning(sMachine, sService: PChar): Boolean;
+begin
+  Result := SERVICE_RUNNING = ServiceGetStatus(sMachine, sService);
+end;
+
+function ServiceStopped(sMachine, sService: PChar): Boolean;
+begin
+  Result := SERVICE_STOPPED = ServiceGetStatus(sMachine, sService);
 end;
 
 function FindWindowByTitle(WindowTitle: string): Hwnd;
@@ -1855,7 +2056,6 @@ end;
 procedure TForm1.FS_SetSecurity(p_Target : String);
 var intAux : integer;
     v_FS_Security : TNTFileSecurity;
-    boolFound : boolean;
 begin
   v_FS_Security := TNTFileSecurity.Create(nil);
   v_FS_Security.FileName := '';

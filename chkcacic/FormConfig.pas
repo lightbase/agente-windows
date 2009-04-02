@@ -31,7 +31,7 @@ type
     Label_ip_serv_cacic: TLabel;
     Label_cacic_dir: TLabel;
     gbOpcional: TGroupBox;
-    Label1: TLabel;
+    lbMensagemNaoAplicavel: TLabel;
     Label_te_instala_informacoes_extras: TLabel;
     Button_Gravar: TButton;
     Memo_te_instala_informacoes_extras: TMemo;

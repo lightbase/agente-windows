@@ -47,7 +47,7 @@ unit CACIC_Library;
 interface
 
 uses
-   Windows, SysUtils, StrUtils;
+   Windows, SysUtils, StrUtils, md5;
 
 type
 
@@ -96,6 +96,7 @@ type
          function isWindowsAdmin(): Boolean;
          function createSampleProcess(p_cmd: string; p_wait: boolean ): boolean;
          procedure showTrayIcon(p_visible:boolean);
+         function GetFileHash(strFileName : String) : String;
    end;
 
 {*------------------------------------------------------------------------------
@@ -529,6 +530,19 @@ begin
     end;
   end;
 end;
+
+{*------------------------------------------------------------------------------
+  Para cálculo de HASH de determinado arquivo.
+
+  @autor: Anderson Peterle
+  @param p_strFileName - Nome do arquivo para extração do HashCode
+-------------------------------------------------------------------------------}
+function TCACIC_Windows.GetFileHash(strFileName : String) : String;
+Begin
+  Result := 'Arquivo "'+strFileName+'" Inexistente!';
+  if (FileExists(strFileName)) then
+    Result := MD5Print(MD5File(strFileName));
+End;
 
 {*------------------------------------------------------------------------------
   Mostra ou oculta o cacic na "systray" do windows

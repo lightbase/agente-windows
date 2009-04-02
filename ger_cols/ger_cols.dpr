@@ -67,7 +67,7 @@ var p_path_cacic,
     v_DatFileName,
     v_ResultCompress,
     v_ResultUnCompress,
-    v_te_so        : string;
+    g_te_so : string;
 
 var v_Aguarde                 : TextFile;
 
@@ -1177,19 +1177,16 @@ Begin
         strAux := 'A.B.C.D'; // Apenas para forçar que o Gerente extraia via _SERVER[REMOTE_ADDR]
 
     // Tratamentos de valores para tráfego POST:
-    // v_te_so => transformar ' ' em <ESPACE> Razão: o mmcrypt se perde quando encontra ' ' (espaço)
-    v_te_so := StringReplace(v_te_so,' ','<ESPACE>',[rfReplaceAll]);
-
     v_AuxRequest.Values['te_node_address']   := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['id_so']             := StringReplace(EnCrypt(g_oCacic.getWindowsStrId()                   , l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_so']             := StringReplace(EnCrypt(v_te_so                                                           ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['id_so']             := StringReplace(EnCrypt(g_oCacic.getWindowsStrId()                                        ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_so']             := StringReplace(EnCrypt(g_te_so                                                           ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['te_ip']             := StringReplace(EnCrypt(strAux                                                            ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['id_ip_rede']        := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['te_workgroup']      := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
     v_AuxRequest.Values['te_nome_computador']:= StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['id_ip_estacao']     := StringReplace(EnCrypt(GetIP,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_versao_cacic']   := StringReplace(EnCrypt(getVersionInfo(p_path_cacic + 'cacic2.exe'),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_versao_gercols'] := StringReplace(EnCrypt(getVersionInfo(ParamStr(0)),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['id_ip_estacao']     := StringReplace(EnCrypt(GetIP                                                             ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_versao_cacic']   := StringReplace(EnCrypt(getVersionInfo(p_path_cacic + 'cacic2.exe')                       ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_versao_gercols'] := StringReplace(EnCrypt(getVersionInfo(ParamStr(0))                                       ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
 
     v_Endereco_WS       := GetValorDatMemoria('Configs.Endereco_WS', v_tstrCipherOpened);
     v_Endereco_Servidor := GetValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened);
@@ -1243,7 +1240,7 @@ Begin
 
        if v_Debugs then
           Begin
-            Log_Debug('te_so => '+v_te_so);
+            Log_Debug('te_so => '+g_te_so);
             Log_Debug('Valores de REQUEST para envio ao Gerente WEB:');
             for intAux := 0 to v_AuxRequest.count -1 do
                 Log_Debug('#'+inttostr(intAux)+': '+v_AuxRequest[intAux]);
@@ -1267,9 +1264,11 @@ Begin
            log_diario('Endereço: ' + strEndereco);
            log_diario('Mensagem: ' + Response_CS.DataString);
            result := '0';
+           setValorDatMemoria('Configs.ConexaoOK','N',v_tstrCipherOpened);
         end
       Else
         Begin
+           setValorDatMemoria('Configs.ConexaoOK','S',v_tstrCipherOpened);
            result := Response_CS.DataString;
         end;
       Response_CS.Free;
@@ -2081,9 +2080,12 @@ Begin
     Ver_UPD(StringReplace(v_scripter,'.exe','',[rfReplaceAll]),'Interpretador VBS'                    ,p_path_cacic + 'modulos\','',false);
     Ver_UPD('chksis'                                          ,'Verificador de Integridade do Sistema',PegaWinDir(nil)+'\'      ,'',false);
 
+    // O módulo de Suporte Remoto é opcional, através da opção Administração / Módulos
+    {
     log_diario('Verificando nova versão para módulo Suporte Remoto Seguro.');
     // Caso encontre nova versão de srCACICsrv esta será gravada em modulos.
     Ver_UPD('srcacicsrv','Suporte Remoto Seguro',p_path_cacic + 'modulos\','',false);
+    }
 
     // Verifico existência do chksis.ini
     if not (FileExists(PegaWinDir(nil) + 'chksis.ini')) then
@@ -2423,6 +2425,25 @@ Begin
              strAux := GeraPalavraChave;
 
              SetValorDatMemoria('Configs.te_palavra_chave',strAux, v_tstrCipherOpened);
+
+             // Verifico se srCACIC está em execução e em caso positivo entrego a chave atualizada
+             Matar(p_path_cacic+'Temp\','aguarde_SRCACIC.txt');
+             sleep(2000);
+             if (FileExists(p_path_cacic + 'Temp\aguarde_SRCACIC.txt')) then
+                Begin
+                  // Alguns cuidados necessários ao tráfego e recepção de valores pelo Gerente WEB
+                  // Some cares about send and receive at Gerente WEB
+                  v_Aux := StringReplace(strAux                       ,' ' ,'<ESPACE>'  ,[rfReplaceAll]);
+                  v_Aux := StringReplace(v_Aux                        ,'"' ,'<AD>'      ,[rfReplaceAll]);
+                  v_Aux := StringReplace(v_Aux                        ,'''','<AS>'      ,[rfReplaceAll]);
+                  v_Aux := StringReplace(v_Aux                        ,'\' ,'<BarrInv>' ,[rfReplaceAll]);
+                  v_Aux := StringReplace(EnCrypt(v_Aux,l_cs_compress) ,'+' ,'<MAIS>'    ,[rfReplaceAll]);
+
+                  log_DEBUG('Invocando "'+p_path_cacic + 'modulos\srcacicsrv.exe -update [' + v_Aux + ']' );
+                  WinExec(PChar(p_path_cacic + 'modulos\srcacicsrv.exe -update [' + v_Aux + ']'),SW_NORMAL);
+                End;
+
+
              Request_SVG.Values['te_palavra_chave']       := EnCrypt(strAux,l_cs_compress);
              v_te_serv_cacic := GetValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened);
 
@@ -2512,6 +2533,7 @@ Begin
                 SetValorDatMemoria('Configs.CS_COLETA_COMPARTILHAMENTOS'    ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_compart'       , strRetorno),true)), v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.CS_COLETA_UNID_DISC'            ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_unid_disc'     , strRetorno),true)), v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.CS_COLETA_PATRIMONIO'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_patrimonio'    , strRetorno),true)), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_SUPORTE_REMOTO'              ,UpperCase(DeCrypt(XML_RetornaValor('cs_suporte_remoto'       , strRetorno),true)), v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.DT_VERSAO_CACIC2_DISPONIVEL'    ,DeCrypt(XML_RetornaValor('dt_versao_cacic2_disponivel'       , strRetorno),true) , v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.TE_HASH_CACIC2'                 ,DeCrypt(XML_RetornaValor('te_hash_cacic2'                    , strRetorno),true) , v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.DT_VERSAO_GER_COLS_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_ger_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
@@ -2746,9 +2768,13 @@ Begin
                             // Caso encontre nova versão de Ger_Cols esta será gravada em temp e ocorrerá o autoupdate.
                             Ver_UPD('ger_cols','Gerente de Coletas',p_path_cacic + 'modulos\','Temp',false);
 
-                            log_diario('Verificando nova versão para módulo Suporte Remoto Seguro.');
-                            // Caso encontre nova versão de srCACICsrv esta será gravada em modulos.
-                            Ver_UPD('srcacicsrv','Suporte Remoto Seguro',p_path_cacic + 'modulos\','Modulos',false);
+                            // O módulo de Suporte Remoto é opcional...
+                            if (GetValorDatMemoria('Configs.CS_SUPORTE_REMOTO'         , v_tstrCipherOpened) = 'S') then
+                              Begin
+                                log_diario('Verificando nova versão para módulo Suporte Remoto Seguro.');
+                                // Caso encontre nova versão de srCACICsrv esta será gravada em modulos.
+                                Ver_UPD('srcacicsrv','Suporte Remoto Seguro',p_path_cacic + 'modulos\','Modulos',false);
+                              End;
 
                             if (FileExists(p_path_cacic + 'Temp\ger_cols.exe')) or
                                (FileExists(p_path_cacic + 'Temp\cacic2.exe'))  then
@@ -3359,7 +3385,7 @@ Begin
               else begin
                   // Atualiza a data de última coleta
                   SetValorDatMemoria('Configs.DT_HR_ULTIMA_COLETA',FormatDateTime('YYYYmmddHHnnss', Now), v_tstrCipherOpened);
-                  log_diario('Todos os dados coletados foram enviados ao Gerente WEB.');
+                  log_diario('Os dados coletados - e não redundantes - foram enviados ao Gerente WEB.');
               end;
             end;
   Except
@@ -3387,11 +3413,6 @@ begin
        For intAux := 0 to tstrTripa1.Count -2 do
            p_path_cacic := p_path_cacic + tstrTripa1[intAux] + '\';
 
-       g_oCacic.setCacicPath(p_path_cacic);
-
-       // Obtem a string de identificação do SO (v_te_so), para uso nas comunicações com o Gerente WEB.
-       v_te_so := g_oCacic.getWindowsStrId();
-
        v_Debugs := false;
        if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
            if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
@@ -3399,6 +3420,8 @@ begin
             v_Debugs := true;
             log_DEBUG('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
           End;
+
+       g_oCacic.setCacicPath(p_path_cacic);
 
         For intAux := 1 to ParamCount do
           if LowerCase(Copy(ParamStr(intAux),1,13)) = '/p_cipherkey=' then
@@ -3429,8 +3452,13 @@ begin
            v_tstrCipherOpened := TStrings.Create;
            v_tstrCipherOpened := CipherOpen(v_DatFileName);
 
+           // Obtem a string de identificação do SO (g_te_so), para uso nas comunicações com o Gerente WEB.
+           g_te_so := g_oCacic.getWindowsStrId();
+
            // Não tirar desta posição
-           SetValorDatMemoria('Configs.ID_SO',g_oCacic.getWindowsStrId(), v_tstrCipherOpened);
+           SetValorDatMemoria('Configs.ID_SO',g_te_so, v_tstrCipherOpened);
+
+           log_DEBUG('Te_So obtido: "' + g_te_so +'"');
 
            v_scripter := 'wscript.exe';
            // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento

@@ -4,7 +4,7 @@ object Configs: TConfigs
   BorderIcons = []
   BorderStyle = bsSingle
   Caption = 'Configura'#231#245'es do CHKCACIC'
-  ClientHeight = 382
+  ClientHeight = 367
   ClientWidth = 490
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -29,7 +29,7 @@ object Configs: TConfigs
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 3
-    object Label1: TLabel
+    object lbMensagemNaoAplicavel: TLabel
       Left = 265
       Top = 25
       Width = 200
@@ -57,7 +57,7 @@ object Configs: TConfigs
     end
     object Memo_te_instala_informacoes_extras: TMemo
       Left = 9
-      Top = 65
+      Top = 66
       Width = 462
       Height = 144
       Color = clInactiveBorder
