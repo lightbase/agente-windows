@@ -25,22 +25,14 @@ uses
   idFTPCommon,
   idFTP,
   PJVersionInfo,
-  DCPcrypt2,
-  DCPrijndael,
-  DCPbase64,
   CACIC_Library in '..\CACIC_Library.pas';
 
-var p_path_cacic,
-    v_te_senha_login_serv_updates,
+var v_te_senha_login_serv_updates,
     v_versao                  : string;
     v_array_path_cacic        : TStrings;
     intAux,
     v_ContaTempo,
     v_Tolerancia              : integer;
-    v_CipherKey,
-    v_IV,
-    v_SeparatorKey,
-    v_DatFileName,
     v_ModulosOpcoes,
     v_Aux                     : String;
     v_Debugs                  : Boolean;
@@ -50,10 +42,11 @@ var v_tstrCipherOpened,
     v_tstrModulosOpcoes,
     v_tstrModuloOpcao         : TStrings;
 
-// Some constants that are dependant on the cipher being used
-// Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
-const KeySize = 32; // 32 bytes = 256 bits
-      BlockSize = 16; // 16 bytes = 128 bits
+var
+   g_oCacic : TCACIC;
+
+const
+   CACIC_APP_NAME = 'ini_cols';
 
 function VerFmt(const MS, LS: DWORD): string;
   // Format the version number from the given DWORDs containing the info
@@ -98,8 +91,8 @@ var
     strDataArqLocal, strDataAtual : string;
 begin
    try
-       FileSetAttr (p_path_cacic + 'cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-       AssignFile(HistoricoLog,p_path_cacic + 'cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
+       FileSetAttr (g_oCacic.getCacicPath + 'cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+       AssignFile(HistoricoLog,g_oCacic.getCacicPath + 'cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
        {$IOChecks off}
        Reset(HistoricoLog); {Abre o arquivo texto}
        {$IOChecks on}
@@ -111,7 +104,7 @@ begin
           end;
        if (trim(strMsg) <> '') then
           begin
-             DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(p_path_cacic + 'cacic2.log')));
+             DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(g_oCacic.getCacicPath + 'cacic2.log')));
              DateTimeToString(strDataAtual   , 'yyyymmdd', Date);
              if (strDataAtual <> strDataArqLocal) then // Se o arquivo INI não é da data atual...
                 begin
@@ -151,126 +144,12 @@ begin
     end;
 end;
 
-Function Explode(Texto, Separador : String) : TStrings;
-var
-    strItem       : String;
-    ListaAuxUTILS : TStrings;
-    NumCaracteres,
-    TamanhoSeparador,
-    I : Integer;
-Begin
-    ListaAuxUTILS    := TStringList.Create;
-    strItem          := '';
-    NumCaracteres    := Length(Texto);
-    TamanhoSeparador := Length(Separador);
-    I                := 1;
-    While I <= NumCaracteres Do
-      Begin
-        If (Copy(Texto,I,TamanhoSeparador) = Separador) or (I = NumCaracteres) Then
-          Begin
-            if (I = NumCaracteres) then strItem := strItem + Texto[I];
-            ListaAuxUTILS.Add(trim(strItem));
-            strItem := '';
-            I := I + (TamanhoSeparador-1);
-          end
-        Else
-            strItem := strItem + Texto[I];
-
-        I := I + 1;
-      End;
-    Explode := ListaAuxUTILS;
-end;
-
 Function GetValorDatMemoria(p_Chave : String) : String;
 begin
     if (v_tstrCipherOpened.IndexOf(p_Chave)<>-1) then
       Result := v_tstrCipherOpened[v_tstrCipherOpened.IndexOf(p_Chave)+1]
     else
       Result := '';
-end;
-
-// Pad a string with zeros so that it is a multiple of size
-function PadWithZeros(const str : string; size : integer) : string;
-var
-  origsize, i : integer;
-begin
-  Result := str;
-  origsize := Length(Result);
-  if ((origsize mod size) <> 0) or (origsize = 0) then
-  begin
-    SetLength(Result,((origsize div size)+1)*size);
-    for i := origsize+1 to Length(Result) do
-      Result[i] := #0;
-  end;
-end;
-
-// Encrypt a string and return the Base64 encoded result
-function EnCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Try
-    // Pad Key, IV and Data with zeros as appropriate
-    l_Key   := PadWithZeros(v_CipherKey,KeySize);
-    l_IV    := PadWithZeros(v_IV,BlockSize);
-    l_Data  := PadWithZeros(p_Data,BlockSize);
-
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(v_CipherKey) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(v_CipherKey) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-    // Encrypt the data
-    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
-
-    // Return the Base64 encoded result
-    Result := Base64EncodeStr(l_Data);
-  Except
-  End;
-end;
-
-function DeCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Try
-    // Pad Key and IV with zeros as appropriate
-    l_Key := PadWithZeros(v_CipherKey,KeySize);
-    l_IV := PadWithZeros(v_IV,BlockSize);
-
-    // Decode the Base64 encoded string
-    l_Data := Base64DecodeStr(p_Data);
-
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(v_CipherKey) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(v_CipherKey) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-    // Decrypt the data
-    l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
-
-    // Return the result
-    Result := l_Data;
-  Except
-  End;
 end;
 
 Function CipherOpen(p_DatFileName : string) : TStrings;
@@ -296,14 +175,14 @@ begin
       Readln(v_DatFile,v_strCipherClosed);
       while not EOF(v_DatFile) do Readln(v_DatFile,v_strCipherClosed);
       CloseFile(v_DatFile);
-      v_strCipherOpened:= DeCrypt(v_strCipherClosed);
+      v_strCipherOpened:= g_oCacic.deCrypt(v_strCipherClosed);
       log_DEBUG('Rotina de Abertura do cacic2.dat RESTAURANDO estado da criptografia.');
     end;
 
     if (trim(v_strCipherOpened)<>'') then
-      Result := explode(v_strCipherOpened,v_SeparatorKey)
+      Result := g_oCacic.explode(v_strCipherOpened,g_oCacic.getSeparatorKey)
     else
-      Result := explode('Configs.ID_SO'+v_SeparatorKey+ oCacic.getWindowsStrId() +v_SeparatorKey+'Configs.Endereco_WS'+v_SeparatorKey+'/cacic2/ws/',v_SeparatorKey);
+      Result := g_oCacic.explode('Configs.ID_SO'+g_oCacic.getSeparatorKey+ oCacic.getWindowsStrId() +g_oCacic.getSeparatorKey+'Configs.Endereco_WS'+g_oCacic.getSeparatorKey+'/cacic2/ws/',g_oCacic.getSeparatorkey);
 
 
     if Result.Count mod 2 <> 0 then
@@ -311,7 +190,7 @@ begin
         log_DEBUG('Vetor MemoryDAT com tamanho IMPAR... Ajustando.');
         Result.Add('');
       End;
-      
+
   oCacic.Free();
 end;
 
@@ -346,120 +225,100 @@ begin
   End;
 end;
 
-const
-   CACIC_APP_NAME = 'ini_cols';
-
-var
-   oCacic : TCACIC;
-
+var v_path_cacic : String;
 begin
-   oCacic := TCACIC.Create();
+   g_oCacic := TCACIC.Create();
 
-   if( not oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+   if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then
     if (ParamCount>0) then // A passagem da chave EAS é mandatória...
     Begin
-       For intAux := 1 to ParamCount do
+       //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.dat
+       v_array_path_cacic := g_oCacic.explode(ExtractFilePath(ParamStr(0)),'\');
+       v_path_cacic := '';
+       For intAux := 0 to v_array_path_cacic.Count -2 do
+         v_path_cacic := v_path_cacic + v_array_path_cacic[intAux] + '\';
+
+       g_oCacic.setCacicPath(v_path_cacic);
+       v_Debugs := false;
+       if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
           Begin
-            if LowerCase(Copy(ParamStr(intAux),1,13)) = '/p_cipherkey=' then
-              v_CipherKey := Trim(Copy(ParamStr(intAux),14,Length((ParamStr(intAux)))));
+           if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+             Begin
+               v_Debugs := true;
+               log_DEBUG('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+             End;
           End;
 
-       if (trim(v_CipherKey)<>'') then
-          Begin
-             //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.dat
-             v_array_path_cacic := explode(ExtractFilePath(ParamStr(0)),'\');
-             p_path_cacic := '';
-             For intAux := 0 to v_array_path_cacic.Count -2 do
-               begin
-                 p_path_cacic := p_path_cacic + v_array_path_cacic[intAux] + '\';
-               end;
+       // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando a coleta ainda estiver sendo efetuada
+       AssignFile(v_Aguarde,g_oCacic.getCacicPath + 'temp\aguarde_INI.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+       {$IOChecks off}
+       Reset(v_Aguarde); {Abre o arquivo texto}
+       {$IOChecks on}
+       if (IOResult <> 0) then // Arquivo não existe, será recriado.
+            Rewrite (v_Aguarde);
 
-             v_Debugs := false;
-             if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
+       Append(v_Aguarde);
+       Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ini_Cols');
+       Append(v_Aguarde);
+
+       Matar(g_oCacic.getCacicPath+'temp\','*.dat');
+       Try
+            // Caso exista o Gerente de Coletas será verificada a versão...
+            // Devido a problemas na rotina de FTP na versão 2.0.1.2,
+            // que impossibilitava atualização de versões de todos os componentes, exceto INI_COLS
+            If (FileExists(g_oCacic.getCacicPath + 'modulos\ger_cols.exe')) Then
                 Begin
-                 if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
-                   Begin
-                     v_Debugs := true;
-                     log_DEBUG('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
-                   End;
+                  v_versao := trim(GetVersionInfo(g_oCacic.getCacicPath +  'modulos\ger_cols.exe'));
+                  if (v_versao = '0.0.0.0') then // Provavelmente arquivo corrompido ou versão muito antiga
+                    Begin
+                      Matar(g_oCacic.getCacicPath+'modulos\','ger_cols.exe');
+                      Sleep(5000); // Pausa 5 segundos para total exclusão de GER_COLS
+                      CipherOpen(g_oCacic.getDatFileName);
+                      v_te_senha_login_serv_updates := GetValorDatMemoria('Configs.te_senha_login_serv_updates');
+
+                      FTP(GetValorDatMemoria('Configs.te_serv_updates'),
+                          GetValorDatMemoria('Configs.nu_porta_serv_updates'),
+                          GetValorDatMemoria('Configs.nm_usuario_login_serv_updates'),
+                          v_te_senha_login_serv_updates,
+                          GetValorDatMemoria('Configs.te_path_serv_updates'),
+                          'ger_cols.exe',
+                          g_oCacic.getCacicPath + 'modulos');
+
+                      // Pausa 5 segundos para total gravação de GER_COLS
+                      Sleep(5000);
+
+                    End;
                 End;
 
-             // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando a coleta ainda estiver sendo efetuada
-             AssignFile(v_Aguarde,p_path_cacic + 'temp\aguarde_INI.txt'); {Associa o arquivo a uma variável do tipo TextFile}
-             {$IOChecks off}
-             Reset(v_Aguarde); {Abre o arquivo texto}
-             {$IOChecks on}
-             if (IOResult <> 0) then // Arquivo não existe, será recriado.
-                  Rewrite (v_Aguarde);
+            // Procuro pelo parâmetro p_ModulosOpcoes que deverá ter sido passado pelo Gerente de Coletas
+            // Contendo a formação: coletor1,wait#coletor2,nowait#coletorN,nowait#
+            // Observações:
+            // 1) Os valores "wait/nowait" determinam se o Inicializador de Coletas estará sujeito à tolerância de tempo para as coletas.
+            // 2) No caso de Coletor de Patrimônio, este depende de digitação e deverá trazer a opção "wait";
+            // 3) Ainda no caso de Coletor de Patrimônio, quando este for invocado através do menu, o Gerente de Coletas enviará a opção "user", ficando o parâmetro p_ModulosOpcoes = "col_patr,wait,user"
+            For intAux := 1 to ParamCount do
+              Begin
+                if LowerCase(Copy(ParamStr(intAux),1,17)) = '/p_modulosopcoes=' then
+                  v_ModulosOpcoes := Trim(Copy(ParamStr(intAux),18,Length((ParamStr(intAux)))));
+              End;
 
-             Append(v_Aguarde);
-             Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ini_Cols');
-             Append(v_Aguarde);
+            log_DEBUG('Parâmetro p_ModulosOpcoes recebido: '+v_ModulosOpcoes);
+            v_tstrModulosOpcoes := g_oCacic.explode(v_ModulosOpcoes,'#');
 
-             // A chave AES foi obtida no parâmetro p_CipherKey. Recomenda-se que cada empresa altere a sua chave.
-             v_IV           := 'abcdefghijklmnop';
-             v_DatFileName  := p_path_cacic + 'cacic2.dat';
-             v_SeparatorKey := '=CacicIsFree=';
+            // Tempo de tolerância para as coletas
+            v_Tolerancia := 5; // (minutos)
 
-             Matar(p_path_cacic+'temp\','*.dat');
-             Try
-                  // Caso exista o Gerente de Coletas será verificada a versão...
-                  // Devido a problemas na rotina de FTP na versão 2.0.1.2,
-                  // que impossibilitava atualização de versões de todos os componentes, exceto INI_COLS
-                  If (FileExists(p_path_cacic + 'modulos\ger_cols.exe')) Then
-                      Begin
-                        v_versao := trim(GetVersionInfo(p_path_cacic +  'modulos\ger_cols.exe'));
-                        if (v_versao = '0.0.0.0') then // Provavelmente arquivo corrompido ou versão muito antiga
-                          Begin
-                            Matar(p_path_cacic+'modulos\','ger_cols.exe');
-                            Sleep(5000); // Pausa 5 segundos para total exclusão de GER_COLS
-                            CipherOpen(v_DatFileName);
-                            v_te_senha_login_serv_updates := GetValorDatMemoria('Configs.te_senha_login_serv_updates');
+            For intAux := 0 to v_tstrModulosOpcoes.Count -1 do
+              Begin
+                v_tstrModuloOpcao := g_oCacic.explode(v_tstrModulosOpcoes[intAux],',');
+                v_Aux := v_tstrModuloOpcao[0]+'.exe /p_Option='+v_tstrModuloOpcao[2];
+                log_DEBUG('Chamando "' + v_tstrModuloOpcao[0]+'.exe " /p_Option='+v_tstrModuloOpcao[2]);
 
-                            FTP(GetValorDatMemoria('Configs.te_serv_updates'),
-                                GetValorDatMemoria('Configs.nu_porta_serv_updates'),
-                                GetValorDatMemoria('Configs.nm_usuario_login_serv_updates'),
-                                v_te_senha_login_serv_updates,
-                                GetValorDatMemoria('Configs.te_path_serv_updates'),
-                                'ger_cols.exe',
-                                p_path_cacic + 'modulos');
+                g_oCacic.createSampleProcess( g_oCacic.getCacicPath + '\modulos\' + v_aux, CACIC_PROCESS_WAIT );
 
-                            // Pausa 5 segundos para total gravação de GER_COLS
-                            Sleep(5000);
-
-                          End;
-                      End;
-
-                  // Procuro pelo parâmetro p_ModulosOpcoes que deverá ter sido passado pelo Gerente de Coletas
-                  // Contendo a formação: coletor1,wait#coletor2,nowait#coletorN,nowait#
-                  // Observações:
-                  // 1) Os valores "wait/nowait" determinam se o Inicializador de Coletas estará sujeito à tolerância de tempo para as coletas.
-                  // 2) No caso de Coletor de Patrimônio, este depende de digitação e deverá trazer a opção "wait";
-                  // 3) Ainda no caso de Coletor de Patrimônio, quando este for invocado através do menu, o Gerente de Coletas enviará a opção "user", ficando o parâmetro p_ModulosOpcoes = "col_patr,wait,user"
-                  For intAux := 1 to ParamCount do
-                    Begin
-                      if LowerCase(Copy(ParamStr(intAux),1,17)) = '/p_modulosopcoes=' then
-                        v_ModulosOpcoes := Trim(Copy(ParamStr(intAux),18,Length((ParamStr(intAux)))));
-                    End;
-
-                  log_DEBUG('Parâmetro p_ModulosOpcoes recebido: '+v_ModulosOpcoes);
-                  v_tstrModulosOpcoes := explode(v_ModulosOpcoes,'#');
-
-                  // Tempo de tolerância para as coletas
-                  v_Tolerancia := 5; // (minutos)
-
-                  For intAux := 0 to v_tstrModulosOpcoes.Count -1 do
-                    Begin
-                      v_tstrModuloOpcao := explode(v_tstrModulosOpcoes[intAux],',');
-                      v_Aux := v_tstrModuloOpcao[0]+'.exe /p_CipherKey='+v_CipherKey+ ' /p_Option='+v_tstrModuloOpcao[2];
-                      log_DEBUG('Chamando "' + v_tstrModuloOpcao[0]+'.exe /p_CipherKey=*****" /p_Option='+v_tstrModuloOpcao[2]);
-
-                      oCacic.createSampleProcess( p_path_cacic + '\modulos\' + v_aux, CACIC_PROCESS_WAIT );
-
-                    End;
-             except
-             end;
-          End;
+              End;
+       except
+       end;
     End;
-    oCacic.Free();
+    g_oCacic.Free();
 end.

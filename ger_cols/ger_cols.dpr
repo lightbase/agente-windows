@@ -44,83 +44,53 @@ uses
   IniFiles,
   Registry,
   LibXmlParser in 'LibXmlParser.pas',
-  DCPcrypt2,
-  DCPrijndael,
-  DCPbase64,
   ZLibEx,
-  md5,
   CACIC_Library in '..\CACIC_Library.pas';
 
 {$APPTYPE CONSOLE}
-var p_path_cacic,
-    v_scripter,
-    p_Shell_Command,
-    v_acao_gercols,
-    v_Tamanho_Arquivo,
-    v_Endereco_Servidor,
-    v_Aux,
-    strAux,
-    endereco_servidor_cacic,
-    v_ModulosOpcoes,
-    v_CipherKey,
-    v_IV,
-    v_DatFileName,
-    v_ResultCompress,
-    v_ResultUnCompress,
-    g_te_so : string;
+var
+  v_scripter,
+  p_Shell_Command,
+  v_acao_gercols,
+  v_Tamanho_Arquivo,
+  v_Endereco_Servidor,
+  v_Aux,
+  strAux,
+  endereco_servidor_cacic,
+  v_ModulosOpcoes,
+  v_ResultCompress,
+  v_ResultUnCompress : string;
 
-var v_Aguarde                 : TextFile;
+var
+  v_Aguarde                 : TextFile;
 
-var CountUPD,
-    intAux,
-    intMontaBatch,
-    intLoop : integer;
+var
+  CountUPD,
+  intAux,
+  intMontaBatch,
+  intLoop : integer;
 
-var tstrTripa1,
-    v_tstrCipherOpened,
-    v_tstrCipherOpened1,
-    tstringsAux               : TStrings;
+var
+  tstrTripa1,
+  v_tstrCipherOpened,
+  v_tstrCipherOpened1,
+  tstringsAux               : TStrings;
 
-var v_Debugs,
-    l_cs_cipher,
-    l_cs_compress,
-    v_CS_AUTO_UPDATE          : boolean;
+var
+  v_Debugs,
+  l_cs_cipher,
+  l_cs_compress,
+  v_CS_AUTO_UPDATE          : boolean;
 
-var BatchFile,
-    Request_Ger_Cols          : TStringList;
+var
+  BatchFile,
+  Request_Ger_Cols          : TStringList;
 
 var
   g_oCacic: TCACIC;
 
-// Some constants that are dependant on the cipher being used
-// Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
-const KeySize = 32; // 32 bytes = 256 bits
-      BlockSize = 16; // 16 bytes = 128 bits
-
-// Para cálculo de HASH de determinado arquivo.
-// Objetivo principal: Verificar autenticidade de agentes para trabalho cooperativo
-// Anderson Peterle - Dataprev/ES - 08/Maio/2008
-function GetFileHash(strFileName : String) : String;
-Begin
-  Result := 'Arquivo "'+strFileName+'" Inexistente!';
-  if (FileExists(strFileName)) then
-    Result := MD5Print(MD5File(strFileName));
-End;
-
-// Pad a string with zeros so that it is a multiple of size
-function PadWithZeros(const str : string; size : integer) : string;
-var
-  origsize, i : integer;
-begin
-  Result := str;
-  origsize := Length(Result);
-  if ((origsize mod size) <> 0) or (origsize = 0) then
-  begin
-    SetLength(Result,((origsize div size)+1)*size);
-    for i := origsize+1 to Length(Result) do
-      Result[i] := #0;
-  end;
-end;
+const
+  CACIC_APP_NAME            = 'ger_cols';
 
 procedure log_diario(strMsg : String);
 var
@@ -128,8 +98,8 @@ var
     strDataArqLocal, strDataAtual : string;
 begin
    try
-       FileSetAttr (p_path_cacic + 'cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-       AssignFile(HistoricoLog,p_path_cacic + 'cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
+       FileSetAttr (g_oCacic.getCacicPath + 'cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+       AssignFile(HistoricoLog,g_oCacic.getCacicPath + 'cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
        {$IOChecks off}
        Reset(HistoricoLog); {Abre o arquivo texto}
        {$IOChecks on}
@@ -139,7 +109,7 @@ begin
             Append(HistoricoLog);
             Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now) + '======================> Iniciando o Log <=======================');
           end;
-       DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(p_path_cacic + 'cacic2.log')));
+       DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(g_oCacic.getCacicPath + 'cacic2.log')));
        DateTimeToString(strDataAtual   , 'yyyymmdd', Date);
        if (strDataAtual <> strDataArqLocal) then // Se o arquivo INI não é da data atual...
           begin
@@ -281,39 +251,8 @@ begin
   log_DEBUG('XML Parser retornando: "'+Result+'" para Tag "'+Tag+'"');
 end;
 
-
-Function Explode(Texto, Separador : String) : TStrings;
-var
-    strItem       : String;
-    ListaAuxUTILS : TStrings;
-    NumCaracteres,
-    TamanhoSeparador,
-    I : Integer;
-Begin
-    ListaAuxUTILS    := TStringList.Create;
-    strItem          := '';
-    NumCaracteres    := Length(Texto);
-    TamanhoSeparador := Length(Separador);
-    I                := 1;
-    While I <= NumCaracteres Do
-      Begin
-        If (Copy(Texto,I,TamanhoSeparador) = Separador) or (I = NumCaracteres) Then
-          Begin
-            if (I = NumCaracteres) then strItem := strItem + Texto[I];
-            ListaAuxUTILS.Add(trim(strItem));
-            strItem := '';
-            I := I + (TamanhoSeparador-1);
-          end
-        Else
-            strItem := strItem + Texto[I];
-
-        I := I + 1;
-      End;
-    Explode := ListaAuxUTILS;
-end;
-
 function StringtoHex(Data: string): string;
-var 
+var
   i, i2: Integer;
   s: string;
 begin
@@ -331,18 +270,6 @@ begin
   Result := s;
 end;
 
-Function Implode(p_Array : TStrings ; p_Separador : String) : String;
-var intAux : integer;
-Begin
-    strAux := '';
-    For intAux := 0 To p_Array.Count -1 do
-      Begin
-        if (strAux<>'') then strAux := strAux + p_Separador;
-        strAux := strAux + p_Array[intAux];
-      End;
-    Implode := strAux;
-end;
-
 Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String; p_tstrCipherOpened : TStrings);
 var v_Aux     : string;
 begin
@@ -357,6 +284,7 @@ begin
         p_tstrCipherOpened.Add(v_Aux);
       End;
 end;
+
 Function GetValorDatMemoria(p_Chave : String; p_tstrCipherOpened : TStrings) : String;
 var intTamanhoLista,
     intIndiceChave : integer;
@@ -367,7 +295,7 @@ begin
     if (intIndiceChave <> -1) then
       Begin
         intTamanhoLista := p_tstrCipherOpened.Count;
-        log_DEBUG('GetValorDatMemoria - Tamanho da Lista: '+intToStr(intTamanhoLista));        
+        log_DEBUG('GetValorDatMemoria - Tamanho da Lista: '+intToStr(intTamanhoLista));
         if ((intIndiceChave + 1) < intTamanhoLista) then
           Result := trim(p_tstrCipherOpened[intIndiceChave + 1])
         else
@@ -377,111 +305,6 @@ begin
         Result := '';
 
     log_DEBUG('GetValorDatMemoria - Retornando "'+Result+'"');
-end;
-
-// Encrypt a string and return the Base64 encoded result
-function EnCrypt(p_Data : String; p_Compress : Boolean) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data,
-  l_Key,
-  l_IV,
-  strAux : String;
-begin
-  Try
-    if l_cs_cipher then
-      Begin
-        // Pad Key, IV and Data with zeros as appropriate
-        l_Key   := PadWithZeros(v_CipherKey,KeySize);
-        l_IV    := PadWithZeros(v_IV,BlockSize);
-        l_Data  := PadWithZeros(trim(p_Data),BlockSize);
-
-        //log_DEBUG('Encrypt - HEXA da CHAVE "'+v_CipherKey+'": "'+StringtoHex(l_Key)+'"');
-        //log_DEBUG('Encrypt - HEXA do IV    "'+v_IV+'": "'+StringtoHex(l_IV)+'"');
-        //log_DEBUG('Encrypt - HEXA do DADO  "'+trim(p_Data)+'": "'+StringtoHex(l_Data)+'"');
-
-        // Create the cipher and initialise according to the key length
-        l_Cipher := TDCP_rijndael.Create(nil);
-        if Length(v_CipherKey) <= 16 then
-          l_Cipher.Init(l_Key[1],128,@l_IV[1])
-        else if Length(v_CipherKey) <= 24 then
-          l_Cipher.Init(l_Key[1],192,@l_IV[1])
-        else
-          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-        // Encrypt the data
-        l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-        // Free the cipher and clear sensitive information
-        l_Cipher.Free;
-        FillChar(l_Key[1],Length(l_Key),0);
-        log_DEBUG('EnCrypt - Criptografia(ATIVADA) de "'+p_Data+'" => "'+l_Data+'"');
-        // Return the Base64 encoded result
-
-        Result := trim(Base64EncodeStr(l_Data));
-      End
-    else
-      Begin
-        log_DEBUG('EnCrypt - Criptografia(DESATIVADA) de "'+p_Data+'"');
-        Result := trim(p_Data);
-      End;
-  Except
-    log_diario('EnCrypt - Erro no Processo de Criptografia');
-  End;
-  if (p_Compress) and (l_cs_compress) then
-       Result := Compress(Result);
-end;
-
-function DeCrypt(p_Data : String ; p_DeCompress : Boolean) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV, v_Data : string;
-begin
-  Try
-    v_Data := p_Data;
-    if (p_DeCompress) and (l_cs_compress) then
-         v_Data := DeCompress(p_Data);
-
-    if l_cs_cipher then
-      Begin
-        // Pad Key and IV with zeros as appropriate
-        l_Key := PadWithZeros(v_CipherKey,KeySize);
-        l_IV := PadWithZeros(v_IV,BlockSize);
-
-        // Decode the Base64 encoded string
-        l_Data := Base64DecodeStr(trim(v_Data));
-
-        //log_DEBUG('Decrypt - HEXA da CHAVE "'+v_CipherKey+'": "'+StringtoHex(l_Key)+'"');
-        //log_DEBUG('Decrypt - HEXA do IV    "'+v_IV+'": "'+StringtoHex(l_IV)+'"');
-        //log_DEBUG('Decrypt - HEXA do DADO  "'+trim(p_Data)+'": "'+StringtoHex(l_Data)+'"');
-
-        // Create the cipher and initialise according to the key length
-        l_Cipher := TDCP_rijndael.Create(nil);
-        if Length(v_CipherKey) <= 16 then
-          l_Cipher.Init(l_Key[1],128,@l_IV[1])
-        else if Length(v_CipherKey) <= 24 then
-          l_Cipher.Init(l_Key[1],192,@l_IV[1])
-        else
-          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-        // Decrypt the data
-        l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-        // Free the cipher and clear sensitive information
-        l_Cipher.Free;
-        FillChar(l_Key[1],Length(l_Key),0);
-        log_DEBUG('DeCrypt - DeCriptografia(ATIVADA) de "'+v_Data+'" => "'+l_Data+'"');
-        // Return the result
-        Result := trim(RemoveZerosFimString(l_Data));
-      End
-    else
-      Begin
-        log_DEBUG('DeCrypt - DeCriptografia(DESATIVADA) de "'+v_Data+'"');
-        Result := trim(v_Data);
-      End;
-  Except
-    log_diario('DeCrypt - Erro no Processo de DeCriptografia. Dado = '+v_Data);
-  End;
 end;
 
 procedure Matar(v_dir,v_files: string);
@@ -525,19 +348,19 @@ begin
            Append(v_DatFileDebug);
          End;
 
-       v_strCipherOpenImploded := Implode(p_tstrCipherOpened,'=CacicIsFree=');
+       v_strCipherOpenImploded := g_oCacic.implode(p_tstrCipherOpened,g_oCacic.getSeparatorKey);
 
        v_cs_cipher := l_cs_cipher;
        l_cs_cipher := true;
        log_DEBUG('Rotina de Fechamento do cacic2.dat ATIVANDO criptografia.');
-       v_strCipherClosed := EnCrypt(v_strCipherOpenImploded, false);
+       v_strCipherClosed := g_oCacic.enCrypt(v_strCipherOpenImploded);
 
        l_cs_cipher := v_cs_cipher;
        log_DEBUG('Rotina de Fechamento do cacic2.dat RESTAURANDO estado da criptografia.');
        Writeln(v_DatFile,v_strCipherClosed); {Grava a string Texto no arquivo texto}
        if v_Debugs then
           Begin
-            Writeln(v_DatFileDebug,StringReplace(v_strCipherOpenImploded,'=CacicIsFree=',#13#10,[rfReplaceAll]));
+            Writeln(v_DatFileDebug,StringReplace(v_strCipherOpenImploded,g_oCacic.getSeparatorKey,#13#10,[rfReplaceAll]));
             CloseFile(v_DatFileDebug);
           End;
        CloseFile(v_DatFile);
@@ -575,14 +398,14 @@ begin
       v_cs_cipher := l_cs_cipher;
       l_cs_cipher := true;
       log_DEBUG('Rotina de Abertura do cacic2.dat ATIVANDO criptografia.');
-      v_strCipherOpened:= DeCrypt(v_strCipherClosed,false);
+      v_strCipherOpened:= g_oCacic.deCrypt(v_strCipherClosed);
       l_cs_cipher := v_cs_cipher;
       log_DEBUG('Rotina de Abertura do cacic2.dat RESTAURANDO estado da criptografia.');
     end;
     if (trim(v_strCipherOpened)<>'') then
-      Result := explode(v_strCipherOpened,'=CacicIsFree=')
+      Result := g_oCacic.explode(v_strCipherOpened,g_oCacic.getSeparatorKey)
     else
-      Result := explode('Configs.ID_SO=CacicIsFree='+g_oCacic.getWindowsStrId()+'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
+      Result := g_oCacic.explode('Configs.ID_SO'+g_oCacic.getSeparatorKey+g_oCacic.getWindowsStrId()+g_oCacic.getSeparatorKey+'Configs.Endereco_WS'+g_oCacic.getSeparatorKey+'/cacic2/ws/',g_oCacic.getSeparatorKey);
 
     if Result.Count mod 2 = 0 then
         Result.Add('');
@@ -591,13 +414,13 @@ end;
 
 procedure Apaga_Temps;
 begin
-  Matar(p_path_cacic + 'temp\','*.vbs');
-  Matar(p_path_cacic + 'temp\','*.txt');
+  Matar(g_oCacic.getCacicPath + 'temp\','*.vbs');
+  Matar(g_oCacic.getCacicPath + 'temp\','*.txt');
 end;
 
 procedure Finalizar(p_pausa:boolean);
 Begin
-  CipherClose(v_DatFileName, v_tstrCipherOpened);
+  CipherClose(g_oCacic.getDatFileName, v_tstrCipherOpened);
   Apaga_Temps;
   if p_pausa then sleep(2000); // Pausa de 2 segundos para conclusão de operações de arquivos.
 End;
@@ -730,7 +553,7 @@ var RegEditGet: TRegistry;
 begin
     try
       Result := '';
-      ListaAuxGet := Explode(Chave, '\');
+      ListaAuxGet := g_oCacic.explode(Chave, '\');
 
       strRootKey := ListaAuxGet[0];
       For I := 1 To ListaAuxGet.Count - 2 Do strKey := strKey + ListaAuxGet[I] + '\';
@@ -770,7 +593,7 @@ var RegEditSet: TRegistry;
     ListaAuxSet : TStrings;
     I : Integer;
 begin
-    ListaAuxSet := Explode(Chave, '\');
+    ListaAuxSet := g_oCacic.explode(Chave, '\');
     strRootKey := ListaAuxSet[0];
     For I := 1 To ListaAuxSet.Count - 2 Do strKey := strKey + ListaAuxSet[I] + '\';
     strValue := ListaAuxSet[ListaAuxSet.Count - 1];
@@ -814,7 +637,7 @@ var RegDelValorReg: TRegistry;
     ListaAuxDel : TStrings;
     I : Integer;
 begin
-    ListaAuxDel := Explode(Chave, '\');
+    ListaAuxDel := g_oCacic.explode(Chave, '\');
     strRootKey := ListaAuxDel[0];
     For I := 1 To ListaAuxDel.Count - 2 Do strKey := strKey + ListaAuxDel[I] + '\';
     strValue := ListaAuxDel[ListaAuxDel.Count - 1];
@@ -941,7 +764,7 @@ begin
      Begin
        Try
           strAux := GetValorChaveRegEdit('HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Last Domain');
-          listaAux_GWG := Explode(strAux, ',');
+          listaAux_GWG := g_oCacic.explode(strAux, ',');
           Result := Trim(listaAux_GWG[2]);
           listaAux_GWG.Free;
        Except
@@ -984,8 +807,8 @@ var L1_GIR, L2_GIR : TStrings;
     end;
 begin
   Try
-   L1_GIR := Explode(IP_Computador, '.');
-   L2_GIR := Explode(MascaraRede, '.');
+   L1_GIR := g_oCacic.explode(IP_Computador, '.');
+   L2_GIR := g_oCacic.explode(MascaraRede, '.');
 
    //Percorre cada um dos 4 octetos dos endereços
    for i := 0 to 3  do
@@ -1041,7 +864,7 @@ begin
     Result              := '';
     if (p_SectionName <> '') then
       Begin
-        v_array_SectionName := explode(p_SectionName,'/');
+        v_array_SectionName := g_oCacic.explode(p_SectionName,'/');
         v_array_SectionName_Count := v_array_SectionName.Count;
       End
     else v_array_SectionName_Count := 0;
@@ -1100,7 +923,7 @@ var
     strDataArqLocal, strDataAtual, v_file_debugs : string;
 begin
    try
-       v_file_debugs := p_path_cacic + '\Temp\Debugs\debug_'+StringReplace(ExtractFileName(StrUpper(PChar(ParamStr(0)))),'.EXE','',[rfReplaceAll])+'.txt';
+       v_file_debugs := g_oCacic.getCacicPath + '\Temp\Debugs\debug_'+StringReplace(ExtractFileName(StrUpper(PChar(ParamStr(0)))),'.EXE','',[rfReplaceAll])+'.txt';
        FileSetAttr (v_file_debugs,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
        AssignFile(DebugsFile,v_file_debugs); {Associa o arquivo a uma variável do tipo TextFile}
 
@@ -1177,16 +1000,15 @@ Begin
         strAux := 'A.B.C.D'; // Apenas para forçar que o Gerente extraia via _SERVER[REMOTE_ADDR]
 
     // Tratamentos de valores para tráfego POST:
-    v_AuxRequest.Values['te_node_address']   := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['id_so']             := StringReplace(EnCrypt(g_oCacic.getWindowsStrId()                                        ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_so']             := StringReplace(EnCrypt(g_te_so                                                           ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_ip']             := StringReplace(EnCrypt(strAux                                                            ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['id_ip_rede']        := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_workgroup']      := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_nome_computador']:= StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['id_ip_estacao']     := StringReplace(EnCrypt(GetIP                                                             ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_versao_cacic']   := StringReplace(EnCrypt(getVersionInfo(p_path_cacic + 'cacic2.exe')                       ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-    v_AuxRequest.Values['te_versao_gercols'] := StringReplace(EnCrypt(getVersionInfo(ParamStr(0))                                       ,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_node_address']   := StringReplace(g_oCacic.EnCrypt(GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened)),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_so']             := StringReplace(g_oCacic.EnCrypt(g_oCacic.getWindowsStrId()                                        ),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_ip']             := StringReplace(g_oCacic.EnCrypt(strAux                                                            ),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['id_ip_rede']        := StringReplace(g_oCacic.EnCrypt(GetValorDatMemoria('TcpIp.ID_IP_REDE'        , v_tstrCipherOpened)),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_workgroup']      := StringReplace(g_oCacic.EnCrypt(GetValorDatMemoria('TcpIp.TE_WORKGROUP'      , v_tstrCipherOpened)),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_nome_computador']:= StringReplace(g_oCacic.EnCrypt(GetValorDatMemoria('TcpIp.TE_NOME_COMPUTADOR', v_tstrCipherOpened)),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['id_ip_estacao']     := StringReplace(g_oCacic.EnCrypt(GetIP                                                             ),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_versao_cacic']   := StringReplace(g_oCacic.EnCrypt(getVersionInfo(g_oCacic.getCacicPath + 'cacic2.exe')                       ),'+','<MAIS>',[rfReplaceAll]);
+    v_AuxRequest.Values['te_versao_gercols'] := StringReplace(g_oCacic.EnCrypt(getVersionInfo(ParamStr(0))                                       ),'+','<MAIS>',[rfReplaceAll]);
 
     v_Endereco_WS       := GetValorDatMemoria('Configs.Endereco_WS', v_tstrCipherOpened);
     v_Endereco_Servidor := GetValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened);
@@ -1198,7 +1020,7 @@ Begin
       End;
 
     if (trim(v_Endereco_Servidor)='') then
-        v_Endereco_Servidor := Trim(GetValorChaveRegIni('Configs','EnderecoServidor',p_path_cacic + 'cacic2.ini'));
+        v_Endereco_Servidor := Trim(GetValorChaveRegIni('Configs','EnderecoServidor',g_oCacic.getCacicPath + 'cacic2.ini'));
 
     strEndereco := 'http://' + v_Endereco_Servidor + v_Endereco_WS + URL;
 
@@ -1223,9 +1045,9 @@ Begin
        idHTTP1.ProxyParams.ProxyPort            := 0;
        idHTTP1.ReadTimeout                      := 0;
        idHTTP1.RedirectMaximum                  := 15;
-       idHTTP1.Request.UserAgent                := StringReplace(EnCrypt('AGENTE_CACIC',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-       idHTTP1.Request.Username                 := StringReplace(EnCrypt('USER_CACIC',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-       idHTTP1.Request.Password                 := StringReplace(EnCrypt('PW_CACIC',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+       idHTTP1.Request.UserAgent                := StringReplace(g_oCacic.enCrypt('AGENTE_CACIC'),'+','<MAIS>',[rfReplaceAll]);
+       idHTTP1.Request.Username                 := StringReplace(g_oCacic.enCrypt('USER_CACIC'),'+','<MAIS>',[rfReplaceAll]);
+       idHTTP1.Request.Password                 := StringReplace(g_oCacic.enCrypt('PW_CACIC'),'+','<MAIS>',[rfReplaceAll]);
        idHTTP1.Request.Accept                   := 'text/html, */*';
        idHTTP1.Request.BasicAuthentication      := true;
        idHTTP1.Request.ContentLength            := -1;
@@ -1240,7 +1062,7 @@ Begin
 
        if v_Debugs then
           Begin
-            Log_Debug('te_so => '+g_te_so);
+            Log_Debug('te_so => '+g_oCacic.getWindowsStrId);
             Log_Debug('Valores de REQUEST para envio ao Gerente WEB:');
             for intAux := 0 to v_AuxRequest.count -1 do
                 Log_Debug('#'+inttostr(intAux)+': '+v_AuxRequest[intAux]);
@@ -1295,7 +1117,7 @@ Begin
 
     strRetorno := ComunicaServidor('get_patrimonio.php', Request_Ger_Cols, '.');
     SetValorDatMemoria('Patrimonio.Configs', strRetorno, v_tstrCipherOpened);
-    SetValorDatMemoria('Patrimonio.cs_abre_janela_patr', DeCrypt(XML_RetornaValor('cs_abre_janela_patr', strRetorno),true), v_tstrCipherOpened);
+    SetValorDatMemoria('Patrimonio.cs_abre_janela_patr', g_oCacic.deCrypt(XML_RetornaValor('cs_abre_janela_patr', strRetorno)), v_tstrCipherOpened);
 
     Request_Ger_Cols.Free;
 
@@ -1360,11 +1182,11 @@ var intAux1, intAux2, intAux3, intAux4, v_conta, v_conta_EXCECOES : integer;
 
 Begin
    Result   := '';
-   tstrOR   := Explode(p_tripa,';'); // OR
+   tstrOR   := g_oCacic.explode(p_tripa,';'); // OR
 
     for intAux1 := 0 to tstrOR.Count-1 Do
       Begin
-        tstrAND  := Explode(tstrOR[intAux1],','); // AND
+        tstrAND  := g_oCacic.explode(tstrOR[intAux1],','); // AND
         for intAux2 := 0 to p_array_campos.Count-1 Do
           Begin
             v_conta := 0;
@@ -1380,7 +1202,7 @@ Begin
                 v_conta_EXCECOES := 0;
                 if (p_excecao <> '') then
                   Begin
-                    tstrEXCECOES  := Explode(p_excecao,','); // Excecoes a serem tratadas
+                    tstrEXCECOES  := g_oCacic.explode(p_excecao,','); // Excecoes a serem tratadas
                     for intAux4 := 0 to tstrEXCECOES.Count-1 Do
                       Begin
                         if (rat(tstrEXCECOES[intAux4],p_array_valores[intAux2]) > 0) then
@@ -1483,7 +1305,7 @@ Begin
           End
        else
           Begin
-            v_Dir_Temp := p_path_cacic + p_Dir_Temp;
+            v_Dir_Temp := g_oCacic.getCacicPath + p_Dir_Temp;
           End;
 
        v_versao_disponivel := '';
@@ -1523,7 +1345,7 @@ Begin
           End
        else
           Begin
-            strHashLocal  := GetFileHash(p_Dir_Inst + p_File + '.exe');
+            strHashLocal  := g_oCacic.getFileHash(p_Dir_Inst + p_File + '.exe');
             strHashRemoto := GetValorDatMemoria('Configs.TE_HASH_'+UpperCase(p_File), v_tstrCipherOpened);
             // TESTE
             //if (UpperCase(p_File) = 'GER_COLS') or (UpperCase(p_File) = 'CACIC2') then
@@ -1577,21 +1399,12 @@ Begin
         end;
    Except
         Begin
-          CriaTXT(p_path_cacic,'ger_erro');
+          CriaTXT(g_oCacic.getCacicPath,'ger_erro');
           SetValorDatMemoria('Erro_Fatal','PROBLEMAS COM ROTINA DE EXECUÇÃO DE UPDATES DE VERSÕES. Não foi possível baixar o módulo '+ p_Nome_Modulo + '.', v_tstrCipherOpened);
           log_diario('PROBLEMAS COM ROTINA DE EXECUÇÃO DE UPDATES DE VERSÕES.');
         End;
    End;
 End;
-
-
-function PegaWinDir(Sender: TObject) : string;
-var WinPath: array[0..MAX_PATH + 1] of char;
-begin
-      GetWindowsDirectory(WinPath,MAX_PATH);
-      Result := WinPath
-end;
-
 
 function GetNetworkUserName : String;
   //  Gets the name of the user currently logged into the network on
@@ -1744,15 +1557,14 @@ End;
 procedure Patrimnio1Click(Sender: TObject);
 begin
   SetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim','', v_tstrCipherOpened);
-  if ChecaAgente(p_path_cacic + 'modulos', 'ini_cols.exe') then
-    g_oCacic.createSampleProcess( p_path_cacic + 'modulos\ini_cols.exe /p_CipherKey=' + v_CipherKey +
-                                           ' /p_ModulosOpcoes=col_patr,wait,user#', CACIC_PROCESS_WAIT );
+  if ChecaAgente(g_oCacic.getCacicPath + 'modulos', 'ini_cols.exe') then
+    g_oCacic.createSampleProcess( g_oCacic.getCacicPath + 'modulos\ini_cols.exe /p_ModulosOpcoes=col_patr,wait,user#', CACIC_PROCESS_WAIT );
 
-  if (FileExists(p_path_cacic + 'Temp\col_patr.dat')) then
+  if (FileExists(g_oCacic.getCacicPath + 'Temp\col_patr.dat')) then
 	  Begin
-		log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_patr.dat encontrado.');
+		log_DEBUG('Indicador '+g_oCacic.getCacicPath + 'Temp\col_patr.dat encontrado.');
 		v_acao_gercols := '* Preparando envio de informações de Patrimônio.';
-		v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_patr.dat');
+		v_tstrCipherOpened1  := CipherOpen(g_oCacic.getCacicPath + 'Temp\col_patr.dat');
 
 		// Armazeno dados para informações de coletas na data, via menu popup do Systray
 		SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações Patrimoniais', v_tstrCipherOpened);
@@ -1764,16 +1576,16 @@ begin
 		if (GetValorDatMemoria('Col_Patr.nada',v_tstrCipherOpened1)='') then
 		  Begin
 			// Preparação para envio...
-			Request_Ger_Cols.Values['id_unid_organizacional_nivel1']  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1'  ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['id_unid_organizacional_nivel1a'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1a' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['id_unid_organizacional_nivel2']  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel2'  ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['te_localizacao_complementar'  ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_localizacao_complementar'    ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['te_info_patrimonio1'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio1'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['te_info_patrimonio2'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio2'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['te_info_patrimonio3'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio3'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['te_info_patrimonio4'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio4'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['te_info_patrimonio5'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio5'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-			Request_Ger_Cols.Values['te_info_patrimonio6'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio6'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['id_unid_organizacional_nivel1']  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1'  ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['id_unid_organizacional_nivel1a'] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1a' ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['id_unid_organizacional_nivel2']  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel2'  ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_localizacao_complementar'  ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_localizacao_complementar'    ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio1'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio1'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio2'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio2'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio3'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio3'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio4'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio4'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio5'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio5'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+			Request_Ger_Cols.Values['te_info_patrimonio6'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio6'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
 
 			if v_Debugs then
 				For intLoop := 0 to Request_Ger_Cols.Count-1 do
@@ -1808,7 +1620,7 @@ begin
 		  SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
 		Request_Ger_Cols.Clear;
-		Matar(p_path_cacic+'Temp\','col_patr.dat');
+		Matar(g_oCacic.getCacicPath+'Temp\','col_patr.dat');
 	  End;
 end;
 
@@ -1924,7 +1736,7 @@ Begin
 
     // Verifico comunicação com o Módulo Gerente WEB.
     Request_SVG := TStringList.Create;
-    Request_SVG.Values['in_teste']          := StringReplace(EnCrypt('OK',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+    Request_SVG.Values['in_teste']          := StringReplace(g_oCacic.enCrypt('OK'),'+','<MAIS>',[rfReplaceAll]);
 
     v_acao_gercols := 'Preparando teste de comunicação com Módulo Gerente WEB.';
 
@@ -1946,11 +1758,11 @@ Begin
             Seta_l_cs_cipher(strRetorno);
             Seta_l_cs_compress(strRetorno);
 
-            v_Aux := DeCrypt(XML_RetornaValor('te_serv_cacic', strRetorno),l_cs_compress);
+            v_Aux := g_oCacic.deCrypt(XML_RetornaValor('te_serv_cacic', strRetorno));
             if (v_te_serv_cacic <> v_Aux) and (v_Aux <> '') then
                SetValorDatMemoria('Configs.EnderecoServidor',v_Aux, v_tstrCipherOpened);
 
-            if (strRetorno <> '0') and (DeCrypt(XML_RetornaValor('te_rede_ok', strRetorno),l_cs_compress)<>'N') Then
+            if (strRetorno <> '0') and (g_oCacic.deCrypt(XML_RetornaValor('te_rede_ok', strRetorno))<>'N') Then
               Begin
                 v_acao_gercols := 'IP/Máscara usados: ' + v_tcpip.Adapter[v_index_ethernet].IPAddress[intAux1]+'/'+v_tcpip.Adapter[v_index_ethernet].IPAddressMask[intAux1]+' validados pelo Módulo Gerente WEB.';
                 te_ip      := v_tcpip.Adapter[v_index_ethernet].IPAddress[intAux1];
@@ -1968,17 +1780,17 @@ Begin
         // Nova tentativa, preciso reinicializar o objeto devido aos restos da operação anterior... (Eu acho!)  :)
         Request_SVG.Free;
         Request_SVG := TStringList.Create;
-        Request_SVG.Values['in_teste']          := StringReplace(EnCrypt('OK',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+        Request_SVG.Values['in_teste']          := StringReplace(g_oCacic.enCrypt('OK'),'+','<MAIS>',[rfReplaceAll]);
         Try
           strRetorno := ComunicaServidor('get_config.php', Request_SVG, 'Teste de comunicação com o Módulo Gerente WEB.');
           Seta_l_cs_cipher(strRetorno);
           Seta_l_cs_compress(strRetorno);
 
-          v_Aux := DeCrypt(XML_RetornaValor('te_serv_cacic', strRetorno),l_cs_compress);
+          v_Aux := g_oCacic.deCrypt(XML_RetornaValor('te_serv_cacic', strRetorno));
           if (v_te_serv_cacic <> v_Aux) and (v_Aux <> '') then
              SetValorDatMemoria('Configs.EnderecoServidor',v_Aux, v_tstrCipherOpened);
 
-          if (strRetorno <> '0') and (DeCrypt(XML_RetornaValor('te_rede_ok', strRetorno),l_cs_compress)<>'N') Then
+          if (strRetorno <> '0') and (g_oCacic.deCrypt(XML_RetornaValor('te_rede_ok', strRetorno))<>'N') Then
             Begin
               v_acao_gercols := 'IP validado pelo Módulo Gerente WEB.';
               log_diario(v_acao_gercols);
@@ -2013,19 +1825,19 @@ Begin
     v_acao_gercols := 'Contabilizando necessidade de Updates...';
 
     // O valor "true" para o 5º parâmetro da função Ver_UPD informa para apenas verificar a necessidade de FTP do referido objeto.
-    CountUPD := CountUPD + Ver_UPD('ini_cols'                                         ,'Inicializador de Coletas'                         ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD(StringReplace(v_scripter,'.exe','',[rfReplaceAll]) ,'Interpretador VBS'                                ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('chksis'                                           ,'Verificador de Integridade do Sistema'            ,PegaWinDir(nil)+'\','',true);
-    CountUPD := CountUPD + Ver_UPD('cacic2'                                           ,'Agente Principal'                                 ,p_path_cacic,'Temp',true);
-    CountUPD := CountUPD + Ver_UPD('srcacicsrv'                                       ,'Suporte Remoto Seguro'                            ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('ger_cols'                                         ,'Gerente de Coletas'                               ,p_path_cacic + 'modulos\','Temp',true);
-    CountUPD := CountUPD + Ver_UPD('col_anvi'                                         ,'Coletor de Informações de Anti-Vírus OfficeScan'  ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_comp'                                         ,'Coletor de Informações de Compartilhamentos'      ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_hard'                                         ,'Coletor de Informações de Hardware'               ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_patr'                                         ,'Coletor de Informações de Patrimônio/Loc.Fís.'    ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_moni'                                         ,'Coletor de Informações de Sistemas Monitorados'   ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_soft'                                         ,'Coletor de Informações de Softwares Básicos'      ,p_path_cacic + 'modulos\','',true);
-    CountUPD := CountUPD + Ver_UPD('col_undi'                                         ,'Coletor de Informações de Unidades de Disco'      ,p_path_cacic + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('ini_cols'                                         ,'Inicializador de Coletas'                         ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD(StringReplace(v_scripter,'.exe','',[rfReplaceAll]) ,'Interpretador VBS'                                ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('chksis'                                           ,'Verificador de Integridade do Sistema'            ,g_oCacic.getWinDir                ,'',true);
+    CountUPD := CountUPD + Ver_UPD('cacic2'                                           ,'Agente Principal'                                 ,g_oCacic.getCacicPath             ,'Temp',true);
+    CountUPD := CountUPD + Ver_UPD('srcacicsrv'                                       ,'Suporte Remoto Seguro'                            ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('ger_cols'                                         ,'Gerente de Coletas'                               ,g_oCacic.getCacicPath + 'modulos\','Temp',true);
+    CountUPD := CountUPD + Ver_UPD('col_anvi'                                         ,'Coletor de Informações de Anti-Vírus OfficeScan'  ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_comp'                                         ,'Coletor de Informações de Compartilhamentos'      ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_hard'                                         ,'Coletor de Informações de Hardware'               ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_patr'                                         ,'Coletor de Informações de Patrimônio/Loc.Fís.'    ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_moni'                                         ,'Coletor de Informações de Sistemas Monitorados'   ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_soft'                                         ,'Coletor de Informações de Softwares Básicos'      ,g_oCacic.getCacicPath + 'modulos\','',true);
+    CountUPD := CountUPD + Ver_UPD('col_undi'                                         ,'Coletor de Informações de Unidades de Disco'      ,g_oCacic.getCacicPath + 'modulos\','',true);
 
 
 
@@ -2042,8 +1854,8 @@ Begin
           log_DEBUG('Preparando contato com módulo Gerente WEB para Downloads.');
           v_acao_gercols := 'Contactando o módulo Gerente WEB: get_config.php...';
           Request_SVG := TStringList.Create;
-          Request_SVG.Values['in_chkcacic']   := StringReplace(EnCrypt('chkcacic',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-          Request_SVG.Values['te_fila_ftp']   := StringReplace(EnCrypt('1',l_cs_compress),'+','<MAIS>',[rfReplaceAll]); // Indicará que o agente quer entrar no grupo para FTP
+          Request_SVG.Values['in_chkcacic']   := StringReplace(g_oCacic.enCrypt('chkcacic'),'+','<MAIS>',[rfReplaceAll]);
+          Request_SVG.Values['te_fila_ftp']   := StringReplace(g_oCacic.enCrypt('1'),'+','<MAIS>',[rfReplaceAll]); // Indicará que o agente quer entrar no grupo para FTP
           //Request_SVG.Values['id_ip_estacao'] := EnCrypt(GetIP,l_cs_compress); // Informará o IP para registro na tabela redes_grupos_FTP
 
           log_DEBUG(v_acao_gercols + ' Parâmetros: in_chkcacic="'+Request_SVG.Values['in_chkcacic']+'", te_fila_ftp="'+Request_SVG.Values['te_fila_ftp']+'" e id_ip_estacao="'+Request_SVG.Values['id_ip_estacao']+'"');
@@ -2051,17 +1863,19 @@ Begin
           Seta_l_cs_cipher(strRetorno);
           Seta_l_cs_compress(strRetorno);
 
+
+
           Request_SVG.Free;
           if (strRetorno <> '0') Then
             Begin
-              SetValorDatMemoria('Configs.TE_SERV_UPDATES'              ,DeCrypt(XML_RetornaValor('te_serv_updates'                   , strRetorno),true), v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES',DeCrypt(XML_RetornaValor('nm_usuario_login_serv_updates'     , strRetorno),true), v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'  ,DeCrypt(XML_RetornaValor('te_senha_login_serv_updates'       , strRetorno),true), v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'         ,DeCrypt(XML_RetornaValor('te_path_serv_updates'              , strRetorno),true), v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'        ,DeCrypt(XML_RetornaValor('nu_porta_serv_updates'             , strRetorno),true), v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.TE_FILA_FTP'                  ,DeCrypt(XML_RetornaValor('te_fila_ftp'                       , strRetorno),true), v_tstrCipherOpened);
-              SetValorDatMemoria('Configs.ID_FTP'                       ,DeCrypt(XML_RetornaValor('id_ftp'                            , strRetorno),true), v_tstrCipherOpened);
-              SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'     ,DeCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno),true), v_tstrCipherOpened);
+              SetValorDatMemoria('Configs.TE_SERV_UPDATES'              ,g_oCacic.deCrypt(XML_RetornaValor('te_serv_updates'                   , strRetorno)), v_tstrCipherOpened);
+              SetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES',g_oCacic.DeCrypt(XML_RetornaValor('nm_usuario_login_serv_updates'     , strRetorno)), v_tstrCipherOpened);
+              SetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'  ,g_oCacic.DeCrypt(XML_RetornaValor('te_senha_login_serv_updates'       , strRetorno)), v_tstrCipherOpened);
+              SetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'         ,g_oCacic.DeCrypt(XML_RetornaValor('te_path_serv_updates'              , strRetorno)), v_tstrCipherOpened);
+              SetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'        ,g_oCacic.DeCrypt(XML_RetornaValor('nu_porta_serv_updates'             , strRetorno)), v_tstrCipherOpened);
+              SetValorDatMemoria('Configs.TE_FILA_FTP'                  ,g_oCacic.DeCrypt(XML_RetornaValor('te_fila_ftp'                       , strRetorno)), v_tstrCipherOpened);
+              SetValorDatMemoria('Configs.ID_FTP'                       ,g_oCacic.DeCrypt(XML_RetornaValor('id_ftp'                            , strRetorno)), v_tstrCipherOpened);
+              SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'     ,g_oCacic.DeCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno)), v_tstrCipherOpened);
             End;
         End;
 
@@ -2077,23 +1891,23 @@ Begin
     v_acao_gercols := 'Verificando versões do scripter e chksis';
     log_DEBUG(''+v_acao_gercols);
 
-    Ver_UPD(StringReplace(v_scripter,'.exe','',[rfReplaceAll]),'Interpretador VBS'                    ,p_path_cacic + 'modulos\','',false);
-    Ver_UPD('chksis'                                          ,'Verificador de Integridade do Sistema',PegaWinDir(nil)+'\'      ,'',false);
+    Ver_UPD(StringReplace(v_scripter,'.exe','',[rfReplaceAll]),'Interpretador VBS'                    ,g_oCacic.getCacicPath + 'modulos\','',false);
+    Ver_UPD('chksis'                                          ,'Verificador de Integridade do Sistema',g_oCacic.getWinDir    +'\'        ,'',false);
 
     // O módulo de Suporte Remoto é opcional, através da opção Administração / Módulos
     {
     log_diario('Verificando nova versão para módulo Suporte Remoto Seguro.');
     // Caso encontre nova versão de srCACICsrv esta será gravada em modulos.
-    Ver_UPD('srcacicsrv','Suporte Remoto Seguro',p_path_cacic + 'modulos\','',false);
+    Ver_UPD('srcacicsrv','Suporte Remoto Seguro',g_oCacic.getCacicPath + 'modulos\','',false);
     }
 
     // Verifico existência do chksis.ini
-    if not (FileExists(PegaWinDir(nil) + 'chksis.ini')) then
+    if not (FileExists(g_oCacic.getWinDir + 'chksis.ini')) then
       Begin
          Try
            v_acao_gercols := 'chksis.ini inexistente, recriando...';
-           tstrTripa1  := Explode(p_path_cacic,'\');
-           AssignFile(chksis_ini,PegaWinDir(nil) + '\chksis.ini'); {Associa o arquivo a uma variável do tipo TextFile}
+           tstrTripa1  := g_oCacic.explode(g_oCacic.getCacicPath,'\');
+           AssignFile(chksis_ini,g_oCacic.getWinDir + 'chksis.ini'); {Associa o arquivo a uma variável do tipo TextFile}
            Rewrite(chksis_ini); // Recria o arquivo...
            Append(chksis_ini);
            Writeln(chksis_ini,'[Cacic2]');
@@ -2115,7 +1929,7 @@ Begin
      (te_nome_host='')  or (te_serv_dhcp='' ) or (te_dns_primario='') or (te_wins_primario='') or
      (te_wins_secundario='') then
     Begin
-      v_nome_arquivo    := p_path_cacic + 'Temp\ipconfig.txt';
+      v_nome_arquivo    := g_oCacic.getCacicPath + 'Temp\ipconfig.txt';
       v_metodo_obtencao := 'WMI Object';
       v_acao_gercols    := 'Criando batch para obtenção de IPCONFIG via WMI...';
       Try
@@ -2148,17 +1962,17 @@ Begin
          Batchfile.Add('IPConfigFile.Close');
          Batchfile.Add('if v_ok = "OK" then');
          Batchfile.Add('  Set FileSysOK      = WScript.CreateObject("Scripting.FileSystemObject")');
-         Batchfile.Add('  Set IPConfigFileOK = FileSysOK.CreateTextFile("'+p_path_cacic + 'Temp\ipconfi1.txt", True)');
+         Batchfile.Add('  Set IPConfigFileOK = FileSysOK.CreateTextFile("'+g_oCacic.getCacicPath + 'Temp\ipconfi1.txt", True)');
          Batchfile.Add('  IPConfigFileOK.Close');
          Batchfile.Add('end if');
          Batchfile.Add('WScript.Quit');
-         Batchfile.SaveToFile(p_path_cacic + 'Temp\ipconfig.vbs');
+         Batchfile.SaveToFile(g_oCacic.getCacicPath + 'Temp\ipconfig.vbs');
          BatchFile.Free;
          v_acao_gercols := 'Invocando execução de VBS para obtenção de IPCONFIG...';
-         log_DEBUG('Executando "'+p_path_cacic + 'modulos\' + v_scripter + ' //b ' + p_path_cacic + 'temp\ipconfig.vbs"');
+         log_DEBUG('Executando "'+g_oCacic.getCacicPath + 'modulos\' + v_scripter + ' //b ' + g_oCacic.getCacicPath + 'temp\ipconfig.vbs"');
 
-         if ChecaAgente(p_path_cacic + 'modulos', v_scripter) then
-           WinExec(PChar(p_path_cacic + 'modulos\' + v_scripter + ' //b ' + p_path_cacic + 'temp\ipconfig.vbs'), SW_HIDE);
+         if ChecaAgente(g_oCacic.getCacicPath + 'modulos', v_scripter) then
+           WinExec(PChar(g_oCacic.getCacicPath + 'modulos\' + v_scripter + ' //b ' + g_oCacic.getCacicPath + 'temp\ipconfig.vbs'), SW_HIDE);
       Except
         Begin
           log_diario('Erro na geração do ipconfig.txt pelo ' + v_metodo_obtencao+'.');
@@ -2168,13 +1982,13 @@ Begin
       // Para aguardar o processamento acima, caso aconteça
       sleep(5000);
 
-      v_Tamanho_Arquivo := Get_File_Size(p_path_cacic + 'Temp\ipconfig.txt',true);
-      if not (FileExists(p_path_cacic + 'Temp\ipconfi1.txt')) or (v_Tamanho_Arquivo='0')  then // O arquivo ipconfig.txt foi gerado vazio, tentarei IPConfig ou WinIPcfg!
+      v_Tamanho_Arquivo := Get_File_Size(g_oCacic.getCacicPath + 'Temp\ipconfig.txt',true);
+      if not (FileExists(g_oCacic.getCacicPath + 'Temp\ipconfi1.txt')) or (v_Tamanho_Arquivo='0')  then // O arquivo ipconfig.txt foi gerado vazio, tentarei IPConfig ou WinIPcfg!
         Begin
           Try
-             v_win_dir          := PegaWinDir(nil);
-             v_win_dir_command  := PegaWinDir(nil);
-             v_win_dir_ipcfg    := PegaWinDir(nil);
+             v_win_dir          := g_oCacic.getWinDir;
+             v_win_dir_command  := g_oCacic.getWinDir;
+             v_win_dir_ipcfg    := g_oCacic.getWinDir;
              v_dir_command      := '';
              v_dir_ipcfg        := '';
 
@@ -2321,7 +2135,7 @@ Begin
                   v_conta_EXCECOES := 0;
                   if (v_enderecos_mac_invalidos <> '') then
                     Begin
-                      tstrEXCECOES  := Explode(v_enderecos_mac_invalidos,','); // Excecoes a serem tratadas
+                      tstrEXCECOES  := g_oCacic.explode(v_enderecos_mac_invalidos,','); // Excecoes a serem tratadas
                       for intAux4 := 0 to tstrEXCECOES.Count-1 Do
                         Begin
                           if (rat(tstrEXCECOES[intAux4],v_mac_address) > 0) then
@@ -2346,11 +2160,11 @@ Begin
       log_DEBUG('Excluindo: "'+v_nome_arquivo+'"');
       DeleteFile(v_nome_arquivo);
 
-      v_acao_gercols := 'Excluindo arquivo '+p_path_cacic + 'Temp\ipconfi1.txt, usado na obtenção de IPCONFIG...';
-      Matar(p_path_cacic+'Temp\','ipconfi1.txt');
+      v_acao_gercols := 'Excluindo arquivo '+g_oCacic.getCacicPath + 'Temp\ipconfi1.txt, usado na obtenção de IPCONFIG...';
+      Matar(g_oCacic.getCacicPath+'Temp\','ipconfi1.txt');
 
-      v_acao_gercols := 'Excluindo arquivo '+p_path_cacic + 'Temp\ipconfig.vbs, usado na obtenção de IPCONFIG...';
-      Matar(p_path_cacic+'Temp\','ipconfig.vbs');
+      v_acao_gercols := 'Excluindo arquivo '+g_oCacic.getCacicPath + 'Temp\ipconfig.vbs, usado na obtenção de IPCONFIG...';
+      Matar(g_oCacic.getCacicPath+'Temp\','ipconfig.vbs');
     End;
 
     v_mascara := te_mascara;
@@ -2406,10 +2220,10 @@ Begin
 
                 if (ValorChaveRegistro <> '') then
                   Begin
-                     tstrTripa1  := Explode(ValorChaveRegistro,'#');
+                     tstrTripa1  := g_oCacic.explode(ValorChaveRegistro,'#');
                      for intAux1 := 0 to tstrTripa1.Count-1 Do
                        Begin
-                         tstrTripa2  := Explode(tstrTripa1[intAux1],',');
+                         tstrTripa2  := g_oCacic.explode(tstrTripa1[intAux1],',');
                          //Apenas os dois primeiros itens, id_aplicativo e dt_atualizacao
                          strTripa := strTripa + tstrTripa2[0] + ',' + tstrTripa2[1]+'#';
                        end;
@@ -2418,7 +2232,7 @@ Begin
               end; //While
 
              // Proposital, para forçar a chegada dos perfis, solução temporária...
-             Request_SVG.Values['te_tripa_perfis']       := StringReplace(EnCrypt('',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+             Request_SVG.Values['te_tripa_perfis']       := StringReplace(g_oCacic.enCrypt(''),'+','<MAIS>',[rfReplaceAll]);
 
              // Gero e armazeno uma palavra-chave e a envio ao Gerente WEB para atualização no BD.
              // Essa palavra-chave será usada para o acesso ao Agente Principal
@@ -2427,9 +2241,9 @@ Begin
              SetValorDatMemoria('Configs.te_palavra_chave',strAux, v_tstrCipherOpened);
 
              // Verifico se srCACIC está em execução e em caso positivo entrego a chave atualizada
-             Matar(p_path_cacic+'Temp\','aguarde_SRCACIC.txt');
+             Matar(g_oCacic.getCacicPath+'Temp\','aguarde_SRCACIC.txt');
              sleep(2000);
-             if (FileExists(p_path_cacic + 'Temp\aguarde_SRCACIC.txt')) then
+             if (FileExists(g_oCacic.getCacicPath + 'Temp\aguarde_SRCACIC.txt')) then
                 Begin
                   // Alguns cuidados necessários ao tráfego e recepção de valores pelo Gerente WEB
                   // Some cares about send and receive at Gerente WEB
@@ -2437,14 +2251,14 @@ Begin
                   v_Aux := StringReplace(v_Aux                        ,'"' ,'<AD>'      ,[rfReplaceAll]);
                   v_Aux := StringReplace(v_Aux                        ,'''','<AS>'      ,[rfReplaceAll]);
                   v_Aux := StringReplace(v_Aux                        ,'\' ,'<BarrInv>' ,[rfReplaceAll]);
-                  v_Aux := StringReplace(EnCrypt(v_Aux,l_cs_compress) ,'+' ,'<MAIS>'    ,[rfReplaceAll]);
+                  v_Aux := StringReplace(g_oCacic.enCrypt(v_Aux)      ,'+' ,'<MAIS>'    ,[rfReplaceAll]);
 
-                  log_DEBUG('Invocando "'+p_path_cacic + 'modulos\srcacicsrv.exe -update [' + v_Aux + ']' );
-                  WinExec(PChar(p_path_cacic + 'modulos\srcacicsrv.exe -update [' + v_Aux + ']'),SW_NORMAL);
+                  log_DEBUG('Invocando "'+g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -update [' + v_Aux + ']' );
+                  WinExec(PChar(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -update [' + v_Aux + ']'),SW_NORMAL);
                 End;
 
 
-             Request_SVG.Values['te_palavra_chave']       := EnCrypt(strAux,l_cs_compress);
+             Request_SVG.Values['te_palavra_chave']       := g_oCacic.enCrypt(strAux);
              v_te_serv_cacic := GetValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened);
 
              strRetorno := ComunicaServidor('get_config.php', Request_SVG, v_mensagem_log);
@@ -2455,7 +2269,7 @@ Begin
              // A versão com compressão do Módulo Gerente WEB retornará o valor cs_compress=1(Quando receber "1") ou cs_compress=2(Quando receber "3")
              Seta_l_cs_compress(strRetorno);
 
-             v_te_serv_cacic := DeCrypt(XML_RetornaValor('te_serv_cacic',strRetorno),true);
+             v_te_serv_cacic := g_oCacic.deCrypt(XML_RetornaValor('te_serv_cacic',strRetorno));
 
              if (strRetorno <> '0') and
                 (v_te_serv_cacic<>'') and
@@ -2471,7 +2285,7 @@ Begin
                   // Solicito do servidor a configuração que foi definida pelo administrador do CACIC.
                   Request_SVG.Free;
                   Request_SVG := TStringList.Create;
-                  Request_SVG.Values['te_tripa_perfis']    := StringReplace(EnCrypt('',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+                  Request_SVG.Values['te_tripa_perfis']    := StringReplace(g_oCacic.enCrypt(''),'+','<MAIS>',[rfReplaceAll]);
                   strRetorno := ComunicaServidor('get_config.php', Request_SVG, v_mensagem_log);
                   Seta_l_cs_cipher(strRetorno);
                   Seta_l_cs_compress(strRetorno);
@@ -2481,7 +2295,7 @@ Begin
 
              if (strRetorno <> '0') Then
               Begin
-                ValorRetornado := DeCrypt(XML_RetornaValor('SISTEMAS_MONITORADOS_PERFIS', strRetorno),true);
+                ValorRetornado := g_oCacic.deCrypt(XML_RetornaValor('SISTEMAS_MONITORADOS_PERFIS', strRetorno));
                 log_DEBUG('Valor Retornado para Sistemas Monitorados: "'+ValorRetornado+'"');
                 IF (ValorRetornado <> '') then
                 Begin
@@ -2499,18 +2313,18 @@ Begin
                       end;
 
                    intAux4 := 0;
-                   tstrTripa3  := Explode(ValorRetornado,'#');
+                   tstrTripa3  := g_oCacic.explode(ValorRetornado,'#');
                    for intAux3 := 0 to tstrTripa3.Count-1 Do
                    Begin
                      strAux3 := 'SIS' + trim(inttostr(intAux4));
-                     tstrTripa4  := Explode(tstrTripa3[intAux3],',');
+                     tstrTripa4  := g_oCacic.explode(tstrTripa3[intAux3],',');
                      while strAux3 <> '' do
                       begin
                         intAux4 := intAux4 + 1;
                         strAux3 := GetValorDatMemoria('Coletas.SIS' + trim(inttostr(intAux4)), v_tstrCipherOpened);
                         if (trim(strAux3)<>'') then
                           Begin
-                            tstrTripa5 := Explode(strAux3,',');
+                            tstrTripa5 := g_oCacic.explode(strAux3,',');
                             if (tstrTripa5[0] = tstrTripa4[0]) then strAux3 := '';
                           End;
                       end;
@@ -2525,62 +2339,62 @@ Begin
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //Gravação no CACIC2.DAT dos valores de REDE, COMPUTADOR e EXECUÇÃO obtidos, para consulta pelos outros módulos...
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                SetValorDatMemoria('Configs.CS_AUTO_UPDATE'                 ,UpperCase(DeCrypt(XML_RetornaValor('cs_auto_update'          , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_HARDWARE'             ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_hardware'      , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_SOFTWARE'             ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_software'      , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_MONITORADO'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_monitorado'    , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_OFFICESCAN'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_officescan'    , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_COMPARTILHAMENTOS'    ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_compart'       , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_UNID_DISC'            ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_unid_disc'     , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_COLETA_PATRIMONIO'           ,UpperCase(DeCrypt(XML_RetornaValor('cs_coleta_patrimonio'    , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.CS_SUPORTE_REMOTO'              ,UpperCase(DeCrypt(XML_RetornaValor('cs_suporte_remoto'       , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_CACIC2_DISPONIVEL'    ,DeCrypt(XML_RetornaValor('dt_versao_cacic2_disponivel'       , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_CACIC2'                 ,DeCrypt(XML_RetornaValor('te_hash_cacic2'                    , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_GER_COLS_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_ger_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_GER_COLS'               ,DeCrypt(XML_RetornaValor('te_hash_ger_cols'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_CHKSIS_DISPONIVEL'    ,DeCrypt(XML_RetornaValor('dt_versao_chksis_disponivel'       , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_CHKSIS'                 ,DeCrypt(XML_RetornaValor('te_hash_chksis'                    , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_ANVI_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_anvi_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_COL_ANVI'               ,DeCrypt(XML_RetornaValor('te_hash_col_anvi'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_COMP_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_comp_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_COL_COMP'               ,DeCrypt(XML_RetornaValor('te_hash_col_comp'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_HARD_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_hard_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_COL_HARD'               ,DeCrypt(XML_RetornaValor('te_hash_col_hard'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_MONI_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_moni_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_COL_MONI'               ,DeCrypt(XML_RetornaValor('te_hash_col_moni'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_PATR_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_patr_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_COL_PATR'               ,DeCrypt(XML_RetornaValor('te_hash_col_patr'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_SOFT_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_soft_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_COL_SOFT'               ,DeCrypt(XML_RetornaValor('te_hash_col_soft'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_COL_UNDI_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_col_undi_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_COL_UNDI'               ,DeCrypt(XML_RetornaValor('te_hash_col_undi'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_INI_COLS_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_ini_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_INI_COLS'               ,DeCrypt(XML_RetornaValor('te_hash_ini_cols'                  , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_INI_COLS_DISPONIVEL'  ,DeCrypt(XML_RetornaValor('dt_versao_ini_cols_disponivel'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_SRCACICSRV'             ,DeCrypt(XML_RetornaValor('te_hash_srcacicsrv'                , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_VERSAO_SRCACICSRV_DISPONIVEL',DeCrypt(XML_RetornaValor('dt_versao_srcacicsrv_disponivel'   , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_HASH_'+StringReplace(v_scripter,'.exe','',[rfReplaceAll]),DeCrypt(XML_RetornaValor('te_hash_'+StringReplace(v_scripter,'.exe','',[rfReplaceAll]),strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_SERV_UPDATES'                ,DeCrypt(XML_RetornaValor('te_serv_updates'                   , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'          ,DeCrypt(XML_RetornaValor('nu_porta_serv_updates'             , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'           ,DeCrypt(XML_RetornaValor('te_path_serv_updates'              , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES'  ,DeCrypt(XML_RetornaValor('nm_usuario_login_serv_updates'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'    ,DeCrypt(XML_RetornaValor('te_senha_login_serv_updates'       , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.IN_EXIBE_ERROS_CRITICOS'        ,UpperCase(DeCrypt(XML_RetornaValor('in_exibe_erros_criticos' , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE'            ,DeCrypt(XML_RetornaValor('te_senha_adm_agente'               , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NU_INTERVALO_RENOVACAO_PATRIM'  ,DeCrypt(XML_RetornaValor('nu_intervalo_renovacao_patrim'     , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NU_INTERVALO_EXEC'              ,DeCrypt(XML_RetornaValor('nu_intervalo_exec'                 , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.NU_EXEC_APOS'                   ,DeCrypt(XML_RetornaValor('nu_exec_apos'                      , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.IN_EXIBE_BANDEJA'               ,UpperCase(DeCrypt(XML_RetornaValor('in_exibe_bandeja'        , strRetorno),true)), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'             ,DeCrypt(XML_RetornaValor('te_janelas_excecao'                , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'       ,DeCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno),true) , v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA'           ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada'     , strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_anvi', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_COMP'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_comp', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_HARD'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_hard', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_MONI'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_moni', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_PATR'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_patr', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_SOFT'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_soft', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
-                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_UNDI'      ,stringreplace(stringreplace(stringreplace(DeCrypt(XML_RetornaValor('dt_hr_coleta_forcada_undi', strRetorno),true),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_AUTO_UPDATE'                 ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_auto_update'          , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_HARDWARE'             ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_coleta_hardware'      , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_SOFTWARE'             ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_coleta_software'      , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_MONITORADO'           ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_coleta_monitorado'    , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_OFFICESCAN'           ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_coleta_officescan'    , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_COMPARTILHAMENTOS'    ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_coleta_compart'       , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_UNID_DISC'            ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_coleta_unid_disc'     , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_COLETA_PATRIMONIO'           ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_coleta_patrimonio'    , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_SUPORTE_REMOTO'              ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_suporte_remoto'       , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_CACIC2_DISPONIVEL'    ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_cacic2_disponivel'       , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_CACIC2'                 ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_cacic2'                    , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_GER_COLS_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_ger_cols_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_GER_COLS'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_ger_cols'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_CHKSIS_DISPONIVEL'    ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_chksis_disponivel'       , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_CHKSIS'                 ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_chksis'                    , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_ANVI_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_col_anvi_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_ANVI'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_col_anvi'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_COMP_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_col_comp_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_COMP'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_col_comp'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_HARD_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_col_hard_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_HARD'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_col_hard'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_MONI_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_col_moni_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_MONI'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_col_moni'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_PATR_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_col_patr_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_PATR'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_col_patr'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_SOFT_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_col_soft_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_SOFT'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_col_soft'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_COL_UNDI_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_col_undi_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_COL_UNDI'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_col_undi'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_INI_COLS_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_ini_cols_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_INI_COLS'               ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_ini_cols'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_INI_COLS_DISPONIVEL'  ,g_oCacic.deCrypt(XML_RetornaValor('dt_versao_ini_cols_disponivel'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_SRCACICSRV'             ,g_oCacic.deCrypt(XML_RetornaValor('te_hash_srcacicsrv'                , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_VERSAO_SRCACICSRV_DISPONIVEL',g_oCacic.deCrypt(XML_RetornaValor('dt_versao_srcacicsrv_disponivel'   , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_HASH_'+StringReplace(v_scripter,'.exe','',[rfReplaceAll]),g_oCacic.deCrypt(XML_RetornaValor('te_hash_'+StringReplace(v_scripter,'.exe','',[rfReplaceAll]),strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_SERV_UPDATES'                ,g_oCacic.deCrypt(XML_RetornaValor('te_serv_updates'                   , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_PORTA_SERV_UPDATES'          ,g_oCacic.deCrypt(XML_RetornaValor('nu_porta_serv_updates'             , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_PATH_SERV_UPDATES'           ,g_oCacic.deCrypt(XML_RetornaValor('te_path_serv_updates'              , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NM_USUARIO_LOGIN_SERV_UPDATES'  ,g_oCacic.deCrypt(XML_RetornaValor('nm_usuario_login_serv_updates'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_SENHA_LOGIN_SERV_UPDATES'    ,g_oCacic.deCrypt(XML_RetornaValor('te_senha_login_serv_updates'       , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.IN_EXIBE_ERROS_CRITICOS'        ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('in_exibe_erros_criticos' , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_SENHA_ADM_AGENTE'            ,g_oCacic.deCrypt(XML_RetornaValor('te_senha_adm_agente'               , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_INTERVALO_RENOVACAO_PATRIM'  ,g_oCacic.deCrypt(XML_RetornaValor('nu_intervalo_renovacao_patrim'     , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_INTERVALO_EXEC'              ,g_oCacic.deCrypt(XML_RetornaValor('nu_intervalo_exec'                 , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_EXEC_APOS'                   ,g_oCacic.deCrypt(XML_RetornaValor('nu_exec_apos'                      , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.IN_EXIBE_BANDEJA'               ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('in_exibe_bandeja'        , strRetorno))), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'             ,g_oCacic.deCrypt(XML_RetornaValor('te_janelas_excecao'                , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'       ,g_oCacic.deCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA'           ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada'     , strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_anvi', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_COMP'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_comp', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_HARD'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_hard', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_MONI'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_moni', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_PATR'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_patr', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_SOFT'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_soft', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_UNDI'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_undi', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
               end;
 
@@ -2598,17 +2412,17 @@ Begin
               End;
 
             Request_SVG := TStringList.Create;
-            Request_SVG.Values['te_mascara']         := StringReplace(EnCrypt(te_mascara,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_gateway']         := StringReplace(EnCrypt(te_gateway,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_serv_dhcp']       := StringReplace(EnCrypt(te_serv_dhcp,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_dns_primario']    := StringReplace(EnCrypt(te_dns_primario,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_dns_secundario']  := StringReplace(EnCrypt(te_dns_secundario,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_wins_primario']   := StringReplace(EnCrypt(te_wins_primario,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_wins_secundario'] := StringReplace(EnCrypt(te_wins_secundario,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_nome_host']       := StringReplace(EnCrypt(te_nome_host,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_dominio_dns']     := StringReplace(EnCrypt(te_dominio_dns,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_origem_mac']      := StringReplace(EnCrypt(GetValorDatMemoria('TcpIp.TE_ORIGEM_MAC', v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-            Request_SVG.Values['te_dominio_windows'] := StringReplace(EnCrypt(te_dominio_windows,l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_mascara']         := StringReplace(g_oCacic.enCrypt(te_mascara),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_gateway']         := StringReplace(g_oCacic.enCrypt(te_gateway),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_serv_dhcp']       := StringReplace(g_oCacic.enCrypt(te_serv_dhcp),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_dns_primario']    := StringReplace(g_oCacic.enCrypt(te_dns_primario),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_dns_secundario']  := StringReplace(g_oCacic.enCrypt(te_dns_secundario),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_wins_primario']   := StringReplace(g_oCacic.enCrypt(te_wins_primario),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_wins_secundario'] := StringReplace(g_oCacic.enCrypt(te_wins_secundario),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_nome_host']       := StringReplace(g_oCacic.enCrypt(te_nome_host),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_dominio_dns']     := StringReplace(g_oCacic.enCrypt(te_dominio_dns),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_origem_mac']      := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('TcpIp.TE_ORIGEM_MAC', v_tstrCipherOpened)),'+','<MAIS>',[rfReplaceAll]);
+            Request_SVG.Values['te_dominio_windows'] := StringReplace(g_oCacic.enCrypt(te_dominio_windows),'+','<MAIS>',[rfReplaceAll]);
 
             v_acao_gercols := 'Contactando módulo Gerente WEB: set_tcp_ip.php';
 
@@ -2653,17 +2467,17 @@ Begin
                log_DEBUG('Opção /UpdatePrincipal recebida...');
                // 15 segundos de tempo total até a execução do novo cacic2.exe
                sleep(7000);
-               v_acao_gercols := 'Atualização do Agente Principal - Excluindo '+p_path_cacic + 'cacic2.exe';
-               Matar(p_path_cacic,'cacic2.exe');
+               v_acao_gercols := 'Atualização do Agente Principal - Excluindo '+g_oCacic.getCacicPath + 'cacic2.exe';
+               Matar(g_oCacic.getCacicPath,'cacic2.exe');
                sleep(2000);
 
-               v_acao_gercols := 'Atualização do Agente Principal - Copiando '+p_path_cacic + 'temp\cacic2.exe para '+p_path_cacic + 'cacic2.exe';
-               log_DEBUG('Copiando '+p_path_cacic + 'temp\cacic2.exe para '+p_path_cacic + 'cacic2.exe');
-               CopyFile(pChar(p_path_cacic + 'temp\cacic2.exe'),pChar(p_path_cacic + 'cacic2.exe'),FALSE {Fail if Exists});
+               v_acao_gercols := 'Atualização do Agente Principal - Copiando '+g_oCacic.getCacicPath + 'temp\cacic2.exe para '+g_oCacic.getCacicPath + 'cacic2.exe';
+               log_DEBUG('Copiando '+g_oCacic.getCacicPath + 'temp\cacic2.exe para '+g_oCacic.getCacicPath + 'cacic2.exe');
+               CopyFile(pChar(g_oCacic.getCacicPath + 'temp\cacic2.exe'),pChar(g_oCacic.getCacicPath + 'cacic2.exe'),FALSE {Fail if Exists});
                sleep(2000);
 
-               v_acao_gercols := 'Atualização do Agente Principal - Excluindo '+p_path_cacic + 'temp\cacic2.exe';
-               Matar(p_path_cacic+'temp\','cacic2.exe');
+               v_acao_gercols := 'Atualização do Agente Principal - Excluindo '+g_oCacic.getCacicPath + 'temp\cacic2.exe';
+               Matar(g_oCacic.getCacicPath+'temp\','cacic2.exe');
                sleep(2000);
 
                SetValorDatMemoria('Configs.NU_EXEC_APOS','12345', v_tstrCipherOpened); // Para que o Agente Principal comande a coleta logo após 1 minuto...
@@ -2671,11 +2485,11 @@ Begin
 
                log_DEBUG('Invocando atualização do Agente Principal...');
 
-               v_acao_gercols := 'Atualização do Agente Principal - Invocando '+p_path_cacic + 'cacic2.exe /atualizacao';
+               v_acao_gercols := 'Atualização do Agente Principal - Invocando '+g_oCacic.getCacicPath + 'cacic2.exe /atualizacao';
                Finalizar(false);
 
-               if ChecaAgente(p_path_cacic, 'cacic2.exe') then
-                  WinExec(PChar(p_path_cacic + 'cacic2.exe /atualizacao'), SW_MINIMIZE);
+               if ChecaAgente(g_oCacic.getCacicPath, 'cacic2.exe') then
+                  WinExec(PChar(g_oCacic.getCacicPath + 'cacic2.exe /atualizacao'), SW_MINIMIZE);
                Sair;
               end;
 
@@ -2718,7 +2532,7 @@ Begin
               log_DEBUG('Chamando Coletor de Patrimônio...');
               Patrimnio1Click(Nil);
               Finalizar(false);
-              CriaTXT(p_path_cacic+'temp','coletas');
+              CriaTXT(g_oCacic.getCacicPath+'temp','coletas');
               Sair;
             End;
 
@@ -2729,7 +2543,7 @@ Begin
               Batchfile := TStringList.Create;
               Batchfile.Add('*** Simulação de cookie para cacic2.exe recarregar os valores de configurações ***');
               // A existência deste arquivo forçará o Cacic2.exe a recarregar valores das configurações obtidas e gravadas no Cacic2.DAT
-              Batchfile.SaveToFile(p_path_cacic + 'Temp\reset.txt');
+              Batchfile.SaveToFile(g_oCacic.getCacicPath + 'Temp\reset.txt');
               BatchFile.Free;
               log_DEBUG('Configurações apanhadas no módulo Gerente WEB. Retornando ao Agente Principal...');
               Finalizar(false);
@@ -2762,22 +2576,22 @@ Begin
                             // Caso encontre nova versão de cacic2.exe esta será gravada em temp e ocorrerá o autoupdate em sua próxima tentativa de chamada ao Ger_Cols.
                             v_acao_gercols := 'Verificando versão do Agente Principal';
                             log_diario('Verificando nova versão para módulo Principal.');
-                            Ver_UPD('cacic2','Agente Principal',p_path_cacic,'Temp',false);
+                            Ver_UPD('cacic2','Agente Principal',g_oCacic.getCacicPath,'Temp',false);
 
                             log_diario('Verificando nova versão para módulo Gerente de Coletas.');
                             // Caso encontre nova versão de Ger_Cols esta será gravada em temp e ocorrerá o autoupdate.
-                            Ver_UPD('ger_cols','Gerente de Coletas',p_path_cacic + 'modulos\','Temp',false);
+                            Ver_UPD('ger_cols','Gerente de Coletas',g_oCacic.getCacicPath + 'modulos\','Temp',false);
 
                             // O módulo de Suporte Remoto é opcional...
                             if (GetValorDatMemoria('Configs.CS_SUPORTE_REMOTO'         , v_tstrCipherOpened) = 'S') then
                               Begin
                                 log_diario('Verificando nova versão para módulo Suporte Remoto Seguro.');
                                 // Caso encontre nova versão de srCACICsrv esta será gravada em modulos.
-                                Ver_UPD('srcacicsrv','Suporte Remoto Seguro',p_path_cacic + 'modulos\','Modulos',false);
+                                Ver_UPD('srcacicsrv','Suporte Remoto Seguro',g_oCacic.getCacicPath + 'modulos\','Modulos',false);
                               End;
 
-                            if (FileExists(p_path_cacic + 'Temp\ger_cols.exe')) or
-                               (FileExists(p_path_cacic + 'Temp\cacic2.exe'))  then
+                            if (FileExists(g_oCacic.getCacicPath + 'Temp\ger_cols.exe')) or
+                               (FileExists(g_oCacic.getCacicPath + 'Temp\cacic2.exe'))  then
                                 Begin
                                   log_diario('Finalizando... (Update em ± 1 minuto).');
                                   Finalizar(false);
@@ -2791,7 +2605,7 @@ Begin
                           (GetValorDatMemoria('Configs.CS_COLETA_OFFICESCAN'       , v_tstrCipherOpened) = 'S') or
                           (GetValorDatMemoria('Configs.CS_COLETA_COMPARTILHAMENTOS', v_tstrCipherOpened) = 'S') or
                           (GetValorDatMemoria('Configs.CS_COLETA_UNID_DISC'        , v_tstrCipherOpened) = 'S')) and
-                          not FileExists(p_path_cacic + 'Temp\ger_cols.exe')  then
+                          not FileExists(g_oCacic.getCacicPath + 'Temp\ger_cols.exe')  then
                           begin
                              v_acao_gercols := 'Montando script de coletas';
                              // Monto o batch de coletas de acordo com as configurações
@@ -2817,8 +2631,8 @@ Begin
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_PATR','N', v_tstrCipherOpened);
 
-                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_patr','Coletor de Informações de Patrimônio/Loc.Fís.',p_path_cacic + 'modulos\','',false);
-                                   if (FileExists(p_path_cacic + 'Modulos\col_patr.exe'))  then
+                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_patr','Coletor de Informações de Patrimônio/Loc.Fís.',g_oCacic.getCacicPath + 'modulos\','',false);
+                                   if (FileExists(g_oCacic.getCacicPath + 'Modulos\col_patr.exe'))  then
                                       Begin
                                          GetInfoPatrimonio;
                                          // Só chamo o Coletor de Patrimônio caso haja alteração de localização(e esteja configurado no módulo gerente WEB a abertura automática da janela)
@@ -2847,8 +2661,8 @@ Begin
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_ANVI','N', v_tstrCipherOpened);
 
-                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_anvi','Coletor de Informações de Anti-Vírus OfficeScan',p_path_cacic + 'modulos\','',false);
-                                   if (FileExists(p_path_cacic + 'Modulos\col_anvi.exe'))  then
+                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_anvi','Coletor de Informações de Anti-Vírus OfficeScan',g_oCacic.getCacicPath + 'modulos\','',false);
+                                   if (FileExists(g_oCacic.getCacicPath + 'Modulos\col_anvi.exe'))  then
                                       Begin
                                          intMontaBatch := 1;
                                          v_ModulosOpcoes := v_ModulosOpcoes + 'col_anvi,nowait,system';
@@ -2868,8 +2682,8 @@ Begin
                                   else
                                      SetValorDatMemoria('Configs.IN_COLETA_FORCADA_COMP','N', v_tstrCipherOpened);
 
-                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_comp','Coletor de Informações de Compartilhamentos',p_path_cacic + 'modulos\','',false);
-                                   if (FileExists(p_path_cacic + 'Modulos\col_comp.exe'))  then
+                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_comp','Coletor de Informações de Compartilhamentos',g_oCacic.getCacicPath + 'modulos\','',false);
+                                   if (FileExists(g_oCacic.getCacicPath + 'Modulos\col_comp.exe'))  then
                                       Begin
                                          intMontaBatch := 1;
                                          if (v_ModulosOpcoes<>'') then v_ModulosOpcoes := v_ModulosOpcoes + '#';
@@ -2890,8 +2704,8 @@ Begin
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_HARD','N', v_tstrCipherOpened);
 
-                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_hard','Coletor de Informações de Hardware',p_path_cacic + 'modulos\','',false);
-                                   if (FileExists(p_path_cacic + 'Modulos\col_hard.exe'))  then
+                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_hard','Coletor de Informações de Hardware',g_oCacic.getCacicPath + 'modulos\','',false);
+                                   if (FileExists(g_oCacic.getCacicPath + 'Modulos\col_hard.exe'))  then
                                       Begin
                                          intMontaBatch := 1;
                                          if (v_ModulosOpcoes<>'') then v_ModulosOpcoes := v_ModulosOpcoes + '#';
@@ -2913,8 +2727,8 @@ Begin
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_MONI','N', v_tstrCipherOpened);
 
-                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_moni','Coletor de Informações de Sistemas Monitorados',p_path_cacic + 'modulos\','',false);
-                                   if (FileExists(p_path_cacic + 'Modulos\col_moni.exe'))  then
+                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_moni','Coletor de Informações de Sistemas Monitorados',g_oCacic.getCacicPath + 'modulos\','',false);
+                                   if (FileExists(g_oCacic.getCacicPath + 'Modulos\col_moni.exe'))  then
                                       Begin
                                          intMontaBatch := 1;
                                          if (v_ModulosOpcoes<>'') then v_ModulosOpcoes := v_ModulosOpcoes + '#';
@@ -2935,8 +2749,8 @@ Begin
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_SOFT','N', v_tstrCipherOpened);
 
-                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_soft','Coletor de Informações de Softwares Básicos',p_path_cacic + 'modulos\','',false);
-                                   if (FileExists(p_path_cacic + 'Modulos\col_soft.exe'))  then
+                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_soft','Coletor de Informações de Softwares Básicos',g_oCacic.getCacicPath + 'modulos\','',false);
+                                   if (FileExists(g_oCacic.getCacicPath + 'Modulos\col_soft.exe'))  then
                                       Begin
                                          intMontaBatch := 1;
                                          if (v_ModulosOpcoes<>'') then v_ModulosOpcoes := v_ModulosOpcoes + '#';
@@ -2957,8 +2771,8 @@ Begin
                                   else
                                       SetValorDatMemoria('Configs.IN_COLETA_FORCADA_UNDI','N', v_tstrCipherOpened);
 
-                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_undi','Coletor de Informações de Unidades de Disco',p_path_cacic + 'modulos\','',false);
-                                   if (FileExists(p_path_cacic + 'Modulos\col_undi.exe'))  then
+                                   if (v_CS_AUTO_UPDATE) then Ver_UPD('col_undi','Coletor de Informações de Unidades de Disco',g_oCacic.getCacicPath + 'modulos\','',false);
+                                   if (FileExists(g_oCacic.getCacicPath + 'Modulos\col_undi.exe'))  then
                                       Begin
                                          intMontaBatch := 1;
                                          if (v_ModulosOpcoes<>'') then v_ModulosOpcoes := v_ModulosOpcoes + '#';
@@ -2971,29 +2785,28 @@ Begin
                                 (GetValorDatMemoria('Configs.ID_FTP',v_tstrCipherOpened)<>'') then
                                 Begin
                                   Request_Ger_Cols := TStringList.Create;
-                                  Request_Ger_Cols.Values['in_chkcacic']   := StringReplace(EnCrypt('chkcacic',l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                                  Request_Ger_Cols.Values['te_fila_ftp']   := StringReplace(EnCrypt('2',l_cs_compress),'+','<MAIS>',[rfReplaceAll]); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
-                                  Request_Ger_Cols.Values['id_ftp']        := StringReplace(EnCrypt(GetValorDatMemoria('Configs.ID_FTP',v_tstrCipherOpened),l_cs_compress),'+','<MAIS>',[rfReplaceAll]); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
+                                  Request_Ger_Cols.Values['in_chkcacic']   := StringReplace(g_oCacic.enCrypt('chkcacic'),'+','<MAIS>',[rfReplaceAll]);
+                                  Request_Ger_Cols.Values['te_fila_ftp']   := StringReplace(g_oCacic.enCrypt('2'),'+','<MAIS>',[rfReplaceAll]); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
+                                  Request_Ger_Cols.Values['id_ftp']        := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Configs.ID_FTP',v_tstrCipherOpened)),'+','<MAIS>',[rfReplaceAll]); // Indicará sucesso na operação de FTP e liberará lugar para o próximo
                                   ComunicaServidor('get_config.php', Request_Ger_Cols, '>> Liberando Grupo FTP!...');
                                   Request_Ger_Cols.Free;
                                   SetValorDatMemoria('Configs.ID_FTP','', v_tstrCipherOpened)
                                 End;
                              if (intMontaBatch > 0) then
                                 Begin
-                                     Ver_UPD('ini_cols','Inicializador de Coletas',p_path_cacic + 'modulos\','',false);
+                                     Ver_UPD('ini_cols','Inicializador de Coletas',g_oCacic.getCacicPath + 'modulos\','',false);
                                      log_diario('Iniciando coletas.');
                                      Finalizar(false);
-                                     Matar(p_path_cacic + 'temp\','*.dat');
-                                     CriaTXT(p_path_cacic+'temp','coletas');
-                                     g_oCacic.createSampleProcess( p_path_cacic + 'modulos\ini_cols.exe /p_CipherKey=' + v_CipherKey +
-                                                                     ' /p_ModulosOpcoes=' + v_ModulosOpcoes, CACIC_PROCESS_WAIT );
+                                     Matar(g_oCacic.getCacicPath + 'temp\','*.dat');
+                                     CriaTXT(g_oCacic.getCacicPath+'temp','coletas');
+                                     g_oCacic.createSampleProcess( g_oCacic.getCacicPath + 'modulos\ini_cols.exe /p_ModulosOpcoes=' + v_ModulosOpcoes, CACIC_PROCESS_WAIT );
                                 End;
 
                           end
                        else
                           begin
-                             if not FileExists(p_path_cacic + 'Temp\ger_cols.exe') and
-                                not FileExists(p_path_cacic + 'modulos\ger_cols.exe')  then
+                             if not FileExists(g_oCacic.getCacicPath + 'Temp\ger_cols.exe') and
+                                not FileExists(g_oCacic.getCacicPath + 'modulos\ger_cols.exe')  then
                                   log_diario('Módulo Gerente de Coletas inexistente.')
                              else log_diario('Nenhuma coleta configurada para essa subrede / estação / S.O.');
                           end;
@@ -3001,7 +2814,7 @@ Begin
             end;
 
         // Caso não existam os arquivos abaixo, será finalizado.
-        if (FileExists(p_path_cacic + 'Temp\coletas.txt')) or (FileExists(p_path_cacic + 'Temp\coletas.bat')) then
+        if (FileExists(g_oCacic.getCacicPath + 'Temp\coletas.txt')) or (FileExists(g_oCacic.getCacicPath + 'Temp\coletas.bat')) then
             begin
               log_DEBUG('Encontrado indicador de Coletas - Realizando leituras...');
               v_tstrCipherOpened1 := TStrings.Create;
@@ -3010,11 +2823,11 @@ Begin
               Request_Ger_Cols:=TStringList.Create;
               intAux := 0;
 
-              if (FileExists(p_path_cacic + 'Temp\col_anvi.dat')) then
+              if (FileExists(g_oCacic.getCacicPath + 'Temp\col_anvi.dat')) then
                   Begin
-                    log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_anvi.dat encontrado.');
+                    log_DEBUG('Indicador '+g_oCacic.getCacicPath + 'Temp\col_anvi.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Anti-Vírus.';
-                    v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_anvi.dat');
+                    v_tstrCipherOpened1  := CipherOpen(g_oCacic.getCacicPath + 'Temp\col_anvi.dat');
 
                     // Armazeno dados para informações de coletas na data, via menu popup do Systray
                     SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Anti-Vírus OfficeScan', v_tstrCipherOpened);
@@ -3026,11 +2839,11 @@ Begin
                     if (GetValorDatMemoria('Col_Anvi.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Preparação para envio...
-                        Request_Ger_Cols.Values['nu_versao_engine' ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Anvi.nu_versao_engine' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['nu_versao_pattern'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Anvi.nu_versao_pattern',v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['dt_hr_instalacao' ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Anvi.dt_hr_instalacao' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_servidor'      ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Anvi.te_servidor'      ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['in_ativo'         ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Anvi.in_ativo'         ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['nu_versao_engine' ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Anvi.nu_versao_engine' ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['nu_versao_pattern'] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Anvi.nu_versao_pattern',v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['dt_hr_instalacao' ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Anvi.dt_hr_instalacao' ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_servidor'      ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Anvi.te_servidor'      ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['in_ativo'         ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Anvi.in_ativo'         ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
 
                         if v_Debugs then
                             For intLoop := 0 to Request_Ger_Cols.Count-1 do
@@ -3057,14 +2870,14 @@ Begin
                       SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
                     Request_Ger_Cols.Clear;
-                    Matar(p_path_cacic+'Temp\','col_anvi.dat');
+                    Matar(g_oCacic.getCacicPath+'Temp\','col_anvi.dat');
                   End;
 
-              if (FileExists(p_path_cacic + 'Temp\col_comp.dat')) then
+              if (FileExists(g_oCacic.getCacicPath + 'Temp\col_comp.dat')) then
                   Begin
-                    log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_comp.dat encontrado.');
+                    log_DEBUG('Indicador '+g_oCacic.getCacicPath + 'Temp\col_comp.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Compartilhamentos.';
-                    v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_comp.dat');
+                    v_tstrCipherOpened1  := CipherOpen(g_oCacic.getCacicPath + 'Temp\col_comp.dat');
 
                     // Armazeno dados para informações de coletas na data, via menu popup do Systray
                     SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Compartilhamentos', v_tstrCipherOpened);
@@ -3076,7 +2889,7 @@ Begin
                     if (GetValorDatMemoria('Col_Comp.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Preparação para envio...
-                        Request_Ger_Cols.Values['CompartilhamentosLocais'] := StringReplace(EnCrypt(StringReplace(GetValorDatMemoria('Col_Comp.UVC',v_tstrCipherOpened1),'\','<BarrInv>',[rfReplaceAll]),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['CompartilhamentosLocais'] := StringReplace(g_oCacic.enCrypt(StringReplace(GetValorDatMemoria('Col_Comp.UVC',v_tstrCipherOpened1),'\','<BarrInv>',[rfReplaceAll])),'+','<MAIS>',[rfReplaceAll]);
                         if v_Debugs then
                           Begin
                             log_DEBUG('Col_Comp.UVC => '+GetValorDatMemoria('Col_Comp.UVC',v_tstrCipherOpened1));
@@ -3104,14 +2917,14 @@ Begin
                       SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
                     Request_Ger_Cols.Clear;
-                    Matar(p_path_cacic+'Temp\','col_comp.dat');
+                    Matar(g_oCacic.getCacicPath+'Temp\','col_comp.dat');
                   End;
 
-              if (FileExists(p_path_cacic + 'Temp\col_hard.dat')) then
+              if (FileExists(g_oCacic.getCacicPath + 'Temp\col_hard.dat')) then
                   Begin
-                    log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_hard.dat encontrado.');
+                    log_DEBUG('Indicador '+g_oCacic.getCacicPath + 'Temp\col_hard.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Hardware.';
-                    v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_hard.dat');
+                    v_tstrCipherOpened1  := CipherOpen(g_oCacic.getCacicPath + 'Temp\col_hard.dat');
 
                     // Armazeno dados para informações de coletas na data, via menu popup do Systray
                     SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Hardware', v_tstrCipherOpened);
@@ -3123,24 +2936,24 @@ Begin
                     if (GetValorDatMemoria('Col_Hard.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Preparação para envio...
-                        Request_Ger_Cols.Values['te_Tripa_TCPIP'          ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_Tripa_TCPIP'          ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_Tripa_CPU'            ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_Tripa_CPU'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_Tripa_CDROM'          ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_Tripa_CDROM'          ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_placa_mae_fabricante' ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_placa_mae_fabricante' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_placa_mae_desc'       ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_placa_mae_desc'       ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['qt_mem_ram'              ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.qt_mem_ram'              ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_mem_ram_desc'         ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_mem_ram_desc'         ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_bios_desc'            ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_bios_desc'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_bios_data'            ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_bios_data'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_bios_fabricante'      ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_bios_fabricante'      ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['qt_placa_video_cores'    ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.qt_placa_video_cores'    ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_placa_video_desc'     ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_placa_video_desc'     ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['qt_placa_video_mem'      ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.qt_placa_video_mem'      ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_placa_video_resolucao'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_placa_video_resolucao',v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_placa_som_desc'       ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_placa_som_desc'       ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_teclado_desc'         ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_teclado_desc'         ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_mouse_desc'           ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_mouse_desc'           ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_modem_desc'           ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Hard.te_modem_desc'           ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_Tripa_TCPIP'          ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_Tripa_TCPIP'          ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_Tripa_CPU'            ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_Tripa_CPU'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_Tripa_CDROM'          ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_Tripa_CDROM'          ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_placa_mae_fabricante' ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_placa_mae_fabricante' ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_placa_mae_desc'       ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_placa_mae_desc'       ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['qt_mem_ram'              ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.qt_mem_ram'              ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_mem_ram_desc'         ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_mem_ram_desc'         ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_bios_desc'            ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_bios_desc'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_bios_data'            ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_bios_data'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_bios_fabricante'      ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_bios_fabricante'      ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['qt_placa_video_cores'    ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.qt_placa_video_cores'    ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_placa_video_desc'     ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_placa_video_desc'     ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['qt_placa_video_mem'      ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.qt_placa_video_mem'      ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_placa_video_resolucao'] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_placa_video_resolucao',v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_placa_som_desc'       ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_placa_som_desc'       ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_teclado_desc'         ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_teclado_desc'         ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_mouse_desc'           ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_mouse_desc'           ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_modem_desc'           ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Hard.te_modem_desc'           ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
                         if v_Debugs then
                             For intLoop := 0 to Request_Ger_Cols.Count-1 do
                                 log_DEBUG('Item "'+Request_Ger_Cols.Names[intLoop]+'" de Col_Hard: '+Request_Ger_Cols.ValueFromIndex[intLoop]);
@@ -3165,14 +2978,14 @@ Begin
                       SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
                     Request_Ger_Cols.Clear;
-                    Matar(p_path_cacic+'Temp\','col_hard.dat');
+                    Matar(g_oCacic.getCacicPath+'Temp\','col_hard.dat');
                   End;
 
-              if (FileExists(p_path_cacic + 'Temp\col_patr.dat')) then
+              if (FileExists(g_oCacic.getCacicPath + 'Temp\col_patr.dat')) then
                   Begin
-                    log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_patr.dat encontrado.');
+                    log_DEBUG('Indicador '+g_oCacic.getCacicPath + 'Temp\col_patr.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Patrimônio.';
-                    v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_patr.dat');
+                    v_tstrCipherOpened1  := CipherOpen(g_oCacic.getCacicPath + 'Temp\col_patr.dat');
 
                     // Armazeno dados para informações de coletas na data, via menu popup do Systray
                     SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações Patrimoniais', v_tstrCipherOpened);
@@ -3184,16 +2997,16 @@ Begin
                     if (GetValorDatMemoria('Col_Patr.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Preparação para envio...
-                        Request_Ger_Cols.Values['id_unid_organizacional_nivel1']  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1'  ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['id_unid_organizacional_nivel1a'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1a' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['id_unid_organizacional_nivel2']  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel2'  ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_localizacao_complementar'  ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_localizacao_complementar'    ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_info_patrimonio1'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio1'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_info_patrimonio2'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio2'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_info_patrimonio3'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio3'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_info_patrimonio4'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio4'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_info_patrimonio5'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio5'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_info_patrimonio6'          ]  := StringReplace(EnCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio6'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['id_unid_organizacional_nivel1']  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1'  ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['id_unid_organizacional_nivel1a'] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel1a' ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['id_unid_organizacional_nivel2']  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.id_unid_organizacional_nivel2'  ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_localizacao_complementar'  ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_localizacao_complementar'    ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_info_patrimonio1'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio1'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_info_patrimonio2'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio2'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_info_patrimonio3'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio3'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_info_patrimonio4'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio4'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_info_patrimonio5'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio5'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_info_patrimonio6'          ]  := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Patr.te_info_patrimonio6'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
 
                         if v_Debugs then
                             For intLoop := 0 to Request_Ger_Cols.Count-1 do
@@ -3228,14 +3041,14 @@ Begin
                       SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
                     Request_Ger_Cols.Clear;
-                    Matar(p_path_cacic+'Temp\','col_patr.dat');
+                    Matar(g_oCacic.getCacicPath+'Temp\','col_patr.dat');
                   End;
 
-              if (FileExists(p_path_cacic + 'Temp\col_moni.dat')) then
+              if (FileExists(g_oCacic.getCacicPath + 'Temp\col_moni.dat')) then
                   Begin
-                    log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_moni.dat encontrado.');
+                    log_DEBUG('Indicador '+g_oCacic.getCacicPath + 'Temp\col_moni.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Sistemas Monitorados.';
-                    v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_moni.dat');
+                    v_tstrCipherOpened1  := CipherOpen(g_oCacic.getCacicPath + 'Temp\col_moni.dat');
 
                     // Armazeno dados para informações de coletas na data, via menu popup do Systray
                     SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Sistemas Monitorados', v_tstrCipherOpened);
@@ -3247,7 +3060,7 @@ Begin
                     if (GetValorDatMemoria('Col_Moni.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Preparação para envio...
-                        Request_Ger_Cols.Values['te_tripa_monitorados'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Moni.UVC',v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_tripa_monitorados'] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Moni.UVC',v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
 
                         if v_Debugs then
                             For intLoop := 0 to Request_Ger_Cols.Count-1 do
@@ -3273,14 +3086,14 @@ Begin
                       SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
                     Request_Ger_Cols.Clear;
-                    Matar(p_path_cacic+'Temp\','col_moni.dat');
+                    Matar(g_oCacic.getCacicPath+'Temp\','col_moni.dat');
                   End;
 
-              if (FileExists(p_path_cacic + 'Temp\col_soft.dat')) then
+              if (FileExists(g_oCacic.getCacicPath + 'Temp\col_soft.dat')) then
                   Begin
-                    log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_soft.dat encontrado.');
+                    log_DEBUG('Indicador '+g_oCacic.getCacicPath + 'Temp\col_soft.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Softwares.';
-                    v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_soft.dat');
+                    v_tstrCipherOpened1  := CipherOpen(g_oCacic.getCacicPath + 'Temp\col_soft.dat');
 
                     // Armazeno dados para informações de coletas na data, via menu popup do Systray
                     SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Softwares', v_tstrCipherOpened);
@@ -3292,17 +3105,17 @@ Begin
                     if (GetValorDatMemoria('Col_Soft.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Preparação para envio...
-                        Request_Ger_Cols.Values['te_versao_bde'           ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_bde'           ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_versao_dao'           ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_dao'           ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_versao_ado'           ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_ado'           ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_versao_odbc'          ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_odbc'          ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_versao_directx'       ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_directx'       ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_versao_acrobat_reader'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_acrobat_reader',v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_versao_ie'            ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_ie'            ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_versao_mozilla'       ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_mozilla'       ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_versao_jre'           ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_versao_jre'           ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_inventario_softwares' ] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Soft.te_inventario_softwares' ,v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
-                        Request_Ger_Cols.Values['te_variaveis_ambiente'   ] := StringReplace(EnCrypt(StringReplace(GetValorDatMemoria('Col_Soft.te_variaveis_ambiente',v_tstrCipherOpened1),'\','<BarrInv>',[rfReplaceAll]),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_bde'           ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_bde'           ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_dao'           ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_dao'           ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_ado'           ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_ado'           ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_odbc'          ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_odbc'          ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_directx'       ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_directx'       ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_acrobat_reader'] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_acrobat_reader',v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_ie'            ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_ie'            ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_mozilla'       ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_mozilla'       ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_versao_jre'           ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_versao_jre'           ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_inventario_softwares' ] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Soft.te_inventario_softwares' ,v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['te_variaveis_ambiente'   ] := StringReplace(g_oCacic.enCrypt(StringReplace(GetValorDatMemoria('Col_Soft.te_variaveis_ambiente',v_tstrCipherOpened1),'\','<BarrInv>',[rfReplaceAll])),'+','<MAIS>',[rfReplaceAll]);
 
                         if v_Debugs then
                             For intLoop := 0 to Request_Ger_Cols.Count-1 do
@@ -3328,14 +3141,14 @@ Begin
                       SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
                     Request_Ger_Cols.Clear;
-                    Matar(p_path_cacic+'Temp\','col_soft.dat');
+                    Matar(g_oCacic.getCacicPath+'Temp\','col_soft.dat');
                   End;
 
-              if (FileExists(p_path_cacic + 'Temp\col_undi.dat')) then
+              if (FileExists(g_oCacic.getCacicPath + 'Temp\col_undi.dat')) then
                   Begin
-                    log_DEBUG('Indicador '+p_path_cacic + 'Temp\col_undi.dat encontrado.');
+                    log_DEBUG('Indicador '+g_oCacic.getCacicPath + 'Temp\col_undi.dat encontrado.');
                     v_acao_gercols := '* Preparando envio de informações de Unidades de Disco.';
-                    v_tstrCipherOpened1  := CipherOpen(p_path_cacic + 'Temp\col_undi.dat');
+                    v_tstrCipherOpened1  := CipherOpen(g_oCacic.getCacicPath + 'Temp\col_undi.dat');
 
                     // Armazeno dados para informações de coletas na data, via menu popup do Systray
                     SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+'#Informações sobre Unidades de Disco', v_tstrCipherOpened);
@@ -3347,7 +3160,7 @@ Begin
                     if (GetValorDatMemoria('Col_Undi.nada',v_tstrCipherOpened1)='') then
                       Begin
                         // Preparação para envio...
-                        Request_Ger_Cols.Values['UnidadesDiscos'] := StringReplace(EnCrypt(GetValorDatMemoria('Col_Undi.UVC',v_tstrCipherOpened1),l_cs_compress),'+','<MAIS>',[rfReplaceAll]);
+                        Request_Ger_Cols.Values['UnidadesDiscos'] := StringReplace(g_oCacic.enCrypt(GetValorDatMemoria('Col_Undi.UVC',v_tstrCipherOpened1)),'+','<MAIS>',[rfReplaceAll]);
 
                         if v_Debugs then
                             For intLoop := 0 to Request_Ger_Cols.Count-1 do
@@ -3373,7 +3186,7 @@ Begin
                       SetValorDatMemoria('Coletas.HOJE',GetValorDatMemoria('Coletas.HOJE',v_tstrCipherOpened)+',0', v_tstrCipherOpened);
 
                     Request_Ger_Cols.Clear;
-                    Matar(p_path_cacic+'Temp\','col_undi.dat');
+                    Matar(g_oCacic.getCacicPath+'Temp\','col_undi.dat');
                   End;
               Request_Ger_Cols.Free;
 
@@ -3391,7 +3204,7 @@ Begin
   Except
     Begin
      log_diario('PROBLEMAS EM EXECUTA_GER_COLS! Ação: ' + v_acao_gercols+'.');
-     CriaTXT(p_path_cacic,'ger_erro');
+     CriaTXT(g_oCacic.getCacicPath,'ger_erro');
      Finalizar(false);
      SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
     End;
@@ -3399,93 +3212,72 @@ Begin
 
 End;
 
-const
-   CACIC_APP_NAME = 'ger_cols';
-
+var v_path_cacic : String;
 begin
    g_oCacic := TCACIC.Create();
 
    if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then begin
      Try
        // Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.DAT
-       tstrTripa1   := explode(ExtractFilePath(ParamStr(0)),'\');
-       p_path_cacic := '';
+       tstrTripa1   := g_oCacic.explode(ExtractFilePath(ParamStr(0)),'\');
+       v_path_cacic := '';
        For intAux := 0 to tstrTripa1.Count -2 do
-           p_path_cacic := p_path_cacic + tstrTripa1[intAux] + '\';
+           v_path_cacic := v_path_cacic + tstrTripa1[intAux] + '\';
 
+       g_oCacic.setCacicPath(v_path_cacic);
        v_Debugs := false;
-       if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
-           if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+       if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
+           if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
           Begin
             v_Debugs := true;
-            log_DEBUG('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+            log_DEBUG('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
           End;
 
-       g_oCacic.setCacicPath(p_path_cacic);
+       g_oCacic.setCacicPath(g_oCacic.getCacicPath);
 
-        For intAux := 1 to ParamCount do
-          if LowerCase(Copy(ParamStr(intAux),1,13)) = '/p_cipherkey=' then
-            Begin
-              v_CipherKey := Trim(Copy(ParamStr(intAux),14,Length((ParamStr(intAux)))));
-              log_DEBUG('Parâmetro para cifragem recebido.');
-            End;
 
-        // Caso tenha sido invocado por um CACIC2.EXE versão antiga, assumo o valor abaixo...
-        // Solução provisória até a convergência das versões do Agente Principal e do Gerente de Coletas
-        if (trim(v_CipherKey)='') then
-           v_CipherKey := 'CacicBrasil';
 
-        if (trim(v_CipherKey)<>'') then
-          Begin
-            v_IV := 'abcdefghijklmnop';
+       // De acordo com a versão do OS, determina-se o ShellCommand para chamadas externas.
+       p_Shell_Command := 'cmd.exe /c '; //NT/2K/XP
+       if(g_oCacic.isWindows9xME()) then
+          p_Shell_Command := 'command.com /c ';
 
-           // De acordo com a versão do OS, determina-se o ShellCommand para chamadas externas.
-           p_Shell_Command := 'cmd.exe /c '; //NT/2K/XP
-           if(g_oCacic.isWindows9xME()) then
-              p_Shell_Command := 'command.com /c ';
+       if not DirectoryExists(g_oCacic.getCacicPath + 'Temp') then
+         ForceDirectories(g_oCacic.getCacicPath + 'Temp');
 
-           if not DirectoryExists(p_path_cacic + 'Temp') then
-             ForceDirectories(p_path_cacic + 'Temp');
+       v_tstrCipherOpened := TStrings.Create;
+       v_tstrCipherOpened := CipherOpen(g_oCacic.getDatFileName);
 
-           // A chave AES foi obtida no parâmetro p_CipherKey. Recomenda-se que cada empresa altere a sua chave.
-           v_DatFileName      := p_path_cacic + 'cacic2.dat';
-           v_tstrCipherOpened := TStrings.Create;
-           v_tstrCipherOpened := CipherOpen(v_DatFileName);
+       // Não tirar desta posição
+       SetValorDatMemoria('Configs.TE_SO',g_oCacic.getWindowsStrId(), v_tstrCipherOpened);
 
-           // Obtem a string de identificação do SO (g_te_so), para uso nas comunicações com o Gerente WEB.
-           g_te_so := g_oCacic.getWindowsStrId();
+       log_DEBUG('Te_So obtido: "' + g_oCacic.getWindowsStrId() +'"');
 
-           // Não tirar desta posição
-           SetValorDatMemoria('Configs.ID_SO',g_te_so, v_tstrCipherOpened);
+       v_scripter := 'wscript.exe';
+       // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento
+       AssignFile(v_Aguarde,g_oCacic.getCacicPath + 'temp\aguarde_GER.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+       {$IOChecks off}
+       Reset(v_Aguarde); {Abre o arquivo texto}
+       {$IOChecks on}
+       if (IOResult <> 0) then // Arquivo não existe, será recriado.
+         Rewrite (v_Aguarde);
 
-           log_DEBUG('Te_So obtido: "' + g_te_so +'"');
+       Append(v_Aguarde);
+       Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ger_Cols');
+       Append(v_Aguarde);
 
-           v_scripter := 'wscript.exe';
-           // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento
-           AssignFile(v_Aguarde,p_path_cacic + 'temp\aguarde_GER.txt'); {Associa o arquivo a uma variável do tipo TextFile}
-           {$IOChecks off}
-           Reset(v_Aguarde); {Abre o arquivo texto}
-           {$IOChecks on}
-           if (IOResult <> 0) then // Arquivo não existe, será recriado.
-             Rewrite (v_Aguarde);
+       ChecaCipher;
+       ChecaCompress;
 
-           Append(v_Aguarde);
-           Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ger_Cols');
-           Append(v_Aguarde);
-
-           ChecaCipher;
-           ChecaCompress;
-
-           Executa_Ger_Cols;
-           Finalizar(true);
-          End;
-       Except
-         Begin
-           log_diario('PROBLEMAS EM EXECUTA_GER_COLS! Ação: ' + v_acao_gercols+'.');
-           CriaTXT(p_path_cacic,'ger_erro');
-           Finalizar(false);
-           SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
-         End;
+       Executa_Ger_Cols;
+       Finalizar(true);
+     Except
+       Begin
+        log_diario('PROBLEMAS EM EXECUTA_GER_COLS! Ação: ' + v_acao_gercols+'.');
+        CriaTXT(g_oCacic.getCacicPath,'ger_erro');
+        Finalizar(false);
+        SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
+       End;
      End;
    End;
 
