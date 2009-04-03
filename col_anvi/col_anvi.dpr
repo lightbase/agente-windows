@@ -26,16 +26,9 @@ uses
   TLHELP32,
   ShellAPI,
   PJVersionInfo,
-  DCPcrypt2,
-  DCPrijndael,
-  DCPbase64,
   CACIC_Library in '..\CACIC_Library.pas';
 
-var  p_path_cacic,
-     v_CipherKey,
-     v_IV,
-     v_strCipherClosed,
-     v_DatFileName             : String;
+var  v_strCipherClosed         : String;
 
 var v_Debugs                   : boolean;
 
@@ -45,26 +38,11 @@ var v_tstrCipherOpened,
 var
   g_oCacic : TCACIC;
 
-// Some constants that are dependant on the cipher being used
-// Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
-const KeySize = 32; // 32 bytes = 256 bits
-      BlockSize = 16; // 16 bytes = 128 bits
-
 function VerFmt(const MS, LS: DWORD): string;
   // Format the version number from the given DWORDs containing the info
 begin
   Result := Format('%d.%d.%d.%d',
     [HiWord(MS), LoWord(MS), HiWord(LS), LoWord(LS)])
-end;
-
-{ TMainForm }
-{ TMainForm }
-function HomeDrive : string;
-var
-WinDir : array [0..144] of char;
-begin
-GetWindowsDirectory (WinDir, 144);
-Result := StrPas (WinDir);
 end;
 
 procedure log_diario(strMsg : String);
@@ -73,8 +51,8 @@ var
     strDataArqLocal, strDataAtual : string;
 begin
    try
-       FileSetAttr (p_path_cacic + 'cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-       AssignFile(HistoricoLog,p_path_cacic + 'cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
+       FileSetAttr (g_oCacic.getCacicPath + '\cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+       AssignFile(HistoricoLog,g_oCacic.getCacicPath + '\cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
        {$IOChecks off}
        Reset(HistoricoLog); {Abre o arquivo texto}
        {$IOChecks on}
@@ -84,7 +62,7 @@ begin
             Append(HistoricoLog);
             Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now) + '======================> Iniciando o Log do CACIC <=======================');
           end;
-       DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(p_path_cacic + 'cacic2.log')));
+       DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(g_oCacic.getCacicPath + '\cacic2.log')));
        DateTimeToString(strDataAtual   , 'yyyymmdd', Date);
        if (strDataAtual <> strDataArqLocal) then // Se o arquivo INI não é da data atual...
           begin
@@ -127,92 +105,6 @@ begin
   end;
 end;
 
-
-// Encrypt a string and return the Base64 encoded result
-function EnCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Try
-    // Pad Key, IV and Data with zeros as appropriate
-    l_Key   := PadWithZeros(v_CipherKey,KeySize);
-    l_IV    := PadWithZeros(v_IV,BlockSize);
-    l_Data  := PadWithZeros(p_Data,BlockSize);
-
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(v_CipherKey) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(v_CipherKey) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-    // Encrypt the data
-    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
-
-    // Return the Base64 encoded result
-    Result := Base64EncodeStr(l_Data);
-  Except
-    log_diario('Erro no Processo de Criptografia');
-  End;
-end;
-
-function DeCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Try
-    // Pad Key and IV with zeros as appropriate
-    l_Key := PadWithZeros(v_CipherKey,KeySize);
-    l_IV := PadWithZeros(v_IV,BlockSize);
-
-    // Decode the Base64 encoded string
-    l_Data := Base64DecodeStr(p_Data);
-
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(v_CipherKey) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(v_CipherKey) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-    // Decrypt the data
-    l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
-
-    // Return the result
-    Result := l_Data;
-  Except
-    log_diario('Erro no Processo de Decriptografia');
-  End;
-end;
-
-Function Implode(p_Array : TStrings ; p_Separador : String) : String;
-var intAux : integer;
-    strAux : string;
-Begin
-//log_diario('IMPLODE - Tamanho de p_Array='+inttostr(p_array.Count));
-    strAux := '';
-    For intAux := 0 To p_Array.Count -1 do
-      Begin
-        if (strAux<>'') then strAux := strAux + p_Separador;
-        strAux := strAux + p_Array[intAux];
-      End;
-    Result := strAux;
-end;
-
 Procedure CipherClose(p_DatFileName : string; p_tstrCipherOpened : TStrings);
 var v_strCipherOpenImploded : string;
     v_DatFile : TextFile;
@@ -225,49 +117,13 @@ begin
        Rewrite (v_DatFile);
        Append(v_DatFile);
 
-       //v_Cipher  := TDCP_rijndael.Create(nil);
-       //v_Cipher.InitStr(v_CipherKey,TDCP_md5);
-       v_strCipherOpenImploded := Implode(p_tstrCipherOpened,'=CacicIsFree=');
-//       v_strCipherClosed := v_Cipher.EncryptString(v_strCipherOpenImploded);
-       v_strCipherClosed := EnCrypt(v_strCipherOpenImploded);
-//       v_Cipher.Burn;
-//       v_Cipher.Free;
+       v_strCipherOpenImploded := g_oCacic.implode(p_tstrCipherOpened,g_oCacic.getSeparatorKey);
+       v_strCipherClosed := g_oCacic.enCrypt(v_strCipherOpenImploded);
        Writeln(v_DatFile,v_strCipherClosed); {Grava a string Texto no arquivo texto}
        CloseFile(v_DatFile);
    except
    end;
 end;
-
-Function Explode(Texto, Separador : String) : TStrings;
-var
-    strItem       : String;
-    ListaAuxUTILS : TStrings;
-    NumCaracteres,
-    TamanhoSeparador,
-    I : Integer;
-Begin
-    ListaAuxUTILS    := TStringList.Create;
-    strItem          := '';
-    NumCaracteres    := Length(Texto);
-    TamanhoSeparador := Length(Separador);
-    I                := 1;
-    While I <= NumCaracteres Do
-      Begin
-        If (Copy(Texto,I,TamanhoSeparador) = Separador) or (I = NumCaracteres) Then
-          Begin
-            if (I = NumCaracteres) then strItem := strItem + Texto[I];
-            ListaAuxUTILS.Add(trim(strItem));
-            strItem := '';
-            I := I + (TamanhoSeparador-1);
-          end
-        Else
-            strItem := strItem + Texto[I];
-
-        I := I + 1;
-      End;
-    Explode := ListaAuxUTILS;
-end;
-
 
 Function CipherOpen(p_DatFileName : string) : TStrings;
 var v_DatFile         : TextFile;
@@ -290,12 +146,12 @@ begin
       Readln(v_DatFile,v_strCipherClosed);
       while not EOF(v_DatFile) do Readln(v_DatFile,v_strCipherClosed);
       CloseFile(v_DatFile);
-      v_strCipherOpened:= DeCrypt(v_strCipherClosed);
+      v_strCipherOpened:= g_oCacic.deCrypt(v_strCipherClosed);
     end;
     if (trim(v_strCipherOpened)<>'') then
-      Result := explode(v_strCipherOpened,'=CacicIsFree=')
+      Result := g_oCacic.explode(v_strCipherOpened,g_oCacic.getSeparatorKey)
     else
-      Result := explode('Configs.ID_SO=CacicIsFree='+ g_oCacic.getWindowsStrId() +'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
+      Result := g_oCacic.explode('Configs.ID_SO'+g_oCacic.getSeparatorKey+ g_oCacic.getWindowsStrId() + g_oCacic.getSeparatorKey + 'Configs.Endereco_WS'+g_oCacic.getSeparatorKey+'/cacic2/ws/',g_oCacic.getSeparatorKey);
 
     if Result.Count mod 2 <> 0 then
         Result.Add('');
@@ -349,7 +205,7 @@ var RegEditGet: TRegistry;
 begin
     try
     Result := '';
-    ListaAuxGet := Explode(Chave, '\');
+    ListaAuxGet := g_oCacic.explode(Chave, '\');
 
     strRootKey := ListaAuxGet[0];
     For I := 1 To ListaAuxGet.Count - 2 Do strKey := strKey + ListaAuxGet[I] + '\';
@@ -454,7 +310,7 @@ begin
            If FileExists(strDirTrend + '\filter32.vxd') Then
            Begin
              // Em máquinas Windows 9X a versão do engine e do pattern não são gravadas no registro. Tenho que pegar direto dos arquivos.
-             Lista2_RCO := Explode(getVersionInfo(strDirTrend + 'filter32.vxd'), '.'); // Pego só os dois primeiros dígitos. Por exemplo: 6.640.0.1001  vira  6.640.
+             Lista2_RCO := g_oCacic.explode(getVersionInfo(strDirTrend + 'filter32.vxd'), '.'); // Pego só os dois primeiros dígitos. Por exemplo: 6.640.0.1001  vira  6.640.
              nu_versao_engine := Lista2_RCO[0] + '.' + Lista2_RCO[1];
              Lista2_RCO.Free;
            end
@@ -517,24 +373,25 @@ begin
              SetValorDatMemoria('Col_Anvi.te_servidor'       , te_servidor      , v_tstrCipherOpened1);
              SetValorDatMemoria('Col_Anvi.in_ativo'          , in_ativo         , v_tstrCipherOpened1);
              SetValorDatMemoria('Col_Anvi.UVC'               , UVC              , v_tstrCipherOpened1);
-             CipherClose(p_path_cacic + 'temp\col_anvi.dat'  , v_tstrCipherOpened1);
+             CipherClose(g_oCacic.getCacicPath + '\temp\col_anvi.dat'  , v_tstrCipherOpened1);
         end
         else
           Begin
             SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
-            CipherClose(p_path_cacic + 'temp\col_anvi.dat', v_tstrCipherOpened1);
+            CipherClose(g_oCacic.getCacicPath + '\temp\col_anvi.dat', v_tstrCipherOpened1);
           End;
   Except
     Begin
       SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
       SetValorDatMemoria('Col_Anvi.Fim', '99999999', v_tstrCipherOpened1);
-      CipherClose(p_path_cacic + 'temp\col_anvi.dat', v_tstrCipherOpened1);
+      CipherClose(g_oCacic.getCacicPath + '\temp\col_anvi.dat', v_tstrCipherOpened1);
     End;
   End;
 end;
 
 var tstrTripa1 : TStrings;
     intAux     : integer;
+    v_path_cacic : String;
 const
   CACIC_APP_NAME = 'col_anvi';
 
@@ -544,50 +401,38 @@ begin
    if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then
     if (ParamCount>0) then
     Begin
-      For intAux := 1 to ParamCount do
-        Begin
-          if LowerCase(Copy(ParamStr(intAux),1,13)) = '/p_cipherkey=' then
-            v_CipherKey := Trim(Copy(ParamStr(intAux),14,Length((ParamStr(intAux)))));
+       //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.ini
+       tstrTripa1 := g_oCacic.explode(ExtractFilePath(ParamStr(0)),'\');
+       v_path_cacic := '';
+       For intAux := 0 to tstrTripa1.Count -2 do
+         v_path_cacic := v_path_cacic + tstrTripa1[intAux] + '\';
+
+       g_oCacic.setCacicPath(v_path_cacic);
+
+       v_Debugs := false;
+       if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
+         Begin
+          if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+            Begin
+              v_Debugs := true;
+              log_diario('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+            End;
         End;
+    
+       v_tstrCipherOpened  := TStrings.Create;
+       v_tstrCipherOpened  := CipherOpen(g_oCacic.getDatFileName);
 
-       if (trim(v_CipherKey)<>'') then
+       v_tstrCipherOpened1 := TStrings.Create;
+       v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_anvi.dat');
+
+       Try
+          Executa_Col_Anvi;
+       Except
           Begin
-             //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.ini
-             tstrTripa1 := explode(ExtractFilePath(ParamStr(0)),'\');
-             p_path_cacic := '';
-             For intAux := 0 to tstrTripa1.Count -2 do
-               begin
-                 p_path_cacic := p_path_cacic + tstrTripa1[intAux] + '\';
-               end;
-
-             v_Debugs := false;
-             if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
-               Begin
-                if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
-                  Begin
-                    v_Debugs := true;
-                    log_diario('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
-                  End;
-              End;
-
-             // A chave AES foi obtida no parâmetro p_CipherKey. Recomenda-se que cada empresa altere a sua chave.
-             v_IV                := 'abcdefghijklmnop';
-             v_DatFileName       := p_path_cacic + 'cacic2.dat';
-             v_tstrCipherOpened  := TStrings.Create;
-             v_tstrCipherOpened  := CipherOpen(v_DatFileName);
-
-             v_tstrCipherOpened1 := TStrings.Create;
-             v_tstrCipherOpened1 := CipherOpen(p_path_cacic + 'temp\col_anvi.dat');
-
-             Try
-                Executa_Col_Anvi;
-             Except
-                Begin
-                  SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
-                  CipherClose(p_path_cacic + 'temp\col_anvi.dat', v_tstrCipherOpened1);
-                End;
-             End;
+            SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
+            CipherClose(g_oCacic.getCacicPath + 'temp\col_anvi.dat', v_tstrCipherOpened1);
           End;
+       End;
     End;
     g_oCacic.Free();
 end.

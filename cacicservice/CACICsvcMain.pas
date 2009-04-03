@@ -18,17 +18,19 @@ unit CACICsvcMain;
 
 interface
 
-uses  Windows,
-      Messages,
-      SysUtils,
-      Classes,
-      SvcMgr,
-      strUtils,
-      ExtCtrls;
+uses
+  Windows,
+  Messages,
+  SysUtils,
+  Classes,
+  SvcMgr,
+  strUtils,
+  ExtCtrls,
+  CACIC_Library;
 
-var   strHomeDrive,
-      strCacicDir   : String;
-      boolStarted   : boolean;
+var
+  boolStarted   : boolean;
+  g_oCacic      : TCACIC;
 
 type
   TCACICservice = class(TService)
@@ -41,9 +43,7 @@ type
   private
 
     { Internal Start & Stop methods }
-    function  HomeDrive : string;
     function  GetValorChaveRegIni(p_Secao, p_Chave, p_File : String): String;
-    function  GetAppPath: String;
     procedure doSaveLog(Msg : String);
     Procedure WMEndSession(var Msg : TWMEndSession) ;  message WM_ENDSESSION;
     procedure ExecutaCACIC;
@@ -66,6 +66,7 @@ begin
   inherited;
   Application.Free;
 end;
+
 // Funções Auxiliares
 function TCACICservice.GetValorChaveRegIni(p_Secao, p_Chave, p_File : String): String;
 //Para buscar do Arquivo INI...
@@ -105,40 +106,11 @@ var
     end;
   end;
 
-function TCACICservice.GetAppPath: String;
-Var
-  Test : String;
-  Res  : Longint;
-  CurSize : Longint;
-begin
-  CurSize := 1024;
-  SetLength(Test, CurSize);
-  Res := GetModuleFilename(GetModuleHandle(nil), PChar(test), CurSize);
-  If (res > curSize) then
-  begin
-    CurSize := res + 10;
-    SetLength(Test, CurSize);
-    Res := GetModuleFilename(GetModuleHandle(nil), PChar(test), CurSize);
-  end;
-  Setlength(Test, Res);
-  test := ExtractFileDir(Test);
-  if (test[Length(test)] = '\') or (test[Length(test)]='/') then
-      SetLength(Test, Length(test) - 1);
-  Result := test;
-end;
-
-function TCACICservice.HomeDrive : string;
-var WinDir : array [0..144] of char;
-begin
-  GetWindowsDirectory (WinDir, 144);
-  Result := StrPas (WinDir);
-end;
-
 procedure TCACICservice.doSaveLog(Msg : String);
 var fLog: textfile;
 begin
-  AssignFile(fLog, HomeDrive + '\CACICsvc.log');
-  if FileExists(HomeDrive + '\CACICsvc.log') then
+  AssignFile(fLog, g_oCacic.Windows.getWinDir + 'CACICsvc.log');
+  if FileExists(g_oCacic.Windows.getWinDir + 'CACICsvc.log') then
     Append(fLog)
   else
     Rewrite(fLog);
@@ -172,6 +144,7 @@ end;
 
 procedure TCACICservice.ServiceStart(Sender: TService; var Started: Boolean);
 begin
+  g_oCacic := TCACIC.Create;
 
   Started := true;
 
@@ -182,36 +155,32 @@ begin
 
   While not Terminated do
     Sleep(250);
-
-
 end;
 
 procedure TCACICservice.ExecutaCACIC;
 Begin
+  g_oCacic.setCacicPath(g_oCacic.getHomeDrive + GetValorChaveRegIni('Cacic2', 'cacic_dir', g_oCacic.getWinDir + 'chksis.ini') + '\');
 
-  strHomeDrive := MidStr(HomeDrive,1,3); //x:\
-  strCacicDir  :=  strHomeDrive + GetValorChaveRegIni('Cacic2', 'cacic_dir', GetAppPath + '\chksis.ini');
-
-  DeleteFile(strCacicDir + '\aguarde_CACIC.txt');
+  DeleteFile(g_oCacic.getCacicPath + 'aguarde_CACIC.txt');
   Sleep(3000);
 
   // Se o arquivo indicador de execução não existir...
-  if not (FileExists(strCacicDir + '\aguarde_CACIC.txt')) then
+  if not (FileExists(g_oCacic.getCacicPath + 'aguarde_CACIC.txt')) then
     Begin
       // Executo o CHKsis, verificando a estrutura do sistema
       Try
-        WinEXEC(PChar(HomeDrive + '\chksis.exe'),sw_HIDE);
+        WinEXEC(PChar(g_oCacic.getWinDir + 'chksis.exe'),sw_HIDE);
       Except
       End;
 
-      While not (FileExists(strCacicDir + '\cacic2.exe')) do
+      While not (FileExists(g_oCacic.getCacicPath + 'cacic2.exe')) do
         Sleep(5000); // Espero 5 segundos...
     End;
 
 
   // Executo o Agente Principal do CACIC
   Try
-    WinEXEC(PChar(strCacicDir + '\cacic2.exe'),sw_hide);
+    WinEXEC(PChar(g_oCacic.getCacicPath + 'cacic2.exe'),sw_hide);
   Except
   End;
 End;

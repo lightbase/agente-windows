@@ -18,8 +18,8 @@ program CACICsvc;
 
 uses
   SvcMgr,
-  CACICsvcMain in 'CACICsvcMain.pas' {CACICservice: TService};
-
+  CACICsvcMain in 'CACICsvcMain.pas' {CACICservice: TService},
+  CACIC_Library in '..\CACIC_Library.pas';
 {$R *.RES}
 
 begin 
