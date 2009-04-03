@@ -19,46 +19,40 @@ unit main_col_patr;
 
 interface
 
-uses  IniFiles,
-      Windows,
-      Sysutils,    // Deve ser colocado após o Windows acima, nunca antes
-      Registry,
-      LibXmlParser,
-      XML,
-      StdCtrls,
-      Controls,
-      Classes,
-      Forms,
-      PJVersionInfo,
-      DIALOGS,
-      DCPcrypt2,
-      DCPrijndael,
-      DCPbase64,
-      ExtCtrls,
-      Math,
-      CACIC_Library;
-
-var  p_path_cacic       : String;
-     v_Dados_Patrimonio : TStrings;
-     v_CipherKey,
-     v_IV,
-     v_strCipherClosed,
-     v_strCipherOpened,
-     v_configs,
-     v_option           : String;
-     v_Debugs,
-     l_cs_cipher        : boolean;
-
-var v_tstrCipherOpened,
-    v_tstrCipherOpened1             : TStrings;
+uses
+  IniFiles,
+  Windows,
+  Sysutils,    // Deve ser colocado após o Windows acima, nunca antes
+  Registry,
+  LibXmlParser,
+  XML,
+  StdCtrls,
+  Controls,
+  Classes,
+  Forms,
+  PJVersionInfo,
+  DIALOGS,
+  ExtCtrls,
+  Math,
+  CACIC_Library;
 
 var
-    g_oCacic : TCACIC;
+  v_Dados_Patrimonio,
+  v_tstrCipherOpened,
+  v_tstrCipherOpened1   : TStrings;
 
-// Some constants that are dependant on the cipher being used
-// Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
-const KeySize = 32; // 32 bytes = 256 bits
-      BlockSize = 16; // 16 bytes = 128 bits
+var
+  v_strCipherClosed,
+  v_strCipherOpened,
+  v_configs,
+  v_option              : String;
+
+var
+  v_Debugs,
+  l_cs_cipher           : boolean;
+
+var
+  g_oCacic              : TCACIC;
 
 type
   TFormPatrimonio = class(TForm)
@@ -94,15 +88,9 @@ type
     function  GetValorChaveRegEdit(Chave: String): Variant;
     function  GetRootKey(strRootKey: String): HKEY;
     Function  RemoveCaracteresEspeciais(Texto, p_Fill : String; p_start, p_end:integer) : String;
-    function  HomeDrive : string;
-    Function  Implode(p_Array : TStrings ; p_Separador : String) : String;
     Function  CipherClose(p_DatFileName : string; p_tstrCipherOpened : TStrings) : String;
-    Function  Explode(Texto, Separador : String) : TStrings;
     Function  CipherOpen(p_DatFileName : string) : TStrings;
     Function  GetValorDatMemoria(p_Chave : String; p_tstrCipherOpened : TStrings) : String;
-    function  PadWithZeros(const str : string; size : integer) : string;
-    function  EnCrypt(p_Data : String) : String;
-    function  DeCrypt(p_Data : String) : String;
     procedure FormCreate(Sender: TObject);
     procedure MontaCombos;
     procedure MontaInterface;
@@ -175,21 +163,6 @@ var VetorUON1  : TVetorUON1;
     // Esse array é usado apenas para saber a uon2, após a filtragem pelo uon1
     VetorUON2Filtrado : array of String;
 
-// Pad a string with zeros so that it is a multiple of size
-function TFormPatrimonio.PadWithZeros(const str : string; size : integer) : string;
-var
-  origsize, i : integer;
-begin
-  Result := str;
-  origsize := Length(Result);
-  if ((origsize mod size) <> 0) or (origsize = 0) then
-  begin
-    SetLength(Result,((origsize div size)+1)*size);
-    for i := origsize+1 to Length(Result) do
-      Result[i] := #0;
-  end;
-end;
-
 function TFormPatrimonio.GetFolderDate(Folder: string): TDateTime;
 var
   Rec: TSearchRec;
@@ -211,115 +184,6 @@ begin
   end;
 end;
 
-// Encrypt a string and return the Base64 encoded result
-function TFormPatrimonio.EnCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Try
-    if l_cs_cipher then
-      Begin
-
-        // Pad Key, IV and Data with zeros as appropriate
-        l_Key   := PadWithZeros(v_CipherKey,KeySize);
-        l_IV    := PadWithZeros(v_IV,BlockSize);
-        l_Data  := PadWithZeros(p_Data,BlockSize);
-
-        // Create the cipher and initialise according to the key length
-        l_Cipher := TDCP_rijndael.Create(nil);
-        if Length(v_CipherKey) <= 16 then
-          l_Cipher.Init(l_Key[1],128,@l_IV[1])
-        else if Length(v_CipherKey) <= 24 then
-          l_Cipher.Init(l_Key[1],192,@l_IV[1])
-        else
-          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-        // Encrypt the data
-        l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-        // Free the cipher and clear sensitive information
-        l_Cipher.Free;
-        FillChar(l_Key[1],Length(l_Key),0);
-
-        // Return the Base64 encoded result
-        Result := Base64EncodeStr(l_Data);
-      End
-    else
-      Begin
-        log_DEBUG('Criptografia(DESATIVADA) de "'+p_Data+'"');
-        Result := p_Data;
-      End;
-  Except
-    log_diario('Erro no Processo de Criptografia');
-  End;
-end;
-
-function TFormPatrimonio.DeCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Try
-    if l_cs_cipher then
-      Begin
-        // Pad Key and IV with zeros as appropriate
-        l_Key := PadWithZeros(v_CipherKey,KeySize);
-        l_IV := PadWithZeros(v_IV,BlockSize);
-
-        // Decode the Base64 encoded string
-        l_Data := Base64DecodeStr(p_Data);
-
-        // Create the cipher and initialise according to the key length
-        l_Cipher := TDCP_rijndael.Create(nil);
-        if Length(v_CipherKey) <= 16 then
-          l_Cipher.Init(l_Key[1],128,@l_IV[1])
-        else if Length(v_CipherKey) <= 24 then
-          l_Cipher.Init(l_Key[1],192,@l_IV[1])
-        else
-          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-        // Decrypt the data
-        l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-        // Free the cipher and clear sensitive information
-        l_Cipher.Free;
-        FillChar(l_Key[1],Length(l_Key),0);
-        log_DEBUG('DeCriptografia(ATIVADA) de "'+p_Data+'" => "'+l_Data+'"');
-        // Return the result
-        Result := trim(l_Data);
-      End
-    else
-      Begin
-        log_DEBUG('DeCriptografia(DESATIVADA) de "'+p_Data+'"');
-        Result := p_Data;
-      End;
-  Except
-    log_diario('Erro no Processo de Decriptografia');
-  End;
-end;
-
-function TFormPatrimonio.HomeDrive : string;
-var
-WinDir : array [0..144] of char;
-begin
-GetWindowsDirectory (WinDir, 144);
-Result := StrPas (WinDir);
-end;
-
-Function TFormPatrimonio.Implode(p_Array : TStrings ; p_Separador : String) : String;
-var intAux : integer;
-    strAux : string;
-Begin
-    strAux := '';
-    For intAux := 0 To p_Array.Count -1 do
-      Begin
-        if (strAux<>'') then strAux := strAux + p_Separador;
-        strAux := strAux + p_Array[intAux];
-      End;
-    Implode := strAux;
-end;
-
 Function TFormPatrimonio.CipherClose(p_DatFileName : string; p_tstrCipherOpened : TStrings) : String;
 var v_strCipherOpenImploded : string;
     v_DatFile               : TextFile;
@@ -333,11 +197,11 @@ begin
        Rewrite (v_DatFile);
        Append(v_DatFile);
 
-       v_strCipherOpenImploded := FormPatrimonio.Implode(p_tstrCipherOpened,'=CacicIsFree=');
+       v_strCipherOpenImploded := g_oCacic.implode(p_tstrCipherOpened,g_oCacic.getSeparatorKey);
        v_cs_cipher := l_cs_cipher;
        l_cs_cipher := true;
        log_DEBUG('Rotina de Fechamento do cacic2.dat ATIVANDO criptografia.');
-       v_strCipherClosed := EnCrypt(v_strCipherOpenImploded);
+       v_strCipherClosed := g_oCacic.enCrypt(v_strCipherOpenImploded);
        l_cs_cipher := v_cs_cipher;
        log_DEBUG('Rotina de Fechamento do cacic2.dat RESTAURANDO estado da criptografia.');
 
@@ -347,37 +211,6 @@ begin
    except
    end;
 end;
-
-Function TFormPatrimonio.Explode(Texto, Separador : String) : TStrings;
-var
-    strItem       : String;
-    ListaAuxUTILS : TStrings;
-    NumCaracteres,
-    TamanhoSeparador,
-    I : Integer;
-Begin
-    ListaAuxUTILS    := TStringList.Create;
-    strItem          := '';
-    NumCaracteres    := Length(Texto);
-    TamanhoSeparador := Length(Separador);
-    I                := 1;
-    While I <= NumCaracteres Do
-      Begin
-        If (Copy(Texto,I,TamanhoSeparador) = Separador) or (I = NumCaracteres) Then
-          Begin
-            if (I = NumCaracteres) then strItem := strItem + Texto[I];
-            ListaAuxUTILS.Add(trim(strItem));
-            strItem := '';
-            I := I + (TamanhoSeparador-1);
-          end
-        Else
-            strItem := strItem + Texto[I];
-
-        I := I + 1;
-      End;
-    Explode := ListaAuxUTILS;
-end;
-
 
 Function TFormPatrimonio.CipherOpen(p_DatFileName : string) : TStrings;
 var v_DatFile         : TextFile;
@@ -405,14 +238,14 @@ begin
       v_cs_cipher := l_cs_cipher;
       l_cs_cipher := true;
       log_DEBUG('Rotina de Abertura do cacic2.dat ATIVANDO criptografia.');
-      v_strCipherOpened:= DeCrypt(v_strCipherClosed);
+      v_strCipherOpened:= g_oCacic.deCrypt(v_strCipherClosed);
       l_cs_cipher := v_cs_cipher;
       log_DEBUG('Rotina de Abertura do cacic2.dat RESTAURANDO estado da criptografia.');
     end;
     if (trim(v_strCipherOpened)<>'') then
-      Result := explode(v_strCipherOpened,'=CacicIsFree=')
+      Result := g_oCacic.explode(v_strCipherOpened,g_oCacic.getSeparatorKey)
     else
-      Result := explode('Configs.ID_SO=CacicIsFree='+ g_oCacic.getWindowsStrId() +'=CacicIsFree=Configs.Endereco_WS=CacicIsFree=/cacic2/ws/','=CacicIsFree=');
+      Result := g_oCacic.explode('Configs.ID_SO' + g_oCacic.getSeparatorKey + g_oCacic.getWindowsStrId() + g_oCacic.getSeparatorKey + 'Configs.Endereco_WS' + g_oCacic.getSeparatorKey + '/cacic2/ws/',g_oCacic.getSeparatorKey);
 
     if Result.Count mod 2 = 0 then
         Result.Add('');
@@ -453,7 +286,7 @@ var RegEditSet: TRegistry;
     ListaAuxSet : TStrings;
     I : Integer;
 begin
-    ListaAuxSet := Explode(Chave, '\');
+    ListaAuxSet := g_oCacic.explode(Chave, '\');
     strRootKey := ListaAuxSet[0];
     For I := 1 To ListaAuxSet.Count - 2 Do strKey := strKey + ListaAuxSet[I] + '\';
     strValue := ListaAuxSet[ListaAuxSet.Count - 1];
@@ -530,8 +363,8 @@ var
     strDataArqLocal, strDataAtual : string;
 begin
    try
-       FileSetAttr (p_path_cacic + 'cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-       AssignFile(HistoricoLog,p_path_cacic + 'cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
+       FileSetAttr (g_oCacic.getCacicPath + 'cacic2.log',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+       AssignFile(HistoricoLog,g_oCacic.getCacicPath + 'cacic2.log'); {Associa o arquivo a uma variável do tipo TextFile}
        {$IOChecks off}
        Reset(HistoricoLog); {Abre o arquivo texto}
        {$IOChecks on}
@@ -541,7 +374,7 @@ begin
             Append(HistoricoLog);
             Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now) + '======================> Iniciando o Log do CACIC <=======================');
           end;
-       DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(p_path_cacic + 'cacic2.log')));
+       DateTimeToString(strDataArqLocal, 'yyyymmdd', FileDateToDateTime(Fileage(g_oCacic.getCacicPath + 'cacic2.log')));
        DateTimeToString(strDataAtual   , 'yyyymmdd', Date);
        if (strDataAtual <> strDataArqLocal) then // Se o arquivo INI não é da data atual...
           begin
@@ -581,20 +414,20 @@ end;
 
 procedure TFormPatrimonio.RecuperaValoresAnteriores;
 begin
-    Etiqueta1.Caption  := DeCrypt(XML.XML_RetornaValor('te_etiqueta1', v_configs));
-    Etiqueta1a.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1a', v_configs));
+    Etiqueta1.Caption  := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta1', v_configs));
+    Etiqueta1a.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta1a', v_configs));
 
     var_id_unid_organizacional_nivel1 := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1',v_tstrCipherOpened);
-    if (var_id_unid_organizacional_nivel1='') then var_id_unid_organizacional_nivel1 := DeCrypt(XML.XML_RetornaValor('ID_UON1', v_configs));
+    if (var_id_unid_organizacional_nivel1='') then var_id_unid_organizacional_nivel1 := g_oCacic.deCrypt(XML.XML_RetornaValor('ID_UON1', v_configs));
 
     var_id_unid_organizacional_nivel1a := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel1a',v_tstrCipherOpened);
-    if (var_id_unid_organizacional_nivel1a='') then var_id_unid_organizacional_nivel1a := DeCrypt(XML.XML_RetornaValor('ID_UON1a', v_configs));
+    if (var_id_unid_organizacional_nivel1a='') then var_id_unid_organizacional_nivel1a := g_oCacic.deCrypt(XML.XML_RetornaValor('ID_UON1a', v_configs));
 
     var_id_unid_organizacional_nivel2 := GetValorDatMemoria('Patrimonio.id_unid_organizacional_nivel2',v_tstrCipherOpened);
-    if (var_id_unid_organizacional_nivel2='') then var_id_unid_organizacional_nivel2 := DeCrypt(XML.XML_RetornaValor('ID_UON2', v_configs));
+    if (var_id_unid_organizacional_nivel2='') then var_id_unid_organizacional_nivel2 := g_oCacic.deCrypt(XML.XML_RetornaValor('ID_UON2', v_configs));
 
     var_te_localizacao_complementar   := GetValorDatMemoria('Patrimonio.te_localizacao_complementar',v_tstrCipherOpened);
-    if (var_te_localizacao_complementar='') then var_te_localizacao_complementar := DeCrypt(XML.XML_RetornaValor('TE_LOC_COMPL', v_configs));
+    if (var_te_localizacao_complementar='') then var_te_localizacao_complementar := g_oCacic.deCrypt(XML.XML_RetornaValor('TE_LOC_COMPL', v_configs));
 
     // Tentarei buscar informação gravada no Registry
     var_te_info_patrimonio1           := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio1');
@@ -602,13 +435,13 @@ begin
       Begin
         var_te_info_patrimonio1           := GetValorDatMemoria('Patrimonio.te_info_patrimonio1',v_tstrCipherOpened);
       End;
-    if (var_te_info_patrimonio1='') then var_te_info_patrimonio1 := DeCrypt(XML.XML_RetornaValor('TE_INFO1', v_configs));
+    if (var_te_info_patrimonio1='') then var_te_info_patrimonio1 := g_oCacic.deCrypt(XML.XML_RetornaValor('TE_INFO1', v_configs));
 
     var_te_info_patrimonio2           := GetValorDatMemoria('Patrimonio.te_info_patrimonio2',v_tstrCipherOpened);
-    if (var_te_info_patrimonio2='') then var_te_info_patrimonio2 := DeCrypt(XML.XML_RetornaValor('TE_INFO2', v_configs));
+    if (var_te_info_patrimonio2='') then var_te_info_patrimonio2 := g_oCacic.deCrypt(XML.XML_RetornaValor('TE_INFO2', v_configs));
 
     var_te_info_patrimonio3           := GetValorDatMemoria('Patrimonio.te_info_patrimonio3',v_tstrCipherOpened);
-    if (var_te_info_patrimonio3='') then var_te_info_patrimonio3 := DeCrypt(XML.XML_RetornaValor('TE_INFO3', v_configs));
+    if (var_te_info_patrimonio3='') then var_te_info_patrimonio3 := g_oCacic.deCrypt(XML.XML_RetornaValor('TE_INFO3', v_configs));
 
     // Tentarei buscar informação gravada no Registry
     var_te_info_patrimonio4           := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio4');
@@ -616,13 +449,13 @@ begin
       Begin
         var_te_info_patrimonio4           := GetValorDatMemoria('Patrimonio.te_info_patrimonio4',v_tstrCipherOpened);
       End;
-    if (var_te_info_patrimonio4='') then var_te_info_patrimonio4 := DeCrypt(XML.XML_RetornaValor('TE_INFO4', v_configs));
+    if (var_te_info_patrimonio4='') then var_te_info_patrimonio4 := g_oCacic.deCrypt(XML.XML_RetornaValor('TE_INFO4', v_configs));
 
     var_te_info_patrimonio5           := GetValorDatMemoria('Patrimonio.te_info_patrimonio5',v_tstrCipherOpened);
-    if (var_te_info_patrimonio5='') then var_te_info_patrimonio5 := DeCrypt(XML.XML_RetornaValor('TE_INFO5', v_configs));
+    if (var_te_info_patrimonio5='') then var_te_info_patrimonio5 := g_oCacic.deCrypt(XML.XML_RetornaValor('TE_INFO5', v_configs));
 
     var_te_info_patrimonio6           := GetValorDatMemoria('Patrimonio.te_info_patrimonio6',v_tstrCipherOpened);
-    if (var_te_info_patrimonio6='') then var_te_info_patrimonio6 := DeCrypt(XML.XML_RetornaValor('TE_INFO6', v_configs));
+    if (var_te_info_patrimonio6='') then var_te_info_patrimonio6 := g_oCacic.deCrypt(XML.XML_RetornaValor('TE_INFO6', v_configs));
 
     Try
       id_unid_organizacional_nivel1.ItemIndex := id_unid_organizacional_nivel1.Items.IndexOf(RetornaValorVetorUON1(var_id_unid_organizacional_nivel1));
@@ -684,7 +517,7 @@ begin
        strTagName := ''
      else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT1')Then
        Begin
-         strAux1 := DeCrypt(Parser.CurContent);
+         strAux1 := g_oCacic.deCrypt(Parser.CurContent);
          if      (strItemName = 'ID1') then
            Begin
              VetorUON1[i].id1 := strAux1;
@@ -716,7 +549,7 @@ begin
        strTagName := ''
      else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT1A')Then
         Begin
-          strAux1 := DeCrypt(Parser.CurContent);
+          strAux1 := g_oCacic.deCrypt(Parser.CurContent);
           if      (strItemName = 'ID1') then
             Begin
               VetorUON1a[i].id1 := strAux1;
@@ -762,7 +595,7 @@ begin
        strTagName := ''
      else if (Parser.CurPartType in [ptContent, ptCData]) and (strTagName='IT2')Then
         Begin
-          strAux1  := DeCrypt(Parser.CurContent);
+          strAux1  := g_oCacic.deCrypt(Parser.CurContent);
           if      (strItemName = 'ID1A') then
             Begin
               VetorUON2[i].id1a := strAux1;
@@ -874,7 +707,7 @@ var strIdUON1,
     tstrAux    : TStrings;
 begin
      tstrAux := TStrings.Create;
-     tstrAux := explode(VetorUON2Filtrado[id_unid_organizacional_nivel2.ItemIndex],'#');
+     tstrAux := g_oCacic.explode(VetorUON2Filtrado[id_unid_organizacional_nivel2.ItemIndex],'#');
      Try
         strIdUON1  := VetorUON1[id_unid_organizacional_nivel1.ItemIndex].id1;
         strIdUON1a := VetorUON1aFiltrado[id_unid_organizacional_nivel1a.ItemIndex];
@@ -909,12 +742,12 @@ begin
          SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SOFTWARE\Dataprev\Patrimonio\te_info_patrimonio4', te_info_patrimonio4.Text);
          SetValorDatMemoria('Col_Patr.te_info_patrimonio5'           , te_info_patrimonio5.Text, v_tstrCipherOpened1);
          SetValorDatMemoria('Col_Patr.te_info_patrimonio6'           , te_info_patrimonio6.Text, v_tstrCipherOpened1);
-         CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
+         CipherClose(g_oCacic.getCacicPath + 'temp\col_patr.dat', v_tstrCipherOpened1);
       end
     else
       Begin
         SetValorDatMemoria('Col_Patr.nada', 'nada', v_tstrCipherOpened1);
-        CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
+        CipherClose(g_oCacic.getCacicPath + 'temp\col_patr.dat', v_tstrCipherOpened1);
       End;
     Application.Terminate;
 end;
@@ -924,21 +757,21 @@ Begin
    // Se houve alteração na configuração da interface, atualizo os dados no registro e depois monto a interface.
    // Caso, contrário, pego direto do registro.
 
-   Etiqueta1.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1', v_configs));
-   id_unid_organizacional_nivel1.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta1', v_configs));
+   Etiqueta1.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta1', v_configs));
+   id_unid_organizacional_nivel1.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta1', v_configs));
 
-   Etiqueta1a.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta1a', v_configs));
-   id_unid_organizacional_nivel1a.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta1a', v_configs));
+   Etiqueta1a.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta1a', v_configs));
+   id_unid_organizacional_nivel1a.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta1a', v_configs));
 
-   Etiqueta2.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta2', v_configs));
-   id_unid_organizacional_nivel2.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta2', v_configs));
+   Etiqueta2.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta2', v_configs));
+   id_unid_organizacional_nivel2.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta2', v_configs));
 
-   Etiqueta3.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta3', v_configs));
+   Etiqueta3.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta3', v_configs));
 
-   if (DeCrypt(XML.XML_RetornaValor('in_exibir_etiqueta4', v_configs)) = 'S') then
+   if (g_oCacic.deCrypt(XML.XML_RetornaValor('in_exibir_etiqueta4', v_configs)) = 'S') then
    begin
-      Etiqueta4.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta4', v_configs));
-      te_info_patrimonio1.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta4', v_configs));
+      Etiqueta4.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta4', v_configs));
+      te_info_patrimonio1.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta4', v_configs));
       te_info_patrimonio1.visible := True;
    end
    else begin
@@ -947,10 +780,10 @@ Begin
 
    end;
 
-   if (DeCrypt(XML.XML_RetornaValor('in_exibir_etiqueta5', v_configs)) = 'S') then
+   if (g_oCacic.deCrypt(XML.XML_RetornaValor('in_exibir_etiqueta5', v_configs)) = 'S') then
    begin
-      Etiqueta5.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta5', v_configs));
-      te_info_patrimonio2.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta5', v_configs));
+      Etiqueta5.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta5', v_configs));
+      te_info_patrimonio2.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta5', v_configs));
       te_info_patrimonio2.visible := True;
    end
    else begin
@@ -958,10 +791,10 @@ Begin
       te_info_patrimonio2.visible := False;
    end;
 
-   if (DeCrypt(XML.XML_RetornaValor('in_exibir_etiqueta6', v_configs)) = 'S') then
+   if (g_oCacic.deCrypt(XML.XML_RetornaValor('in_exibir_etiqueta6', v_configs)) = 'S') then
    begin
-      Etiqueta6.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta6', v_configs));
-      te_info_patrimonio3.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta6', v_configs));
+      Etiqueta6.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta6', v_configs));
+      te_info_patrimonio3.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta6', v_configs));
       te_info_patrimonio3.visible := True;
    end
    else begin
@@ -969,10 +802,10 @@ Begin
       te_info_patrimonio3.visible := False;
    end;
 
-   if (DeCrypt(XML.XML_RetornaValor('in_exibir_etiqueta7', v_configs)) = 'S') then
+   if (g_oCacic.deCrypt(XML.XML_RetornaValor('in_exibir_etiqueta7', v_configs)) = 'S') then
    begin
-      Etiqueta7.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta7', v_configs));
-      te_info_patrimonio4.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta7', v_configs));
+      Etiqueta7.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta7', v_configs));
+      te_info_patrimonio4.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta7', v_configs));
       te_info_patrimonio4.visible := True;
    end  else
    begin
@@ -980,10 +813,10 @@ Begin
       te_info_patrimonio4.visible := False;
    end;
 
-   if (DeCrypt(XML.XML_RetornaValor('in_exibir_etiqueta8', v_configs)) = 'S') then
+   if (g_oCacic.deCrypt(XML.XML_RetornaValor('in_exibir_etiqueta8', v_configs)) = 'S') then
    begin
-      Etiqueta8.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta8', v_configs));
-      te_info_patrimonio5.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta8', v_configs));
+      Etiqueta8.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta8', v_configs));
+      te_info_patrimonio5.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta8', v_configs));
       te_info_patrimonio5.visible := True;
    end else
    begin
@@ -991,10 +824,10 @@ Begin
       te_info_patrimonio5.visible := False;
   end;
 
-   if (DeCrypt(XML.XML_RetornaValor('in_exibir_etiqueta9', v_configs)) = 'S') then
+   if (g_oCacic.deCrypt(XML.XML_RetornaValor('in_exibir_etiqueta9', v_configs)) = 'S') then
   begin
-     Etiqueta9.Caption := DeCrypt(XML.XML_RetornaValor('te_etiqueta9', v_configs));
-     te_info_patrimonio6.Hint := DeCrypt(XML.XML_RetornaValor('te_help_etiqueta9', v_configs));
+     Etiqueta9.Caption := g_oCacic.deCrypt(XML.XML_RetornaValor('te_etiqueta9', v_configs));
+     te_info_patrimonio6.Hint := g_oCacic.deCrypt(XML.XML_RetornaValor('te_help_etiqueta9', v_configs));
      te_info_patrimonio6.visible := True;
   end
   else begin
@@ -1006,7 +839,7 @@ end;
 procedure TFormPatrimonio.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
    SetValorDatMemoria('Col_Patr.nada', 'nada', v_tstrCipherOpened1);
-   CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
+   CipherClose(g_oCacic.getCacicPath + 'temp\col_patr.dat', v_tstrCipherOpened1);
    Application.Terminate;
 end;
 // Função adaptada de http://www.latiumsoftware.com/en/delphi/00004.php
@@ -1020,7 +853,7 @@ var RegEditGet: TRegistry;
 begin
     try
     Result := '';
-    ListaAuxGet := Explode(Chave, '\');
+    ListaAuxGet := g_oCacic.explode(Chave, '\');
 
     strRootKey := ListaAuxGet[0];
     For I := 1 To ListaAuxGet.Count - 2 Do strKey := strKey + ListaAuxGet[I] + '\';
@@ -1069,104 +902,94 @@ Begin
 end;
 
 procedure TFormPatrimonio.FormCreate(Sender: TObject);
-var boolColeta  : boolean;
-    tstrTripa1  : TStrings;
-    i,intAux    : integer;
-    v_Aux       : String;
+var boolColeta   : boolean;
+    tstrTripa1   : TStrings;
+    i,intAux     : integer;
+    v_Aux,
+    v_path_cacic : String;
 Begin
   g_oCacic := TCACIC.Create();
 
   if (ParamCount>0) then
     Begin
       FormPatrimonio.lbVersao.Caption          := 'Versão: ' + GetVersionInfo(ParamStr(0));
+
+      v_option := 'system';
       For intAux := 1 to ParamCount do
         Begin
-          if LowerCase(Copy(ParamStr(intAux),1,13)) = '/p_cipherkey=' then
-            v_CipherKey := Trim(Copy(ParamStr(intAux),14,Length((ParamStr(intAux)))));
+          if LowerCase(Copy(ParamStr(intAux),1,10)) = '/p_option=' then
+            v_option := Trim(Copy(ParamStr(intAux),11,Length((ParamStr(intAux)))));
         End;
 
-       if (trim(v_CipherKey)<>'') then
-          Begin
-            v_option := 'system';
-            For intAux := 1 to ParamCount do
-              Begin
-                if LowerCase(Copy(ParamStr(intAux),1,10)) = '/p_option=' then
-                  v_option := Trim(Copy(ParamStr(intAux),11,Length((ParamStr(intAux)))));
-              End;
+      tstrTripa1 := g_oCacic.explode(ExtractFilePath(Application.Exename),'\'); //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic
+      v_path_cacic := '';
+      For i := 0 to tstrTripa1.Count -2 do
+        v_path_cacic := v_path_cacic + tstrTripa1[i] + '\';
 
-            tstrTripa1 := explode(ExtractFilePath(Application.Exename),'\'); //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic
-            p_path_cacic := '';
-            For i := 0 to tstrTripa1.Count -2 do
-              begin
-                p_path_cacic := p_path_cacic + tstrTripa1[i] + '\';
-              end;
-
-            v_Debugs := false;
-            if DirectoryExists(p_path_cacic + 'Temp\Debugs') then
-              Begin
-                if (FormatDateTime('ddmmyyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
-                  Begin
-                    v_Debugs := true;
-                    log_DEBUG('Pasta "' + p_path_cacic + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(p_path_cacic + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
-                  End;
-              End;
-
-            // A chave AES foi obtida no parâmetro p_CipherKey. Recomenda-se que cada empresa altere a sua chave.
-            v_IV                := 'abcdefghijklmnop';
-            v_tstrCipherOpened  := TStrings.Create;
-            v_tstrCipherOpened  := CipherOpen(p_path_cacic + 'cacic2.dat');
-
-            v_tstrCipherOpened1 := TStrings.Create;
-            v_tstrCipherOpened1 := CipherOpen(p_path_cacic + 'temp\col_patr.dat');
-
-            // Os valores possíveis serão 0-DESLIGADO 1-LIGADO 2-ESPERA PARA LIGAR (Será transformado em "1") 3-Ainda se comunicará com o Gerente WEB
-            l_cs_cipher  := false;
-            v_Aux := GetValorDatMemoria('Configs.CS_CIPHER', v_tstrCipherOpened);
-            if (v_Aux='1')then
-               Begin
-                 l_cs_cipher  := true;
-               End;
-
-            Try
-              boolColeta := false;
-              if (GetValorDatMemoria('Patrimonio.in_alteracao_fisica',v_tstrCipherOpened)= 'S') then
-                Begin
-                  // Solicita o cadastramento de informações de patrimõnio caso seja detectado remanejamento para uma nova rede.
-                  MessageDlg('Atenção: foi identificada uma alteração na localização física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
-                  boolColeta := true;
-                End
-              Else if (GetValorDatMemoria('Patrimonio.in_renovacao_informacoes',v_tstrCipherOpened)= 'S') and (v_option='system') then
-                Begin
-                  // Solicita o cadastramento de informações de patrimõnio caso tenha completado o prazo configurado para renovação de informações.
-                  MessageDlg('Atenção: é necessário o preenchimento/atualização das informações de Patrimônio e Localização Física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
-                  boolColeta := true;
-                end
-              Else if (GetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim',v_tstrCipherOpened)= '') then
-                Begin
-                  // Solicita o cadastramento de informações de patrimõnio caso ainda não tenha sido cadastrado.
-                  boolColeta := true;
-                end;
-
-              if boolColeta then
-                  Begin
-                    SetValorDatMemoria('Col_Patr.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
-                    log_diario('Coletando informações de Patrimônio e Localização Física.');
-                    v_configs := GetValorDatMemoria('Patrimonio.Configs',v_tstrCipherOpened);
-                    log_DEBUG('Configurações obtidas: '+v_configs);
-
-                    MontaInterface;
-                    MontaCombos;
-                    RecuperaValoresAnteriores;
-                    
-                  End;
-            Except
-              SetValorDatMemoria('Col_Patr.nada','nada', v_tstrCipherOpened1);
-              SetValorDatMemoria('Col_Patr.Fim', '99999999', v_tstrCipherOpened1);
-              CipherClose(p_path_cacic + 'temp\col_patr.dat', v_tstrCipherOpened1);
-              g_oCacic.Free();
-              Application.Terminate;
+      g_oCacic.setCacicPath(v_path_cacic);
+      v_Debugs := false;
+      if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
+        Begin
+          if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+            Begin
+              v_Debugs := true;
+              log_DEBUG('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
             End;
-          End;
+        End;
+
+      v_tstrCipherOpened  := TStrings.Create;
+      v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + 'cacic2.dat');
+
+      v_tstrCipherOpened1 := TStrings.Create;
+      v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_patr.dat');
+
+      // Os valores possíveis serão 0-DESLIGADO 1-LIGADO 2-ESPERA PARA LIGAR (Será transformado em "1") 3-Ainda se comunicará com o Gerente WEB
+      l_cs_cipher  := false;
+      v_Aux := GetValorDatMemoria('Configs.CS_CIPHER', v_tstrCipherOpened);
+      if (v_Aux='1')then
+         Begin
+           l_cs_cipher  := true;
+         End;
+
+      Try
+        boolColeta := false;
+        if (GetValorDatMemoria('Patrimonio.in_alteracao_fisica',v_tstrCipherOpened)= 'S') then
+          Begin
+            // Solicita o cadastramento de informações de patrimõnio caso seja detectado remanejamento para uma nova rede.
+            MessageDlg('Atenção: foi identificada uma alteração na localização física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
+            boolColeta := true;
+          End
+        Else if (GetValorDatMemoria('Patrimonio.in_renovacao_informacoes',v_tstrCipherOpened)= 'S') and (v_option='system') then
+          Begin
+            // Solicita o cadastramento de informações de patrimõnio caso tenha completado o prazo configurado para renovação de informações.
+            MessageDlg('Atenção: é necessário o preenchimento/atualização das informações de Patrimônio e Localização Física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
+            boolColeta := true;
+          end
+        Else if (GetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim',v_tstrCipherOpened)= '') then
+          Begin
+            // Solicita o cadastramento de informações de patrimõnio caso ainda não tenha sido cadastrado.
+            boolColeta := true;
+          end;
+
+        if boolColeta then
+            Begin
+              SetValorDatMemoria('Col_Patr.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+              log_diario('Coletando informações de Patrimônio e Localização Física.');
+              v_configs := GetValorDatMemoria('Patrimonio.Configs',v_tstrCipherOpened);
+              log_DEBUG('Configurações obtidas: '+v_configs);
+
+              MontaInterface;
+              MontaCombos;
+              RecuperaValoresAnteriores;
+
+            End;
+      Except
+        SetValorDatMemoria('Col_Patr.nada','nada', v_tstrCipherOpened1);
+        SetValorDatMemoria('Col_Patr.Fim', '99999999', v_tstrCipherOpened1);
+        CipherClose(g_oCacic.getCacicPath + 'temp\col_patr.dat', v_tstrCipherOpened1);
+        g_oCacic.Free();
+        Application.Terminate;
+      End;
     End;
 end;
 
