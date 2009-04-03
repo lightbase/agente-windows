@@ -46,9 +46,15 @@ unit CACIC_Library;
 
 interface
 
-uses
-   Windows, SysUtils, StrUtils, md5;
-
+uses 
+	Windows,
+    Classes,
+    SysUtils,
+    StrUtils,
+    MD5,
+    DCPcrypt2,
+    DCPrijndael,
+    DCPbase64;
 type
 
 { ------------------------------------------------------------------------------
@@ -84,19 +90,20 @@ type
          g_osVersionInfoExtended: boolean;
 
        public
-         function isWindowsVista() : boolean;
-         function isWindowsGEVista() : boolean;
-         function isWindowsXP() : boolean;
-         function isWindowsGEXP() : boolean;
-         function isWindowsNTPlataform() : boolean;
-         function isWindows2000() : boolean;
-         function isWindowsNT() : boolean;
-         function isWindows9xME() : boolean;
-         function getWindowsStrId() : string;
-         function isWindowsAdmin(): Boolean;
-         function createSampleProcess(p_cmd: string; p_wait: boolean ): boolean;
+         function  isWindowsVista()                                     : boolean;
+         function  isWindowsGEVista()                                   : boolean;
+         function  isWindowsXP()                                        : boolean;
+         function  isWindowsGEXP()                                      : boolean;
+         function  isWindowsNTPlataform()                               : boolean;
+         function  isWindows2000()                                      : boolean;
+         function  isWindowsNT()                                        : boolean;
+         function  isWindows9xME()                                      : boolean;
+         function  getWindowsStrId()                                    : string;
+         function  getWinDir()                                          : string;
+         function  getHomeDrive                                         : string;
+         function  isWindowsAdmin()                                     : boolean;
+         function  createSampleProcess(p_cmd: string; p_wait: boolean ) : boolean;
          procedure showTrayIcon(p_visible:boolean);
-         function GetFileHash(strFileName : String) : String;
    end;
 
 {*------------------------------------------------------------------------------
@@ -128,16 +135,49 @@ type
 
        public
          Windows : TCACIC_Windows; /// objeto de informacoes de windows
-         Debug : TCACIC_Debug; /// objeto de tratamento de debug
+         Debug   : TCACIC_Debug; /// objeto de tratamento de debug
          procedure setCacicPath(p_cacic_path: string);
-         function getCacicPath(): string;
-         function trimEspacosExcedentes(p_str: string): string;
-         function isAppRunning( p_app_name: PAnsiChar ): boolean;
+         function  deCrypt(p_Data : String)                           : String;
+         function  enCrypt(p_Data : String)                           : String;
+         function  explode(p_String, p_Separador : String)            : TStrings;
+         function  implode(p_Array : TStrings ; p_Separador : String) : String;
+         function  getCacicPath()                                     : String;
+         function  getCipherKey()                                     : String;
+         function  getIV()                                            : String;
+         function  getKeySize()                                       : integer;
+         function  getBlockSize()                                     : integer;
+         function  getDatFileName()                                   : String;
+         function  getSeparatorKey()                                  : String;
+         function  getFileHash(strFileName : String)                  : String;
+         function  isAppRunning( p_app_name: PAnsiChar )              : boolean;
+         function  padWithZeros(const str : string; size : integer)   : String;
+         function  trimEspacosExcedentes(p_str: string)               : String;
+
    end;
 
 // Declaração de constantes para a biblioteca
-const CACIC_PROCESS_WAIT = true; // aguardar fim do processo
-const CACIC_PROCESS_NOWAIT = false; // não aguardar o fim do processo
+const
+  CACIC_PROCESS_WAIT   = true; // aguardar fim do processo
+  CACIC_PROCESS_NOWAIT = false; // não aguardar o fim do processo
+
+// Some constants that are dependant on the cipher being used
+// Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
+const
+  CACIC_KEYSIZE        = 32; // 32 bytes = 256 bits
+  CACIC_BLOCKSIZE      = 16; // 16 bytes = 128 bits
+
+// Chave AES. Recomenda-se que cada empresa altere a sua chave.
+// Esta chave é passada como parâmetro para o Gerente de Coletas que, por sua vez,
+// passa para o Inicializador de Coletas e este passa para os coletores...
+const
+  CACIC_CIPHERKEY      = 'CacicBrasil';
+  CACIC_IV             = 'abcdefghijklmnop';
+  CACIC_SEPARATORKEY   = '=CacicIsFree='; // Usada apenas para o cacic2.dat
+
+// Arquivo local para armazenamento de configurações e informações coletadas
+const
+  CACIC_DATFILENAME    = 'cacic2.dat';
+
 var
   P_OSVersionInfo: POSVersionInfo;
 
@@ -175,6 +215,80 @@ destructor TCACIC.Destroy();
 begin
    FreeMemory(P_OSVersionInfo);
    inherited;
+end;
+
+{*------------------------------------------------------------------------------
+  Retorna a pasta de instalação do MS-Windows
+-------------------------------------------------------------------------------}
+function TCACIC_Windows.getWinDir : string;
+var
+  WinPath: array[0..MAX_PATH + 1] of char;
+begin
+  GetWindowsDirectory(WinPath,MAX_PATH);
+  Result := StrPas(WinPath)+'\';
+end;
+
+{*------------------------------------------------------------------------------
+  Retorna a unidade de instalação do MS-Windows
+-------------------------------------------------------------------------------}
+function TCACIC_Windows.getHomeDrive : string;
+begin
+  Result := MidStr(getWinDir,1,3); //x:\
+end;
+
+{*------------------------------------------------------------------------------
+  Retorna array de elementos com base em separador
+
+  @param p_String    String contendo campos e valores separados por caracter ou string
+  @param p_Separador String separadora de campos e valores
+-------------------------------------------------------------------------------}
+Function TCACIC.explode(p_String, p_Separador : String) : TStrings;
+var
+    strItem       : String;
+    ListaAuxUTILS : TStrings;
+    NumCaracteres,
+    TamanhoSeparador,
+    I : Integer;
+Begin
+    ListaAuxUTILS    := TStringList.Create;
+    strItem          := '';
+    NumCaracteres    := Length(p_String);
+    TamanhoSeparador := Length(p_Separador);
+    I                := 1;
+    While I <= NumCaracteres Do
+      Begin
+        If (Copy(p_String,I,TamanhoSeparador) = p_Separador) or (I = NumCaracteres) Then
+          Begin
+            if (I = NumCaracteres) then strItem := strItem + p_String[I];
+            ListaAuxUTILS.Add(trim(strItem));
+            strItem := '';
+            I := I + (TamanhoSeparador-1);
+          end
+        Else
+            strItem := strItem + p_String[I];
+
+        I := I + 1;
+      End;
+    Explode := ListaAuxUTILS;
+end;
+
+{*------------------------------------------------------------------------------
+  Retorna string com campos e valores separados por caracter ou string
+
+  @param p_Array     Array contendo campos e valores
+  @param p_Separador String separadora de campos e valores
+-------------------------------------------------------------------------------}
+Function TCACIC.implode(p_Array : TStrings ; p_Separador : String) : String;
+var intAux : integer;
+    strAux : string;
+Begin
+    strAux := '';
+    For intAux := 0 To p_Array.Count -1 do
+      Begin
+        if (strAux<>'') then strAux := strAux + p_Separador;
+        strAux := strAux + p_Array[intAux];
+      End;
+    Implode := strAux;
 end;
 
 {*------------------------------------------------------------------------------
@@ -537,7 +651,7 @@ end;
   @autor: Anderson Peterle
   @param p_strFileName - Nome do arquivo para extração do HashCode
 -------------------------------------------------------------------------------}
-function TCACIC_Windows.GetFileHash(strFileName : String) : String;
+function TCACIC.GetFileHash(strFileName : String) : String;
 Begin
   Result := 'Arquivo "'+strFileName+'" Inexistente!';
   if (FileExists(strFileName)) then
@@ -574,5 +688,150 @@ procedure TCACIC_Windows.showTrayIcon(p_visible:boolean);
          v_child := GetWindow(v_child, GW_HWNDNEXT);
       End;
  End;
+
+{*------------------------------------------------------------------------------
+  Obter a chave para criptografia simétrica
+
+  @return String contendo a chave simétrica
+-------------------------------------------------------------------------------}
+function TCACIC.getCipherKey(): string;
+begin
+   Result := CACIC_CIPHERKEY;
+end;
+
+{*------------------------------------------------------------------------------
+  Obter o vetor de inicialização para criptografia
+
+  @return String contendo o vetor de inicialização
+-------------------------------------------------------------------------------}
+function TCACIC.getIV(): string;
+begin
+   Result := CACIC_IV;
+end;
+
+{*------------------------------------------------------------------------------
+  Obter o valor para tamanho da chave de criptografia
+
+  @return Integer contendo o tamanho para chave de criptografia
+-------------------------------------------------------------------------------}
+function TCACIC.getKeySize(): Integer;
+begin
+   Result := CACIC_KEYSIZE;
+end;
+
+{*------------------------------------------------------------------------------
+  Obter o valor para tamanho do bloco de criptografia
+
+  @return Integer contendo o tamanho para bloco de criptografia
+-------------------------------------------------------------------------------}
+function TCACIC.getBlockSize(): Integer;
+begin
+   Result := CACIC_BLOCKSIZE;
+end;
+
+{*------------------------------------------------------------------------------
+  Obter o nome do arquivo de informações de configurações e dados locais
+
+  @return String contendo o nome do arquivo de configurações e dados locais
+-------------------------------------------------------------------------------}
+function TCACIC.getDatFileName(): string;
+begin
+   Result := CACIC_DATFILENAME;
+end;
+
+{*------------------------------------------------------------------------------
+  Obter o separador para criação de listas locais
+
+  @return String contendo o separador de campos e valores
+-------------------------------------------------------------------------------}
+function TCACIC.getSeparatorKey(): string;
+begin
+   Result := CACIC_SEPARATORKEY;
+end;
+
+// Encrypt a string and return the Base64 encoded result
+function TCACIC.enCrypt(p_Data : String) : String;
+var
+  l_Cipher : TDCP_rijndael;
+  l_Data, l_Key, l_IV : string;
+begin
+  Try
+    // Pad Key, IV and Data with zeros as appropriate
+    l_Key   := PadWithZeros(CACIC_CIPHERKEY,CACIC_KEYSIZE);
+    l_IV    := PadWithZeros(CACIC_IV,CACIC_BLOCKSIZE);
+    l_Data  := PadWithZeros(p_Data,CACIC_BLOCKSIZE);
+
+    // Create the cipher and initialise according to the key length
+    l_Cipher := TDCP_rijndael.Create(nil);
+    if Length(CACIC_CIPHERKEY) <= 16 then
+      l_Cipher.Init(l_Key[1],128,@l_IV[1])
+    else if Length(CACIC_CIPHERKEY) <= 24 then
+      l_Cipher.Init(l_Key[1],192,@l_IV[1])
+    else
+      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+
+    // Encrypt the data
+    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+
+    // Free the cipher and clear sensitive information
+    l_Cipher.Free;
+    FillChar(l_Key[1],Length(l_Key),0);
+
+    // Return the Base64 encoded result
+    Result := Base64EncodeStr(l_Data);
+  Except
+//    LogDiario('Erro no Processo de Criptografia');
+  End;
+end;
+
+function TCACIC.deCrypt(p_Data : String) : String;
+var
+  l_Cipher : TDCP_rijndael;
+  l_Data, l_Key, l_IV : string;
+begin
+  Try
+    // Pad Key and IV with zeros as appropriate
+    l_Key := PadWithZeros(CACIC_CIPHERKEY,CACIC_KEYSIZE);
+    l_IV  := PadWithZeros(CACIC_IV,CACIC_BLOCKSIZE);
+
+    // Decode the Base64 encoded string
+    l_Data := Base64DecodeStr(p_Data);
+
+    // Create the cipher and initialise according to the key length
+    l_Cipher := TDCP_rijndael.Create(nil);
+    if Length(CACIC_CIPHERKEY) <= 16 then
+      l_Cipher.Init(l_Key[1],128,@l_IV[1])
+    else if Length(CACIC_CIPHERKEY) <= 24 then
+      l_Cipher.Init(l_Key[1],192,@l_IV[1])
+    else
+      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+
+    // Decrypt the data
+    l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+
+    // Free the cipher and clear sensitive information
+    l_Cipher.Free;
+    FillChar(l_Key[1],Length(l_Key),0);
+
+    // Return the result
+    Result := l_Data;
+  Except
+//    LogDiario('Erro no Processo de Decriptografia');
+  End;
+end;
+
+// Pad a string with zeros so that it is a multiple of size
+function TCACIC.padWithZeros(const str : string; size : integer) : string;
+var origsize, i : integer;
+begin
+  Result := str;
+  origsize := Length(Result);
+  if ((origsize mod size) <> 0) or (origsize = 0) then
+  begin
+    SetLength(Result,((origsize div size)+1)*size);
+    for i := origsize+1 to Length(Result) do
+      Result[i] := #0;
+  end;
+end;
 
 end.

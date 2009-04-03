@@ -20,8 +20,17 @@ unit acesso;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  StdCtrls, ExtCtrls, dialogs;
+  Windows,
+  Messages,
+  SysUtils,
+  Variants,
+  Classes,
+  Graphics,
+  Controls,
+  Forms,
+  StdCtrls,
+  ExtCtrls,
+  dialogs;
 
 type
   TfrmAcesso = class(TForm)
@@ -54,7 +63,8 @@ type
     { Public declarations }
   end;
 
-var frmAcesso: TfrmAcesso;
+var
+  frmAcesso: TfrmAcesso;
 
 implementation
 uses main_mapa;
@@ -71,24 +81,24 @@ begin
   lbMsg_Erro_Senha.Caption := str_local_Aux;
 
   // Envio dos dados ao DataBase...
-  Request_mapa.Values['nm_acesso']      := frmMapaCacic.EnCrypt(edNomeUsuarioAcesso.Text);
-  Request_mapa.Values['te_senha']       := frmMapaCacic.EnCrypt(edSenhaAcesso.Text);
-  Request_mapa.Values['cs_MapaCacic']   := frmMapaCacic.EnCrypt('S');
-  Request_mapa.Values['te_versao_mapa'] := frmMapaCacic.EnCrypt(frmMapaCacic.getVersionInfo(ParamStr(0)));
+  Request_mapa.Values['nm_acesso']      := frmMapaCacic.g_oCacic.enCrypt(edNomeUsuarioAcesso.Text);
+  Request_mapa.Values['te_senha']       := frmMapaCacic.g_oCacic.EnCrypt(edSenhaAcesso.Text);
+  Request_mapa.Values['cs_MapaCacic']   := frmMapaCacic.g_oCacic.EnCrypt('S');
+  Request_mapa.Values['te_versao_mapa'] := frmMapaCacic.g_oCacic.EnCrypt(frmMapaCacic.getVersionInfo(ParamStr(0)));
 
   strRetorno := frmMapaCacic.ComunicaServidor('mapa_acesso.php', Request_mapa, 'Autenticando o Acesso...');
   Request_mapa.free;
 
   if (frmMapaCacic.XML_RetornaValor('STATUS', strRetorno)='OK') then
     Begin
-      str_local_Aux := trim(frmMapaCacic.DeCrypt(frmMapaCacic.XML_RetornaValor('TE_VERSAO_MAPA',strRetorno)));
+      str_local_Aux := trim(frmMapaCacic.g_oCacic.deCrypt(frmMapaCacic.XML_RetornaValor('TE_VERSAO_MAPA',strRetorno)));
       if (str_local_Aux <> '') then
         Begin
           MessageDLG(#13#10#13#10+'ATENÇÃO! Foi disponibilizada a versão "'+str_local_Aux+'".'+#13#10#13#10+'Acesse o gerente cacic na opção "Repositório" e baixe o programa "MapaCACIC"!'+#13#10,mtWarning,[mbOK],0);
           btCancela.Click;
         End;
 
-      str_local_Aux := trim(frmMapaCacic.DeCrypt(frmMapaCacic.XML_RetornaValor('ID_USUARIO',strRetorno)));
+      str_local_Aux := trim(frmMapaCacic.g_oCacic.deCrypt(frmMapaCacic.XML_RetornaValor('ID_USUARIO',strRetorno)));
       if (str_local_Aux <> '') then
         Begin
           frmMapaCacic.strId_usuario := str_local_Aux;
@@ -109,7 +119,7 @@ begin
 
   if (frmMapaCacic.boolAcessoOK) then
     Begin
-      lbAviso.Caption := 'USUÁRIO AUTENTICADO: "' + trim(frmMapaCacic.DeCrypt(frmMapaCacic.XML_RetornaValor('NM_USUARIO_COMPLETO',strRetorno)))+'"';
+      lbAviso.Caption := 'USUÁRIO AUTENTICADO: "' + trim(frmMapaCacic.g_oCacic.deCrypt(frmMapaCacic.XML_RetornaValor('NM_USUARIO_COMPLETO',strRetorno)))+'"';
       lbAviso.Font.Style := [fsBold];
       lbAviso.Font.Color := clGreen;
       Application.ProcessMessages;
@@ -145,7 +155,7 @@ procedure TfrmAcesso.FormCreate(Sender: TObject);
 begin
   intPausaPadrao                    := 3000; //(3 mil milisegundos = 3 segundos)
   frmAcesso.lbVersao.Caption        := 'Versão: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
-  frmMapaCacic.tStringsCipherOpened := frmMapaCacic.CipherOpen(frmMapaCacic.strDatFileName);
+  frmMapaCacic.tStringsCipherOpened := frmMapaCacic.CipherOpen(frmMapaCacic.g_oCacic.getDatFileName);
   frmMapaCacic.lbNomeServidorWEB.Caption := 'Servidor: '+frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsCipherOpened);
   frmMapaCacic.lbMensagens.Caption  := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';
   if (frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS' , frmMapaCacic.tStringsCipherOpened)='') then
