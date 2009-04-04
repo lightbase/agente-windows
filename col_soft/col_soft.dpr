@@ -78,7 +78,6 @@ begin
        Append(HistoricoLog);
        Writeln(HistoricoLog,FormatDateTime('dd/mm hh:nn:ss : ', Now)+ '[Coletor SOFT] '+strMsg); {Grava a string Texto no arquivo texto}
        CloseFile(HistoricoLog); {Fecha o arquivo texto}
-//       FileSetAttr (ExtractFilePath(Application.Exename) + '\cacic2.log',6); // Muda o atributo para arquivo de SISTEMA e OCULTO
 
    except
      log_diario('Erro na gravação do log!');
@@ -503,7 +502,6 @@ begin
       v_SOFTWARE := TMiTeC_Software.Create(nil);
       v_SOFTWARE.RefreshData;
       MSI_XML_Reports.Software_XML_Report(v_SOFTWARE,true,InfoSoft);
-      //v_SOFTWARE.Report(InfoSoft,false);
 
       // Caso exista a pasta ..temp/debugs, será criado o arquivo diário debug_<coletor>.txt
       // Usar esse recurso apenas para debug de coletas mal-sucedidas através do componente MSI-Mitec.
@@ -511,23 +509,21 @@ begin
         Begin
           v_Report := TStringList.Create;
 
-          //v_SOFTWARE.Report(v_Report,false);
           MSI_XML_Reports.Software_XML_Report(v_SOFTWARE,true,v_Report);
           v_SOFTWARE.Free;
 
           v_OS := TMiTeC_OperatingSystem.Create(nil);
           v_OS.RefreshData;
-          //v_OS.Report(v_Report,false);
+
           MSI_XML_Reports.OperatingSystem_XML_Report(v_OS,true,v_Report);
           v_OS.Free;
         End
-      else v_SOFTWARE.Free;
 
    except
       log_diario('Problema em Software Report!');
    end;
 
-   for i := 0 to InfoSoft.Count - 1 do
+   for i := 0 to v_SOFTWARE.Count - 1 do
       begin
           if (trim(Copy(InfoSoft[i],1,14))='<section name=') then
               Begin
@@ -537,12 +533,13 @@ begin
               End;
       end;
 
+   v_SOFTWARE.Free;
 
-    try
+   try
       te_inventario_softwares := AnsiToAscii(te_inventario_softwares);
-    except
+   except
       log_diario('Falha após a Conversão ANSIxASCII');
-    end;
+   end;
 
    InfoSoft.Free;
 
@@ -556,7 +553,6 @@ begin
    // Usar esse recurso apenas para debug de coletas mal-sucedidas através do componente MSI-Mitec.
    if (v_Debugs) then
      Begin
-       //v_ENGINES.Report(v_Report,false);
        MSI_XML_Reports.Engines_XML_Report(v_ENGINES,true,v_Report);
      End;
 

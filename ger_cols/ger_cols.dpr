@@ -2102,7 +2102,7 @@ Begin
            if (te_wins_primario='')   then Try te_wins_primario   := PegaDadosIPConfig(v_array_campos,v_array_valores,'servidor,wins,prim;wins,server,primary','')              Except te_wins_primario   := ''; end;
            if (te_wins_secundario='') then Try te_wins_secundario := PegaDadosIPConfig(v_array_campos,v_array_valores,'servidor,wins,secund;wins,server,secondary','')          Except te_wins_secundario := ''; end;
 
-           if (g_oCacic.isWindowsNT()) then //Se NT/2K/XP
+           if (g_oCacic.isWindowsNTPlataform()) then //Se NT/2K/XP
              Try
                 te_dominio_windows := PegaDadosIPConfig(v_array_campos,v_array_valores,'usu,rio,logado;usu,rio,logado','')
              Except
@@ -2403,7 +2403,7 @@ Begin
             if (te_dominio_windows = '') then
               Begin
                 Try
-                  if (g_oCacic.isWindowsNT()) then //Se NT/2K/XP
+                  if (g_oCacic.isWindowsNTPlataform()) then //Se NT/2K/XP
                      te_dominio_windows := GetNetworkUserName + '@' + GetDomainName
                   else
                      te_dominio_windows := GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Network\Logon\username')+ '@' + GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MSNP32\NetworkProvider\AuthenticatingAgent');
