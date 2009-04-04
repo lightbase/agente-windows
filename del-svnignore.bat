@@ -1,0 +1,1 @@
+del /s *.txt *.log *.dsk *.dcu *.exe thumbs.db *.~ddp *.~dfm *.~pas *.~dpr *.~dsk
