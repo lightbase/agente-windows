@@ -44,7 +44,7 @@ type
 
     { Internal Start & Stop methods }
     function  GetValorChaveRegIni(p_Secao, p_Chave, p_File : String): String;
-    procedure doSaveLog(Msg : String);
+    procedure logDEBUG(Msg : String);
     Procedure WMEndSession(var Msg : TWMEndSession) ;  message WM_ENDSESSION;
     procedure ExecutaCACIC;
   public
@@ -62,7 +62,7 @@ implementation
 procedure TCACICservice.WMEndSession(var Msg : TWMEndSession) ;
 begin
   if Msg.EndSession = TRUE then
-    doSaveLog('Windows finalizado em ' + FormatDateTime('c', Now)) ;
+    logDEBUG('Windows finalizado em ' + FormatDateTime('c', Now)) ;
   inherited;
   Application.Free;
 end;
@@ -77,7 +77,7 @@ var
   i, j, v_Size_Section, v_Size_Key : integer;
   v_SectionName, v_KeyName : string;
   begin
-//doSaveLog('GetVCRini: Secao: '+p_Secao+' Chave: '+p_Chave+' File: '+p_File);
+    logDEBUG('GetVCRini: Secao: '+p_Secao+' Chave: '+p_Chave+' File: '+p_File);
     Result := '';
     v_SectionName := '[' + p_Secao + ']';
     v_Size_Section := strLen(PChar(v_SectionName));
@@ -106,32 +106,34 @@ var
     end;
   end;
 
-procedure TCACICservice.doSaveLog(Msg : String);
+procedure TCACICservice.logDEBUG(Msg : String);
 var fLog: textfile;
 begin
-  AssignFile(fLog, g_oCacic.Windows.getWinDir + 'CACICsvc.log');
-  if FileExists(g_oCacic.Windows.getWinDir + 'CACICsvc.log') then
-    Append(fLog)
-  else
-    Rewrite(fLog);
-  Writeln(fLog,FormatDateTime('dd/mm hh:nn:ss ', Now) + '[CACICsvc] : ' +msg);
-  CloseFile(fLog);
+  // Somente gravarei informações para debug se o arquivo "<HomeDrive>:\CACICsvc.log" existir
+  if FileExists(g_oCacic.Windows.getHomeDrive + 'CACICsvc.log') then
+    Begin
+      AssignFile(fLog, g_oCacic.Windows.getHomeDrive + 'CACICsvc.log');
+      if FileExists(g_oCacic.Windows.getHomeDrive + 'CACICsvc.log') then
+        Append(fLog)
+      else
+        Rewrite(fLog);
+      Writeln(fLog,FormatDateTime('dd/mm hh:nn:ss ', Now) + '[CACICsvc][DEBUG] : ' +msg);
+      CloseFile(fLog);
+    End;
 End;
 
 procedure ServiceController(CtrlCode: DWord); stdcall;
 begin
-     CACICservice.Controller(CtrlCode);
+  CACICservice.Controller(CtrlCode);
 end;
 
 function TCACICservice.GetServiceController: TServiceController;
 begin
-     Result := ServiceController;
+  Result := ServiceController;
 end;
 
 procedure TCACICservice.ServiceExecute(Sender: TService);
 begin
-    doSaveLog('TCACICservice.ServiceExecute');
-
      { Loop while service is active in SCM }
      While NOT Terminated do
      Begin
@@ -144,8 +146,9 @@ end;
 
 procedure TCACICservice.ServiceStart(Sender: TService; var Started: Boolean);
 begin
-  g_oCacic := TCACIC.Create;
 
+  g_oCacic := TCACIC.Create;
+  CACICservice.logDEBUG('TCACICservice.ServiceStart');
   Started := true;
 
   ExecutaCACIC;
@@ -159,8 +162,10 @@ end;
 
 procedure TCACICservice.ExecutaCACIC;
 Begin
-  g_oCacic.setCacicPath(g_oCacic.getHomeDrive + GetValorChaveRegIni('Cacic2', 'cacic_dir', g_oCacic.getWinDir + 'chksis.ini') + '\');
+  CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : setCacicPath => '+GetValorChaveRegIni('Cacic2', 'cacic_dir', g_oCacic.getWinDir + 'chksis.ini'));
+  g_oCacic.setCacicPath(GetValorChaveRegIni('Cacic2', 'cacic_dir', g_oCacic.getWinDir + 'chksis.ini'));
 
+  CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : deleteFile => '+g_oCacic.getCacicPath + 'aguarde_CACIC.txt');
   DeleteFile(g_oCacic.getCacicPath + 'aguarde_CACIC.txt');
   Sleep(3000);
 
@@ -169,7 +174,8 @@ Begin
     Begin
       // Executo o CHKsis, verificando a estrutura do sistema
       Try
-        WinEXEC(PChar(g_oCacic.getWinDir + 'chksis.exe'),sw_HIDE);
+        CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : winExec => '+g_oCacic.getWinDir + 'chksis.exe');
+        g_oCacic.createSampleProcess(g_oCacic.getWinDir + 'chksis.exe',false);
       Except
       End;
 
@@ -180,19 +186,21 @@ Begin
 
   // Executo o Agente Principal do CACIC
   Try
-    WinEXEC(PChar(g_oCacic.getCacicPath + 'cacic2.exe'),sw_hide);
+    CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : winExec => '+g_oCacic.getCacicPath + 'cacic2.exe');
+    g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe',false);
   Except
   End;
 End;
 
 procedure TCACICservice.ServiceAfterInstall(Sender: TService);
-
 begin
   ServiceStart(nil,boolStarted);
+  CACICservice.logDEBUG('TCACICservice.ServiceAfterInstall');
 end;
 
 procedure TCACICservice.Timer_CHKsisTimer(Sender: TObject);
 begin
+  CACICservice.logDEBUG('TCACICservice.Timer_CHKsisTimer');
   ExecutaCACIC;
 
   // Verificações diversas
@@ -202,6 +210,7 @@ end;
 procedure TCACICservice.ServiceStop(Sender: TService;
   var Stopped: Boolean);
 begin
+  CACICservice.logDEBUG('TCACICservice.ServiceStop');
   Stopped := true;
 end;
 

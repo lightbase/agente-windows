@@ -80,9 +80,9 @@ uses
   IdFTP,
   Tlhelp32,
   ExtCtrls,
+  Dialogs,
   CACIC_Library,
-  WinSvc,
-  dialogs;
+  WinSvc;
 
 var
   v_ip_serv_cacic,
@@ -94,9 +94,9 @@ var
   v_versao_remota,
   v_strCipherClosed,
   v_strCipherOpened,
-  v_retorno,
   v_versao_REM,
-  v_versao_LOC              : String;
+  v_versao_LOC,
+  v_retorno                 : String;
 
 var
   v_Debugs                  : boolean;
@@ -392,6 +392,7 @@ var v_DatFile         : TextFile;
     v_strCipherOpened,
     v_strCipherClosed : string;
 begin
+  LogDebug('Tentando acessar configurações em '+g_oCacic.getCacicPath + g_oCacic.getDatFileName);
   v_strCipherOpened    := '';
   if FileExists(p_DatFileName) then
     begin
@@ -415,10 +416,8 @@ begin
     else
       Result := g_oCacic.explode('Configs.ID_SO'+g_oCacic.getSeparatorKey+ g_oCacic.getWindowsStrId() +g_oCacic.getSeparatorKey+'Configs.Endereco_WS'+g_oCacic.getSeparatorKey+'/cacic2/ws/',g_oCacic.getSeparatorKey);
 
-
     if Result.Count mod 2 <> 0 then
         Result.Add('');
-
 end;
 
 Procedure SetValorDatMemoria(p_Chave : string; p_Valor : String);
@@ -573,11 +572,6 @@ end;
 function SetValorChaveRegIni(p_Secao, p_Chave, p_Valor, p_File : String): String;
 var Reg_Ini     : TIniFile;
 begin
-//    FileSetAttr (p_File,0);
-    {
-    To remove write protection on a file:
-    Den Schreibschutz einer Datei aufheben:
-    }
     if (FileGetAttr(p_File) and faReadOnly) > 0 then
       FileSetAttr(p_File, FileGetAttr(p_File) xor faReadOnly);
 
@@ -650,12 +644,14 @@ end;
 
 Procedure CriaFormConfigura;
 begin
+  LogDebug('Chamando Criação do Formulário de Configurações - 1');
   Application.CreateForm(TConfigs, FormConfig.Configs);
   FormConfig.Configs.lbVersao.Caption := 'v: ' + getVersionInfo(ParamStr(0));
 end;
 
 Procedure MostraFormConfigura;
 begin
+  LogDebug('Exibindo formulário de configurações');
   FormConfig.Configs.ShowModal;
 end;
 
@@ -726,12 +722,12 @@ begin
       LogDebug('FTP: Change to "'+p_PathServer+'"');
       IdFTP.ChangeDir(p_PathServer);
       Try
-        LogDebug('Iniciando FTP de "'+p_Dest + '\' + p_File+'"');
-        LogDebug('HashCode de "'+p_File+'" Antes do FTP => '+g_oCacic.GetFileHash(p_File));
-        IdFTP.Get(p_File, p_Dest + '\' + p_File, True, True);
-        LogDebug('HashCode de "'+p_Dest + '\' + p_File +'" Após o FTP   => '+g_oCacic.GetFileHash(p_Dest + '\' + p_File));
+        LogDebug('Iniciando FTP de "'+p_Dest + p_File+'"');
+        LogDebug('HashCode de "'+p_File+'" Antes do FTP => '+g_oCacic.GetFileHash(p_Dest + p_File));
+        IdFTP.Get(p_File, p_Dest + p_File, True, True);
+        LogDebug('HashCode de "'+p_Dest + p_File +'" Após o FTP   => '+g_oCacic.GetFileHash(p_Dest + p_File));
       Finally
-          LogDebug('HashCode de "'+p_Dest + '\' + p_File +'" Após o FTP em Finally   => '+g_oCacic.GetFileHash(p_Dest + '\' + p_File));
+          LogDebug('HashCode de "'+p_Dest + p_File +'" Após o FTP em Finally   => '+g_oCacic.GetFileHash(p_Dest + p_File));
           IdFTP.Disconnect;
           IdFTP.Free;
           result := true;
@@ -751,7 +747,7 @@ procedure GravaConfiguracoes;
 var chkcacic_ini : TextFile;
 begin
    try
-       g_oCacic.setCacicPath(Configs.Edit_cacic_dir.text+'\');
+       LogDebug('g_ocacic => setCacicpath => '+Configs.Edit_cacic_dir.text+'\');
 
        FileSetAttr (ExtractFilePath(Application.Exename) + '\chkcacic.ini',0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
        AssignFile(chkcacic_ini,ExtractFilePath(Application.Exename) + '\chkcacic.ini'); {Associa o arquivo a uma variável do tipo TextFile}
@@ -845,13 +841,15 @@ begin
 
        // Escrita dos parâmetros obrigatórios
        Writeln(chkcacic_ini,'ip_serv_cacic='+v_ip_serv_cacic);
-       Writeln(chkcacic_ini,'cacic_dir='+Configs.Edit_cacic_dir.text);
+       Writeln(chkcacic_ini,'cacic_dir='+g_oCacic.getHomeDrive + Configs.Edit_cacic_dir.text+'\');
        Writeln(chkcacic_ini,'exibe_informacoes='+v_exibe_informacoes);
 
        // Escrita dos valores opcionais quando existirem
        if (v_te_instala_informacoes_extras <>'') then
           Writeln(chkcacic_ini,'te_instala_informacoes_extras='+ StringReplace(v_te_instala_informacoes_extras,#13#10,'*13*10',[rfReplaceAll]));
        CloseFile(chkcacic_ini); {Fecha o arquivo texto}
+
+       g_oCacic.setCacicPath(g_oCacic.getHomeDrive + Configs.Edit_cacic_dir.text+'\');
    except
    end;
 end;
@@ -962,7 +960,9 @@ var SearchRec: TSearchRec;
     Result: Integer;
     strFileName : String;
 begin
+
   strFileName := StringReplace(v_dir + '\' + v_files,'\\','\',[rfReplaceAll]);
+  LogDebug('Matando: '+strFileName);
   Result:=FindFirst(strFileName, faAnyFile, SearchRec);
 
   while result=0 do
@@ -1022,52 +1022,56 @@ end;
 
 procedure verifyAndGet(p_strModuleName,
                        p_strFileHash,
-                       p_strDestinationFolderName,
-                       p_strServUpdates,
-                       p_strPortaServUpdates,
-                       p_strNomeUsuarioLoginServUpdates,
-                       p_strSenhaLoginServUpdates,
-                       p_strPathServUpdates,
-                       p_strExibeInformacoes : String);
-  var v_strFileHash : String;
-  Begin
+                       p_strDestinationFolderName : String);
+var v_strFileHash,
+    v_strDestinationFolderName : String;
+Begin
+    v_strDestinationFolderName := p_strDestinationFolderName + '\';
+    v_strDestinationFolderName := StringReplace(v_strDestinationFolderName,'\\','\',[rfReplaceAll]);
 
+    LogDebug('Verificando módulo: '+v_strDestinationFolderName +p_strModuleName);
     // Verifico validade do Módulo e mato-o em caso negativo.
-    v_strFileHash := g_oCacic.GetFileHash(p_strDestinationFolderName + '\'+p_strModuleName);
+    v_strFileHash := g_oCacic.GetFileHash(v_strDestinationFolderName + p_strModuleName);
 
-    LogDebug('verifyAndGet - strFileHash de "'+p_strDestinationFolderName + '\'+p_strModuleName+'": ' + v_strFileHash);
+    LogDebug('verifyAndGet - HashCode Remot: "'+p_strFileHash+'"');
+    LogDebug('verifyAndGet - HashCode Local: "'+v_strFileHash+'"');
 
     If (v_strFileHash <> p_strFileHash) then
-      Matar(p_strDestinationFolderName, p_strModuleName);
+      Matar(v_strDestinationFolderName, p_strModuleName);
 
-    If not FileExists(p_strDestinationFolderName + '\'+p_strModuleName) Then
+    If not FileExists(v_strDestinationFolderName + p_strModuleName) Then
       Begin
         if (FileExists(ExtractFilePath(Application.Exename) + '\modulos\'+p_strModuleName)) then
           Begin
-            LogDiario('Copiando '+p_strModuleName+' de '+ExtractFilePath(Application.Exename)+'modulos\');
-            CopyFile(PChar(ExtractFilePath(Application.Exename) + 'modulos\'+p_strModuleName), PChar(p_strDestinationFolderName + '\'+p_strModuleName),false);
-            FileSetAttr (PChar(p_strDestinationFolderName + '\' + p_strModuleName),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED
+            LogDebug('Copiando '+p_strModuleName+' de '+ExtractFilePath(Application.Exename)+'modulos\');
+            CopyFile(PChar(ExtractFilePath(Application.Exename) + 'modulos\'+p_strModuleName), PChar(v_strDestinationFolderName + p_strModuleName),false);
+            FileSetAttr (PChar(v_strDestinationFolderName + p_strModuleName),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED
           End
         else
           begin
+
             Try
-              if not FTP(p_strServUpdates,
-                         p_strPortaServUpdates,
-                         p_strNomeUsuarioLoginServUpdates,
-                         p_strSenhaLoginServUpdates,
-                         p_strPathServUpdates,
+              if not FTP(XML_RetornaValor('te_serv_updates'              , v_retorno),
+                         XML_RetornaValor('nu_porta_serv_updates'        , v_retorno),
+                         XML_RetornaValor('nm_usuario_login_serv_updates', v_retorno),
+                         XML_RetornaValor('te_senha_login_serv_updates'  , v_retorno),
+                         XML_RetornaValor('te_path_serv_updates'         , v_retorno),
                          p_strModuleName,
-                         p_strDestinationFolderName) then
-                  Configs.Memo_te_instala_informacoes_extras.Lines.add(#13#10+'ATENÇÃO! Não foi possível efetuar FTP para "'+p_strDestinationFolderName + '\'+p_strModuleName+'".'+#13#10+'Verifique o Servidor de Updates.');
+                         v_strDestinationFolderName) then
+                  Configs.Memo_te_instala_informacoes_extras.Lines.add(#13#10+'ATENÇÃO! Não foi possível efetuar FTP para "'+v_strDestinationFolderName + p_strModuleName+'".'+#13#10+'Verifique o Servidor de Updates.');
             Except
-              LogDebug('FTP de "'+ p_strDestinationFolderName + '\' + p_strModuleName+'" Interrompido.');
+              LogDebug('FTP de "'+ v_strDestinationFolderName + p_strModuleName+'" Interrompido.');
             End;
 
-            if not FileExists(p_strDestinationFolderName + '\' + p_strModuleName) Then
+            if not FileExists(v_strDestinationFolderName + p_strModuleName) Then
               Begin
-                LogDebug('Problemas Efetuando Download de '+ p_strDestinationFolderName + '\' + p_strModuleName+' (FTP)');
+                LogDebug('Problemas Efetuando Download de '+ v_strDestinationFolderName + p_strModuleName+' (FTP)');
                 LogDebug('Conexão:');
-                LogDebug(p_strServUpdates+', '+p_strPortaServUpdates+', '+p_strNomeUsuarioLoginServUpdates+', '+p_strSenhaLoginServUpdates+', '+p_strPathServUpdates);
+                LogDebug(XML_RetornaValor('te_serv_updates',v_retorno)               +', '+
+                         XML_RetornaValor('nu_porta_serv_updates'        , v_retorno)+', '+
+                         XML_RetornaValor('nm_usuario_login_serv_updates', v_retorno)+', '+
+                         XML_RetornaValor('te_senha_login_serv_updates'  , v_retorno)+', '+
+                         XML_RetornaValor('te_path_serv_updates'         , v_retorno));
               End
             else
                 LogDiario('Download Concluído de "'+p_strModuleName+'" (FTP)');
@@ -1114,6 +1118,8 @@ begin
   bool_CommandLine                := false;
   bool_ArquivoINI                 := FileExists(ExtractFilePath(Application.Exename) + '\chkcacic.ini');
 
+  g_oCacic := TCACIC.Create();
+  g_oCacic.setBoolCipher(true);
   Try
 
   // 2.2.0.17 - Tratamento de opções passadas em linha de comando
@@ -1155,7 +1161,6 @@ begin
     Begin
       If not bool_ArquivoINI then
           Begin
-              LogDiario('Abrindo formulário de configurações');
               CriaFormConfigura;
               MostraFormConfigura;
           End;
@@ -1165,8 +1170,7 @@ begin
       v_te_instala_informacoes_extras := StringReplace(GetValorChaveRegIni('Cacic2', 'te_instala_informacoes_extras', ExtractFilePath(Application.Exename) + '\chkcacic.ini'),'*13*10',#13#10,[rfReplaceAll]);
     End;
 
-  g_oCacic := TCACIC.Create();
-  g_oCacic.setCacicPath(g_oCacic.getHomeDrive + v_cacic_dir + '\');
+  g_oCacic.setCacicPath(v_cacic_dir);
 
   if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
     Begin
@@ -1202,7 +1206,7 @@ begin
       Configs.ckboxExibeInformacoes.Checked               := true;
       Configs.ckboxExibeInformacoes.Visible               := false;
 
-      Configs.Height                                      := 357;
+      Configs.Height                                      := 350;
       Configs.lbMensagemNaoAplicavel.Visible              := false;
 
       Configs.Memo_te_instala_informacoes_extras.Clear;
@@ -1232,7 +1236,7 @@ begin
       bool_configura := false;
 
       //chave AES. Recomenda-se que cada empresa/órgão altere a sua chave.
-      v_tstrCipherOpened := CipherOpen(g_oCacic.getCacicPath + '\' + g_oCacic.getDatFileName);
+      v_tstrCipherOpened := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
 
       if (g_oCacic.isWindowsGEXP()) then // Se >= Maior ou Igual ao WinXP...
         Begin
@@ -1282,7 +1286,6 @@ begin
 
       while (v_ip_serv_cacic = '') or (v_cacic_dir = '') or bool_configura do
           Begin
-              LogDiario('Abrindo formulário de configurações');
               bool_configura := false;
               CriaFormConfigura;
 
@@ -1304,6 +1307,7 @@ begin
          Application.Terminate;
       end;
 
+      LogDebug('Verificando pasta "'+g_oCacic.getCacicPath+'"');
       // Verifico a existência do diretório configurado para o Cacic, normalmente CACIC
       if not DirectoryExists(g_oCacic.getCacicPath) then
           begin
@@ -1311,6 +1315,7 @@ begin
             ForceDirectories(g_oCacic.getCacicPath);
           end;
 
+      LogDebug('Verificando pasta "'+g_oCacic.getCacicPath+'modulos'+'"');
       // Para eliminar versão 20014 e anteriores que provavelmente não fazem corretamente o AutoUpdate
       if not DirectoryExists(g_oCacic.getCacicPath+'modulos') then
           begin
@@ -1319,11 +1324,12 @@ begin
             LogDiario('Criando pasta '+g_oCacic.getCacicPath+'modulos');
           end;
 
+      LogDebug('Verificando pasta "'+g_oCacic.getCacicPath+'Temp'+'"');
       // Crio o SubDiretório TEMP, caso não exista
-      if not DirectoryExists(g_oCacic.getCacicPath+'temp') then
+      if not DirectoryExists(g_oCacic.getCacicPath+'Temp') then
           begin
-            ForceDirectories(g_oCacic.getCacicPath + 'temp');
-            LogDiario('Criando pasta '+g_oCacic.getCacicPath+'temp');
+            ForceDirectories(g_oCacic.getCacicPath + 'Temp');
+            LogDiario('Criando pasta '+g_oCacic.getCacicPath+'Temp');
           end;
 
 
@@ -1361,19 +1367,15 @@ begin
         idHTTP1.Free;
 
         v_retorno := Response_Config.DataString;
-        v_te_serv_updates               := XML_RetornaValor('te_serv_updates'              , v_retorno);
-        v_nu_porta_serv_updates         := XML_RetornaValor('nu_porta_serv_updates'        , v_retorno);
-        v_nm_usuario_login_serv_updates := XML_RetornaValor('nm_usuario_login_serv_updates', v_retorno);
-        v_te_senha_login_serv_updates   := XML_RetornaValor('te_senha_login_serv_updates'  , v_retorno);
-        v_te_path_serv_updates          := XML_RetornaValor('te_path_serv_updates'         , v_retorno);
+        LogDebug('Retorno de comunicação com servidor: '+v_retorno);
 
         LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
         LogDebug(':::::::::::::::: VALORES OBTIDOS NO Gerente WEB :::::::::::::::');
         LogDebug(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
-        LogDebug('Servidor de updates......................: '+v_te_serv_updates);
-        LogDebug('Porta do servidor de updates.............: '+v_nu_porta_serv_updates);
-        LogDebug('Usuário para login no servidor de updates: '+v_nm_usuario_login_serv_updates);
-        LogDebug('Pasta no servidor de updates.............: '+v_te_path_serv_updates);
+        LogDebug('Servidor de updates......................: '+XML_RetornaValor('te_serv_updates'              , v_retorno));
+        LogDebug('Porta do servidor de updates.............: '+XML_RetornaValor('nu_porta_serv_updates'        , v_retorno));
+        LogDebug('Usuário para login no servidor de updates: '+XML_RetornaValor('nm_usuario_login_serv_updates', v_retorno));
+        LogDebug('Pasta no servidor de updates.............: '+XML_RetornaValor('te_path_serv_updates'         , v_retorno));
         LogDebug(' ');
         LogDebug('Versões dos Agentes Principais:');
         LogDebug('------------------------------');
@@ -1403,7 +1405,7 @@ begin
           // Atribuição de acesso ao módulo principal e pastas
           Form1.FS_SetSecurity(g_oCacic.getCacicPath);
           Form1.FS_SetSecurity(g_oCacic.getCacicPath + 'cacic2.exe');
-          Form1.FS_SetSecurity(g_oCacic.getCacicPath + 'cacic2.dat');
+          Form1.FS_SetSecurity(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
           Form1.FS_SetSecurity(g_oCacic.getCacicPath + 'cacic2.log');
           Form1.FS_SetSecurity(g_oCacic.getCacicPath + 'modulos');
           Form1.FS_SetSecurity(g_oCacic.getCacicPath + 'temp');
@@ -1494,14 +1496,8 @@ begin
 
         // Tento detectar o ChkSis.EXE e copio ou faço FTP caso não exista
         verifyAndGet('chksis.exe',
-                      XML_RetornaValor('CHKSIS_HASH', v_retorno),
-                      g_oCacic.getWinDir,
-                      v_te_serv_updates,
-                      v_nu_porta_serv_updates,
-                      v_nm_usuario_login_serv_updates,
-                      v_te_senha_login_serv_updates,
-                      v_te_path_serv_updates,
-                      v_exibe_informacoes);
+                      XML_RetornaValor('TE_HASH_CHKSIS', v_retorno),
+                      g_oCacic.getWinDir);
 
       // Tento detectar o ChkSis.INI e crio-o caso necessário
       If not FileExists(g_oCacic.getWinDir + 'chksis.ini') Then
@@ -1517,14 +1513,8 @@ begin
         Begin
           // Tento detectar o CACICsvc.EXE e copio ou faço FTP caso não exista
           verifyAndGet('cacicsvc.exe',
-                        XML_RetornaValor('CACICSVC_HASH', v_retorno),
-                        g_oCacic.getWinDir,
-                        v_te_serv_updates,
-                        v_nu_porta_serv_updates,
-                        v_nm_usuario_login_serv_updates,
-                        v_te_senha_login_serv_updates,
-                        v_te_path_serv_updates,
-                        v_exibe_informacoes);
+                        XML_RetornaValor('TE_HASH_CACICSVC', v_retorno),
+                        g_oCacic.getWinDir);
 
           // O CACICsvc usará o arquivo de configurações \Windows\chksis.ini
         End;
@@ -1542,24 +1532,12 @@ begin
 
       // Tento detectar o Agente Principal e copio ou faço FTP caso não exista
       verifyAndGet('cacic2.exe',
-                   XML_RetornaValor('CACIC2_HASH', v_retorno),
-                   g_oCacic.getCacicPath,
-                   v_te_serv_updates,
-                   v_nu_porta_serv_updates,
-                   v_nm_usuario_login_serv_updates,
-                   v_te_senha_login_serv_updates,
-                   v_te_path_serv_updates,
-                   v_exibe_informacoes);
+                   XML_RetornaValor('TE_HASH_CACIC2', v_retorno),
+                   g_oCacic.getCacicPath);
 
       verifyAndGet('ger_cols.exe',
-                   XML_RetornaValor('GER_COLS_HASH', v_retorno),
-                   g_oCacic.getCacicPath + 'modulos',
-                   v_te_serv_updates,
-                   v_nu_porta_serv_updates,
-                   v_nm_usuario_login_serv_updates,
-                   v_te_senha_login_serv_updates,
-                   v_te_path_serv_updates,
-                   v_exibe_informacoes);
+                   XML_RetornaValor('TE_HASH_GER_COLS', v_retorno),
+                   g_oCacic.getCacicPath + 'modulos');
 
         // Caso exista a pasta "modulos", copio todos os executáveis para a pasta Cacic\modulos, exceto cacic2.exe, ger_cols.exe e chksis.exe
         if (v_modulos <> '') then
@@ -1584,35 +1562,17 @@ begin
 
       // Tento detectar (de novo) o ChkSis.EXE e copio ou faço FTP caso não exista
       verifyAndGet('chksis.exe',
-                    XML_RetornaValor('CHKSIS_HASH', v_retorno),      
-                    g_oCacic.getWinDir,
-                    v_te_serv_updates,
-                    v_nu_porta_serv_updates,
-                    v_nm_usuario_login_serv_updates,
-                    v_te_senha_login_serv_updates,
-                    v_te_path_serv_updates,
-                    v_exibe_informacoes);
+                    XML_RetornaValor('TE_HASH_CHKSIS', v_retorno),
+                    g_oCacic.getWinDir);
 
       // Tento detectar (de novo) o Agente Principal e copio ou faço FTP caso não exista
       verifyAndGet('cacic2.exe',
-                   XML_RetornaValor('CACIC2_HASH', v_retorno),
-                   g_oCacic.getCacicPath,
-                   v_te_serv_updates,
-                   v_nu_porta_serv_updates,
-                   v_nm_usuario_login_serv_updates,
-                   v_te_senha_login_serv_updates,
-                   v_te_path_serv_updates,
-                   v_exibe_informacoes);
+                   XML_RetornaValor('TE_HASH_CACIC2', v_retorno),
+                   g_oCacic.getCacicPath);
 
       verifyAndGet('ger_cols.exe',
-                   XML_RetornaValor('GER_COLS_HASH', v_retorno),
-                   g_oCacic.getCacicPath + 'modulos',
-                   v_te_serv_updates,
-                   v_nu_porta_serv_updates,
-                   v_nm_usuario_login_serv_updates,
-                   v_te_senha_login_serv_updates,
-                   v_te_path_serv_updates,
-                   v_exibe_informacoes);
+                   XML_RetornaValor('TE_HASH_GER_COLS', v_retorno),
+                   g_oCacic.getCacicPath + 'modulos');
 
       if (g_oCacic.isWindowsNTPlataform) then
         Begin
@@ -1659,7 +1619,7 @@ begin
       // Igualo as chaves ip_serv_cacic dos arquivos chksis.ini e cacic2.ini!
       SetValorDatMemoria('Configs.EnderecoServidor', v_ip_serv_cacic);
       LogDebug('Fechando Arquivo de Configurações do Cacic');
-      CipherClose(g_oCacic.getDatFileName);
+      CipherClose(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
 
       LogDebug('Abrindo Arquivo de Configurações do ChkSis');
       CipherOpen(g_oCacic.getWinDir + 'chksis.dat');
@@ -1709,9 +1669,9 @@ begin
             Begin
               LogDebug('Executando '+g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
               if (strDataHoraCACIC2_INI <> strDataHoraCACIC2_FIM) then
-                WinExec(PChar(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute'), SW_HIDE)
+                g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute', false)
               else
-                WinExec(PChar(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             ), SW_HIDE);
+                g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             , false);
             End
           else
             Begin
@@ -1729,14 +1689,14 @@ begin
               if (wordServiceStatus = 0) then
                 Begin
                   // Instalo e Habilito o serviço
-                  LogDiario('Instalando CACICservice...');
-                  WinExec(PChar(g_oCacic.getWinDir + 'cacicsvc.exe -install'), SW_NORMAL);
+                  LogDiario('Instalando/Iniciando CACICservice...');
+                  g_oCacic.createSampleProcess(g_oCacic.getWinDir + 'cacicsvc.exe -install',false);
                 End
               else if ((wordServiceStatus < 4) or
                        (wordServiceStatus > 4))  then
                 Begin
                   LogDiario('Iniciando CACICservice');
-                  WinExec(PChar(g_oCacic.getWinDir + 'cacicsvc.exe -start'), SW_NORMAL);
+                  g_oCacic.createSampleProcess(g_oCacic.getWinDir + 'cacicsvc.exe -start', false);
                 End
               else
                   LogDiario('Não instalei o CACICservice. Já está rodando...');
@@ -1757,9 +1717,10 @@ begin
   End;
 
   try
-    g_oCacic.Free();
+    g_oCacic.Free;
   except
   end;
+
   Application.Terminate;
 end;
 

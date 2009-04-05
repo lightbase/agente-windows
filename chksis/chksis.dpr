@@ -640,7 +640,7 @@ begin
   v_cacic_dir        := GetValorChaveRegIni('Cacic2', 'cacic_dir'    , ExtractFilePath(ParamStr(0)) + 'chksis.ini');
   v_rem_cacic_v0x    := GetValorChaveRegIni('Cacic2', 'rem_cacic_v0x', ExtractFilePath(ParamStr(0)) + 'chksis.ini');
 
-  g_oCacic.setCacicPath(g_oCacic.getHomeDrive + v_cacic_dir +'\');
+  g_oCacic.setCacicPath(v_cacic_dir);
 
   v_Debugs := false;
   if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
@@ -804,28 +804,7 @@ begin
 
   // 5 segundos para espera de possível FTP...
   Sleep(5000);
-  {
-  Try
-    // Crio a chave/valor chksis para autoexecução do Cacic, caso não exista esta chave/valor
-    log_diario('Setando chave HLM../Run com ' + HomeDrive + '\chksis.exe');
-    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\CheckSystemRoutine', HomeDrive + '\chksis.exe');
-  Except
-  End;
 
-
-  bool_ExistsAutoRun := false;
-  if (GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2')=Dir + '\cacic2.exe') then
-    bool_ExistsAutoRun := true
-  else
-    Begin
-      Try
-        // Crio a chave/valor cacic2 para autoexecução do Cacic, caso não exista esta chave/valor
-        log_diario('Setando chave HLM../Run com ' + Dir + '\cacic2.exe');
-        SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic2', Dir + '\cacic2.exe');
-      Except
-      End;
-    End;
-  }
   // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
       if Posso_Rodar_CACIC or not bool_ExistsAutoRun then
         Begin
@@ -833,9 +812,9 @@ begin
 
           // Caso tenha havido download de agentes principais, executar coletas imediatamente...
           if (bool_download_CACIC2) then
-            WinExec(PChar(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute'), SW_HIDE)
+            g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute', false)
           else
-            WinExec(PChar(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             ), SW_HIDE);
+            g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             , false);
         End;
 end;
 
@@ -844,6 +823,8 @@ const
 
 begin
    g_oCacic := TCACIC.Create();
+
+   g_oCacic.setBoolCipher(true);
 
    if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) )
      then begin

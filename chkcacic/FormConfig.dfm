@@ -154,11 +154,11 @@ object Configs: TConfigs
     Text = 'Cacic'
   end
   object Button_Gravar: TButton
-    Left = 74
+    Left = 48
     Top = 325
-    Width = 150
+    Width = 214
     Height = 35
-    Caption = 'Gravar Configura'#231#245'es'
+    Caption = 'Concluir Instala'#231#227'o/Atualiza'#231#227'o'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -169,7 +169,7 @@ object Configs: TConfigs
     OnClick = Button_GravarClick
   end
   object btSair: TButton
-    Left = 265
+    Left = 291
     Top = 325
     Width = 150
     Height = 35

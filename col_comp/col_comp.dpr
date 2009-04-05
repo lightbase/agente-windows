@@ -25,12 +25,15 @@ uses
   Registry,
   CACIC_Library in '..\CACIC_Library.pas';
 
-var  v_strCipherClosed         : String;
+var
+  v_strCipherClosed         : String;
 
-var v_tstrCipherOpened,
-    v_tstrCipherOpened1        : TStrings;
+var
+  v_tstrCipherOpened,
+  v_tstrCipherOpened1        : TStrings;
 
-var g_oCacic : TCACIC;
+var
+  g_oCacic : TCACIC;
 
 procedure log_diario(strMsg : String);
 var
@@ -139,7 +142,6 @@ begin
     else
       Result := '';
 end;
-
 
 function GetRootKey(strRootKey: String): HKEY;
 begin
@@ -343,37 +345,46 @@ end;
 
 var tstrTripa1 : TStrings;
     intAux     : integer;
-    v_path_cacic : String;
+    strAux     : String;
 
 const
   CACIC_APP_NAME = 'col_comp';
 
 begin
   g_oCacic := TCACIC.Create();
+
+  g_oCacic.setBoolCipher(true);
+
   if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then
     if (ParamCount>0) then
-    Begin
-       //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.ini
-       tstrTripa1 := g_oCacic.explode(ExtractFilePath(ParamStr(0)),'\');
-       v_path_cacic := '';
-       For intAux := 0 to tstrTripa1.Count -2 do
-         v_path_cacic := v_path_cacic + tstrTripa1[intAux] + '\';
+        Begin
+          strAux := '';
+          For intAux := 1 to ParamCount do
+            Begin
+              if LowerCase(Copy(ParamStr(intAux),1,11)) = '/cacicpath=' then
+                begin
+                  strAux := Trim(Copy(ParamStr(intAux),12,Length((ParamStr(intAux)))));
+                end;
+            end;
 
-       g_oCacic.setCacicPath(v_path_cacic);
+          if (strAux <> '') then
+            Begin
+               g_oCacic.setCacicPath(strAux);
 
-       v_tstrCipherOpened  := TStrings.Create;
-       v_tstrCipherOpened  := CipherOpen(g_oCacic.getDatFileName);
+               v_tstrCipherOpened  := TStrings.Create;
+               v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
 
-       v_tstrCipherOpened1 := TStrings.Create;
-       v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_comp.dat');
+               v_tstrCipherOpened1 := TStrings.Create;
+               v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_comp.dat');
 
-       Try
-          Executa_Col_comp;
-       Except
-          SetValorDatMemoria('Col_Comp.nada', 'nada', v_tstrCipherOpened1);
-          CipherClose(g_oCacic.getCacicPath + 'temp\col_comp.dat', v_tstrCipherOpened1);
-       End;
-       Halt(0);
-    End;
+               Try
+                  Executa_Col_comp;
+               Except
+                  SetValorDatMemoria('Col_Comp.nada', 'nada', v_tstrCipherOpened1);
+                  CipherClose(g_oCacic.getCacicPath + 'temp\col_comp.dat', v_tstrCipherOpened1);
+               End;
+               Halt(0);
+            End;
+        End;
    g_oCacic.Free();
 end.

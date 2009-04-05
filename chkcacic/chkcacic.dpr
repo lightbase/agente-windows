@@ -27,18 +27,18 @@ const
   CACIC_APP_NAME = 'chkcacic';
 
 var
-  g_oCacic : TCACIC;
+  oCacic : TCACIC;
 
 begin
-   g_oCacic := TCACIC.Create();
+   oCacic := TCACIC.Create();
 
-   if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) )
+   if( not oCacic.isAppRunning( CACIC_APP_NAME ) )
      then begin
         Application.Initialize;
         Application.CreateForm(TForm1, Form1);
         Application.Run;
      end;
 
-   g_oCacic.Free();
+   oCacic.Free();
 
 end.

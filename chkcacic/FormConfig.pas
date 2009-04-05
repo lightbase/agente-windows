@@ -20,8 +20,21 @@ unit FormConfig;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls,main, PJVersionInfo, NTFileSecurity, Buttons, ExtCtrls;
+  Windows,
+  Messages,
+  SysUtils,
+  Variants,
+  Classes,
+  Graphics,
+  Controls,
+  Forms,
+  Dialogs,
+  StdCtrls,
+  main,
+  PJVersionInfo,
+  NTFileSecurity,
+  Buttons,
+  ExtCtrls;
 
 type
   TConfigs = class(TForm)

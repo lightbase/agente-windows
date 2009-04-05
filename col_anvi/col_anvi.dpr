@@ -28,12 +28,15 @@ uses
   PJVersionInfo,
   CACIC_Library in '..\CACIC_Library.pas';
 
-var  v_strCipherClosed         : String;
+var
+  v_strCipherClosed         : String;
 
-var v_Debugs                   : boolean;
+var
+  v_Debugs                   : boolean;
 
-var v_tstrCipherOpened,
-    v_tstrCipherOpened1        : TStrings;
+var
+  v_tstrCipherOpened,
+  v_tstrCipherOpened1        : TStrings;
 
 var
   g_oCacic : TCACIC;
@@ -391,48 +394,57 @@ end;
 
 var tstrTripa1 : TStrings;
     intAux     : integer;
-    v_path_cacic : String;
+    strAux     : String;
 const
   CACIC_APP_NAME = 'col_anvi';
 
 begin
    g_oCacic := TCACIC.Create();
 
+   g_oCacic.setBoolCipher(true);
+
    if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then
     if (ParamCount>0) then
-    Begin
-       //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.ini
-       tstrTripa1 := g_oCacic.explode(ExtractFilePath(ParamStr(0)),'\');
-       v_path_cacic := '';
-       For intAux := 0 to tstrTripa1.Count -2 do
-         v_path_cacic := v_path_cacic + tstrTripa1[intAux] + '\';
-
-       g_oCacic.setCacicPath(v_path_cacic);
-
-       v_Debugs := false;
-       if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
-         Begin
-          if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+        Begin
+          strAux := '';
+          For intAux := 1 to ParamCount do
             Begin
-              v_Debugs := true;
-              log_diario('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+              if LowerCase(Copy(ParamStr(intAux),1,11)) = '/cacicpath=' then
+                begin
+                  strAux := Trim(Copy(ParamStr(intAux),12,Length((ParamStr(intAux)))));
+                  log_DEBUG('Parâmetro /CacicPath recebido com valor="'+strAux+'"');
+                end;
+            end;
+
+          if (strAux <> '') then
+            Begin
+               g_oCacic.setCacicPath(strAux);
+
+           v_Debugs := false;
+           if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
+             Begin
+              if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+                Begin
+                  v_Debugs := true;
+                  log_diario('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+                End;
             End;
+
+           v_tstrCipherOpened  := TStrings.Create;
+           v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
+
+           v_tstrCipherOpened1 := TStrings.Create;
+           v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_anvi.dat');
+
+           Try
+              Executa_Col_Anvi;
+           Except
+              Begin
+                SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
+                CipherClose(g_oCacic.getCacicPath + 'temp\col_anvi.dat', v_tstrCipherOpened1);
+              End;
+           End;
         End;
-    
-       v_tstrCipherOpened  := TStrings.Create;
-       v_tstrCipherOpened  := CipherOpen(g_oCacic.getDatFileName);
-
-       v_tstrCipherOpened1 := TStrings.Create;
-       v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_anvi.dat');
-
-       Try
-          Executa_Col_Anvi;
-       Except
-          Begin
-            SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
-            CipherClose(g_oCacic.getCacicPath + 'temp\col_anvi.dat', v_tstrCipherOpened1);
-          End;
-       End;
     End;
     g_oCacic.Free();
 end.
