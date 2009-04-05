@@ -3268,7 +3268,6 @@ begin
       if ParamCount > 0 then
         Begin
           strAux := '';
-          v_Debugs := true;
 
           For intAux := 1 to ParamCount do
             Begin
@@ -3286,7 +3285,7 @@ begin
                Try
                  v_Debugs := false;
                  if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
-                     if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+                   if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
                     Begin
                       v_Debugs := true;
                       log_DEBUG('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');

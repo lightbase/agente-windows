@@ -969,7 +969,9 @@ procedure TFormularioGeral.HabilitaSuporteRemoto;
 Begin
   // Desabilita/Habilita a opção de Suporte Remoto
   Mnu_SuporteRemoto.Enabled := False;
-  if (getValorDatMemoria('Configs.CS_SUPORTE_REMOTO',v_tstrCipherOpened) = 'S') then Mnu_SuporteRemoto.Enabled := True;
+  if (getValorDatMemoria('Configs.CS_SUPORTE_REMOTO',v_tstrCipherOpened) = 'S') and
+     (FileExists(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe')) then
+     Mnu_SuporteRemoto.Enabled := True;
 End;
 
 
@@ -2245,7 +2247,7 @@ begin
   else
     Begin
       Mnu_SuporteRemoto.Caption := 'Ativar Suporte Remoto';
-      Mnu_SuporteRemoto.Enabled := true;
+      HabilitaSuporteRemoto;
     End;
 
 end;

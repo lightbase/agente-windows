@@ -1624,6 +1624,7 @@ begin
       LogDebug('Abrindo Arquivo de Configurações do ChkSis');
       CipherOpen(g_oCacic.getWinDir + 'chksis.dat');
       SetValorDatMemoria('Cacic2.ip_serv_cacic', v_ip_serv_cacic);
+      SetValorDatMemoria('Cacic2.cacic_dir'    , g_oCacic.getCacicPath);
       CipherClose(g_oCacic.getWinDir + 'chksis.dat');
 
       // Volto a gravar o chksis.ini para o difícil caso de leitura por versões antigas

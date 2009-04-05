@@ -155,18 +155,9 @@ procedure TfrmAcesso.FormCreate(Sender: TObject);
 begin
   intPausaPadrao                    := 3000; //(3 mil milisegundos = 3 segundos)
   frmAcesso.lbVersao.Caption        := 'Versão: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
-  frmMapaCacic.tStringsCipherOpened := frmMapaCacic.CipherOpen(frmMapaCacic.g_oCacic.getDatFileName);
+//  frmMapaCacic.tStringsCipherOpened := frmMapaCacic.CipherOpen(frmMapaCacic.g_oCacic.getCacicPath + frmMapaCacic.g_oCacic.getDatFileName);
   frmMapaCacic.lbNomeServidorWEB.Caption := 'Servidor: '+frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsCipherOpened);
   frmMapaCacic.lbMensagens.Caption  := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';
-  if (frmMapaCacic.GetValorDatMemoria('TcpIp.TE_NODE_ADDRESS' , frmMapaCacic.tStringsCipherOpened)='') then
-    Begin
-      frmMapaCacic.boolAcessoOK := false;
-      MessageDLG(#13#10+'Atenção! É necessário executar as coletas do Sistema Cacic.' + #13#10     + #13#10 +
-                            'Caso o Sistema Cacic já esteja instalado, clique com botão direito'   + #13#10 +
-                            'sobre o ícone da bandeja, escolha a opção "Executar Agora" e aguarde' + #13#10 +
-                            'o fim do processo.',mtError,[mbOK],0);
-      frmMapaCacic.Finalizar(false);
-    End;
 end;
 
 procedure TfrmAcesso.edNomeUsuarioAcessoKeyUp(Sender: TObject;

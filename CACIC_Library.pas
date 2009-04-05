@@ -845,7 +845,7 @@ begin
         FillChar(l_Key[1],Length(l_Key),0);
 
         // Return the result (unCrypted)
-        Result := l_Data
+        Result := trim(l_Data);
       End
     Else
       // Return the original value
