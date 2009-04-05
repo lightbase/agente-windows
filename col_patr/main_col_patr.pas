@@ -906,93 +906,96 @@ var boolColeta   : boolean;
     tstrTripa1   : TStrings;
     i,intAux     : integer;
     v_Aux,
-    v_path_cacic : String;
+    strAux       : String;
 Begin
   g_oCacic := TCACIC.Create();
+
+  g_oCacic.setBoolCipher(true);
 
   if (ParamCount>0) then
     Begin
       FormPatrimonio.lbVersao.Caption          := 'Versão: ' + GetVersionInfo(ParamStr(0));
-
-      v_option := 'system';
-      For intAux := 1 to ParamCount do
         Begin
-          if LowerCase(Copy(ParamStr(intAux),1,10)) = '/p_option=' then
-            v_option := Trim(Copy(ParamStr(intAux),11,Length((ParamStr(intAux)))));
-        End;
-
-      tstrTripa1 := g_oCacic.explode(ExtractFilePath(Application.Exename),'\'); //Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic
-      v_path_cacic := '';
-      For i := 0 to tstrTripa1.Count -2 do
-        v_path_cacic := v_path_cacic + tstrTripa1[i] + '\';
-
-      g_oCacic.setCacicPath(v_path_cacic);
-      v_Debugs := false;
-      if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
-        Begin
-          if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+          strAux := '';
+          For intAux := 1 to ParamCount do
             Begin
-              v_Debugs := true;
-              log_DEBUG('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+              if LowerCase(Copy(ParamStr(intAux),1,11)) = '/cacicpath=' then
+                begin
+                  strAux := Trim(Copy(ParamStr(intAux),12,Length((ParamStr(intAux)))));
+                  log_DEBUG('Parâmetro /CacicPath recebido com valor="'+strAux+'"');
+                end;
+            end;
+
+          if (strAux <> '') then
+            Begin
+              g_oCacic.setCacicPath(strAux);
+              v_Debugs := false;
+              if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
+                Begin
+                  if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+                    Begin
+                      v_Debugs := true;
+                      log_DEBUG('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+                    End;
+                End;
+
+              v_tstrCipherOpened  := TStrings.Create;
+              v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
+
+              v_tstrCipherOpened1 := TStrings.Create;
+              v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_patr.dat');
+
+              // Os valores possíveis serão 0-DESLIGADO 1-LIGADO 2-ESPERA PARA LIGAR (Será transformado em "1") 3-Ainda se comunicará com o Gerente WEB
+              l_cs_cipher  := false;
+              v_Aux := GetValorDatMemoria('Configs.CS_CIPHER', v_tstrCipherOpened);
+              if (v_Aux='1')then
+                 Begin
+                   l_cs_cipher  := true;
+                 End;
+
+              Try
+                boolColeta := false;
+                if (GetValorDatMemoria('Patrimonio.in_alteracao_fisica',v_tstrCipherOpened)= 'S') then
+                  Begin
+                    // Solicita o cadastramento de informações de patrimõnio caso seja detectado remanejamento para uma nova rede.
+                    MessageDlg('Atenção: foi identificada uma alteração na localização física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
+                    boolColeta := true;
+                  End
+                Else if (GetValorDatMemoria('Patrimonio.in_renovacao_informacoes',v_tstrCipherOpened)= 'S') and (v_option='system') then
+                  Begin
+                    // Solicita o cadastramento de informações de patrimõnio caso tenha completado o prazo configurado para renovação de informações.
+                    MessageDlg('Atenção: é necessário o preenchimento/atualização das informações de Patrimônio e Localização Física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
+                    boolColeta := true;
+                  end
+                Else if (GetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim',v_tstrCipherOpened)= '') then
+                  Begin
+                    // Solicita o cadastramento de informações de patrimõnio caso ainda não tenha sido cadastrado.
+                    boolColeta := true;
+                  end;
+
+                if boolColeta then
+                    Begin
+                      SetValorDatMemoria('Col_Patr.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
+                      log_diario('Coletando informações de Patrimônio e Localização Física.');
+                      v_configs := GetValorDatMemoria('Patrimonio.Configs',v_tstrCipherOpened);
+                      log_DEBUG('Configurações obtidas: '+v_configs);
+
+                      MontaInterface;
+                      MontaCombos;
+                      RecuperaValoresAnteriores;
+
+                    End;
+              Except
+                SetValorDatMemoria('Col_Patr.nada','nada', v_tstrCipherOpened1);
+                SetValorDatMemoria('Col_Patr.Fim', '99999999', v_tstrCipherOpened1);
+                CipherClose(g_oCacic.getCacicPath + 'temp\col_patr.dat', v_tstrCipherOpened1);
+                g_oCacic.Free();
+                Application.Terminate;
+              End;
             End;
         End;
-
-      v_tstrCipherOpened  := TStrings.Create;
-      v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + 'cacic2.dat');
-
-      v_tstrCipherOpened1 := TStrings.Create;
-      v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_patr.dat');
-
-      // Os valores possíveis serão 0-DESLIGADO 1-LIGADO 2-ESPERA PARA LIGAR (Será transformado em "1") 3-Ainda se comunicará com o Gerente WEB
-      l_cs_cipher  := false;
-      v_Aux := GetValorDatMemoria('Configs.CS_CIPHER', v_tstrCipherOpened);
-      if (v_Aux='1')then
-         Begin
-           l_cs_cipher  := true;
-         End;
-
-      Try
-        boolColeta := false;
-        if (GetValorDatMemoria('Patrimonio.in_alteracao_fisica',v_tstrCipherOpened)= 'S') then
-          Begin
-            // Solicita o cadastramento de informações de patrimõnio caso seja detectado remanejamento para uma nova rede.
-            MessageDlg('Atenção: foi identificada uma alteração na localização física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
-            boolColeta := true;
-          End
-        Else if (GetValorDatMemoria('Patrimonio.in_renovacao_informacoes',v_tstrCipherOpened)= 'S') and (v_option='system') then
-          Begin
-            // Solicita o cadastramento de informações de patrimõnio caso tenha completado o prazo configurado para renovação de informações.
-            MessageDlg('Atenção: é necessário o preenchimento/atualização das informações de Patrimônio e Localização Física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
-            boolColeta := true;
-          end
-        Else if (GetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim',v_tstrCipherOpened)= '') then
-          Begin
-            // Solicita o cadastramento de informações de patrimõnio caso ainda não tenha sido cadastrado.
-            boolColeta := true;
-          end;
-
-        if boolColeta then
-            Begin
-              SetValorDatMemoria('Col_Patr.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
-              log_diario('Coletando informações de Patrimônio e Localização Física.');
-              v_configs := GetValorDatMemoria('Patrimonio.Configs',v_tstrCipherOpened);
-              log_DEBUG('Configurações obtidas: '+v_configs);
-
-              MontaInterface;
-              MontaCombos;
-              RecuperaValoresAnteriores;
-
-            End;
-      Except
-        SetValorDatMemoria('Col_Patr.nada','nada', v_tstrCipherOpened1);
-        SetValorDatMemoria('Col_Patr.Fim', '99999999', v_tstrCipherOpened1);
-        CipherClose(g_oCacic.getCacicPath + 'temp\col_patr.dat', v_tstrCipherOpened1);
-        g_oCacic.Free();
-        Application.Terminate;
-      End;
-    End;
-end;
-
+    end;
+End;
 
 
 end.

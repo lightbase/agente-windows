@@ -20,7 +20,6 @@ program cacic2;
 uses
   Forms,
   Windows,
-  Dialogs,
   main in 'main.pas' {FormularioGeral},
   frmSenha in 'frmsenha.pas' {formSenha},
   frmConfiguracoes in 'frmConfiguracoes.pas' {FormConfiguracoes},

@@ -78,7 +78,6 @@ var
 
 var
   v_Debugs,
-  l_cs_cipher,
   l_cs_compress,
   v_CS_AUTO_UPDATE          : boolean;
 
@@ -132,6 +131,7 @@ var intLimite,
     strPalavra,
     strCaracter    : String;
 begin
+  log_diario('Regerando palavra-chave...');
   Randomize;
   strPalavra  := '';
   intLimite  := RandomRange(10,30); // Gerarei uma palavra com tamanho mínimo 10 e máximo 30
@@ -350,13 +350,13 @@ begin
 
        v_strCipherOpenImploded := g_oCacic.implode(p_tstrCipherOpened,g_oCacic.getSeparatorKey);
 
-       v_cs_cipher := l_cs_cipher;
-       l_cs_cipher := true;
-       log_DEBUG('Rotina de Fechamento do cacic2.dat ATIVANDO criptografia.');
+       v_cs_cipher := g_oCacic.getBoolCipher;
+       g_oCacic.setBoolCipher(true);
+       log_DEBUG('Rotina de Fechamento do ' + g_oCacic.getDatFileName + '. ATIVANDO criptografia.');
        v_strCipherClosed := g_oCacic.enCrypt(v_strCipherOpenImploded);
 
-       l_cs_cipher := v_cs_cipher;
-       log_DEBUG('Rotina de Fechamento do cacic2.dat RESTAURANDO estado da criptografia.');
+       g_oCacic.setBoolCipher(v_cs_cipher);
+       log_DEBUG('Rotina de Fechamento do ' + g_oCacic.getDatFileName + '.  RESTAURANDO estado da criptografia.');
        Writeln(v_DatFile,v_strCipherClosed); {Grava a string Texto no arquivo texto}
        if v_Debugs then
           Begin
@@ -395,12 +395,12 @@ begin
       Readln(v_DatFile,v_strCipherClosed);
       while not EOF(v_DatFile) do Readln(v_DatFile,v_strCipherClosed);
       CloseFile(v_DatFile);
-      v_cs_cipher := l_cs_cipher;
-      l_cs_cipher := true;
-      log_DEBUG('Rotina de Abertura do cacic2.dat ATIVANDO criptografia.');
+      v_cs_cipher := g_oCacic.getBoolCipher;
+      g_oCacic.setBoolCipher(true);
+      log_DEBUG('Rotina de Abertura do ' + g_oCacic.getDatFileName + '.  ATIVANDO criptografia.');
       v_strCipherOpened:= g_oCacic.deCrypt(v_strCipherClosed);
-      l_cs_cipher := v_cs_cipher;
-      log_DEBUG('Rotina de Abertura do cacic2.dat RESTAURANDO estado da criptografia.');
+      g_oCacic.setBoolCipher(v_cs_cipher);
+      log_DEBUG('Rotina de Abertura do ' + g_oCacic.getDatFileName + '.  RESTAURANDO estado da criptografia.');
     end;
     if (trim(v_strCipherOpened)<>'') then
       Result := g_oCacic.explode(v_strCipherOpened,g_oCacic.getSeparatorKey)
@@ -418,25 +418,24 @@ begin
   Matar(g_oCacic.getCacicPath + 'temp\','*.txt');
 end;
 
+procedure Sair;
+Begin
+  g_oCacic.Free;
+  Halt(0);
+End;
+
 procedure Finalizar(p_pausa:boolean);
 Begin
-  CipherClose(g_oCacic.getDatFileName, v_tstrCipherOpened);
+  CipherClose(g_oCacic.getCacicPath + g_oCacic.getDatFileName, v_tstrCipherOpened);
   Apaga_Temps;
   if p_pausa then sleep(2000); // Pausa de 2 segundos para conclusão de operações de arquivos.
 End;
 
-procedure Sair;
-Begin
-  log_DEBUG('Liberando Memória - FreeMemory(0)');
-  FreeMemory(0);
-  log_DEBUG('Suspendendo - Halt(0)');
-  Halt(0);
-End;
 
-procedure Seta_l_cs_cipher(p_strRetorno : String);
+procedure Seta_boolCipher(p_strRetorno : String);
 var v_Aux : string;
 Begin
-  l_cs_cipher := false;
+  g_oCacic.setBoolCipher(false);
 
   v_Aux := XML_RetornaValor('cs_cipher',p_strRetorno);
   if (p_strRetorno = '') or (v_Aux = '') then v_Aux := '3';
@@ -444,7 +443,7 @@ Begin
   if (v_Aux='1') then
     Begin
       log_DEBUG('ATIVANDO Criptografia!');
-      l_cs_cipher := true;
+      g_oCacic.setBoolCipher(true);
     End
   else if (v_Aux='2') then
     Begin
@@ -1558,7 +1557,7 @@ procedure Patrimnio1Click(Sender: TObject);
 begin
   SetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim','', v_tstrCipherOpened);
   if ChecaAgente(g_oCacic.getCacicPath + 'modulos', 'ini_cols.exe') then
-    g_oCacic.createSampleProcess( g_oCacic.getCacicPath + 'modulos\ini_cols.exe /p_ModulosOpcoes=col_patr,wait,user#', CACIC_PROCESS_WAIT );
+    g_oCacic.createSampleProcess( g_oCacic.getCacicPath + 'modulos\ini_cols.exe /CacicPath='+g_oCacic.getCacicPath+' /p_ModulosOpcoes=col_patr,wait,user#', CACIC_PROCESS_WAIT );
 
   if (FileExists(g_oCacic.getCacicPath + 'Temp\col_patr.dat')) then
 	  Begin
@@ -1627,11 +1626,11 @@ end;
 procedure ChecaCipher;
 begin
     // Os valores possíveis serão 0-DESLIGADO 1-LIGADO 2-ESPERA PARA LIGAR (Será transformado em "1") 3-Ainda se comunicará com o Gerente WEB
-    l_cs_cipher  := false;
+    g_oCacic.setBoolCipher(false);
     v_Aux := GetValorDatMemoria('Configs.CS_CIPHER', v_tstrCipherOpened);
     if (v_Aux='1') or (v_Aux='2') then
         Begin
-          l_cs_cipher  := true;
+          g_oCacic.setBoolCipher(true);
           SetValorDatMemoria('Configs.CS_CIPHER','1', v_tstrCipherOpened);
         End
     else
@@ -1654,17 +1653,63 @@ begin
 end;
 
 procedure BuscaConfigs(p_mensagem_log : boolean);
-var Request_SVG, v_array_campos, v_array_valores, v_Report : TStringList;
-    intAux1, intAux2, intAux3, intAux4, v_conta_EXCECOES, v_index_ethernet : integer;
-    strRetorno, strTripa, strAux3, ValorChaveRegistro, ValorRetornado, v_mensagem_log,
-    v_mascara,te_ip,te_mascara, te_gateway, te_serv_dhcp, te_dns_primario, te_dns_secundario, te_wins_primario, te_wins_secundario, te_nome_host, te_dominio_dns, te_dominio_windows,
-    v_mac_address,v_metodo_obtencao,v_nome_arquivo,IpConfigLINHA, v_enderecos_mac_invalidos, v_win_dir, v_dir_command, v_dir_ipcfg, v_win_dir_command, v_win_dir_ipcfg, v_te_serv_cacic : string;
-    tstrTripa1, tstrTripa2, tstrTripa3, tstrTripa4, tstrTripa5, tstrEXCECOES : TStrings;
-    IpConfigTXT, chksis_ini : textfile;
+var
+  Request_SVG,
+  v_array_campos,
+  v_array_valores,
+  v_Report          : TStringList;
 
-    v_oMachine : TMiTec_Machine;
-    v_TCPIP     : TMiTeC_TCPIP;
-    v_NETWORK : TMiTeC_Network;
+  intAux1,
+  intAux2,
+  intAux3,
+  intAux4,
+  v_conta_EXCECOES,
+  v_index_ethernet  : integer;
+
+  strRetorno,
+  strTripa,
+  strAux3,
+  ValorChaveRegistro,
+  ValorRetornado,
+  v_mensagem_log,
+  v_mascara,
+  te_ip,
+  te_mascara,
+  te_gateway,
+  te_serv_dhcp,
+  te_dns_primario,
+  te_dns_secundario,
+  te_wins_primario,
+  te_wins_secundario,
+  te_nome_host,
+  te_dominio_dns,
+  te_dominio_windows,
+  v_mac_address,
+  v_metodo_obtencao,
+  v_nome_arquivo,
+  IpConfigLINHA,
+  v_enderecos_mac_invalidos,
+  v_win_dir,
+  v_dir_command,
+  v_dir_ipcfg,
+  v_win_dir_command,
+  v_win_dir_ipcfg,
+  v_te_serv_cacic     : string;
+
+  tstrTripa1,
+  tstrTripa2,
+  tstrTripa3,
+  tstrTripa4,
+  tstrTripa5,
+  tstrEXCECOES        : TStrings;
+
+  IpConfigTXT,
+  chksis_ini,
+  v_txtCookie         : TextFile;
+
+  v_oMachine          : TMiTec_Machine;
+  v_TCPIP             : TMiTeC_TCPIP;
+  v_NETWORK           : TMiTeC_Network;
 Begin
   Try
     ChecaCipher;
@@ -1755,12 +1800,12 @@ Begin
           SetValorDatMemoria('TcpIp.TE_IP',v_tcpip.Adapter[v_index_ethernet].IPAddress[intAux1], v_tstrCipherOpened);
           Try
             strRetorno := ComunicaServidor('get_config.php', Request_SVG, 'Testando comunicação com o Módulo Gerente WEB.');
-            Seta_l_cs_cipher(strRetorno);
+            Seta_boolCipher(strRetorno);
             Seta_l_cs_compress(strRetorno);
 
             v_Aux := g_oCacic.deCrypt(XML_RetornaValor('te_serv_cacic', strRetorno));
             if (v_te_serv_cacic <> v_Aux) and (v_Aux <> '') then
-               SetValorDatMemoria('Configs.EnderecoServidor',v_Aux, v_tstrCipherOpened);
+               SetValorDatMemoria('Configs.EnderecoServidor',Trim(v_Aux), v_tstrCipherOpened);
 
             if (strRetorno <> '0') and (g_oCacic.deCrypt(XML_RetornaValor('te_rede_ok', strRetorno))<>'N') Then
               Begin
@@ -1783,12 +1828,12 @@ Begin
         Request_SVG.Values['in_teste']          := StringReplace(g_oCacic.enCrypt('OK'),'+','<MAIS>',[rfReplaceAll]);
         Try
           strRetorno := ComunicaServidor('get_config.php', Request_SVG, 'Teste de comunicação com o Módulo Gerente WEB.');
-          Seta_l_cs_cipher(strRetorno);
+          Seta_boolCipher(strRetorno);
           Seta_l_cs_compress(strRetorno);
 
           v_Aux := g_oCacic.deCrypt(XML_RetornaValor('te_serv_cacic', strRetorno));
           if (v_te_serv_cacic <> v_Aux) and (v_Aux <> '') then
-             SetValorDatMemoria('Configs.EnderecoServidor',v_Aux, v_tstrCipherOpened);
+             SetValorDatMemoria('Configs.EnderecoServidor',Trim(v_Aux), v_tstrCipherOpened);
 
           if (strRetorno <> '0') and (g_oCacic.deCrypt(XML_RetornaValor('te_rede_ok', strRetorno))<>'N') Then
             Begin
@@ -1860,10 +1905,8 @@ Begin
 
           log_DEBUG(v_acao_gercols + ' Parâmetros: in_chkcacic="'+Request_SVG.Values['in_chkcacic']+'", te_fila_ftp="'+Request_SVG.Values['te_fila_ftp']+'" e id_ip_estacao="'+Request_SVG.Values['id_ip_estacao']+'"');
           strRetorno := ComunicaServidor('get_config.php', Request_SVG, v_mensagem_log);
-          Seta_l_cs_cipher(strRetorno);
+          Seta_boolCipher(strRetorno);
           Seta_l_cs_compress(strRetorno);
-
-
 
           Request_SVG.Free;
           if (strRetorno <> '0') Then
@@ -1972,7 +2015,7 @@ Begin
          log_DEBUG('Executando "'+g_oCacic.getCacicPath + 'modulos\' + v_scripter + ' //b ' + g_oCacic.getCacicPath + 'temp\ipconfig.vbs"');
 
          if ChecaAgente(g_oCacic.getCacicPath + 'modulos', v_scripter) then
-           WinExec(PChar(g_oCacic.getCacicPath + 'modulos\' + v_scripter + ' //b ' + g_oCacic.getCacicPath + 'temp\ipconfig.vbs'), SW_HIDE);
+	         g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\' + v_scripter + ' //b ' + g_oCacic.getCacicPath + 'temp\ipconfig.vbs', false);
       Except
         Begin
           log_diario('Erro na geração do ipconfig.txt pelo ' + v_metodo_obtencao+'.');
@@ -2014,7 +2057,7 @@ Begin
                       v_dir_ipcfg     := '\';
                     End;
 
-                  WinExec(PChar(v_win_dir + v_dir_command + '\cmd.exe /c ' + v_win_dir + v_dir_ipcfg + '\ipconfig.exe /all > ' + v_nome_arquivo), SW_MINIMIZE);
+                  g_oCacic.createSampleProcess(v_win_dir + v_dir_command + '\cmd.exe /c ' + v_win_dir + v_dir_ipcfg + '\ipconfig.exe /all > ' + v_nome_arquivo, false);
                 End
              else
                 Begin
@@ -2036,7 +2079,7 @@ Begin
                       v_win_dir_ipcfg := LeftStr(v_win_dir_command,2);
                       v_dir_ipcfg     := '\';
                     End;
-                  WinExec(PChar(v_win_dir + v_dir_command + '\command.com /c ' + v_win_dir + v_dir_ipcfg + '\winipcfg.exe /all /batch ' + v_nome_arquivo), SW_MINIMIZE);
+                  g_oCacic.createSampleProcess(v_win_dir + v_dir_command + '\command.com /c ' + v_win_dir + v_dir_ipcfg + '\winipcfg.exe /all /batch ' + v_nome_arquivo, false);
                 End;
           Except log_diario('Erro na geração do ipconfig.txt pelo ' + v_metodo_obtencao+'.');
           End;
@@ -2253,8 +2296,13 @@ Begin
                   v_Aux := StringReplace(v_Aux                        ,'\' ,'<BarrInv>' ,[rfReplaceAll]);
                   v_Aux := StringReplace(g_oCacic.enCrypt(v_Aux)      ,'+' ,'<MAIS>'    ,[rfReplaceAll]);
 
-                  log_DEBUG('Invocando "'+g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -update [' + v_Aux + ']' );
-                  WinExec(PChar(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -update [' + v_Aux + ']'),SW_NORMAL);
+                  log_DEBUG('Criando cookie para srCACICsrv com nova palavra-chave.');
+
+                  AssignFile(v_txtCookie,g_oCacic.getCacicPath + 'temp\cacic_ck.txt');
+                  Rewrite(v_txtCookie);
+                  Append(v_txtCookie);
+                  Writeln(v_txtCookie,v_Aux);
+                  CloseFile(v_txtCookie);
                 End;
 
 
@@ -2264,12 +2312,12 @@ Begin
              strRetorno := ComunicaServidor('get_config.php', Request_SVG, v_mensagem_log);
 
              // A versão com criptografia do Módulo Gerente WEB retornará o valor cs_cipher=1(Quando receber "1") ou cs_cipher=2(Quando receber "3")
-             Seta_l_cs_cipher(strRetorno);
+             Seta_boolCipher(strRetorno);
 
              // A versão com compressão do Módulo Gerente WEB retornará o valor cs_compress=1(Quando receber "1") ou cs_compress=2(Quando receber "3")
              Seta_l_cs_compress(strRetorno);
 
-             v_te_serv_cacic := g_oCacic.deCrypt(XML_RetornaValor('te_serv_cacic',strRetorno));
+             v_te_serv_cacic := trim(g_oCacic.deCrypt(XML_RetornaValor('te_serv_cacic',strRetorno)));
 
              if (strRetorno <> '0') and
                 (v_te_serv_cacic<>'') and
@@ -2278,7 +2326,7 @@ Begin
                   v_mensagem_log := 'Novo endereço para Gerente WEB: '+v_te_serv_cacic;
                   SetValorDatMemoria('Configs.EnderecoServidor',v_te_serv_cacic, v_tstrCipherOpened);
                   log_DEBUG('Setando Criptografia para 3. (Primeiro contato)');
-                  Seta_l_cs_cipher('');
+                  Seta_boolCipher('');
                   log_DEBUG('Refazendo comunicação');
 
                   // Passei a enviar sempre a versão do CACIC...
@@ -2287,7 +2335,7 @@ Begin
                   Request_SVG := TStringList.Create;
                   Request_SVG.Values['te_tripa_perfis']    := StringReplace(g_oCacic.enCrypt(''),'+','<MAIS>',[rfReplaceAll]);
                   strRetorno := ComunicaServidor('get_config.php', Request_SVG, v_mensagem_log);
-                  Seta_l_cs_cipher(strRetorno);
+                  Seta_boolCipher(strRetorno);
                   Seta_l_cs_compress(strRetorno);
                 End;
 
@@ -2337,7 +2385,7 @@ Begin
                 v_acao_gercols := 'Armazenando valores obtidos no DAT Memória.';
 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                //Gravação no CACIC2.DAT dos valores de REDE, COMPUTADOR e EXECUÇÃO obtidos, para consulta pelos outros módulos...
+                //Gravação no DatFileName dos valores de REDE, COMPUTADOR e EXECUÇÃO obtidos, para consulta pelos outros módulos...
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 SetValorDatMemoria('Configs.CS_AUTO_UPDATE'                 ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_auto_update'          , strRetorno))), v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.CS_COLETA_HARDWARE'             ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('cs_coleta_hardware'      , strRetorno))), v_tstrCipherOpened);
@@ -2489,7 +2537,7 @@ Begin
                Finalizar(false);
 
                if ChecaAgente(g_oCacic.getCacicPath, 'cacic2.exe') then
-                  WinExec(PChar(g_oCacic.getCacicPath + 'cacic2.exe /atualizacao'), SW_MINIMIZE);
+                  g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /atualizacao', false);
                Sair;
               end;
 
@@ -2542,7 +2590,7 @@ Begin
               BuscaConfigs(false);
               Batchfile := TStringList.Create;
               Batchfile.Add('*** Simulação de cookie para cacic2.exe recarregar os valores de configurações ***');
-              // A existência deste arquivo forçará o Cacic2.exe a recarregar valores das configurações obtidas e gravadas no Cacic2.DAT
+              // A existência deste arquivo forçará o Cacic2.exe a recarregar valores das configurações obtidas e gravadas no DatFileName
               Batchfile.SaveToFile(g_oCacic.getCacicPath + 'Temp\reset.txt');
               BatchFile.Free;
               log_DEBUG('Configurações apanhadas no módulo Gerente WEB. Retornando ao Agente Principal...');
@@ -2799,7 +2847,7 @@ Begin
                                      Finalizar(false);
                                      Matar(g_oCacic.getCacicPath + 'temp\','*.dat');
                                      CriaTXT(g_oCacic.getCacicPath+'temp','coletas');
-                                     g_oCacic.createSampleProcess( g_oCacic.getCacicPath + 'modulos\ini_cols.exe /p_ModulosOpcoes=' + v_ModulosOpcoes, CACIC_PROCESS_WAIT );
+                                     g_oCacic.createSampleProcess( g_oCacic.getCacicPath + 'modulos\ini_cols.exe /CacicPath='+g_oCacic.getCacicPath+' /p_ModulosOpcoes=' + v_ModulosOpcoes, CACIC_PROCESS_WAIT );
                                 End;
 
                           end
@@ -3209,77 +3257,86 @@ Begin
      SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
     End;
   End;
-
+  g_oCacic.Free;
 End;
 
-var v_path_cacic : String;
 begin
    g_oCacic := TCACIC.Create();
 
-   if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then begin
-     Try
-       // Pegarei o nível anterior do diretório, que deve ser, por exemplo \Cacic, para leitura do cacic2.DAT
-       tstrTripa1   := g_oCacic.explode(ExtractFilePath(ParamStr(0)),'\');
-       v_path_cacic := '';
-       For intAux := 0 to tstrTripa1.Count -2 do
-           v_path_cacic := v_path_cacic + tstrTripa1[intAux] + '\';
+   if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then
+    begin
+      if ParamCount > 0 then
+        Begin
+          strAux := '';
+          v_Debugs := true;
 
-       g_oCacic.setCacicPath(v_path_cacic);
-       v_Debugs := false;
-       if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
-           if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
-          Begin
-            v_Debugs := true;
-            log_DEBUG('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
-          End;
+          For intAux := 1 to ParamCount do
+            Begin
+              if (LowerCase(Copy(ParamStr(intAux),1,11)) = '/cacicpath=') then
+                begin
+                  v_acao_gercols := 'Configurando CacicPath.';
+                  strAux := Copy(ParamStr(intAux),12,StrLen(PChar(ParamStr(intAux))));
+                end;
+            end;
 
-       g_oCacic.setCacicPath(g_oCacic.getCacicPath);
+          if (strAux <> '') then
+            Begin
+               g_oCacic.setCacicPath(strAux);
+               log_DEBUG('Parâmetro /CacicPath recebido com valor="'+strAux+'"');
+               Try
+                 v_Debugs := false;
+                 if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
+                     if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+                    Begin
+                      v_Debugs := true;
+                      log_DEBUG('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+                    End;
 
+                 g_oCacic.setCacicPath(g_oCacic.getCacicPath);
 
+                 // De acordo com a versão do OS, determina-se o ShellCommand para chamadas externas.
+                 p_Shell_Command := 'cmd.exe /c '; //NT/2K/XP
+                 if(g_oCacic.isWindows9xME()) then
+                    p_Shell_Command := 'command.com /c ';
 
-       // De acordo com a versão do OS, determina-se o ShellCommand para chamadas externas.
-       p_Shell_Command := 'cmd.exe /c '; //NT/2K/XP
-       if(g_oCacic.isWindows9xME()) then
-          p_Shell_Command := 'command.com /c ';
+                 if not DirectoryExists(g_oCacic.getCacicPath + 'Temp') then
+                   ForceDirectories(g_oCacic.getCacicPath + 'Temp');
 
-       if not DirectoryExists(g_oCacic.getCacicPath + 'Temp') then
-         ForceDirectories(g_oCacic.getCacicPath + 'Temp');
+                 v_tstrCipherOpened := TStrings.Create;
+                 v_tstrCipherOpened := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
 
-       v_tstrCipherOpened := TStrings.Create;
-       v_tstrCipherOpened := CipherOpen(g_oCacic.getDatFileName);
+                 // Não tirar desta posição
+                 SetValorDatMemoria('Configs.TE_SO',g_oCacic.getWindowsStrId(), v_tstrCipherOpened);
 
-       // Não tirar desta posição
-       SetValorDatMemoria('Configs.TE_SO',g_oCacic.getWindowsStrId(), v_tstrCipherOpened);
+                 log_DEBUG('Te_So obtido: "' + g_oCacic.getWindowsStrId() +'"');
 
-       log_DEBUG('Te_So obtido: "' + g_oCacic.getWindowsStrId() +'"');
+                 v_scripter := 'wscript.exe';
+                 // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento
+                 AssignFile(v_Aguarde,g_oCacic.getCacicPath + 'temp\aguarde_GER.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+                 {$IOChecks off}
+                 Reset(v_Aguarde); {Abre o arquivo texto}
+                 {$IOChecks on}
+                 if (IOResult <> 0) then // Arquivo não existe, será recriado.
+                   Rewrite (v_Aguarde);
 
-       v_scripter := 'wscript.exe';
-       // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento
-       AssignFile(v_Aguarde,g_oCacic.getCacicPath + 'temp\aguarde_GER.txt'); {Associa o arquivo a uma variável do tipo TextFile}
-       {$IOChecks off}
-       Reset(v_Aguarde); {Abre o arquivo texto}
-       {$IOChecks on}
-       if (IOResult <> 0) then // Arquivo não existe, será recriado.
-         Rewrite (v_Aguarde);
+                 Append(v_Aguarde);
+                 Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ger_Cols');
+                 Append(v_Aguarde);
 
-       Append(v_Aguarde);
-       Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ger_Cols');
-       Append(v_Aguarde);
+                 ChecaCipher;
+                 ChecaCompress;
 
-       ChecaCipher;
-       ChecaCompress;
-
-       Executa_Ger_Cols;
-       Finalizar(true);
-     Except
-       Begin
-        log_diario('PROBLEMAS EM EXECUTA_GER_COLS! Ação: ' + v_acao_gercols+'.');
-        CriaTXT(g_oCacic.getCacicPath,'ger_erro');
-        Finalizar(false);
-        SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
-       End;
-     End;
+                 Executa_Ger_Cols;
+                 Finalizar(true);
+               Except
+                 Begin
+                  log_diario('PROBLEMAS EM EXECUTA_GER_COLS! Ação: ' + v_acao_gercols+'.');
+                  CriaTXT(g_oCacic.getCacicPath,'ger_erro');
+                  Finalizar(false);
+                  SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
+                 End;
+               End;
+            End;
+        End;
    End;
-
-   g_oCacic.Free();
 end.

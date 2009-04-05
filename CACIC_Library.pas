@@ -132,17 +132,20 @@ type
        protected
          /// Mantem o caminho físico de instalação do agente cacic
          g_cacic_path: string;
+         g_boolCipher : boolean;
 
        public
          Windows : TCACIC_Windows; /// objeto de informacoes de windows
          Debug   : TCACIC_Debug; /// objeto de tratamento de debug
          procedure setCacicPath(p_cacic_path: string);
+         procedure setBoolCipher(p_boolCipher : boolean);
          function  deCrypt(p_Data : String)                           : String;
          function  enCrypt(p_Data : String)                           : String;
          function  explode(p_String, p_Separador : String)            : TStrings;
          function  implode(p_Array : TStrings ; p_Separador : String) : String;
          function  getCacicPath()                                     : String;
          function  getCipherKey()                                     : String;
+         function  getBoolCipher()                                    : boolean;
          function  getIV()                                            : String;
          function  getKeySize()                                       : integer;
          function  getBlockSize()                                     : integer;
@@ -305,6 +308,26 @@ begin
 
   Result := p_str;
 end;
+
+{*------------------------------------------------------------------------------
+  Atribui valor booleano à variável indicadora do status da criptografia
+
+  @param p_boolCipher Valor booleano para atribuição à variável para status da
+                      criptografia.
+-------------------------------------------------------------------------------}
+procedure TCACIC.setBoolCipher(p_boolCipher : boolean);
+Begin
+  Self.g_boolCipher := p_boolCipher;
+End;
+{*------------------------------------------------------------------------------
+  Obtém o status da criptografia (TRUE -> Ligada  /  FALSE -> Desligada)
+
+  @return boolean contendo o status para a criptografia
+-------------------------------------------------------------------------------}
+function TCACIC.getBoolCipher() : boolean;
+Begin
+  Result := Self.g_boolCipher;
+End;
 
 {*------------------------------------------------------------------------------
   Atribui o caminho físico de instalação do agente cacic
@@ -756,29 +779,35 @@ var
   l_Data, l_Key, l_IV : string;
 begin
   Try
-    // Pad Key, IV and Data with zeros as appropriate
-    l_Key   := PadWithZeros(CACIC_CIPHERKEY,CACIC_KEYSIZE);
-    l_IV    := PadWithZeros(CACIC_IV,CACIC_BLOCKSIZE);
-    l_Data  := PadWithZeros(p_Data,CACIC_BLOCKSIZE);
+    if self.g_boolCipher then
+      Begin
+        // Pad Key, IV and Data with zeros as appropriate
+        l_Key   := PadWithZeros(CACIC_CIPHERKEY,CACIC_KEYSIZE);
+        l_IV    := PadWithZeros(CACIC_IV,CACIC_BLOCKSIZE);
+        l_Data  := PadWithZeros(p_Data,CACIC_BLOCKSIZE);
 
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(CACIC_CIPHERKEY) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(CACIC_CIPHERKEY) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+        // Create the cipher and initialise according to the key length
+        l_Cipher := TDCP_rijndael.Create(nil);
+        if Length(CACIC_CIPHERKEY) <= 16 then
+          l_Cipher.Init(l_Key[1],128,@l_IV[1])
+        else if Length(CACIC_CIPHERKEY) <= 24 then
+          l_Cipher.Init(l_Key[1],192,@l_IV[1])
+        else
+          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
 
-    // Encrypt the data
-    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+        // Encrypt the data
+        l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
 
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
+        // Free the cipher and clear sensitive information
+        l_Cipher.Free;
+        FillChar(l_Key[1],Length(l_Key),0);
 
-    // Return the Base64 encoded result
-    Result := Base64EncodeStr(l_Data);
+        // Return the Base64 encoded result
+        Result := Base64EncodeStr(l_Data);
+      End
+    Else
+      // Return the original value
+      Result := p_Data;
   Except
 //    LogDiario('Erro no Processo de Criptografia');
   End;
@@ -790,31 +819,37 @@ var
   l_Data, l_Key, l_IV : string;
 begin
   Try
-    // Pad Key and IV with zeros as appropriate
-    l_Key := PadWithZeros(CACIC_CIPHERKEY,CACIC_KEYSIZE);
-    l_IV  := PadWithZeros(CACIC_IV,CACIC_BLOCKSIZE);
+    if self.g_boolCipher then
+      Begin
+        // Pad Key and IV with zeros as appropriate
+        l_Key := PadWithZeros(CACIC_CIPHERKEY,CACIC_KEYSIZE);
+        l_IV  := PadWithZeros(CACIC_IV,CACIC_BLOCKSIZE);
 
-    // Decode the Base64 encoded string
-    l_Data := Base64DecodeStr(p_Data);
+        // Decode the Base64 encoded string
+        l_Data := Base64DecodeStr(p_Data);
 
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(CACIC_CIPHERKEY) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(CACIC_CIPHERKEY) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
+        // Create the cipher and initialise according to the key length
+        l_Cipher := TDCP_rijndael.Create(nil);
+        if Length(CACIC_CIPHERKEY) <= 16 then
+          l_Cipher.Init(l_Key[1],128,@l_IV[1])
+        else if Length(CACIC_CIPHERKEY) <= 24 then
+          l_Cipher.Init(l_Key[1],192,@l_IV[1])
+        else
+          l_Cipher.Init(l_Key[1],256,@l_IV[1]);
 
-    // Decrypt the data
-    l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
+        // Decrypt the data
+        l_Cipher.DecryptCBC(l_Data[1],l_Data[1],Length(l_Data));
 
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
+        // Free the cipher and clear sensitive information
+        l_Cipher.Free;
+        FillChar(l_Key[1],Length(l_Key),0);
 
-    // Return the result
-    Result := l_Data;
+        // Return the result (unCrypted)
+        Result := l_Data
+      End
+    Else
+      // Return the original value
+      Result := p_Data
   Except
 //    LogDiario('Erro no Processo de Decriptografia');
   End;

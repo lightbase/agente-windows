@@ -1467,6 +1467,8 @@ var intAux            : integer;
     Request_mapa      : TStringList;
 begin
   g_oCacic := TCACIC.Create();
+
+  g_oCacic.setBoolCipher(true);
   frmMapaCacic.lbVersao.Caption          := 'Versão: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
   log_DEBUG('Versão do MapaCacic: '+frmMapaCacic.lbVersao.Caption);
   if (g_oCacic.isWindowsNTPlataform()) and (not g_oCacic.isWindowsAdmin()) then

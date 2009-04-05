@@ -32,12 +32,12 @@ const
 
 var
   hwind:HWND;
-  g_oCacic : TCACIC;
+  oCacic : TCACIC;
 
 begin
-   g_oCacic := TCACIC.Create();
+   oCacic := TCACIC.Create();
 
-   if( g_oCacic.isAppRunning( CACIC_APP_NAME ) )
+   if( oCacic.isAppRunning( CACIC_APP_NAME ) )
      then begin
         hwind := 0;
         repeat			// The string 'My app' must match your App Title (below)
@@ -55,6 +55,6 @@ begin
        Application.Run;
      end;
 
-   g_oCacic.Free();
+   oCacic.Free();
 
 end.
