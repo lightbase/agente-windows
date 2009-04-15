@@ -170,7 +170,7 @@ procedure log_DEBUG(p_msg:string);
 Begin
   if v_Debugs then log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
 End;
-
+{
 function Compress(p_strToCompress : string) : String;
 var   v_tstrToCompress, v_tstrCompressed : TStringStream;
       Zip : TZCompressionStream;
@@ -182,7 +182,7 @@ begin
   Zip.Free;
 
   Result := ZlibEx.ZCompressStrWeb(v_tstrCompressed.DataString);
-end; {Compress}
+end;
 
 function DeCompress(p_ToDeCompress : String) : String;
 var v_tstrToDeCompress, v_tstrDeCompressed : TStringStream;
@@ -203,8 +203,8 @@ end;
 
 DeZip.Free;
   Result := ZlibEx.ZDecompressStrEx(v_tstrDeCompressed.DataString);
-end; {DeCompress}
-
+end;
+}
 Function RemoveCaracteresEspeciais(Texto, p_Fill : String; p_start, p_end:integer) : String;
 var I : Integer;
 Begin
@@ -2435,6 +2435,8 @@ Begin
                 SetValorDatMemoria('Configs.IN_EXIBE_BANDEJA'               ,UpperCase(g_oCacic.deCrypt(XML_RetornaValor('in_exibe_bandeja'        , strRetorno))), v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'             ,g_oCacic.deCrypt(XML_RetornaValor('te_janelas_excecao'                , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'       ,g_oCacic.deCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_PORTA_SRCACIC'               ,g_oCacic.deCrypt(XML_RetornaValor('nu_porta_srcacic'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.CS_PERMITIR_DESATIVAR_SRCACIC'  ,g_oCacic.deCrypt(XML_RetornaValor('cs_permitir_desativar_srcacic'     , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA'           ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada'     , strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_anvi', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_COMP'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_comp', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);

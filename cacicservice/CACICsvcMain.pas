@@ -110,10 +110,10 @@ procedure TCACICservice.logDEBUG(Msg : String);
 var fLog: textfile;
 begin
   // Somente gravarei informações para debug se o arquivo "<HomeDrive>:\CACICsvc.log" existir
-  if FileExists(g_oCacic.Windows.getHomeDrive + 'CACICsvc.log') then
+  if FileExists(g_oCacic.Windows.getHomeDrive + g_oCacic.Windows.getWinDir + 'CACICsvc.log') then
     Begin
-      AssignFile(fLog, g_oCacic.Windows.getHomeDrive + 'CACICsvc.log');
-      if FileExists(g_oCacic.Windows.getHomeDrive + 'CACICsvc.log') then
+      AssignFile(fLog, g_oCacic.Windows.getHomeDrive + g_oCacic.Windows.getWinDir + 'CACICsvc.log');
+      if FileExists(g_oCacic.Windows.getHomeDrive + g_oCacic.Windows.getWinDir + 'CACICsvc.log') then
         Append(fLog)
       else
         Rewrite(fLog);
@@ -148,6 +148,9 @@ procedure TCACICservice.ServiceStart(Sender: TService; var Started: Boolean);
 begin
 
   g_oCacic := TCACIC.Create;
+  g_oCacic.setCacicPath(GetValorChaveRegIni('Cacic2', 'cacic_dir', g_oCacic.getWinDir + 'chksis.ini'));
+  CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : setCacicPath => '+GetValorChaveRegIni('Cacic2', 'cacic_dir', g_oCacic.getWinDir + 'chksis.ini'));
+
   CACICservice.logDEBUG('TCACICservice.ServiceStart');
   Started := true;
 
@@ -162,9 +165,6 @@ end;
 
 procedure TCACICservice.ExecutaCACIC;
 Begin
-  CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : setCacicPath => '+GetValorChaveRegIni('Cacic2', 'cacic_dir', g_oCacic.getWinDir + 'chksis.ini'));
-  g_oCacic.setCacicPath(GetValorChaveRegIni('Cacic2', 'cacic_dir', g_oCacic.getWinDir + 'chksis.ini'));
-
   CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : deleteFile => '+g_oCacic.getCacicPath + 'aguarde_CACIC.txt');
   DeleteFile(g_oCacic.getCacicPath + 'aguarde_CACIC.txt');
   Sleep(3000);
@@ -181,15 +181,14 @@ Begin
 
       While not (FileExists(g_oCacic.getCacicPath + 'cacic2.exe')) do
         Sleep(5000); // Espero 5 segundos...
+
+      // Executo o Agente Principal do CACIC
+      Try
+        CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : winExec => '+g_oCacic.getCacicPath + 'cacic2.exe');
+        g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe',false);
+      Except
+      End;
     End;
-
-
-  // Executo o Agente Principal do CACIC
-  Try
-    CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : winExec => '+g_oCacic.getCacicPath + 'cacic2.exe');
-    g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe',false);
-  Except
-  End;
 End;
 
 procedure TCACICservice.ServiceAfterInstall(Sender: TService);

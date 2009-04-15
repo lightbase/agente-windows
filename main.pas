@@ -62,6 +62,10 @@ var
   v_tstrCipherOpened        : TStrings;
 
 var
+  g_intTaskBarAtual,
+  g_intTaskBarAnterior      : integer;  
+
+var
   boolDebugs                : Boolean;
 
 var
@@ -1054,6 +1058,11 @@ var strAux,
     v_Aguarde : TextFile;
     v_SystemDrive : TStrings;
 begin
+      // Essas variáveis ajudarão a controlar o redesenho do ícone no systray,
+      // evitando o "roubo" do foco.
+      g_intTaskBarAtual    := 0;
+      g_intTaskBarAnterior := 0;
+      
       // Não mostrar o formulário...
       Application.ShowMainForm:=false;
       g_oCacic := TCACIC.Create;
@@ -2158,15 +2167,20 @@ end;
 }
 procedure TFormularioGeral.Mnu_SuporteRemotoClick(Sender: TObject);
 var boolAux          : boolean;
-    strPalavraChave,
-    strTeSO,
-    strTeNodeAddress : String;
+    v_strPalavraChave,
+    v_strTeSO,
+    v_strTeNodeAddress,
+    v_strNuPortaSR     : String;
     fileAguarde : TextFile;
 begin
   if boolServerON then // Ordeno ao SrCACICsrv que auto-finalize
     Begin
       Log_Diario('Desativando Suporte Remoto Seguro.');
+      WinExec(PChar(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -kill'), SW_NORMAL);
+      {
       g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -kill',false);
+      }
+
       boolServerON := false;
     End
   else
@@ -2176,28 +2190,31 @@ begin
 
       // Alguns cuidados necessários ao tráfego e recepção de valores pelo Gerente WEB
       // Some cares about send and receive at Gerente WEB
-      strPalavraChave  := FormularioGeral.getValorDatMemoria('Configs.te_palavra_chave', v_tstrCipherOpened);
-      strPalavraChave  := StringReplace(strPalavraChave,' '     ,'<ESPACE>'  ,[rfReplaceAll]);
-      strPalavraChave  := StringReplace(strPalavraChave,'"'     ,'<AD>'      ,[rfReplaceAll]);
-      strPalavraChave  := StringReplace(strPalavraChave,''''    ,'<AS>'      ,[rfReplaceAll]);
-      strPalavraChave  := StringReplace(strPalavraChave,'\'     ,'<BarrInv>' ,[rfReplaceAll]);
-      strPalavraChave  := g_oCacic.enCrypt(strPalavraChave);
-      strPalavraChave  := StringReplace(strPalavraChave,'+','<MAIS>',[rfReplaceAll]);
+      v_strPalavraChave  := FormularioGeral.getValorDatMemoria('Configs.te_palavra_chave', v_tstrCipherOpened);
+      v_strPalavraChave  := StringReplace(v_strPalavraChave,' '     ,'<ESPACE>'  ,[rfReplaceAll]);
+      v_strPalavraChave  := StringReplace(v_strPalavraChave,'"'     ,'<AD>'      ,[rfReplaceAll]);
+      v_strPalavraChave  := StringReplace(v_strPalavraChave,''''    ,'<AS>'      ,[rfReplaceAll]);
+      v_strPalavraChave  := StringReplace(v_strPalavraChave,'\'     ,'<BarrInv>' ,[rfReplaceAll]);
+      v_strPalavraChave  := g_oCacic.enCrypt(v_strPalavraChave);
+      v_strPalavraChave  := StringReplace(v_strPalavraChave,'+','<MAIS>',[rfReplaceAll]);
 
-      strTeSO          := trim(StringReplace(FormularioGeral.getValorDatMemoria('Configs.TE_SO', v_tstrCipherOpened),' ','<ESPACE>',[rfReplaceAll]));
-      strTeSO          := g_oCacic.enCrypt(strTeSO);
-      strTeSO          := StringReplace(strTeSO,'+','<MAIS>',[rfReplaceAll]);
+      v_strTeSO          := trim(StringReplace(FormularioGeral.getValorDatMemoria('Configs.TE_SO', v_tstrCipherOpened),' ','<ESPACE>',[rfReplaceAll]));
+      v_strTeSO          := g_oCacic.enCrypt(v_strTeSO);
+      v_strTeSO          := StringReplace(v_strTeSO,'+','<MAIS>',[rfReplaceAll]);
 
-      strTeNodeAddress := trim(StringReplace(FormularioGeral.getValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),' ','<ESPACE>'  ,[rfReplaceAll]));
-      strTeNodeAddress := g_oCacic.enCrypt(strTeNodeAddress);
-      strTeNodeAddress := StringReplace(strTeNodeAddress,'+','<MAIS>',[rfReplaceAll]);
+      v_strTeNodeAddress := trim(StringReplace(FormularioGeral.getValorDatMemoria('TcpIp.TE_NODE_ADDRESS'   , v_tstrCipherOpened),' ','<ESPACE>'  ,[rfReplaceAll]));
+      v_strTeNodeAddress := g_oCacic.enCrypt(v_strTeNodeAddress);
+      v_strTeNodeAddress := StringReplace(v_strTeNodeAddress,'+','<MAIS>',[rfReplaceAll]);
+
+      v_strNuPortaSR     := trim(FormularioGeral.getValorDatMemoria('Configs.NU_PORTA_SRCACIC'              , v_tstrCipherOpened));
 
       log_DEBUG('Invocando "'+g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
-                                                                           '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
-                                                                           '[' + strTeSO                                                                                     + ']' +
-                                                                           '[' + strTeNodeAddress                                                                            + ']' +
-                                                                           '[' + strPalavraChave                                                                             + ']' +
-                                                                           '[' + g_oCacic.getCacicPath + 'Temp\aguarde_srCACIC.txt'                                                   + ']');
+                                                                           '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'              , v_tstrCipherOpened)) + ']' +
+                                                                           '[' + v_strTeSO                                                                                                     + ']' +
+                                                                           '[' + v_strTeNodeAddress                                                                                            + ']' +
+                                                                           '[' + v_strPalavraChave                                                                                             + ']' +
+                                                                           '[' + g_oCacic.getCacicPath + 'Temp\'                                                                               + ']' +
+                                                                           '[' + v_strNuPortaSR                                                                                                + ']');
 
       // Detectar versão do Windows antes de fazer a chamada seguinte...
       try
@@ -2215,12 +2232,23 @@ begin
         CloseFile(fileAguarde);
       Finally
       End;
-      g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start  [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
-                                                                                          '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'              , v_tstrCipherOpened)) + ']' +
-                                                                                          '[' + strTeSO                                                                                                       + ']' +
-                                                                                          '[' + strTeNodeAddress                                                                                              + ']' +
-                                                                                          '[' + strPalavraChave                                                                                               + ']' +
-                                                                                          '[' + g_oCacic.getCacicPath + 'Temp\'                                                                               + ']',false);
+      WinExec(PChar(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
+                                                                                         '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
+                                                                                         '[' + v_strTeSO                                                                                            + ']' +
+                                                                                         '[' + v_strTeNodeAddress                                                                                   + ']' +
+                                                                                         '[' + v_strPalavraChave                                                                                    + ']' +
+                                                                                         '[' + g_oCacic.getCacicPath + 'Temp\'                                                                      + ']' +
+                                                                                         '[' + v_strNuPortaSR                                                                                       + ']'),SW_NORMAL);
+      {
+      g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
+                                                                                         '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
+                                                                                         '[' + v_strTeSO                                                                                            + ']' +
+                                                                                         '[' + v_strTeNodeAddress                                                                                   + ']' +
+                                                                                         '[' + v_strPalavraChave                                                                                    + ']' +
+                                                                                         '[' + g_oCacic.getCacicPath + 'Temp\'                                                                      + ']' +
+                                                                                         '[' + v_strNuPortaSR                                                                                       + ']',false);
+      }
+
 
       BoolServerON := true;
     End;
@@ -2240,8 +2268,17 @@ begin
   FormularioGeral.Matar(g_oCacic.getCacicPath+'temp\','aguarde_SRCACIC.txt');
   if  FileExists(g_oCacic.getCacicPath + 'temp\aguarde_SRCACIC.txt') then
     Begin
-      Mnu_SuporteRemoto.Caption := 'Suporte Remoto Ativo!';
-      Mnu_SuporteRemoto.Enabled := false;
+      if (getValorDatMemoria('Configs.CS_PERMITIR_DESATIVAR_SRCACIC',v_tstrCipherOpened) = 'S') then
+        Begin
+          Mnu_SuporteRemoto.Caption := 'Desativar Suporte Remoto';
+          Mnu_SuporteRemoto.Enabled := true;
+        End
+      else
+        Begin
+          Mnu_SuporteRemoto.Caption := 'Suporte Remoto Ativo!';
+          Mnu_SuporteRemoto.Enabled := false;
+        End;
+
       boolServerON := true;
     End
   else
@@ -2254,9 +2291,18 @@ end;
 
 procedure TFormularioGeral.Timer_InicializaTrayTimer(Sender: TObject);
 begin
- Timer_InicializaTray.Enabled := false;
- InicializaTray;
- Timer_InicializaTray.Enabled := true;
+  Timer_InicializaTray.Enabled := false;
+
+  g_intTaskBarAtual := FindWindow('Shell_TrayWnd', Nil);
+  Log_DEBUG('g_intTaskBarAnterior: '+ intToStr(g_intTaskBarAnterior));
+  Log_DEBUG('g_intTaskBarAtual: '   + intToStr(g_intTaskBarAtual));
+
+  if (g_intTaskBarAnterior = 0) and (g_intTaskBarAtual > 0) then
+    InicializaTray;
+
+  g_intTaskBarAnterior := g_intTaskBarAtual;
+
+  Timer_InicializaTray.Enabled := true;
 end;
 
 end.
