@@ -181,6 +181,14 @@ const
 const
   CACIC_DATFILENAME    = 'cacic2.dat';
 
+
+{
+ Controle de prioridade de processo
+ http://msdn.microsoft.com/en-us/library/ms683211(VS.85).aspx
+}
+const BELOW_NORMAL_PRIORITY_CLASS = $00004000;
+  {$EXTERNALSYM BELOW_NORMAL_PRIORITY_CLASS}
+
 var
   P_OSVersionInfo: POSVersionInfo;
 
@@ -652,7 +660,7 @@ begin
                           nil,
                           false,
                           CREATE_NEW_CONSOLE or
-                          NORMAL_PRIORITY_CLASS,
+                          BELOW_NORMAL_PRIORITY_CLASS,
                           nil,
                           nil,
                           SUInfo,
