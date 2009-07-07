@@ -3,7 +3,14 @@ unit main_testacrypt;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Windows,
+  Messages,
+  SysUtils,
+  Variants,
+  Classes,
+  Graphics,
+  Controls,
+  Forms,
   XML,
   LibXmlParser,
   IdHTTP,
@@ -11,13 +18,14 @@ uses
   IdComponent,
   IdTCPConnection,
   IdTCPClient,
-  DCPcrypt2,
-  DCPrijndael,
-  DCPbase64,
   StdCtrls,
   WinSock,
   NB30,
-  ComCtrls, PJVersionInfo, JvExComCtrls, JvStatusBar;
+  ComCtrls,
+  PJVersionInfo,
+  JvExComCtrls,
+  JvStatusBar,
+  CACIC_Library;
 
 type
   TForm1 = class(TForm)
@@ -51,7 +59,6 @@ type
     StatusBar_Mensagens: TJvStatusBar;
     procedure Button_EfetuaTesteClick(Sender: TObject);
     function PadWithZeros(const str : string; size : integer) : string;
-    function EnCrypt(p_Data : String) : String;
     procedure Button_FinalizaClick(Sender: TObject);
     procedure Edit_FraseOriginalKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
@@ -73,6 +80,7 @@ type
     procedure Edit_ScriptPathChange(Sender: TObject);
     procedure DesfazCriticas;
     procedure Edit_IVStationChange(Sender: TObject);
+    procedure Edit_FraseCriptografadaEnviadaEstacaoExit(Sender: TObject);
   private
     { Private declarations }
   public
@@ -80,14 +88,10 @@ type
   end;
 
 var   Form1: TForm1;
-      v_CipherKey,
-      v_IV : String;
       boolProcessaPausa : boolean;
 
-// Some constants that are dependant on the cipher being used
-// Assuming MCRYPT_RIJNDAEL_128 (i.e., 128bit blocksize, 256bit keysize)
-const KeySize = 32; // 32 bytes = 256 bits
-      BlockSize = 16; // 16 bytes = 128 bits
+var
+  g_oCacic: TCACIC;
 
 implementation
 
@@ -95,7 +99,9 @@ implementation
 procedure TForm1.CriptografaPalavra;
 Begin
   if (trim(form1.Edit_FraseOriginal.Text)<>'') then
-    Form1.Edit_FraseCriptografadaEnviadaEstacao.Text := form1.EnCrypt(trim(form1.Edit_FraseOriginal.Text));
+    Form1.Edit_FraseCriptografadaEnviadaEstacao.Text := g_oCacic.enCrypt(trim(form1.Edit_FraseOriginal.Text))
+  else if (trim(form1.Edit_FraseCriptografadaEnviadaEstacao.Text)<>'') then
+    Form1.Edit_FraseOriginal.Text := g_oCacic.deCrypt(trim(form1.Edit_FraseCriptografadaEnviadaEstacao.Text));
 End;
 
 procedure TForm1.Button_EfetuaTesteClick(Sender: TObject);
@@ -109,18 +115,19 @@ var v_retorno,
     intAux : integer;
 begin
 
+  boolProcessaPausa := true;
+//  InicializaCampos;
+  CriptografaPalavra;
+
   intAux := POS('255.255.255.255',Edit_ScriptPath.Text);
   if (intAux > 0) then
     Begin
-      StatusBar_Mensagens.Panels[0].Text := 'ATENÇÃO: Informe um endereço válido para o teste';
+      StatusBar_Mensagens.Panels[0].Text := 'ATENÇÃO: Caso não seja um teste local, informe um endereço válido.';
       StatusBar_Mensagens.Color := clYellow;
       Edit_ScriptPath.SetFocus;
     End
   else
     Begin
-      boolProcessaPausa := true;
-      InicializaCampos;
-      CriptografaPalavra;
 
       Request_Config                            := TStringList.Create;
       Request_Config.Values['cs_operacao']      := 'TestaCrypt';
@@ -163,7 +170,7 @@ begin
         Begin
           Form1.StatusBar_Mensagens.Panels[0].Text := 'Problemas na comunicação...';
           Sleep(1000);
-          Form1.StatusBar_Mensagens.Panels[0].Text := '';          
+          Form1.StatusBar_Mensagens.Panels[0].Text := '';
         End;
       End;
       Request_Config.Free;
@@ -228,47 +235,6 @@ begin
   end;
 end;
 
-// Encrypt a string and return the Base64 encoded result
-function TForm1.EnCrypt(p_Data : String) : String;
-var
-  l_Cipher : TDCP_rijndael;
-  l_Data, l_Key, l_IV : string;
-begin
-  Form1.StatusBar_Mensagens.Panels[0].Text := 'Criptografando "'+p_Data+'"';
-
-  if boolProcessaPausa then
-    Begin
-      boolProcessaPausa := false;
-      Sleep(1000);
-    End;
-  Form1.StatusBar_Mensagens.Panels[0].Text := '';
-  Try
-    // Pad Key, IV and Data with zeros as appropriate
-    l_Key   := form1.PadWithZeros(trim(form1.Edit_CipherKeyStation.Text),KeySize);
-    l_IV    := form1.PadWithZeros(trim(form1.Edit_IVStation.Text),BlockSize);
-    l_Data  := form1.PadWithZeros(p_Data,BlockSize);
-
-    // Create the cipher and initialise according to the key length
-    l_Cipher := TDCP_rijndael.Create(nil);
-    if Length(trim(form1.Edit_CipherKeyStation.Text)) <= 16 then
-      l_Cipher.Init(l_Key[1],128,@l_IV[1])
-    else if Length(trim(form1.Edit_CipherKeyStation.Text)) <= 24 then
-      l_Cipher.Init(l_Key[1],192,@l_IV[1])
-    else
-      l_Cipher.Init(l_Key[1],256,@l_IV[1]);
-
-    // Encrypt the data
-    l_Cipher.EncryptCBC(l_Data[1],l_Data[1],Length(l_Data));
-
-    // Free the cipher and clear sensitive information
-    l_Cipher.Free;
-    FillChar(l_Key[1],Length(l_Key),0);
-
-    // Return the Base64 encoded result
-    Result := Base64EncodeStr(l_Data);
-  Except
-  End;
-end;
 
 
 procedure TForm1.Button_FinalizaClick(Sender: TObject);
@@ -303,12 +269,12 @@ end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
-  //chave AES. Recomenda-se que cada empresa/órgão altere a sua chave.
-  v_CipherKey    := 'CacicBrasil';
-  v_IV           := 'abcdefghijklmnop';
+  g_oCacic := TCACIC.Create;
+  g_oCacic.setBoolCipher(true);
 
-  form1.Edit_IVStation.Text        := v_IV;
-  form1.Edit_CipherKeyStation.Text := v_CipherKey;
+  form1.Edit_IVStation.Text        := g_oCacic.getIV;
+  form1.Edit_CipherKeyStation.Text := g_oCacic.getCipherKey;
+
   Form1.StatusBar_Mensagens.Panels[1].Text := 'v: '+getVersionInfo(ParamStr(0));
   boolProcessaPausa := false;
 end;
@@ -329,15 +295,7 @@ procedure TForm1.Edit_FraseCriptografadaEnviadaEstacaoChange(
   Sender: TObject);
 begin
   if trim(form1.Edit_FraseCriptografadaEnviadaEstacao.Text) = '' then
-    Begin
-      form1.Edit_FraseCriptografadaEnviadaEstacao.Visible   := false;
-      form1.Label_FraseCriptografadaEnviadaEstacao.Visible  := false;
-    End
-  else
-    Begin
-      form1.Edit_FraseCriptografadaEnviadaEstacao.Visible   := true;
-      form1.Label_FraseCriptografadaEnviadaEstacao.Visible  := true;
-    End;
+    form1.Button_EfetuaTeste.Enabled := true;
   ProcessaPausa;
 end;
 
@@ -437,6 +395,16 @@ end;
 procedure TForm1.Edit_IVStationChange(Sender: TObject);
 begin
   DesfazCriticas;
+end;
+
+procedure TForm1.Edit_FraseCriptografadaEnviadaEstacaoExit(
+  Sender: TObject);
+begin
+  if (form1.Edit_FraseCriptografadaEnviadaEstacao.Text <> '') then
+    Begin
+      form1.Button_EfetuaTeste.Enabled := true;
+    End;
+
 end;
 
 end.

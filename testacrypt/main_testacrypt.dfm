@@ -90,16 +90,17 @@ object Form1: TForm1
     object Label_FraseCriptografadaEnviadaEstacao: TLabel
       Left = 8
       Top = 110
-      Width = 209
+      Width = 337
       Height = 13
-      Caption = 'Frase Criptografada (para envio ao servidor):'
+      Caption = 
+        'Frase Criptografada (para envio ao servidor ou testes de decript' +
+        'ografia):'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      Visible = False
     end
     object Label_IVStation: TLabel
       Left = 8
@@ -157,10 +158,9 @@ object Form1: TForm1
       Font.Style = []
       MaxLength = 100
       ParentFont = False
-      ReadOnly = True
       TabOrder = 2
-      Visible = False
       OnChange = Edit_FraseCriptografadaEnviadaEstacaoChange
+      OnExit = Edit_FraseCriptografadaEnviadaEstacaoExit
     end
     object Edit_IVStation: TEdit
       Left = 8

@@ -100,7 +100,7 @@ type
          function  isWindows9xME()                                      : boolean;
          function  getWindowsStrId()                                    : string;
          function  getWinDir()                                          : string;
-         function  getHomeDrive                                         : string;
+         function  getHomeDrive()                                         : string;
          function  isWindowsAdmin()                                     : boolean;
          function  createSampleProcess(p_cmd: string; p_wait: boolean ) : boolean;
          procedure showTrayIcon(p_visible:boolean);
@@ -242,7 +242,7 @@ end;
 {*------------------------------------------------------------------------------
   Retorna a unidade de instalação do MS-Windows
 -------------------------------------------------------------------------------}
-function TCACIC_Windows.getHomeDrive : string;
+function TCACIC_Windows.getHomeDrive() : string;
 begin
   Result := MidStr(getWinDir,1,3); //x:\
 end;
