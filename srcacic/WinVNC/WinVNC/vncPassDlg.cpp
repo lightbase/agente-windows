@@ -8,19 +8,21 @@ vncPassDlg::vncPassDlg(vector<Dominio> &listaDominios) {
 	m_listaDominios = listaDominios;
 	m_authStat = vncPassDlg::ESPERANDO_AUTENTICACAO;
 
-	memset(m_usuario, '\0', 32);
-	memset(m_senha, '\0', 32);
-	memset(m_dominio, '\0', 16);
+	memset(m_usuario, 0, 32);
+	memset(m_senha, 0, 32);
+	memset(m_dominio, 0, 16);
 }
 
-vncPassDlg::~vncPassDlg()
-{
+vncPassDlg::~vncPassDlg() {
+	memset(m_usuario, 0, 32);
+	memset(m_senha, 0, 32);
+	memset(m_dominio, 0, 16);
 }
 
-BOOL vncPassDlg::DoDialog(EAuthCode authStat, string msginfo)
+BOOL vncPassDlg::DoDialog(EAuthCode authStat, string msgInfo)
 {
 	m_authStat = authStat;
-	m_msgInfo = msginfo;
+	m_msgInfo = msgInfo;
 
 	BOOL retVal;
 	if (m_authStat == vncPassDlg::SEM_AUTENTICACAO)
@@ -34,7 +36,7 @@ BOOL vncPassDlg::DoDialog(EAuthCode authStat, string msginfo)
 	{
 		retVal = DialogBoxParam(hInstResDLL, MAKEINTRESOURCE(IDD_AUTH_DLG), 
 			NULL, (DLGPROC) vncAuthDlgProc, (LONG) this);
-	}
+	} 
 
 	return retVal;
 }
@@ -90,12 +92,6 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				if (found != string::npos)
 					SendMessage(hDominios, CB_SELECTSTRING, 0, (LPARAM) nm_dominio.c_str());
 			}
-			
-			//HWND num_con_cb = GetDlgItem(hwnd, IDC_NUMCON_CB);
-			//SendMessage(num_con_cb, CB_ADDSTRING, 0, (LPARAM)"1");
-			//SendMessage(num_con_cb, CB_ADDSTRING, 0, (LPARAM)"2");
-			//SendMessage(num_con_cb, CB_ADDSTRING, 0, (LPARAM)"3");
-			//SendMessage(num_con_cb, CB_SETCURSEL, 0, 0);
 
 			if (_this->m_authStat == vncPassDlg::FALHA_AUTENTICACAO)
 			{
@@ -104,6 +100,7 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				SendMessage(hDominios, CB_SELECTSTRING, 0, (LPARAM) _this->m_listaDominios.at(_this->m_indiceDominio).nome.c_str());
 				SetDlgItemText(hwnd, IDC_USER_EDIT, _this->m_usuario);
 				SetDlgItemText(hwnd, IDC_PASS_EDIT, _this->m_senha);
+
 				SetDlgItemText(hwnd, IDC_MSG, (LPSTR) "Falha na autenticação!");
 			}
 			else if (_this->m_authStat == vncPassDlg::AUTENTICADO)
@@ -121,11 +118,6 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				HWND hSenha = GetDlgItem(hwnd, IDC_PASS_EDIT);
 				EnableWindow( hSenha, FALSE );
 
-				//HWND h_num_con_lbl = GetDlgItem(hwnd, IDC_STATIC_N_CON);
-				//ShowWindow( h_num_con_lbl, TRUE );
-				//HWND h_num_con = GetDlgItem(hwnd, IDC_NUMCON_CB);
-				//ShowWindow( h_num_con, TRUE );
-
 				SetDlgItemText( hwnd, IDC_MSG, (LPSTR)_this->m_msgInfo.c_str() );
 			}
 
@@ -141,11 +133,6 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				{
 					if (_this->m_authStat == vncPassDlg::AUTENTICADO)
 					{
-						/*HWND numcon_cb = GetDlgItem(hwnd, IDC_NUMCON_CB);
-						int numcon = SendMessage(numcon_cb, CB_GETCURSEL, 0, 0);
-						numcon++;
-						MAX_VNC_CLIENTS = numcon;*/
-
 						EndDialog(hwnd, IDOK);
 					}
 
@@ -155,28 +142,18 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 					HWND hDominios = GetDlgItem(hwnd, IDC_DOMAIN_CB);
 					_this->m_indiceDominio = SendMessage(hDominios, CB_GETCURSEL, 0, 0);
 
-					memset(_this->m_usuario, '\0', 32);
-					memset(_this->m_senha, '\0', 32);
-					memset(_this->m_dominio, '\0', 16);
+					memset(_this->m_usuario, 0, 32);
+					memset(_this->m_senha, 0, 32);
+					memset(_this->m_dominio, 0, 16);
 
 					GetDlgItemText(hwnd, IDC_USER_EDIT, _this->m_usuario, 32);
+					GetDlgItemText(hwnd, IDC_PASS_EDIT, _this->m_senha, 32);
+					strcpy(_this->m_dominio, _this->m_listaDominios.at(_this->m_indiceDominio).id.c_str());
 
-					if (_this->m_authStat == vncPassDlg::SEM_AUTENTICACAO)
+					if (_this->m_usuario[0] == '\0' || _this->m_senha[0] == '\0' || _this->m_dominio[0] == '\0')
 					{
-						strcpy(_this->m_senha, "0");
-						strcpy(_this->m_dominio, "0");
-					}
-					else
-					{
-						GetDlgItemText(hwnd, IDC_PASS_EDIT, _this->m_senha, 32);
-
-						strcpy(_this->m_dominio, _this->m_listaDominios.at(_this->m_indiceDominio).id.c_str());
-
-						if (_this->m_usuario[0] == '\0' || _this->m_senha[0] == '\0' || _this->m_dominio[0] == '\0')
-						{
-							MessageBox(hwnd, "Os campos devem ser preenchidos!", "Erro!", MB_ICONERROR | MB_OK);
-							return FALSE;
-						}
+						MessageBox(hwnd, "Os campos devem ser preenchidos!", "Erro!", MB_ICONERROR | MB_OK);
+						return FALSE;
 					}
 
 					EndDialog(hwnd, IDOK);

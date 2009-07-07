@@ -25,6 +25,10 @@ public:
 	static char hexToAscii(char first, char second);
 	static void trim(string &str);
 
+	static void changeFont(HWND dlgHandle, int dlgItem, 
+						   int fontSize, string fontName, 
+						   bool fontIsBold = false);
+
 private:
 
 	virtual void cutils() = 0; // Truque para tornar a classe abstrata.

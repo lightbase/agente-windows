@@ -44,7 +44,7 @@ public:
 
 	EAuthCode m_authStat;
 
-	BOOL vncPassDlg::DoDialog(EAuthCode authStat, string msginfo);
+	BOOL DoDialog(EAuthCode authStat, string msgInfo);
 
 private:
 	static BOOL CALLBACK vncAuthDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);

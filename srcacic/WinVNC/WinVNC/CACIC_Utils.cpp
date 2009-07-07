@@ -137,3 +137,25 @@ void CACIC_Utils::trim(string &str)
   }
   else str.erase(str.begin(), str.end());
 }
+
+
+void CACIC_Utils::changeFont(HWND dlgHandle, int dlgItem, int fontSize, string fontName, bool fontIsBold)
+{
+	HFONT hFont ;
+	LOGFONT lfFont;
+
+	memset(&lfFont, 0x00, sizeof(lfFont));
+	memcpy(lfFont.lfFaceName, fontName.data(), 16);
+
+	lfFont.lfHeight   = fontSize;
+	lfFont.lfWeight   = (fontIsBold == true) ? FW_BOLD : FW_NORMAL;
+	lfFont.lfCharSet  = ANSI_CHARSET;
+	lfFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+	lfFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+	lfFont.lfQuality  = DEFAULT_QUALITY;
+
+	// Create the font from the LOGFONT structure passed.
+	hFont = CreateFontIndirect (&lfFont);
+
+	SendMessage(GetDlgItem(dlgHandle, dlgItem), WM_SETFONT, (int)hFont, MAKELONG(TRUE, 0));
+}

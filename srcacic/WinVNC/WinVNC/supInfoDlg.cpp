@@ -12,15 +12,15 @@ supInfoDlg::~supInfoDlg()
 HWND supInfoDlg::showInfoDialog()
 {	
 	DWORD threadID;
-	infoDlgThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) supInfoDlg::showDialog, (LPVOID) this, 0, &threadID);
-	ResumeThread(infoDlgThread);
+	m_hInfoDlgThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) supInfoDlg::showDialog, (LPVOID) this, 0, &threadID);
+	ResumeThread(m_hInfoDlgThread);
 
 	return (HWND) 0;
 }
 
 HWND supInfoDlg::closeInfoDialog()
 {
-	TerminateThread(infoDlgThread, 0);
+	TerminateThread(m_hInfoDlgThread, 0);
 
 	return (HWND) 0;
 }
@@ -86,13 +86,9 @@ BOOL CALLBACK supInfoDlg::supInfoDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				dlgRect.bottom - dlgRect.top,
 				SWP_SHOWWINDOW);
 
-			string text = TEXTO_SUPORTE;
-			text.append("\n\nInício: ");
-			text.append(_this->dataInicio);
-			text.append("\nUsuário Remoto: ");
-			text.append(_this->nomeVisitante);
-			SetDlgItemText(hwnd, IDC_ATENCAO_STATIC, (LPSTR) "ATENÇÃO");
-			SetDlgItemText(hwnd, IDC_AVISO_SUPORTE, (LPSTR) text.data());
+			SetDlgItemText(hwnd, IDC_INFO_NOME, (LPSTR) _this->m_nomeVisitante.data());
+			SetDlgItemText(hwnd, IDC_INFO_IP, (LPSTR) _this->m_ip.data());
+			SetDlgItemText(hwnd, IDC_INFO_INICIO, (LPSTR) _this->m_dataInicio.data());
 
 			changeFont(hwnd, IDC_ATENCAO_STATIC);
 
@@ -122,12 +118,16 @@ BOOL CALLBACK supInfoDlg::supInfoDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 		}
 		break;
 
+		// muda a cor de fundo dos itens do dialog
 		case WM_CTLCOLORSTATIC:
 		{
 			HDC hdc = (HDC)wParam;
 			HWND hwndStatic = (HWND)lParam;
 
-			if (hwndStatic == GetDlgItem(hwnd, IDC_AVISO_SUPORTE))
+			SetBkMode(hdc, TRANSPARENT);
+				return (LRESULT)vrsBkColor;
+
+			/*if (hwndStatic == GetDlgItem(hwnd, IDC_AVISO_SUPORTE))
 			{
 				SetBkMode(hdc, TRANSPARENT);
 				return (LRESULT)vrsBkColor;
@@ -136,8 +136,13 @@ BOOL CALLBACK supInfoDlg::supInfoDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 			{
 				SetBkMode(hdc, TRANSPARENT);
 				return (LRESULT)vrsBkColor;
-			}
+			}*/
 		}
+		break;
+
+		// muda a cor de fundo do dialog
+		case WM_CTLCOLORDLG:
+			return (LONG)vrsBkColor;
 		break;
 
 	}

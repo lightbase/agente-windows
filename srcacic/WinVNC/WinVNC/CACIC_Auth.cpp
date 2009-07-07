@@ -26,14 +26,12 @@ bool CACIC_Auth::autentica()
 	if (!verificaAuthChave(resposta, listaDominios)) return false;
 
 	vncPassDlg::EAuthCode authStat;
-	if (listaDominios.at(0).id == "0")
-	{
+	if (listaDominios.at(0).id == "0") {
 		authStat = vncPassDlg::SEM_AUTENTICACAO;
-	}
-	else
-	{
+	} else {
 		authStat = vncPassDlg::ESPERANDO_AUTENTICACAO;
 	}
+
 	// apresenta o dialogo de autenticação
 	vncPassDlg passDlg(listaDominios);
 	do
@@ -61,7 +59,6 @@ bool CACIC_Auth::autentica()
 		string session_script = m_scriptsPath.c_str();
 		session_script.append(SET_SESSION_SCRIPT);
 
-		memset(resposta, 0, sizeof(resposta));
 		CACIC_Con::sendHtppPost(m_servidorWeb, session_script, post, resposta, TAMANHO_RESPOSTA);
 		
 		if(verificaAuthDominio(resposta)) {
@@ -69,7 +66,6 @@ bool CACIC_Auth::autentica()
 		} else {
 			authStat = vncPassDlg::FALHA_AUTENTICACAO;
 		}
-
 	}
 	while (authStat != vncPassDlg::AUTENTICADO);
 
@@ -270,8 +266,8 @@ bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[]
 		
 		m_novoCliente = novoCliente;
 
-		m_infoDlg.nomeVisitante = novoCliente.nm_usuario_completo;
-		m_infoDlg.dataInicio = novoCliente.dt_hr_inicio_sessao;
+		m_infoDlg.m_nomeVisitante = m_novoCliente.nm_usuario_completo;
+		m_infoDlg.m_dataInicio = m_novoCliente.dt_hr_inicio_sessao;
 
 		return true;
 	}

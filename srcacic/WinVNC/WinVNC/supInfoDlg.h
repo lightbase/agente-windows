@@ -12,8 +12,6 @@ using namespace std;
 
 #pragma once
 
-#define TEXTO_SUPORTE "ESTA ESTAÇÃO ENCONTRA-SE EM SUPORTE REMOTO."
-
 class supInfoDlg {
 
 public:
@@ -23,11 +21,12 @@ public:
 	HWND showInfoDialog();
 	HWND closeInfoDialog();
 	
-	string nomeVisitante;
-	string dataInicio;
+	string m_nomeVisitante;
+	string m_ip;
+	string m_dataInicio;
 
 private:
-	HANDLE infoDlgThread;
+	HANDLE m_hInfoDlgThread;
 
 	static LRESULT CALLBACK supInfoDlg::showDialog(LPVOID lpParameter);
 	static BOOL CALLBACK supInfoDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);

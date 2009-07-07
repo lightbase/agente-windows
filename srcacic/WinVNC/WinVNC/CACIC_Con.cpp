@@ -73,6 +73,8 @@ bool CACIC_Con::getResponse(char buff[], unsigned long sz)
 void CACIC_Con::sendHtppPost(const string &servidor, const string &script, string &post,
 							 char resposta[], unsigned long sz)
 {
+	memset(resposta, 0, sz);
+
 	CACIC_Con cCon;
 	cCon.setServer(servidor.c_str());
 	try
