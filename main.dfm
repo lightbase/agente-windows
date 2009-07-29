@@ -1374,30 +1374,53 @@ object FormularioGeral: TFormularioGeral
     Top = 86
     object Mnu_LogAtividades: TMenuItem
       Caption = 'Log de Atividades'
+      Hint = 
+        'Exibe as atividades desempenhadas pelos agentes do CACIC nesta d' +
+        'ata.'
       OnClick = ExibirLogAtividades
     end
     object Mnu_Configuracoes: TMenuItem
       Caption = 'Configura'#231#245'es'
+      Hint = 
+        'Permite a reconfigura'#231#227'o de endere'#231'o do Servidor de Aplica'#231#227'o e ' +
+        'Servidor de Atualiza'#231#245'es'
       OnClick = ExibirConfiguracoes
     end
     object Mnu_ExecutarAgora: TMenuItem
       Caption = 'Executar Agora'
+      Hint = 
+        'Ordena ao Agente Principal que inicie as a'#231#245'es fora do intervalo' +
+        ' previamente configurado no m'#243'dulo Gerente WEB'
       OnClick = ExecutaCacic
     end
     object Mnu_InfosTCP: TMenuItem
       Caption = 'Informa'#231#245'es Gerais'
+      Hint = 
+        'Exibe um resumo de informa'#231#245'es relevantes coletadas neste comput' +
+        'ador'
       OnClick = Mnu_InfosTCPClick
     end
     object Mnu_InfosPatrimoniais: TMenuItem
       Caption = 'Informa'#231#245'es &Patrimoniais'
+      Hint = 
+        'Caso a op'#231#227'o de coleta autom'#225'tica esteja ativa no m'#243'dulo Gerente' +
+        ' WEB, esta op'#231#227'o executar'#225' o M'#243'dulo Coletor de Informa'#231#245'es Patri' +
+        'moniais'
       OnClick = Mnu_InfosPatrimoniaisClick
     end
     object Mnu_SuporteRemoto: TMenuItem
-      Caption = 'Ativar Suporte Remoto'
+      Caption = 'Ativar Suporte Remoto Seguro'
+      Hint = 
+        'Caso a op'#231#227'o de Suporte Remoto Seguro esteja ativa no m'#243'dulo Ger' +
+        'ente WEB para esta subrede, esta op'#231#227'o executar'#225' o M'#243'dulo Servid' +
+        'or de Suporte Remoto Seguro'
       OnClick = Mnu_SuporteRemotoClick
     end
     object Mnu_FinalizarCacic: TMenuItem
       Caption = 'Finalizar o CACIC'
+      Hint = 
+        'Ordenar'#225' ao Agente Principal que auto-finalize-se. '#201' necess'#225'rio ' +
+        'conhecer a senha configurada previamente no m'#243'dulo Gerente WEB.'
       OnClick = Sair
     end
   end

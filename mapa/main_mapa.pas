@@ -51,6 +51,8 @@ var
 var
   intPausaPadrao            : integer;
 
+var v_Aguarde               : TextFile;                
+
 var
   boolDebugs                : boolean;
 
@@ -1494,6 +1496,19 @@ begin
       if not (v_strCacicPath = '') then
         Begin
           g_oCacic.setCacicPath(v_strCacicPath);
+
+          // A existência e bloqueio do arquivo abaixo evitará que o Cacic2.exe entre em ação
+          AssignFile(v_Aguarde,g_oCacic.getCacicPath + 'temp\aguarde_MAPACACIC.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+          {$IOChecks off}
+          Reset(v_Aguarde); {Abre o arquivo texto}
+          {$IOChecks on}
+          if (IOResult <> 0) then // Arquivo não existe, será recriado.
+            Rewrite (v_Aguarde);
+
+          Append(v_Aguarde);
+          Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de MapaCACIC');
+          Append(v_Aguarde);
+
           frmMapaCacic.tStringsCipherOpened := frmMapaCacic.CipherOpen(frmMapaCacic.g_oCacic.getCacicPath + frmMapaCacic.g_oCacic.getDatFileName);
           frmMapaCacic.lbNomeServidorWEB.Caption := 'Servidor: '+frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsCipherOpened);
           frmMapaCacic.lbMensagens.Caption  := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';

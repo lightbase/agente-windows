@@ -2436,6 +2436,7 @@ Begin
                 SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'             ,g_oCacic.deCrypt(XML_RetornaValor('te_janelas_excecao'                , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'       ,g_oCacic.deCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.NU_PORTA_SRCACIC'               ,g_oCacic.deCrypt(XML_RetornaValor('nu_porta_srcacic'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.NU_TIMEOUT_SRCACIC'             ,g_oCacic.deCrypt(XML_RetornaValor('nu_timeout_srcacic'                , strRetorno)) , v_tstrCipherOpened);                
                 SetValorDatMemoria('Configs.CS_PERMITIR_DESATIVAR_SRCACIC'  ,g_oCacic.deCrypt(XML_RetornaValor('cs_permitir_desativar_srcacic'     , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA'           ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada'     , strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA_ANVI'      ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada_anvi', strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);

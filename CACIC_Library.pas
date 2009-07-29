@@ -102,7 +102,7 @@ type
          function  getWinDir()                                          : string;
          function  getHomeDrive()                                         : string;
          function  isWindowsAdmin()                                     : boolean;
-         function  createSampleProcess(p_cmd: string; p_wait: boolean ) : boolean;
+         function  createSampleProcess(p_cmd: string; p_wait: boolean; p_showWindow : word): boolean;
          procedure showTrayIcon(p_visible:boolean);
    end;
 
@@ -641,10 +641,12 @@ end;
   Executa commandos, substitui o WinExec
 
   @autor: Marcos Dell Antonio
-  @param p_cmd Comando a ser executado
-  @param p_wait TRUE se deve aguardar término da excução, FALSE caso contrário
+  @adaptações: Anderson Peterle
+  @param p_cmd        Comando a ser executado
+  @param p_wait       TRUE se deve aguardar término da excução, FALSE caso contrário
+  @param p_showWindow Constante que define o tipo de exibição da janela do aplicativo
 -------------------------------------------------------------------------------}
-function TCACIC_Windows.createSampleProcess(p_cmd: string; p_wait: boolean ): boolean;
+function TCACIC_Windows.createSampleProcess(p_cmd: string; p_wait: boolean; p_showWindow : word): boolean;
 var
   SUInfo: TStartupInfo;
   ProcInfo: TProcessInformation;
@@ -652,7 +654,7 @@ begin
   FillChar(SUInfo, SizeOf(SUInfo), #0);
   SUInfo.cb      := SizeOf(SUInfo);
   SUInfo.dwFlags := STARTF_USESHOWWINDOW;
-  SUInfo.wShowWindow := SW_HIDE;
+  SUInfo.wShowWindow := p_showWindow;
 
   Result := CreateProcess(nil,
                           PChar(p_cmd),

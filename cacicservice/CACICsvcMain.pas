@@ -175,7 +175,7 @@ Begin
       // Executo o CHKsis, verificando a estrutura do sistema
       Try
         CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : winExec => '+g_oCacic.getWinDir + 'chksis.exe');
-        g_oCacic.createSampleProcess(g_oCacic.getWinDir + 'chksis.exe',false);
+        g_oCacic.createSampleProcess(g_oCacic.getWinDir + 'chksis.exe',false,SW_HIDE);
       Except
       End;
 
@@ -185,7 +185,7 @@ Begin
       // Executo o Agente Principal do CACIC
       Try
         CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : winExec => '+g_oCacic.getCacicPath + 'cacic2.exe');
-        g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe',false);
+        g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe',false,SW_NORMAL);
       Except
       End;
     End;

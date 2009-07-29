@@ -32,9 +32,9 @@ object Configs: TConfigs
     object lbMensagemNaoAplicavel: TLabel
       Left = 265
       Top = 25
-      Width = 200
+      Width = 192
       Height = 13
-      Caption = '(N'#227'o aplic'#225'vel ao ChkCacic do NetLogon)'
+      Caption = '(N'#227'o aplicar ao chkCACIC do NetLogon)'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clRed
       Font.Height = -11
@@ -155,7 +155,7 @@ object Configs: TConfigs
   end
   object Button_Gravar: TButton
     Left = 48
-    Top = 325
+    Top = 314
     Width = 214
     Height = 35
     Caption = 'Concluir Instala'#231#227'o/Atualiza'#231#227'o'
@@ -170,7 +170,7 @@ object Configs: TConfigs
   end
   object btSair: TButton
     Left = 291
-    Top = 325
+    Top = 314
     Width = 150
     Height = 35
     Caption = 'Sair'
@@ -185,7 +185,7 @@ object Configs: TConfigs
   end
   object pnVersao: TPanel
     Left = 426
-    Top = 302
+    Top = 354
     Width = 58
     Height = 14
     BevelOuter = bvLowered

@@ -441,21 +441,25 @@ end;
 
 
 function Pode_Coletar : boolean;
-var v_JANELAS_EXCECAO, v_plural1, v_plural2 : string;
+var v_JANELAS_EXCECAO,
+    v_plural1,
+    v_plural2   : string;
     tstrJANELAS : TStrings;
     h : hwnd;
     v_contador, intContaJANELAS, intAux : integer;
 Begin
-    // Se eu conseguir matar o arquivo abaixo é porque Ger_Cols e Ini_Cols já finalizaram suas atividades...
+    // Se eu conseguir matar os arquivos abaixo é porque srCACICsrv, Ger_Cols, Ini_Cols e mapaCACIC já finalizaram suas atividades...
     FormularioGeral.Matar(g_oCacic.getCacicPath+'temp\','aguarde_SRCACIC.txt');
     FormularioGeral.Matar(g_oCacic.getCacicPath+'temp\','aguarde_GER.txt');
     FormularioGeral.Matar(g_oCacic.getCacicPath+'temp\','aguarde_INI.txt');
+    FormularioGeral.Matar(g_oCacic.getCacicPath+'temp\','aguarde_MAPACACIC.txt');
     intContaJANELAS := 0;
     h := 0;
 
     if  (not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_GER.txt')     and
          not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_SRCACIC.txt') and
-         not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_INI.txt'))    then
+         not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_INI.txt')     and
+         not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_MAPACACIC.txt'))    then
         Begin
           FormularioGeral.CipherOpen;
           // Verificação das janelas abertas para que não aconteça coletas caso haja aplicações pesadas rodando (configurado no Módulo Gerente)
@@ -509,19 +513,28 @@ Begin
         (h = 0) and
         (not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_GER.txt')) and
         (not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_SRCACIC.txt')) and
+        (not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_MAPACACIC.txt')) and
         (not FileExists(g_oCacic.getCacicPath + 'temp\aguarde_INI.txt')) then
           Result := true
      else
         Begin
           FormularioGeral.log_DEBUG('Ação NEGADA!');
           if (intContaJANELAS=0) then
-            if (FileExists(g_oCacic.getCacicPath + 'temp\aguarde_SRCACIC.txt')) then
-              FormularioGeral.log_DEBUG('Suporte Remoto em atividade.')
-            else if (FileExists(g_oCacic.getCacicPath + 'temp\aguarde_GER.txt')) then
-              FormularioGeral.log_DEBUG('Gerente de Coletas em atividade.')
-            else if (FileExists(g_oCacic.getCacicPath + 'temp\aguarde_INI.txt')) then
-              FormularioGeral.log_DEBUG('Inicializador de Coletas em atividade.')
-            else FormularioGeral.CipherClose;
+            Begin
+              if (FileExists(g_oCacic.getCacicPath + 'temp\aguarde_SRCACIC.txt')) then
+                FormularioGeral.log_DEBUG('Suporte Remoto em atividade.');
+
+              if (FileExists(g_oCacic.getCacicPath + 'temp\aguarde_GER.txt')) then
+                FormularioGeral.log_DEBUG('Gerente de Coletas em atividade.');
+
+              if (FileExists(g_oCacic.getCacicPath + 'temp\aguarde_INI.txt')) then
+                FormularioGeral.log_DEBUG('Inicializador de Coletas em atividade.');
+
+              if (FileExists(g_oCacic.getCacicPath + 'temp\aguarde_MAPACACIC.txt')) then
+                FormularioGeral.log_DEBUG('Módulo Avulso para Coleta de Patrimônio em atividade.');
+            End
+          else
+            FormularioGeral.CipherClose;
           Result := false;
         End;
 
@@ -822,7 +835,7 @@ Begin
 
       log_diario('Acionando recuperador de Módulo Gerente de Coletas.');
       log_DEBUG('Recuperador de Módulo Gerente de Coletas: '+g_oCacic.getWinDir + 'chksis.exe');
-      g_oCacic.createSampleProcess(g_oCacic.getWinDir + 'chksis.exe',false);
+      g_oCacic.createSampleProcess(g_oCacic.getWinDir + 'chksis.exe',false,SW_HIDE);
 
       sleep(30000); // 30 segundos de espera para download do ger_cols.exe
       v_Tamanho_Arquivo := Get_File_Size(g_oCacic.getCacicPath + 'modulos\ger_cols.exe',true);
@@ -1322,7 +1335,7 @@ begin
       CipherClose;
       log_diario('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
       Timer_Nu_Exec_Apos.Enabled  := False;
-      g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\GER_COLS.EXE /'+p_acao+' /CacicPath='+g_oCacic.getCacicPath,false);
+      g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\GER_COLS.EXE /'+p_acao+' /CacicPath='+g_oCacic.getCacicPath,false,SW_HIDE);
     End
   else
     log_diario('Não foi possível invocar o Gerente de Coletas!');
@@ -1767,6 +1780,7 @@ var v_tripa_perfis, v_tripa_infos_coletadas,strAux : string;
     v_conta_perfis, v_conta_infos_coletadas, intAux : integer;
     v_achei : boolean;
 begin
+    Log_DEBUG('Montando Informações Gerais...');
     FormularioGeral.Enabled       := true;
     FormularioGeral.Visible       := true;
 
@@ -1794,6 +1808,7 @@ begin
       begin
 
         v_tripa_perfis := getValorDatMemoria('Coletas.SIS' + trim(inttostr(v_conta_perfis)),v_tstrCipherOpened);
+        Log_DEBUG('Perfil => Coletas.SIS' + trim(inttostr(v_conta_perfis))+' => '+v_tripa_perfis);
         v_conta_perfis := v_conta_perfis + 1;
 
         if (trim(v_tripa_perfis) <> '') then
@@ -1804,7 +1819,7 @@ begin
             if (v_array_perfis.Count > 11) and (v_array_perfis[11]='S') then
               Begin
                 v_tripa_infos_coletadas := getValorDatMemoria('Coletas.Sistemas_Monitorados',v_tstrCipherOpened);
-
+                Log_DEBUG('Coletas de S.M. Efetuadas => ' + v_tripa_infos_coletadas);
                 if (trim(v_tripa_infos_coletadas) <> '') then
                   Begin
                     v_array_tripa_infos_coletadas := explode(v_tripa_infos_coletadas,'#');
@@ -1812,8 +1827,10 @@ begin
                       Begin
                         v_array_infos_coletadas := explode(v_array_tripa_infos_coletadas[intAux],',');
 
+                        Log_DEBUG('Verificando perfil[0]:' + v_array_perfis[0]);
                         if (v_array_infos_coletadas[0]=v_array_perfis[0]) then
                           Begin
+                            Log_DEBUG('Verificando valores condicionais [1]:"'+trim(v_array_infos_coletadas[1])+'" e [3]:"'+trim(v_array_infos_coletadas[3])+'"');
                             if  ((trim(v_array_infos_coletadas[1])<>'') and (trim(v_array_infos_coletadas[1])<>'?')) or
                                 ((trim(v_array_infos_coletadas[3])<>'') and (trim(v_array_infos_coletadas[3])<>'?')) then
                               Begin
@@ -2170,16 +2187,19 @@ var boolAux          : boolean;
     v_strPalavraChave,
     v_strTeSO,
     v_strTeNodeAddress,
-    v_strNuPortaSR     : String;
+    v_strNuPortaSR,
+    v_strNuTimeOutSR : String;
     fileAguarde : TextFile;
 begin
   if boolServerON then // Ordeno ao SrCACICsrv que auto-finalize
     Begin
       Log_Diario('Desativando Suporte Remoto Seguro.');
-      WinExec(PChar(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -kill'), SW_NORMAL);
+
       {
-      g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -kill',false);
+      WinExec(PChar(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -kill'), SW_NORMAL);
       }
+
+      g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -kill',false,SW_HIDE);
 
       boolServerON := false;
     End
@@ -2207,6 +2227,7 @@ begin
       v_strTeNodeAddress := StringReplace(v_strTeNodeAddress,'+','<MAIS>',[rfReplaceAll]);
 
       v_strNuPortaSR     := trim(FormularioGeral.getValorDatMemoria('Configs.NU_PORTA_SRCACIC'              , v_tstrCipherOpened));
+      v_strNuTimeOutSR   := trim(FormularioGeral.getValorDatMemoria('Configs.NU_TIMEOUT_SRCACIC'            , v_tstrCipherOpened));
 
       log_DEBUG('Invocando "'+g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
                                                                            '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'              , v_tstrCipherOpened)) + ']' +
@@ -2214,7 +2235,8 @@ begin
                                                                            '[' + v_strTeNodeAddress                                                                                            + ']' +
                                                                            '[' + v_strPalavraChave                                                                                             + ']' +
                                                                            '[' + g_oCacic.getCacicPath + 'Temp\'                                                                               + ']' +
-                                                                           '[' + v_strNuPortaSR                                                                                                + ']');
+                                                                           '[' + v_strNuPortaSR                                                                                                + ']' +
+                                                                           '[' + v_strNuTimeOutSR                                                                                              + ']');
 
       // Detectar versão do Windows antes de fazer a chamada seguinte...
       try
@@ -2232,23 +2254,25 @@ begin
         CloseFile(fileAguarde);
       Finally
       End;
-      WinExec(PChar(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
-                                                                                         '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
-                                                                                         '[' + v_strTeSO                                                                                            + ']' +
-                                                                                         '[' + v_strTeNodeAddress                                                                                   + ']' +
-                                                                                         '[' + v_strPalavraChave                                                                                    + ']' +
-                                                                                         '[' + g_oCacic.getCacicPath + 'Temp\'                                                                      + ']' +
-                                                                                         '[' + v_strNuPortaSR                                                                                       + ']'),SW_NORMAL);
+
       {
+      WinExec(PChar(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
+                                                                          '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
+                                                                          '[' + v_strTeSO                                                                                            + ']' +
+                                                                          '[' + v_strTeNodeAddress                                                                                   + ']' +
+                                                                          '[' + v_strPalavraChave                                                                                    + ']' +
+                                                                          '[' + g_oCacic.getCacicPath + 'Temp\'                                                                      + ']' +
+                                                                          '[' + v_strNuPortaSR                                                                                       + ']' +
+                                                                          '[' + v_strNuTimeOutSR                                                                                     + ']'),SW_NORMAL);
+      }
       g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
                                                                                          '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
                                                                                          '[' + v_strTeSO                                                                                            + ']' +
                                                                                          '[' + v_strTeNodeAddress                                                                                   + ']' +
                                                                                          '[' + v_strPalavraChave                                                                                    + ']' +
                                                                                          '[' + g_oCacic.getCacicPath + 'Temp\'                                                                      + ']' +
-                                                                                         '[' + v_strNuPortaSR                                                                                       + ']',false);
-      }
-
+                                                                                         '[' + v_strNuPortaSR                                                                                       + ']' +
+                                                                                         '[' + v_strNuTimeOutSR                                                                                     + ']',false,SW_NORMAL);
 
       BoolServerON := true;
     End;
