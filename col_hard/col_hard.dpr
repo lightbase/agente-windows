@@ -722,20 +722,39 @@ begin
               Begin
                 v_SMBIOS := TMiTeC_SMBIOS.Create(nil);
                 v_SMBIOS.RefreshData;
-                if v_SMBIOS.MemoryModuleCount > -1 then
-                  Begin
-                    for i:=0 to v_SMBIOS.MemoryModuleCount-1 do begin
-                      if (v_SMBIOS.MemoryModule[i].Size <> 0) then begin
-                         v_te_mem_ram_tipo := v_SMBIOS.GetMemoryTypeStr(v_SMBIOS.MemoryModule[i].Types);
+                with v_SMBIOS do begin
+                   if v_SMBIOS.MemoryDeviceCount>0 then begin
+                     for i:=0 to v_SMBIOS.MemoryDeviceCount-1 do
+                       if (v_SMBIOS.MemoryDevice[i].Size>0) then begin
+                         if v_SMBIOS.MemoryDevice[i].Device>smmdUnknown then
+                            v_te_mem_ram_tipo:=MemoryDeviceTypes[v_SMBIOS.MemoryDevice[i].Device]
+                         else
+                           v_te_mem_ram_tipo:=MemoryFormFactors[v_SMBIOS.MemoryDevice[i].FormFactor];
+
                          if (v_te_mem_ram_desc <> '') then
                             v_te_mem_ram_desc := v_te_mem_ram_desc + ' - ';
+
                          v_te_mem_ram_desc := v_te_mem_ram_desc + 'Slot '+ inttostr(i) + ': '
                                                                 + v_SMBIOS.MemoryDevice[i].Manufacturer + ' '
-                                                                + inttostr(v_SMBIOS.MemoryModule[i].Size) + 'Mb '
+                                                                + inttostr(v_SMBIOS.MemoryDevice[i].Size) + 'Mb '
                                                                 + '(' + v_te_mem_ram_tipo +')';
-                      end;
-                    end;
-                  end;
+                       end;
+                   end
+                   else if v_SMBIOS.MemoryModuleCount > -1 then
+                     Begin
+                       for i:=0 to v_SMBIOS.MemoryModuleCount-1 do begin
+                         if (v_SMBIOS.MemoryModule[i].Size <> 0) then begin
+                            v_te_mem_ram_tipo := v_SMBIOS.GetMemoryTypeStr(v_SMBIOS.MemoryModule[i].Types);
+                            if (v_te_mem_ram_desc <> '') then
+                               v_te_mem_ram_desc := v_te_mem_ram_desc + ' - ';
+                            v_te_mem_ram_desc := v_te_mem_ram_desc + 'Slot '+ inttostr(i) + ': '
+                                                                   + v_SMBIOS.MemoryDevice[i].Manufacturer + ' '
+                                                                   + inttostr(v_SMBIOS.MemoryModule[i].Size) + 'Mb '
+                                                                   + '(' + v_te_mem_ram_tipo +')';
+                         end;
+                       end;
+                     end;
+                end;
 
                 if (trim(v_te_placa_mae_fabricante)='') then begin
                    v_te_placa_mae_fabricante := v_SMBIOS.MainBoardManufacturer;

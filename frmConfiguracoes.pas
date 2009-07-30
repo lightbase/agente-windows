@@ -91,7 +91,7 @@ begin
   EditEnderecoServidorUpdates.Text := FormularioGeral.GetValorDatMemoria('Configs.TE_SERV_UPDATES',v_tstrCipherOpened);
   v_ID_SO := trim(FormularioGeral.GetValorDatMemoria('Configs.ID_SO',v_tstrCipherOpened));
   Btn_Desinstalar.Visible := FALSE;
-  If (v_ID_SO <> '') and (StrToInt(v_ID_SO) in [1, 2, 3, 4, 5]) then
+  If (v_ID_SO <> '') and (g_oCacic.isWindows9xME()) then
     begin
     //Se for Win9x/ME
     Btn_Desinstalar.Visible := TRUE;
