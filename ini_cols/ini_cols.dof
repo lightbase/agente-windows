@@ -115,7 +115,7 @@ AutoIncBuild=0
 MajorVer=2
 MinorVer=5
 Release=0
-Build=758
+Build=773
 Debug=0
 PreRelease=0
 Special=0
@@ -124,36 +124,13 @@ DLL=0
 Locale=1046
 CodePage=1252
 [Version Info Keys]
-CompanyName=Dataprev-Unidade Regional Espírito Santo
+CompanyName=Dataprev - Emp. de TI da Prev.Social - URES
 FileDescription=Inicializador de Coletas do Sistema CACIC
-FileVersion=2.5.0.758
+FileVersion=2.5.0.773
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
 ProductName=Ini_COLS
-ProductVersion=2.6.0
+ProductVersion=2.6
 Comments=Baseado na licença GPL (General Public License)
-[HistoryLists\hlDebugSourcePath]
-Count=2
-Item0=C:\Arquivos de programas\Borland\Delphi7\Mitec\D7
-Item1=C:\Arquivos de programas\Borland\Delphi7\Mitec\D7;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Hashes
-[HistoryLists\hlUnitAliases]
-Count=1
-Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-[HistoryLists\hlSearchPath]
-Count=10
-Item0=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP
-Item1=C:\Arquivos de programas\Borland\Delphi7\Mitec\D7
-Item2=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion
-Item3=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP
-Item4=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\ZLibEx
-Item5=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion
-Item6=C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7
-Item7=C:\Arquivos de programas\Borland\Delphi7\Source\Rtl\Common;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion
-Item8=C:\Documents and Settings\Adriano S. Vieira\Meus documentos\cacic\Comps_CACIC\CriptografiaDCP;C:\Documents and Settings\Adriano S. Vieira\Meus documentos\cacic\Comps_CACIC\LibXMLParser;C:\Documents and Settings\Adriano S. Vieira\Meus documentos\cacic\Comps_CACIC\MD5;C:\Documents and Settings\Adriano S. Vieira\Meus documentos\cacic\Comps_CACIC\Mitec\v10.2.0-D7;C:\Documents and Settings\Adriano S. Vieira\Meus documentos\cacic\Comps_CACIC\NTFileSecurity;C:\Documents and Settings\Adriano S. Vieira\Meus documentos\cacic\Comps_CACIC\PJVersion;C:\Documents and Settings\Adriano S. Vieira\Meus documentos\cacic\Comps_CACIC\ShellLinker;C:\Documents and Settings\Adriano S. Vieira\Meus documentos\cacic\Comps_CACIC\ZLibEx
-Item9=C:\Arquivos de programas\Borland\Delphi7\Mitec\D7;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Ciphers;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Hashes
-[HistoryLists\hlOutputDirectorry]
-Count=2
-Item0=..\Repositorio
-Item1=Repositorio
