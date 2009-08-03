@@ -727,17 +727,23 @@ var RegEditSet: TRegistry;
 begin
     ListaAuxSet := g_oCacic.explode(Chave, '\');
     strRootKey := ListaAuxSet[0];
-    For I := 1 To ListaAuxSet.Count - 2 Do strKey := strKey + ListaAuxSet[I] + '\';
+    For I := 1 To ListaAuxSet.Count - 2 Do
+      strKey := strKey + ListaAuxSet[I] + '\';
     strValue := ListaAuxSet[ListaAuxSet.Count - 1];
 
     RegEditSet := TRegistry.Create;
     try
+        log_DEBUG('Em TfrmMapaCacic.SetValorChaveRegEdit: Abrindo Registry para Escrita => Root: "'+strRootKey+ '" Key: "'+strKey+'"');
         RegEditSet.Access := KEY_WRITE;
         RegEditSet.Rootkey := GetRootKey(strRootKey);
 
         if RegEditSet.OpenKey(strKey, True) then
         Begin
             RegDataType := RegEditSet.GetDataType(strValue);
+
+            // Sempre será String
+            RegDataType := rdString;
+
             if RegDataType = rdString then
               begin
                 RegEditSet.WriteString(strValue, Dado);
