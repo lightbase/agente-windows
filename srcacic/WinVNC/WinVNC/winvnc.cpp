@@ -269,8 +269,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 		CACIC_Auth::getInstance()->setTempPath(cmdln[5]);
 
 		// Cria o arquivo temporário de travamento do CACIC
-		string filePath = cmdln[5];
-		filePath += AGUARDE_FILENAME;
+		string filePath = string(cmdln[5]);
+		filePath += CACIC_Auth::AGUARDE_FILENAME;
 		pFile = fopen(filePath.data(), "w+");
 		vnclog.Print(LL_SRLOG, VNCLOG("Criando arquivo temporário: aguarde_SRCACIC.txt!\n"));
 
@@ -290,6 +290,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 		stringstream portBuffer(cmdln[6]);
 		portBuffer >> porta;
 		CACIC_Auth::getInstance()->setPorta(porta);
+		UINT timeout;
+		stringstream timeoutBuffer(cmdln[7]);
+		timeoutBuffer >> timeout;
+		CACIC_Auth::getInstance()->setTimeout(timeout);
 
 		if (CACIC_Auth::getInstance()->autentica()) {
 			iniciaTimer();
@@ -524,6 +528,7 @@ int WinVNCAppMain()
 	// Set the name and port number
 	server.SetName(szAppName);
 	server.SetPort(CACIC_Auth::getInstance()->getPorta());
+	server.SetAutoIdleDisconnectTimeout(CACIC_Auth::getInstance()->getTimeout());
 	server.SockConnect(TRUE);
 	vnclog.Print(LL_STATE, VNCLOG("Servidor inicializado com sucesso!\n"));
 	//uninstall driver before cont
@@ -531,10 +536,6 @@ int WinVNCAppMain()
 	// sf@2007 - Set Application0 special mode
 	server.RunningFromExternalService(fRunningFromExternalService);
 	
-	// colocando uma referência do servidor na classe CACIC_Auth
-	// para facilitar o acesso e a mudança de propriedades posteriormente.
-	//CACIC_Auth::getInstance()->m_server = &server;
-
 	// sf@2007 - New impersonation thread stuff for tray icon & menu
 	// Subscribe to shutdown event
 	hShutdownEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, "Global\\SessionEventUltra");

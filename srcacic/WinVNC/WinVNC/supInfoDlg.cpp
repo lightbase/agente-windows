@@ -89,8 +89,9 @@ BOOL CALLBACK supInfoDlg::supInfoDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 			SetDlgItemText(hwnd, IDC_INFO_NOME, (LPSTR) _this->m_nomeVisitante.data());
 			SetDlgItemText(hwnd, IDC_INFO_IP, (LPSTR) _this->m_ip.data());
 			SetDlgItemText(hwnd, IDC_INFO_INICIO, (LPSTR) _this->m_dataInicio.data());
+			SetDlgItemText(hwnd, IDC_INFO_REFERENCIA, (LPSTR) _this->m_documentoReferencia.data());
 
-			changeFont(hwnd, IDC_ATENCAO_STATIC);
+			CACIC_Utils::changeFont(hwnd, IDC_ATENCAO_STATIC, 16, CACIC_Utils::F_SANS_SERIF, true);
 
 			/*WINDOWPLACEMENT wndpl;
 			GetWindowPlacement(hwnd, &wndpl);
@@ -148,25 +149,4 @@ BOOL CALLBACK supInfoDlg::supInfoDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 	}
 
 	return FALSE;
-}
-
-void supInfoDlg::changeFont(HWND hwndDlg, int dlgItem)
-{
-	HFONT hFont ;
-	LOGFONT lfFont;
-
-	memset(&lfFont, 0x00, sizeof(lfFont));
-	memcpy(lfFont.lfFaceName, TEXT("Microsoft Sans Serif"), 16);
-
-	lfFont.lfHeight   = 16;
-	lfFont.lfWeight   = FW_BOLD;
-	lfFont.lfCharSet  = ANSI_CHARSET;
-	lfFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-	lfFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	lfFont.lfQuality  = DEFAULT_QUALITY;
-
-	// Create the font from the LOGFONT structure passed.
-	hFont = CreateFontIndirect (&lfFont);
-
-	SendMessage( GetDlgItem(hwndDlg, dlgItem), WM_SETFONT, (int)hFont, MAKELONG( TRUE, 0 ) );
 }

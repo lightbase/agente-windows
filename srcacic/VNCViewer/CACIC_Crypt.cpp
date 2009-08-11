@@ -1,5 +1,7 @@
-/* 
- * Classe para criptografia de dados
+/**
+ * Copyright (C) 2009 DATAPREV-ES
+ * @author Vinicius Avellar Moreira
+ * Classe para criptografia de dados.
  */
 
 #include "CACIC_Crypt.h"

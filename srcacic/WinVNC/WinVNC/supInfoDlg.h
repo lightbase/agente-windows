@@ -10,6 +10,8 @@
 #include <string>
 using namespace std;
 
+#include "CACIC_Utils.h"
+
 #pragma once
 
 class supInfoDlg {
@@ -24,13 +26,13 @@ public:
 	string m_nomeVisitante;
 	string m_ip;
 	string m_dataInicio;
+	string m_documentoReferencia;
 
 private:
 	HANDLE m_hInfoDlgThread;
 
 	static LRESULT CALLBACK supInfoDlg::showDialog(LPVOID lpParameter);
 	static BOOL CALLBACK supInfoDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static void changeFont(HWND hwndDlg, int dlgItem);
 };
 
 #endif

@@ -1,5 +1,7 @@
-/* 
- * Classe para criptografia de dados
+/**
+ * Copyright (C) 2009 DATAPREV-ES
+ * @author Vinicius Avellar Moreira
+ * Classe para criptografia de dados.
  */
 
 #include "CACIC_Crypt.h"
@@ -9,7 +11,6 @@ const unsigned int CACIC_Crypt::SRCACIC_KEY_SIZE = 16;
 const char CACIC_Crypt::SRCACIC_KEY[17] = "CacicBrasil";
 const char CACIC_Crypt::SRCACIC_IV[17] = "abcdefghijklmnop";
 
-// Tira do base64 e desencripta.
 string CACIC_Crypt::decodifica(const char* entrada)
 {
 	string decode_base64;
@@ -34,7 +35,6 @@ string CACIC_Crypt::decodifica(const char* entrada)
 	return out;
 }
 
-// Encripta e coloca no base64.
 string CACIC_Crypt::codifica(const char* entrada)
 {
 	unsigned int entrada_len = strlen(entrada);

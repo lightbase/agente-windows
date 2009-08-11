@@ -1,7 +1,5 @@
 #include "CACIC_Utils.h"
 
-// troca os caracteres da string
-//								   origem      ori_str      new_str
 void CACIC_Utils::replaceAll(string &str, string key, string newkey)
 {
 	int found = str.find(key, 0);
@@ -13,7 +11,6 @@ void CACIC_Utils::replaceAll(string &str, string key, string newkey)
 	}
 }
 
-// substitui alguns caracteres especiais antes da encriptacao
 void CACIC_Utils::simpleUrlEncode(string &decoded)
 {
 	replaceAll(decoded, "+", "<MAIS>");
@@ -32,7 +29,6 @@ void CACIC_Utils::simpleUrlDecode(string &encoded)
 	replaceAll(encoded, "<BarrInv>", "\\");
 }
 
-// Fetches the MAC address and prints it
 string CACIC_Utils::getMACAddress() {
 
 	IP_ADAPTER_INFO AdapterInfo[16];			// Allocate information for up to 16 NICs
@@ -44,7 +40,6 @@ string CACIC_Utils::getMACAddress() {
 	assert(dwStatus == ERROR_SUCCESS);			// Verify return value is valid, no buffer overflow
 
 	PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;// Contains pointer to current adapter info
-	// TODO: e se houve mais de uma placa de rede, qual mac deve ir?
 	//do {
 	//	PrintMACaddress(pAdapterInfo->Address); // Print MAC address
 	//	pAdapterInfo = pAdapterInfo->Next;    // Progress through linked list
@@ -62,8 +57,6 @@ string CACIC_Utils::getMACAddress() {
 
 }
 
-// TODO: Lembrete, quero melhorar o código:
-// http://www.codeguru.com/cpp/w-p/system/systeminformation/article.php/c8973__2/
 string CACIC_Utils::getSOID() {
 	OSVERSIONINFO osver;
 	ZeroMemory(&osver, sizeof(OSVERSIONINFO));

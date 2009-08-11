@@ -736,7 +736,7 @@ begin
 
                          v_te_mem_ram_desc := v_te_mem_ram_desc + 'Slot '+ inttostr(i) + ': '
                                                                 + v_SMBIOS.MemoryDevice[i].Manufacturer + ' '
-                                                                + inttostr(v_SMBIOS.MemoryDevice[i].Size) + 'Mb '
+                                                                + inttostr(v_SMBIOS.MemoryDevice[i].Size) + 'MB '
                                                                 + '(' + v_te_mem_ram_tipo +')';
                        end;
                    end
@@ -749,7 +749,7 @@ begin
                                v_te_mem_ram_desc := v_te_mem_ram_desc + ' - ';
                             v_te_mem_ram_desc := v_te_mem_ram_desc + 'Slot '+ inttostr(i) + ': '
                                                                    + v_SMBIOS.MemoryDevice[i].Manufacturer + ' '
-                                                                   + inttostr(v_SMBIOS.MemoryModule[i].Size) + 'Mb '
+                                                                   + inttostr(v_SMBIOS.MemoryModule[i].Size) + 'MB '
                                                                    + '(' + v_te_mem_ram_tipo +')';
                          end;
                        end;
@@ -787,7 +787,7 @@ begin
 
                 if (trim(v_te_placa_video_desc)='') then v_te_placa_video_desc := v_DISPLAY.Adapter;
                 v_qt_placa_video_cores     := IntToStr(v_DISPLAY.ColorDepth);
-                v_qt_placa_video_mem       := IntToStr(v_DISPLAY.Memory div 1048576 ) + 'Mb';
+                v_qt_placa_video_mem       := IntToStr(v_DISPLAY.Memory div 1048576 ) + 'MB';
                 v_te_placa_video_resolucao := IntToStr(v_DISPLAY.HorzRes) + 'x' + IntToStr(v_DISPLAY.VertRes);
 
                 v_DISPLAY.Free;

@@ -1,17 +1,15 @@
-// Declaração da classe CACIC_Con
+/**
+ * Copyright (C) 2009 DATAPREV-ES
+ * @author Vinicius Avellar Moreira
+ * Classe para envio de requisições html ao gerente web.
+ * API das funções wininet:
+ * http://msdn.microsoft.com/en-us/library/aa385473(VS.85).aspx
+ */
 
 #include "CACIC_Con.h"
 
-CACIC_Con::CACIC_Con() {}
+const TCHAR CACIC_Con::DEFAULT_HEADER[] = "Content-Type: application/x-www-form-urlencoded";
 
-CACIC_Con::~CACIC_Con()
-{
-	if(m_hSession != NULL) InternetCloseHandle(m_hSession);
-	if(m_hConnect != NULL) InternetCloseHandle(m_hConnect);
-	if(m_hRequest != NULL) InternetCloseHandle(m_hRequest);	
-}
-
-// conecta ao gerente web
 void CACIC_Con::conecta()
 {
 	m_hSession = InternetOpen("CACIC_Con", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
@@ -32,7 +30,6 @@ void CACIC_Con::conecta()
 	}
 }
 
-// envia os parametros ao script
 void CACIC_Con::sendRequest(LPCTSTR metodo, LPCTSTR script, TCHAR frmdata[])
 {
 	m_hRequest = HttpOpenRequest(m_hConnect, metodo, script, NULL, NULL, NULL, 0, 1);
@@ -43,10 +40,11 @@ void CACIC_Con::sendRequest(LPCTSTR metodo, LPCTSTR script, TCHAR frmdata[])
 		return;
 	}
 
-	HttpSendRequest(m_hRequest, hdrs, strlen(hdrs), frmdata, strlen(frmdata));
+	HttpSendRequest(m_hRequest, CACIC_Con::DEFAULT_HEADER, 
+					strlen(CACIC_Con::DEFAULT_HEADER), 
+					frmdata, strlen(frmdata));
 }
 
-// pega a resposta da ultima solicitacao e armazena no buffer
 bool CACIC_Con::getResponse(char buff[], unsigned long sz)
 {
 	if(!m_hRequest)

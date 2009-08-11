@@ -95,35 +95,37 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIB
 CAPTION "Aceitar conexão?"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "&Aceitar",IDACCEPT,7,142,53,21
+    DEFPUSHBUTTON   "&Aceitar",IDACCEPT,7,142,57,21
     PUSHBUTTON      "&Rejeitar",IDREJECT,178,142,53,21
     CTEXT           "srCACICsrv recebeu uma tentativa de conexão de:",IDC_STATIC_TEXT1,7,3,224,16,SS_CENTERIMAGE
     LTEXT           "<desconhecido>",IDC_ACCEPT_IP,69,28,162,10,SS_CENTERIMAGE
     CTEXT           "Você deseja aceitar a conexão?",IDC_STATIC_TEXT,7,126,224,16,SS_CENTERIMAGE
-    CTEXT           "Rejeitar:",IDC_ACCEPT_TIMEOUT,60,142,118,21,SS_CENTERIMAGE
+    CTEXT           "Rejeitar:",IDC_ACCEPT_TIMEOUT,64,142,114,21,SS_CENTERIMAGE
     LTEXT           "<desconhecido>",IDC_UVIS_NAME,69,17,162,8
     EDITTEXT        IDC_MOTIVO_SUPORTE,7,64,224,62,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_WANTRETURN
     LTEXT           "Motivo do Suporte:",IDC_STATIC,7,54,62,8
     LTEXT           "Endereço IP:",IDC_STATIC,7,29,42,8
-    LTEXT           "Nome do Técnico:",IDC_STATIC,7,17,53,8
-    LTEXT           "Doc. Referência:",IDC_STATIC,7,41,55,8
+    LTEXT           "Nome do Técnico:",IDC_STATIC,7,17,57,8
+    LTEXT           "Doc. Referência:",IDC_STATIC,7,41,57,8
     EDITTEXT        IDC_DOC_REF,68,41,163,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
 END
 
-IDD_INFO_DLG DIALOGEX 0, 0, 261, 51
+IDD_INFO_DLG DIALOGEX 0, 0, 261, 62
 STYLE DS_SYSMODAL | DS_SETFONT | DS_FIXEDSYS | WS_POPUP
 EXSTYLE WS_EX_PALETTEWINDOW | WS_EX_DLGMODALFRAME | WS_EX_NOPARENTNOTIFY | WS_EX_ACCEPTFILES | WS_EX_TRANSPARENT | WS_EX_MDICHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     CTEXT           "ESTAÇÃO DE TRABALHO EM SUPORTE REMOTO",IDC_AVISO_SUPORTE,54,12,205,11
     CTEXT           "ATENÇÃO",IDC_ATENCAO_STATIC,54,2,205,10
-    CONTROL         163,IDC_SRCACIC_IMG,"Static",SS_BITMAP,0,2,51,47
     LTEXT           "Nome:",IDC_STATIC,54,22,24,8
     LTEXT           "IP:",IDC_STATIC,54,32,10,8
-    LTEXT           "Início:",IDC_STATIC,54,41,20,8
+    LTEXT           "Início:",IDC_STATIC,54,42,20,8
     LTEXT           "",IDC_INFO_NOME,78,23,181,8,0,WS_EX_TRANSPARENT
     LTEXT           "",IDC_INFO_IP,78,32,181,8,0,WS_EX_TRANSPARENT
     LTEXT           "",IDC_INFO_INICIO,78,41,181,8,0,WS_EX_TRANSPARENT
+    LTEXT           "Doc. Referência:",IDC_STATIC_INFO_REF,54,51,57,8
+    LTEXT           "",IDC_INFO_REFERENCIA,111,51,148,8
+    CONTROL         163,IDC_SRCACIC_IMG,"Static",SS_BITMAP,0,0,54,62
 END
 
 
@@ -189,7 +191,7 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 231
-        VERTGUIDE, 60
+        VERTGUIDE, 64
         VERTGUIDE, 69
         VERTGUIDE, 178
         TOPMARGIN, 7
@@ -203,8 +205,9 @@ BEGIN
     BEGIN
         VERTGUIDE, 54
         VERTGUIDE, 78
+        VERTGUIDE, 111
         VERTGUIDE, 259
-        BOTTOMMARGIN, 49
+        BOTTOMMARGIN, 60
         HORZGUIDE, 2
         HORZGUIDE, 10
         HORZGUIDE, 49
@@ -219,8 +222,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,5,0,800
- PRODUCTVERSION 2,5,0,800
+ FILEVERSION 2,5,0,804
+ PRODUCTVERSION 2,5,0,804
  FILEFLAGSMASK 0x37L
 #ifdef _DEBUG
  FILEFLAGS 0x25L
@@ -237,11 +240,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Dataprev - Unidade Regional Espírito Santo"
             VALUE "FileDescription", "Módulo Suporte Remoto Seguro do Sistema CACIC"
-            VALUE "FileVersion", "2, 5, 0, 800"
+            VALUE "FileVersion", "2, 5, 0, 804"
             VALUE "InternalName", "srCACICsrv"
             VALUE "LegalCopyright", "Copyright © 2008 DATAPREV"
             VALUE "LegalTrademarks", "srCACIC"
-            VALUE "ProductVersion", "2, 5, 0, 800"
+            VALUE "ProductVersion", "2, 5, 0, 804"
         END
     END
     BLOCK "VarFileInfo"
@@ -390,7 +393,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",ID_POK,55,130,50,13
     PUSHBUTTON      "Cancelar",ID_PCANCELAR,117,130,50,13
     COMBOBOX        IDC_DOMAIN_CB,84,59,83,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "v2.5.0.800",IDC_AUTHDLG_VERSION,187,145,36,8,SS_CENTERIMAGE,WS_EX_STATICEDGE
+    CTEXT           "v2.5.0.804",IDC_AUTHDLG_VERSION,187,145,36,8,SS_CENTERIMAGE,WS_EX_STATICEDGE
     CTEXT           "Por favor, preencha as informações solicitadas abaixo, para a autenticação de seu usuário.",IDC_AUTH_INFO,3,38,216,18
     EDITTEXT        IDC_MSG,3,111,216,17,ES_CENTER | ES_MULTILINE | ES_READONLY | NOT WS_BORDER
     CTEXT           "ATENÇÃO: Esta autenticação, que precede a abertura de sessão para suporte remoto, atribui ao usuário a total responsabilidade por todo e qualquer tipo de dano lógico à estação que porventura seja causado por acesso externo indevido.",IDC_ATT_MSG,3,3,216,33
@@ -406,7 +409,7 @@ BEGIN
     EDITTEXT        IDC_USER_EDIT,69,58,83,12,ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",ID_POK,45,76,45,13
     PUSHBUTTON      "Cancelar",ID_PCANCELAR,102,76,45,13
-    CTEXT           "v2.5.0.800",IDC_AUTHDLG_VERSION,159,90,36,8,SS_CENTERIMAGE,WS_EX_STATICEDGE
+    CTEXT           "v2.5.0.804",IDC_AUTHDLG_VERSION,159,90,36,8,SS_CENTERIMAGE,WS_EX_STATICEDGE
     CTEXT           "Por favor, digite seu nome no campo abaixo.",IDC_AUTH_INFO,3,46,188,10
     CTEXT           "ATENÇÃO: Esta autenticação, que precede a abertura de sessão para suporte remoto, atribui ao usuário a total responsabilidade por todo e qualquer tipo de dano lógico à estação que porventura seja causado por acesso externo indevido.",IDC_ATT_MSG,3,3,188,40
 END

@@ -144,10 +144,11 @@
 #define IDC_ATENCAO_STATIC              1147
 #define IDC_ATENCAO                     1147
 #define IDC_SRCACIC_IMG                 1148
-#define IDC_EDIT3                       1150
 #define IDC_INFO_NOME                   1152
 #define IDC_INFO_IP                     1153
 #define IDC_INFO_INICIO                 1154
+#define IDC_STATIC_INFO_REF             1155
+#define IDC_INFO_REFERENCIA             1156
 #define IDC_FINGER                      9000
 #define IDC_GAMMAGRAY                   9001
 #define IDC_STATIC_SPLIT                9002
@@ -229,7 +230,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        164
 #define _APS_NEXT_COMMAND_VALUE         40019
-#define _APS_NEXT_CONTROL_VALUE         1155
+#define _APS_NEXT_CONTROL_VALUE         1157
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

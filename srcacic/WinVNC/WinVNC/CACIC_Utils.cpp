@@ -1,7 +1,13 @@
+/**
+ * Copyright (C) 2009 DATAPREV-ES
+ * @author Vinicius Avellar Moreira
+ * Classe com alguns métodos utilitários.
+ */
+
 #include "CACIC_Utils.h"
 
-// método bruto para ler
-// uma tag do arquivo xml de resposta
+const string CACIC_Utils::F_SANS_SERIF = "Microsoft Sans Serif";
+
 string CACIC_Utils::leTag(char xml[], char tagname[])
 {
 	char* tag;
@@ -28,8 +34,6 @@ string CACIC_Utils::leTag(char xml[], char tagname[])
 	return content;
 }
 
-// troca os caracteres da string
-//								   origem      ori_str      new_str
 void CACIC_Utils::replaceAll(string &str, string key, string newkey)
 {
 	int found = str.find(key, 0);
@@ -95,7 +99,6 @@ void CACIC_Utils::urlDecode(string &encoded)
 	encoded.swap(buff.str());
 }
 
-// substitui alguns caracteres especiais antes da encriptacao
 void CACIC_Utils::simpleUrlEncode(string &decoded)
 {
 	replaceAll(decoded, "+", "<MAIS>");
@@ -145,7 +148,7 @@ void CACIC_Utils::changeFont(HWND dlgHandle, int dlgItem, int fontSize, string f
 	LOGFONT lfFont;
 
 	memset(&lfFont, 0x00, sizeof(lfFont));
-	memcpy(lfFont.lfFaceName, fontName.data(), 16);
+	memcpy(lfFont.lfFaceName, fontName.c_str(), fontName.size());
 
 	lfFont.lfHeight   = fontSize;
 	lfFont.lfWeight   = (fontIsBold == true) ? FW_BOLD : FW_NORMAL;

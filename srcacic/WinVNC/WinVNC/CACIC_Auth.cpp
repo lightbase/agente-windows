@@ -1,20 +1,24 @@
+/**
+ * Copyright (C) 2009 DATAPREV-ES
+ * @author Vinicius Avellar Moreira
+ * Classe singleton responsável pela autenticação no gerente web.
+ */
+
 #include "CACIC_Auth.h"
 
 const string CACIC_Auth::GET_CONFIG_SCRIPT = "srcacic_get_config.php";
 const string CACIC_Auth::SET_SESSION_SCRIPT = "srcacic_set_session.php";
 const string CACIC_Auth::AUTH_CLIENT_SCRIPT = "srcacic_auth_client.php";
 const unsigned int CACIC_Auth::TAMANHO_RESPOSTA = 1025;
+const string CACIC_Auth::AGUARDE_FILENAME = "aguarde_srCACIC.txt";
+const string CACIC_Auth::COOKIE_FILENAME = "cacic_ck.txt";
+const UINT CACIC_Auth::TEMPO_IDLE = 5;
 
-CACIC_Auth::CACIC_Auth() {}
-
-CACIC_Auth::~CACIC_Auth() {}
-
-// autentica a sessão no servidor web de acordo com os parametros passados
 bool CACIC_Auth::autentica()
 {
-	string post = getPostComum();
-
 	vnclog.Print(LL_SRLOG, VNCLOG("Autenticando o usuário no gerente web.\n"));
+
+	string post = getPostComum();
 
 	string config_script = m_scriptsPath;
 	config_script += GET_CONFIG_SCRIPT;
@@ -25,65 +29,71 @@ bool CACIC_Auth::autentica()
 	vector<Dominio> listaDominios;
 	if (!verificaAuthChave(resposta, listaDominios)) return false;
 
-	vncPassDlg::EAuthCode authStat;
-	if (listaDominios.at(0).id == "0") {
-		authStat = vncPassDlg::SEM_AUTENTICACAO;
-	} else {
-		authStat = vncPassDlg::ESPERANDO_AUTENTICACAO;
-	}
-
-	// apresenta o dialogo de autenticação
-	vncPassDlg passDlg(listaDominios);
-	do
-	{
-		if (!passDlg.DoDialog(authStat, "")) return 0;
-
-		string nm_nome_acesso_autenticacao;
-		nm_nome_acesso_autenticacao = CACIC_Crypt::codifica(passDlg.m_usuario);
-
-		string te_senha_acesso_autenticacao;
-		te_senha_acesso_autenticacao = CACIC_Crypt::codifica(passDlg.m_senha);
-
-		string id_servidor_autenticacao;
-		id_servidor_autenticacao = CACIC_Crypt::codifica(passDlg.m_dominio);
-
-		post += "&nm_nome_acesso_autenticacao=";
-		post += nm_nome_acesso_autenticacao;
-		post += "&te_senha_acesso_autenticacao=";
-		post += te_senha_acesso_autenticacao;
-		post += "&id_servidor_autenticacao=";
-		post += id_servidor_autenticacao;
-
-		vnclog.Print(LL_SRLOG, post.data());
-
-		string session_script = m_scriptsPath.c_str();
-		session_script.append(SET_SESSION_SCRIPT);
-
-		CACIC_Con::sendHtppPost(m_servidorWeb, session_script, post, resposta, TAMANHO_RESPOSTA);
-		
-		if(verificaAuthDominio(resposta)) {
-			authStat = vncPassDlg::AUTENTICADO;
-		} else {
-			authStat = vncPassDlg::FALHA_AUTENTICACAO;
-		}
-	}
-	while (authStat != vncPassDlg::AUTENTICADO);
-
-	if (passDlg.m_authStat != vncPassDlg::SEM_AUTENTICACAO)
-	{
-		string msginfo = "Usuário Autenticado: ";
-		msginfo += m_usuario;
-		if (!passDlg.DoDialog(vncPassDlg::AUTENTICADO, msginfo)) return 0;
-	}
+	if (!autenticaUsuario(listaDominios)) return false;
 
 	vnclog.Print(LL_SRLOG, VNCLOG("Autenticação OK!\n"));
 
 	return true;
 }
 
-// autentica o técnico que irá realizar o suporte remoto
+bool CACIC_Auth::autenticaUsuario(vector<Dominio> &listaDominios)
+{
+	string post;
+	char resposta[TAMANHO_RESPOSTA];
+
+	vncPassDlg passDlg(listaDominios);
+
+	if (listaDominios.at(0).id.compare("0") == 0) {
+		passDlg.m_authStat = vncPassDlg::SEM_AUTENTICACAO;
+	} else {
+		passDlg.m_authStat = vncPassDlg::ESPERANDO_AUTENTICACAO;
+	}
+
+	// apresenta o dialogo de autenticação
+	do
+	{
+		if (!passDlg.DoDialog()) return false;
+		
+		post.clear();
+		post = getPostComum();
+		
+		post += "&nm_nome_acesso_autenticacao=";
+		post += CACIC_Crypt::codifica(passDlg.m_usuario);
+		post += "&te_senha_acesso_autenticacao=";
+		post += CACIC_Crypt::codifica(passDlg.m_senha);
+		post += "&id_servidor_autenticacao=";
+		post += CACIC_Crypt::codifica(passDlg.m_dominio);
+
+		vnclog.Print(LL_SRLOG, post.data());
+
+		string session_script = m_scriptsPath;
+		session_script.append(SET_SESSION_SCRIPT);
+
+		CACIC_Con::sendHtppPost(m_servidorWeb, session_script, post, resposta, TAMANHO_RESPOSTA);
+		
+		if(verificaAuthDominio(resposta)) {
+			passDlg.m_authStat = vncPassDlg::AUTENTICADO;
+		} else {
+			passDlg.m_authStat = vncPassDlg::FALHA_AUTENTICACAO;
+		}
+	}
+	while (passDlg.m_authStat != vncPassDlg::AUTENTICADO);
+
+	if (passDlg.m_authStat != vncPassDlg::SEM_AUTENTICACAO)
+	{
+		string msginfo = "Usuário Autenticado: ";
+		msginfo += m_usuario;
+		passDlg.m_authStat = vncPassDlg::AUTENTICADO;
+		passDlg.m_msgInfo = msginfo;
+		if (!passDlg.DoDialog()) return false;
+	}
+
+	return true;
+}
+
 bool CACIC_Auth::validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char te_node_address_cli[], 
-							   char te_documento_referencial[], char te_motivo_conexao[], char te_so_cli[], vncClientId vncCID)
+							   char te_documento_referencial[], char te_motivo_conexao[], char te_so_cli[], 
+							   const vncClientId vncCID, const char peerName[])
 {
 	string post = getPostComum();
 
@@ -110,7 +120,7 @@ bool CACIC_Auth::validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char 
 	CACIC_Con::sendHtppPost(m_servidorWeb, auth_client_script, post, resposta, TAMANHO_RESPOSTA);
 
 	if (!verificaAuthTecnico(resposta, te_node_address_cli, te_documento_referencial, 
-							 te_motivo_conexao, te_so_cli, vncCID))
+							 te_motivo_conexao, te_so_cli, vncCID, peerName))
 	{
 		return false;
 	}
@@ -118,35 +128,33 @@ bool CACIC_Auth::validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char 
 	return true;
 }
 
-// Verifica o status da chave passada ao agente.
 bool CACIC_Auth::verificaAuthChave(char resposta[], vector<Dominio> &listaDominios)
 {
 	try
 	{
 		if (!verificaStatus(resposta)) throw SRCException("Falha na verificação da chave!");
 
-		// pega o conteudo da tag de resposta <DOMINIOS>..</DOMINIOS>
 		string dominios;
 		dominios = CACIC_Utils::leTag(resposta, "SERVIDORES_AUTENTICACAO");
 
 		string dominios_dec;
 		dominios_dec = CACIC_Crypt::decodifica(dominios.c_str());
 
-		char* id_dominio = strtok((char*)dominios_dec.data(), ";");
+		char* dominios_dec_str = (char*)malloc(sizeof(char)*(dominios_dec.length() + 1));
+		string::traits_type::copy(dominios_dec_str, dominios_dec.c_str(), dominios_dec.length() + 1);
+		char* id_dominio = strtok(dominios_dec_str, ";");
 		char* nm_dominio = strtok(NULL, ";");
 		
-		// pega a lista de dominios e decodifica, adicionando-a no vetor
-		while (id_dominio != NULL && nm_dominio != NULL)
+		while (id_dominio != NULL)
 		{
-			Dominio novoDominio;
-			novoDominio.id = id_dominio;
-			novoDominio.nome = nm_dominio;
+			listaDominios.push_back(Dominio(id_dominio, nm_dominio));
 
-			listaDominios.push_back(novoDominio);
-
-			id_dominio = strtok (NULL, ";");
-			nm_dominio = strtok (NULL, ";");
+			id_dominio = strtok(NULL, ";");
+			nm_dominio = strtok(NULL, ";");
 		}
+		delete dominios_dec_str;
+		delete id_dominio;
+		delete nm_dominio;
 
 		if (listaDominios.empty()) throw SRCException("A lista de domínios está vazia.");
 
@@ -160,37 +168,23 @@ bool CACIC_Auth::verificaAuthChave(char resposta[], vector<Dominio> &listaDomini
 	}
 }
 
-// verifica a resposta referente a antenticacao do host
 bool CACIC_Auth::verificaAuthDominio(char resposta[])
 {
 	try
 	{
-		if (!verificaStatus(resposta)) throw SRCException("Falha na autenticação do usuário.");
+		if (!verificaStatus(resposta)) return false;//throw SRCException("Falha na autenticação do usuário.");
 
-		// pega o conteudo da tag de resposta <NM_COMPLETO>..</NM_COMPLETO>
 		string nm_completo;
 		nm_completo = CACIC_Utils::leTag(resposta, "NM_COMPLETO");
 
-		// decodifica e compara a resposta
 		string nome_dec;
 		nome_dec.append(CACIC_Crypt::decodifica(nm_completo.c_str()));
 
-		// pega o conteudo da tag de resposta <ID_SESSAO>..</ID_SESSAO>
 		string id_sessao;
 		id_sessao = CACIC_Utils::leTag(resposta, "ID_SESSAO");
 
-		string nu_timeout_srcacic;
-		nu_timeout_srcacic = CACIC_Utils::leTag(resposta, "NU_TIMEOUT_SRCACIC");
-
-		string nu_timeout_srcacic_dec;
-		nu_timeout_srcacic_dec = CACIC_Crypt::decodifica(nu_timeout_srcacic.c_str());
-
 		m_usuario = nome_dec;
 		m_idSessao = id_sessao;
-
-		/*stringstream timeoutBuffer(nu_timeout_srcacic_dec);
-		timeoutBuffer >> this->nuTimeout;
-		m_server->SetAutoIdleDisconnectTimeout(this->nuTimeout);*/
 
 		return true;
 	}
@@ -202,16 +196,14 @@ bool CACIC_Auth::verificaAuthDominio(char resposta[])
 	}
 }
 
-// verifica a resposta referente a antenticacao do técnico
 bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[], char te_documento_referencial[],
-						 char te_motivo_conexao[], char te_so_cli[], vncClientId vncCID)
+						 char te_motivo_conexao[], char te_so_cli[], const vncClientId vncCID, const char peerName[])
 {
 	try
 	{
-		// pega o conteudo da tag de resposta <STATUS>..</STATUS>
 		string status;
 		status = CACIC_Utils::leTag(resposta, "STATUS");
-		// decodifica e compara a resposta
+
 		string status_dec;
 		status_dec = CACIC_Crypt::decodifica(status.c_str());
 
@@ -219,19 +211,18 @@ bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[]
 		// para poder pegar a resposta de erro que vem na tag STATUS
 		if (status_dec.compare("OK") != 0) throw SRCException(status_dec.c_str());
 
-		// pega o conteudo da tag de resposta <ID_USUARIO_CLI>..</ID_USUARIO_CLI>
 		string id_usuario_cli;
 		id_usuario_cli = CACIC_Utils::leTag(resposta, "ID_USUARIO_CLI");
 
-		// pega o conteudo da tag de resposta <ID_CONEXAO>..</ID_CONEXAO>
 		string id_conexao;
 		id_conexao = CACIC_Utils::leTag(resposta, "ID_CONEXAO");
 
-		// pega o conteudo da tag de resposta <NM_COMPLETO>..</NM_COMPLETO>
 		string nm_usuario_completo;
 		nm_usuario_completo = CACIC_Utils::leTag(resposta, "NM_USUARIO_COMPLETO");
 
-		// decodifica e compara a resposta
+		string dt_hr_inicio_sessao;
+		dt_hr_inicio_sessao = CACIC_Utils::leTag(resposta, "DT_HR_INICIO_SESSAO");
+
 		string nm_usuario_completo_dec;
 		nm_usuario_completo_dec.append(CACIC_Crypt::decodifica(nm_usuario_completo.c_str()));
 
@@ -241,11 +232,6 @@ bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[]
 		string te_motivo_conexao_dec;
 		te_motivo_conexao_dec.append(CACIC_Crypt::decodifica(te_motivo_conexao));
 
-		// pega o conteudo da tag de resposta <DT_HR_INICIO_SESSAO>..</DT_HR_INICIO_SESSAO>
-		string dt_hr_inicio_sessao;
-		dt_hr_inicio_sessao = CACIC_Utils::leTag(resposta, "DT_HR_INICIO_SESSAO");
-
-		// decodifica e compara a resposta
 		string dt_hr_inicio_sessao_dec;
 		dt_hr_inicio_sessao_dec.append(CACIC_Crypt::decodifica(dt_hr_inicio_sessao.c_str()));
 
@@ -260,6 +246,7 @@ bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[]
 		novoCliente.te_motivo_conexao = te_motivo_conexao_dec;
 		novoCliente.te_so_visitante = te_so_cli;
 		novoCliente.dt_hr_inicio_sessao = dt_hr_inicio_sessao_dec;
+		novoCliente.peerName = peerName;
 
 		// adiciona o novo usuario a lista de usuarios visitantes
 		m_listaClientes.push_back(novoCliente);
@@ -268,6 +255,8 @@ bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[]
 
 		m_infoDlg.m_nomeVisitante = m_novoCliente.nm_usuario_completo;
 		m_infoDlg.m_dataInicio = m_novoCliente.dt_hr_inicio_sessao;
+		m_infoDlg.m_ip = m_novoCliente.peerName;
+		m_infoDlg.m_documentoReferencia = m_novoCliente.te_documento_referencial;
 
 		return true;
 	}
@@ -282,19 +271,19 @@ bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[]
 
 void CACIC_Auth::atualizaSessao()
 {
-	// Verifica se a palavra chave foi trocada enquanto em execução.
+	// Verifica, antes de atualizar a sessão, se a palavra 
+	// chave foi trocada enquanto o servidor estava aberto.
 	FILE *pFile;
-	string filePath = m_tempPath + COOKIE_FILENAME;
+	string filePath = m_tempPath + CACIC_Auth::COOKIE_FILENAME;
 	pFile = fopen(filePath.data(), "r");
 	char newKey[256];
 
-	// testa se o arquivo foi aberto com sucesso
 	if(pFile != NULL)
 	{
 		if (fgets(newKey, 256, pFile))
 			m_palavraChave = newKey;
 
-		fclose(pFile); // libera o ponteiro para o arquivo
+		fclose(pFile);
 		remove(filePath.data());
 	}
 
@@ -316,25 +305,25 @@ void CACIC_Auth::atualizaSessao()
 	}
 	else
 	{
-		string listaidusu = "&id_usuario_visitante=";
-		string listaidcon = "&id_conexao=";
-		string listanode = "&te_node_address_visitante=";
-		string listaidso = "&te_so_visitante=";
+		string listaIDUsuario = "&id_usuario_visitante=";
+		string listaIDConexao = "&id_conexao=";
+		string listaNodeAddress = "&te_node_address_visitante=";
+		string listaID_SO = "&te_so_visitante=";
 		for (int i = 0; i < m_listaClientes.size(); i++)
 		{
-			listaidusu += m_listaClientes[i].id_usuario_visitante;
-			if (i < m_listaClientes.size() - 1) listaidusu += "<REG>";
-			listaidcon += m_listaClientes[i].id_conexao;
-			if (i < m_listaClientes.size() - 1) listaidcon += "<REG>";
-			listanode += m_listaClientes[i].te_node_address_visitante;
-			if (i < m_listaClientes.size() - 1) listanode += "<REG>";
-			listaidso += m_listaClientes[i].te_so_visitante;
-			if (i < m_listaClientes.size() - 1) listaidso += "<REG>";
+			listaIDUsuario += m_listaClientes[i].id_usuario_visitante;
+			if (i < m_listaClientes.size() - 1) listaIDUsuario += "<REG>";
+			listaIDConexao += m_listaClientes[i].id_conexao;
+			if (i < m_listaClientes.size() - 1) listaIDConexao += "<REG>";
+			listaNodeAddress += m_listaClientes[i].te_node_address_visitante;
+			if (i < m_listaClientes.size() - 1) listaNodeAddress += "<REG>";
+			listaID_SO += m_listaClientes[i].te_so_visitante;
+			if (i < m_listaClientes.size() - 1) listaID_SO += "<REG>";
 		}
-		post += listaidusu;
-		post += listaidcon;
-		post += listanode;
-		post += listaidso;
+		post += listaIDUsuario;
+		post += listaIDConexao;
+		post += listaNodeAddress;
+		post += listaID_SO;
 	}
 
 	string session_script = m_scriptsPath.c_str();
@@ -346,8 +335,23 @@ void CACIC_Auth::atualizaSessao()
 	if (!verificaStatus(resposta))
 	{
 		MessageBox(NULL, "Ocorreu um erro ao atualizar a sessão! O programa será fechado.", "Erro!", MB_OK | MB_ICONERROR);
-		ExitProcess(0);
-		return;
+		finalizaServidor();
+	}
+
+	// verifica se o servidor está sem receber conexão por 
+	// mais tempo que o limite, caso esteja, o processo é finalizado.
+	if (m_listaClientes.empty())
+	{
+		m_idleTime--;
+		if (m_idleTime <= 0)
+		{
+			vnclog.Print(LL_SRLOG, "Fechando o servidor por atingir o tempo máximo de idle.");
+			finalizaServidor();
+		}
+	}
+	else
+	{
+		m_idleTime = TEMPO_IDLE;
 	}
 }
 
@@ -373,7 +377,6 @@ void CACIC_Auth::sendChatText(char te_mensagem[], char cs_origem[])
 	CACIC_Con::sendHtppPost(m_servidorWeb, session_script, post, resposta, TAMANHO_RESPOSTA);
 }
 
-// remove o cliente com id vncid da lista de usuarios visitantes
 void CACIC_Auth::removeCliente(vncClientId vncCID)
 {
 	// Atualiza a sessão antes de remover o cliente.
@@ -394,16 +397,6 @@ void CACIC_Auth::removeCliente(vncClientId vncCID)
 	m_novoCliente = novoCliente;
 }
 
-CACIC_Auth* CACIC_Auth::getInstance()
-{
-	if (!m_instance)
-	{
-		m_instance = new CACIC_Auth();
-	}
-	return m_instance;
-}
-
-// pega os parametros comuns a todos os posts enviados
 string CACIC_Auth::getPostComum()
 {
 	string post = "";
@@ -417,24 +410,31 @@ string CACIC_Auth::getPostComum()
 	return post;
 }
 
-// verifica se a resposta enviada na tag status esta ok
 bool CACIC_Auth::verificaStatus(char resposta[])
 {
-	// pega o conteudo da tag de resposta <STATUS>..</STATUS>
 	string status;
 	status = CACIC_Utils::leTag(resposta, "STATUS");
 
-	// decodifica e compara a resposta
 	string status_dec;
 	status_dec = CACIC_Crypt::decodifica(status.c_str());
 
-	if (status_dec.compare("OK") != 0)
-	{
-		string errorMsg = "Falha na autenticação do usuário no domínio.\n";
-		errorMsg += status_dec;
-		vnclog.Print(LL_SRLOG, VNCLOG(errorMsg.c_str()));
-		return false;
-	}
+	if (status_dec.compare("OK") != 0) return false;
 
 	return true;
+}
+
+void CACIC_Auth::finalizaServidor()
+{
+	static HANDLE hShutdownEvent;
+	hShutdownEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, "Global\\SessionEventUltra");
+	SetEvent(hShutdownEvent);
+	CloseHandle(hShutdownEvent);
+	HWND hservwnd;
+						// UVNC Default: WinVNC Tray Icon
+	hservwnd = FindWindow("srCACICsrv Tray Icon", NULL);
+	if (hservwnd != NULL)
+	{
+		PostMessage(hservwnd, WM_COMMAND, 40002, 0);
+		PostMessage(hservwnd, WM_CLOSE, 0, 0);
+	}
 }

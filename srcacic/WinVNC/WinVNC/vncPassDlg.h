@@ -7,11 +7,15 @@
 
 #include "stdhdrs.h"
 #include "resource.h"
+
 #include "vncPasswd.h"
+
 #include <vector>
 using namespace std;
 #include <string>
 using namespace std;
+
+#include "CACIC_Utils.h"
 
 //extern int MAX_VNC_CLIENTS;
 
@@ -19,8 +23,13 @@ using namespace std;
 
 #pragma once
 
-// struct referente a um domínio
+/**
+ * Struct referente a um domínio de autenticação.
+ */
 struct Dominio {
+	Dominio(string p_id, string p_nome) : id(p_id), nome(p_nome) {}
+	Dominio() : id(""), nome("") {}
+
 	string id;
 	string nome;
 };
@@ -36,22 +45,20 @@ public:
 	vncPassDlg(vector<Dominio> &listaDominios);
 	virtual ~vncPassDlg();
 
-	char m_usuario[32]; // nome de usuário
-	char m_senha[32]; // senha de usuário
-	char m_dominio[16]; // id do domínio selecionado
+	char m_usuario[33]; // nome de usuário
+	char m_senha[33]; // senha de usuário
+	char m_dominio[17]; // id do domínio selecionado
 
 	vector<Dominio> m_listaDominios;
 
 	EAuthCode m_authStat;
+	string m_msgInfo;
 
-	BOOL DoDialog(EAuthCode authStat, string msgInfo);
+	BOOL DoDialog();
 
 private:
 	static BOOL CALLBACK vncAuthDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	static BOOL CALLBACK vncNoAuthDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	static void changeFont(HWND hwndDlg, int dlgItem);
-
-	string m_msgInfo;
 
 	UINT m_indiceDominio; // índice selecionado no combobox de domínios
 };

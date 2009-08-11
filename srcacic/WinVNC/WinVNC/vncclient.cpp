@@ -643,7 +643,8 @@ vncClientThread::InitAuthenticate()
 	// verifica o técnico que está querendo logar e o adiciona na lista.
 	if (!CACIC_Auth::getInstance()->validaTecnico(nm_usuario_cli, te_senha_cli,
 												  te_node_address_cli, te_documento_referencial,
-												  te_motivo_conexao, te_so_cli, m_client->GetClientId()))
+												  te_motivo_conexao, te_so_cli, 
+												  m_client->GetClientId(), m_socket->GetPeerName()))
 	{
 		auth_ok = FALSE;
 	}

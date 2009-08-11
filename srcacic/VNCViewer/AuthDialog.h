@@ -36,10 +36,10 @@ public:
 	virtual ~AuthDialog();
 	int DoDialog();
 
-	TCHAR m_user[32];
-	TCHAR m_passwd[32];
-	TCHAR m_doc_ref[128];
-	TCHAR m_motivo[5120];
+	TCHAR m_user[32]; // Usuário técnico a ser autenticado no gerente web
+	TCHAR m_passwd[32]; // Senha
+	TCHAR m_doc_ref[128]; // Documento de Referência apresentado pelo técnico.
+	TCHAR m_motivo[5120]; // Motivo da conexão.
 
 	TCHAR m_domain[128];
 

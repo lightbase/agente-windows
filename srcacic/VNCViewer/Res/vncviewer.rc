@@ -312,7 +312,7 @@ BEGIN
     RTEXT           "Usuário:",IDC_STATIC,76,24,39,10
     RTEXT           "Senha:",IDC_STATIC,80,41,35,8
     LTEXT           "Doc. Referência:",IDC_DOC_REF,61,58,55,8
-    LTEXT           "Motivo do suporte: (tamanho máximo 5120 caracteres)",IDC_MOTIVO_SUPORTE,7,70,179,8
+    LTEXT           "Motivo do Suporte: (tamanho máximo 5120 caracteres)",IDC_MOTIVO_SUPORTE,7,70,179,8
     CONTROL         156,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | SS_SUNKEN,7,21,50,45
     LTEXT           "Por favor, digite seu nome de usuário e senha no gerente web.",IDC_STATIC,7,7,203,11
     LTEXT           "",IDC_CHAR_COUNT,7,136,43,8,0,WS_EX_TRANSPARENT
@@ -535,8 +535,8 @@ IDB_VNC32               BITMAP                  "vnc32.BMP"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,5,0,800
- PRODUCTVERSION 2,5,0,800
+ FILEVERSION 2,5,0,804
+ PRODUCTVERSION 2,5,0,804
  FILEFLAGSMASK 0x37L
 #ifdef _DEBUG
  FILEFLAGS 0x25L
@@ -553,11 +553,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Dataprev - Unidade Regional Espírito Santo"
             VALUE "FileDescription", "Visualizador do Suporte Remoto Seguro do Sistema CACIC"
-            VALUE "FileVersion", "2, 5, 0, 800"
+            VALUE "FileVersion", "2, 5, 0, 804"
             VALUE "InternalName", "srCACICcli"
             VALUE "LegalCopyright", "Copyright © 2008 DATAPREV"
             VALUE "LegalTrademarks", "srCACIC"
-            VALUE "ProductVersion", "2, 5, 0, 800"
+            VALUE "ProductVersion", "2, 5, 0, 804"
         END
     END
     BLOCK "VarFileInfo"

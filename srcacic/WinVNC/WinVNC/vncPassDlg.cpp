@@ -8,22 +8,19 @@ vncPassDlg::vncPassDlg(vector<Dominio> &listaDominios) {
 	m_listaDominios = listaDominios;
 	m_authStat = vncPassDlg::ESPERANDO_AUTENTICACAO;
 
-	memset(m_usuario, 0, 32);
-	memset(m_senha, 0, 32);
-	memset(m_dominio, 0, 16);
+	memset(m_usuario, 0, 33);
+	memset(m_senha, 0, 33);
+	memset(m_dominio, 0, 17);
 }
 
 vncPassDlg::~vncPassDlg() {
-	memset(m_usuario, 0, 32);
-	memset(m_senha, 0, 32);
-	memset(m_dominio, 0, 16);
+	memset(m_usuario, 0, 33);
+	memset(m_senha, 0, 33);
+	memset(m_dominio, 0, 17);
 }
 
-BOOL vncPassDlg::DoDialog(EAuthCode authStat, string msgInfo)
+BOOL vncPassDlg::DoDialog()
 {
-	m_authStat = authStat;
-	m_msgInfo = msgInfo;
-
 	BOOL retVal;
 	if (m_authStat == vncPassDlg::SEM_AUTENTICACAO)
 	{
@@ -71,9 +68,9 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 
 			vrsBkColor = CreateSolidBrush(RGB(238, 215, 184));
 
-			changeFont(hwnd, IDC_ATT_MSG);
+			CACIC_Utils::changeFont(hwnd, IDC_ATT_MSG, 13, CACIC_Utils::F_SANS_SERIF, true);
 
-			SendMessage (hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG (8, 8));
+			//SendMessage (hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG (8, 8));
 
 			// Limitando o tamanho dos campos para 32 caracteres.
 			SendMessage(GetDlgItem(hwnd, IDC_USER_EDIT), EM_LIMITTEXT, WPARAM(32), 0);
@@ -101,7 +98,7 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				SetDlgItemText(hwnd, IDC_USER_EDIT, _this->m_usuario);
 				SetDlgItemText(hwnd, IDC_PASS_EDIT, _this->m_senha);
 
-				SetDlgItemText(hwnd, IDC_MSG, (LPSTR) "Falha na autenticação!");
+				SetDlgItemText(hwnd, IDC_MSG, (LPSTR) "Falha na Autenticação!");
 			}
 			else if (_this->m_authStat == vncPassDlg::AUTENTICADO)
 			{
@@ -142,15 +139,15 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 					HWND hDominios = GetDlgItem(hwnd, IDC_DOMAIN_CB);
 					_this->m_indiceDominio = SendMessage(hDominios, CB_GETCURSEL, 0, 0);
 
-					memset(_this->m_usuario, 0, 32);
-					memset(_this->m_senha, 0, 32);
-					memset(_this->m_dominio, 0, 16);
+					memset(_this->m_usuario, 0, 33);
+					memset(_this->m_senha, 0, 33);
+					memset(_this->m_dominio, 0, 17);
 
 					GetDlgItemText(hwnd, IDC_USER_EDIT, _this->m_usuario, 32);
 					GetDlgItemText(hwnd, IDC_PASS_EDIT, _this->m_senha, 32);
 					strcpy(_this->m_dominio, _this->m_listaDominios.at(_this->m_indiceDominio).id.c_str());
 
-					if (_this->m_usuario[0] == '\0' || _this->m_senha[0] == '\0' || _this->m_dominio[0] == '\0')
+					if (_this->m_usuario[0] == 0 || _this->m_senha[0] == 0 || _this->m_dominio[0] == 0)
 					{
 						MessageBox(hwnd, "Os campos devem ser preenchidos!", "Erro!", MB_ICONERROR | MB_OK);
 						return FALSE;
@@ -228,7 +225,7 @@ BOOL CALLBACK vncPassDlg::vncNoAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 
 			vrsBkColor = CreateSolidBrush(RGB(238, 215, 184));
 
-			changeFont(hwnd, IDC_ATT_MSG);
+			CACIC_Utils::changeFont(hwnd, IDC_ATT_MSG, 13, CACIC_Utils::F_SANS_SERIF, true);
 
 			SendMessage (hwnd, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG (8, 8));
 
@@ -246,11 +243,11 @@ BOOL CALLBACK vncPassDlg::vncNoAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 				{
 					int ulen = GetWindowTextLength(GetDlgItem(hwnd, IDC_USER_EDIT));
 
-					memset(_this->m_usuario, '\0', 32);
+					memset(_this->m_usuario, 0, 33);
 
 					GetDlgItemText(hwnd, IDC_USER_EDIT, _this->m_usuario, 32);
 
-					if (_this->m_usuario[0] == '\0')
+					if (_this->m_usuario[0] == 0)
 					{
 						MessageBox(hwnd, "O campo deve ser preenchido.", "Erro!", MB_ICONERROR | MB_OK);
 						return FALSE;
@@ -296,25 +293,4 @@ BOOL CALLBACK vncPassDlg::vncNoAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 	}
 
 	return FALSE;
-}
-
-void vncPassDlg::changeFont(HWND hwndDlg, int dlgItem)
-{
-	HFONT hFont ;
-	LOGFONT lfFont;
-
-	memset(&lfFont, 0x00, sizeof(lfFont));
-	memcpy(lfFont.lfFaceName, TEXT("Microsoft Sans Serif"), 24);
-
-	lfFont.lfHeight   = 13;
-	lfFont.lfWeight   = FW_BOLD;
-	lfFont.lfCharSet  = ANSI_CHARSET;
-	lfFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
-	lfFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-	lfFont.lfQuality  = DEFAULT_QUALITY;
-
-	// Create the font from the LOGFONT structure passed.
-	hFont = CreateFontIndirect (&lfFont);
-
-	SendMessage( GetDlgItem(hwndDlg, dlgItem), WM_SETFONT, (int)hFont, MAKELONG( TRUE, 0 ) );
 }
