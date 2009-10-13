@@ -148,7 +148,7 @@ procedure TfrmAcesso.btCancelaClick(Sender: TObject);
 begin
   lbMsg_Erro_Senha.Caption := 'Aguarde... Finalizando!';
   Application.ProcessMessages;
-  frmMapaCacic.Finalizar(true);
+  Application.Terminate;
 end;
 
 procedure TfrmAcesso.FormCreate(Sender: TObject);
