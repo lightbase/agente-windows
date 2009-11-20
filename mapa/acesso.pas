@@ -57,6 +57,9 @@ type
       Shift: TShiftState);
     procedure tm_MensagemTimer(Sender: TObject);
     procedure FormActivate(Sender: TObject);
+    Procedure VerificaVersao;
+    procedure FormKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     { Private declarations }
   public
@@ -84,6 +87,7 @@ begin
   Request_mapa.Values['nm_acesso']      := frmMapaCacic.g_oCacic.enCrypt(edNomeUsuarioAcesso.Text);
   Request_mapa.Values['te_senha']       := frmMapaCacic.g_oCacic.EnCrypt(edSenhaAcesso.Text);
   Request_mapa.Values['cs_MapaCacic']   := frmMapaCacic.g_oCacic.EnCrypt('S');
+  Request_mapa.Values['te_operacao']    := frmMapaCacic.g_oCacic.EnCrypt('Autentication');
   Request_mapa.Values['te_versao_mapa'] := frmMapaCacic.g_oCacic.EnCrypt(frmMapaCacic.getVersionInfo(ParamStr(0)));
 
   strRetorno := frmMapaCacic.ComunicaServidor('mapa_acesso.php', Request_mapa, 'Autenticando o Acesso...');
@@ -91,13 +95,6 @@ begin
 
   if (frmMapaCacic.XML_RetornaValor('STATUS', strRetorno)='OK') then
     Begin
-      str_local_Aux := trim(frmMapaCacic.g_oCacic.deCrypt(frmMapaCacic.XML_RetornaValor('TE_VERSAO_MAPA',strRetorno)));
-      if (str_local_Aux <> '') then
-        Begin
-          MessageDLG(#13#10#13#10+'ATENÇÃO! Foi disponibilizada a versão "'+str_local_Aux+'".'+#13#10#13#10+'Acesse o gerente cacic na opção "Repositório" e baixe o programa "MapaCACIC"!'+#13#10,mtWarning,[mbOK],0);
-          btCancela.Click;
-        End;
-
       str_local_Aux := trim(frmMapaCacic.g_oCacic.deCrypt(frmMapaCacic.XML_RetornaValor('ID_USUARIO',strRetorno)));
       if (str_local_Aux <> '') then
         Begin
@@ -107,7 +104,7 @@ begin
         End
       else
         Begin
-          str_local_Aux := 'Usuário/Senha incorretos ou Nível de acesso não permitido!';
+          str_local_Aux := 'Usuário/Senha incorretos ou Usuário sem Acesso Primário/Secundário a este local!';
         End
     End
   else
@@ -135,12 +132,41 @@ begin
   Application.ProcessMessages;
 
   if (frmMapaCacic.boolAcessoOK) then
-    Close
+    self.Close
   else
     Begin
       edNomeUsuarioAcesso.AutoSelect := false;
       edNomeUsuarioAcesso.SetFocus;
+    End;
+end;
+
+Procedure TfrmAcesso.VerificaVersao;
+var Request_mapa : TStringList;
+    strRetorno,
+    strAUX       : String;
+    boolVersaoOK : Boolean;
+begin
+  boolVersaoOK := false;
+  Request_mapa:=TStringList.Create;
+
+  // Envio dos dados ao DataBase...
+  Request_mapa.Values['cs_MapaCacic']   := frmMapaCacic.g_oCacic.EnCrypt('S');
+  Request_mapa.Values['te_operacao']    := frmMapaCacic.g_oCacic.EnCrypt('Autentication');
+  Request_mapa.Values['te_versao_mapa'] := frmMapaCacic.g_oCacic.EnCrypt(frmMapaCacic.getVersionInfo(ParamStr(0)));
+
+  strRetorno := frmMapaCacic.ComunicaServidor('mapa_acesso.php', Request_mapa, 'Verificando Versão...');
+  Request_mapa.free;
+
+  if (frmMapaCacic.XML_RetornaValor('STATUS', strRetorno)='OK') then
+    Begin
+      strAUX := trim(frmMapaCacic.g_oCacic.deCrypt(frmMapaCacic.XML_RetornaValor('TE_VERSAO_MAPA',strRetorno)));
+      if (strAUX = '') then
+        boolVersaoOK := true
+      else
+        MessageDLG(#13#10#13#10+'ATENÇÃO! Foi disponibilizada a versão "'+strAUX+'".'+#13#10#13#10+'Acesse o gerente cacic na opção "Repositório" e baixe o programa "MapaCACIC"!'+#13#10,mtWarning,[mbOK],0);
     End
+  else
+    MessageDLG(#13#10#13#10+'ATENÇÃO! Há problema na comunicação com o módulo Gerente WEB.'+#13#10#13#10,mtWarning,[mbOK],0);
 end;
 
 
@@ -148,16 +174,17 @@ procedure TfrmAcesso.btCancelaClick(Sender: TObject);
 begin
   lbMsg_Erro_Senha.Caption := 'Aguarde... Finalizando!';
   Application.ProcessMessages;
-  Application.Terminate;
+  Self.Close;
+  boolFinalizar := true;
 end;
 
 procedure TfrmAcesso.FormCreate(Sender: TObject);
 begin
-  intPausaPadrao                    := 3000; //(3 mil milisegundos = 3 segundos)
-  frmAcesso.lbVersao.Caption        := 'Versão: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
-//  frmMapaCacic.tStringsCipherOpened := frmMapaCacic.CipherOpen(frmMapaCacic.g_oCacic.getCacicPath + frmMapaCacic.g_oCacic.getDatFileName);
-  frmMapaCacic.lbNomeServidorWEB.Caption := 'Servidor: '+frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsCipherOpened);
-  frmMapaCacic.lbMensagens.Caption  := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';
+  intPausaPadrao                          := 3000; //(3 mil milisegundos = 3 segundos)
+  frmAcesso.lbVersao.Caption              := 'Versão: ' + frmMapaCacic.GetVersionInfo(ParamStr(0));
+  frmMapaCacic.lbNomeServidorWEB.Caption  := 'Servidor de Aplicação: '+frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsMapaCACIC);
+  frmMapaCacic.lbMensagens.Caption        := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';
+  VerificaVersao;
 end;
 
 procedure TfrmAcesso.edNomeUsuarioAcessoKeyUp(Sender: TObject;
@@ -195,7 +222,7 @@ end;
 procedure TfrmAcesso.FormActivate(Sender: TObject);
 var strAux : String;
 begin
-  strAux := 'Servidor: ' + frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsCipherOpened);
+  strAux := 'Servidor de Aplicação: ' + frmMapaCacic.GetValorDatMemoria('Configs.EnderecoServidor', frmMapaCacic.tStringsMapaCACIC);
   if not (strAux = '') then
     Begin
       frmAcesso.lbNomeServidorWEB.Caption := strAux;
@@ -204,6 +231,18 @@ begin
     Begin
       frmMapaCacic.Mensagem('Favor verificar a instalação do Cacic.' +#13#10 + 'Não Existe Servidor de Aplicação configurado!',true,intPausaPadrao);
       frmMapaCacic.Finalizar(true);
+    End;
+end;
+
+procedure TfrmAcesso.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  IF (key = VK_RETURN) then
+    Begin
+      if (edNomeUsuarioAcesso.Focused) and (trim(edNomeUsuarioAcesso.Text) <> '') then
+        edSenhaAcesso.SetFocus
+      else if (edSenhaAcesso.Focused) and (trim(edSenhaAcesso.Text) <> '') then
+        btAcessoClick(nil);
     End;
 end;
 

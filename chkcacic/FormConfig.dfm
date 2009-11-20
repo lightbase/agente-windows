@@ -18,7 +18,7 @@ object Configs: TConfigs
   TextHeight = 13
   object gbOpcional: TGroupBox
     Left = 5
-    Top = 83
+    Top = 91
     Width = 480
     Height = 219
     Caption = 'Opcional'
@@ -100,7 +100,7 @@ object Configs: TConfigs
     Left = 5
     Top = 8
     Width = 480
-    Height = 64
+    Height = 76
     Caption = 'Obrigat'#243'rio'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
@@ -123,7 +123,7 @@ object Configs: TConfigs
       ParentFont = False
     end
     object Label_cacic_dir: TLabel
-      Left = 271
+      Left = 260
       Top = 19
       Width = 103
       Height = 13
@@ -135,19 +135,45 @@ object Configs: TConfigs
       Font.Style = []
       ParentFont = False
     end
+    object Label1: TLabel
+      Left = 8
+      Top = 57
+      Width = 195
+      Height = 12
+      Caption = 'Informe apenas o endere'#231'o IP ou nome (DNS)'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlue
+      Font.Height = -9
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
+    object Label2: TLabel
+      Left = 259
+      Top = 57
+      Width = 212
+      Height = 12
+      Caption = 'Pasta a ser criada na unidade padr'#227'o (HomeDrive)'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlue
+      Font.Height = -9
+      Font.Name = 'Arial'
+      Font.Style = []
+      ParentFont = False
+    end
   end
   object Edit_ip_serv_cacic: TEdit
     Left = 13
     Top = 42
-    Width = 200
+    Width = 195
     Height = 21
     MaxLength = 100
     TabOrder = 0
   end
   object Edit_cacic_dir: TEdit
-    Left = 276
+    Left = 265
     Top = 42
-    Width = 200
+    Width = 211
     Height = 21
     MaxLength = 100
     TabOrder = 1

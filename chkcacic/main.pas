@@ -655,35 +655,6 @@ begin
   FormConfig.Configs.ShowModal;
 end;
 
-Function Explode(Texto, Separador : String) : TStrings;
-var
-    strItem       : String;
-    ListaAuxUTILS : TStrings;
-    NumCaracteres,
-    TamanhoSeparador,
-    I : Integer;
-Begin
-    ListaAuxUTILS    := TStringList.Create;
-    strItem          := '';
-    NumCaracteres    := Length(Texto);
-    TamanhoSeparador := Length(Separador);
-    I                := 1;
-    While I <= NumCaracteres Do
-      Begin
-        If ((Copy(Texto,I,TamanhoSeparador) = Separador) and (Texto[I-1]<>'?')) or (I = NumCaracteres) Then
-          Begin
-            if (I = NumCaracteres) then strItem := strItem + Texto[I];
-            ListaAuxUTILS.Add(trim(strItem));
-            strItem := '';
-            I := I + (TamanhoSeparador-1);
-          end
-        Else
-          if (Texto[I]<>'?') then strItem := strItem + Texto[I];
-        I := I + 1;
-      End;
-    Explode := ListaAuxUTILS;
-end;
-
 Function FTP(p_Host : String; p_Port : String; p_Username : String; p_Password : String; p_PathServer : String; p_File : String; p_Dest : String) : Boolean;
 var IdFTP : TIdFTP;
 begin
@@ -743,6 +714,42 @@ begin
   End;
 end;
 
+// Função para fixar o HomeDrive como letra para a pasta do CACIC
+function TrataCacicDir(strCacicDir : String) : String;
+var tstrCacicDir1,
+    tstrCacicDir2 : TStrings;
+    intAUX : integer;
+Begin
+  Result := strCacicDir;
+  // Crio um array separado por ":" (Para o caso de ter sido informada a letra da unidade)
+  tstrCacicDir1 := TStrings.Create;
+  tstrCacicDir1 := g_oCacic.explode(strCacicDir,':');
+
+  if (tstrCacicDir1.Count > 1) then
+    Begin
+      tstrCacicDir2 := TStrings.Create;
+      // Ignoro a letra informada...
+      // Certifico-me de que as barras são invertidas... (erros acontecem)
+      // Crio um array quebrado por "\"
+      Result := StringReplace(tstrCacicDir1[1],'/','\',[rfReplaceAll]);
+      tstrCacicDir2 := g_oCacic.explode(Result,'\');
+
+      // Inicializo retorno com a unidade raiz do Sistema Operacional
+      // Concateno ao retorno as partes que formarão o caminho completo do CACIC
+      Result := g_oCacic.getHomeDrive;
+      for intAux := 0 to (tstrCacicDir2.Count-1) do
+        if (tstrCacicDir2[intAux] <> '') then
+            Result := Result + tstrCacicDir2[intAux] + '\';
+      tstrCacicDir2.Free;
+    End
+  else
+    Result := g_oCacic.getHomeDrive + strCacicDir + '\';
+
+  tstrCacicDir1.Free;
+
+  Result := StringReplace(Result,'\\','\',[rfReplaceAll]);
+End;
+
 procedure GravaConfiguracoes;
 var chkcacic_ini : TextFile;
 begin
@@ -790,6 +797,7 @@ begin
        Writeln(chkcacic_ini,'# ser colocados todos os arquivos executáveis para uso do CACIC, pois, quando da necessidade de download');
        Writeln(chkcacic_ini,'# de módulo, o arquivo será apenas copiado e não será necessário o FTP:');
        Writeln(chkcacic_ini,'# cacic2.exe ............=> Agente Principal');
+       Writeln(chkcacic_ini,'# cacicsvc.exe ..........=> Serviço para Sustentação do Agente Principal');
        Writeln(chkcacic_ini,'# ger_cols.exe ..........=> Gerente de Coletas');
        Writeln(chkcacic_ini,'# srcacicsrv.exe ........=> Suporte Remoto Seguro');
        Writeln(chkcacic_ini,'# chksis.exe ............=> Check System Routine (chkcacic residente)');
@@ -812,6 +820,7 @@ begin
        Writeln(chkcacic_ini,'# d:\chkcacic.ini');
        Writeln(chkcacic_ini,'#        \modulos');
        Writeln(chkcacic_ini,'#             cacic2.exe');
+       Writeln(chkcacic_ini,'#             cacicsvc.exe');
        Writeln(chkcacic_ini,'#             chksis.exe');
        Writeln(chkcacic_ini,'#             col_anvi.exe');
        Writeln(chkcacic_ini,'#             col_comp.exe');
@@ -841,7 +850,7 @@ begin
 
        // Escrita dos parâmetros obrigatórios
        Writeln(chkcacic_ini,'ip_serv_cacic='+v_ip_serv_cacic);
-       Writeln(chkcacic_ini,'cacic_dir='+g_oCacic.getHomeDrive + Configs.Edit_cacic_dir.text+'\');
+       Writeln(chkcacic_ini,'cacic_dir='+TrataCacicDir(Configs.Edit_cacic_dir.text));
        Writeln(chkcacic_ini,'exibe_informacoes='+v_exibe_informacoes);
 
        // Escrita dos valores opcionais quando existirem
@@ -849,7 +858,7 @@ begin
           Writeln(chkcacic_ini,'te_instala_informacoes_extras='+ StringReplace(v_te_instala_informacoes_extras,#13#10,'*13*10',[rfReplaceAll]));
        CloseFile(chkcacic_ini); {Fecha o arquivo texto}
 
-       g_oCacic.setCacicPath(g_oCacic.getHomeDrive + Configs.Edit_cacic_dir.text+'\');
+       g_oCacic.setCacicPath(TrataCacicDir(Configs.Edit_cacic_dir.text));
    except
    end;
 end;
@@ -889,55 +898,14 @@ begin
     Result := FileList;
   end;
 end;
-procedure LiberaFireWall(p_objeto:string);
-begin
-  LogDebug('Rotina para Liberação de FireWall...');
-  Try
-    if (g_oCacic.isWindowsGEVista()) then // Se >= WinVISTA...
-      Begin
-        if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll])))='') then
-          Begin
-            SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll]),p_objeto+'.exe:*:Enabled:'+p_objeto);
-          End
-        else
-          LogDebug('Exceção para "'+p_objeto+'" já existente.');
 
-        if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll])))='') then
-          Begin
-            SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll]),p_objeto+'.exe:*:Enabled:'+p_objeto);
-          End
-        else
-          LogDebug('Exceção para "'+p_objeto+'" já existente.');
-
-      End
-    else
-      Begin
-        if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll])))='') then
-          Begin
-            SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll]),p_objeto+'.exe:*:Enabled:'+p_objeto);
-          End
-        else
-          LogDebug('Exceção para "'+p_objeto+'" já existente.');
-
-        if (trim(GetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll])))='') then
-          Begin
-            SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\StandardProfile\AuthorizedApplications\List\'+StringReplace(p_objeto+'.exe','\','?\',[rfReplaceAll]),p_objeto+'.exe:*:Enabled:'+p_objeto);
-          End
-        else
-          LogDebug('Exceção para "'+p_objeto+'" já existente.');
-
-      End
-  Except
-    LogDebug('Problema adicionando "'+p_objeto+'" à lista de exceções do FireWall!');
-  End;
-end;
 
 Function ChecaVersoesAgentes(p_strNomeAgente : String) : integer; // 2.2.0.16
 var strNomeAgente : String;
     v_array_NomeAgente : TStrings;
     intAux : integer;
 Begin
-  v_array_NomeAgente := explode(p_strNomeAgente,'\');
+  v_array_NomeAgente := g_oCacic.explode(p_strNomeAgente,'\');
 
   v_versao_REM := XML_RetornaValor(StringReplace(StrUpper(PChar(v_array_NomeAgente[v_array_NomeAgente.count-1])),'.EXE','',[rfReplaceAll]), v_retorno);
   v_versao_LOC := GetVersionInfo(p_strNomeAgente);
@@ -1188,6 +1156,9 @@ begin
       v_te_instala_informacoes_extras := StringReplace(GetValorChaveRegIni('Cacic2', 'te_instala_informacoes_extras', ExtractFilePath(Application.Exename) + '\chkcacic.ini'),'*13*10',#13#10,[rfReplaceAll]);
     End;
 
+  // Tratamento do diretório informado para o CACIC, para que seja na unidade HomeDrive
+  v_cacic_dir := TrataCacicDir(v_cacic_dir);
+
   g_oCacic.setCacicPath(v_cacic_dir);
 
   if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
@@ -1265,35 +1236,35 @@ begin
                 Try
                   Begin
                     // Liberando as conexões de Saída para o FTP
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getHomeDrive+'system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getHomeDrive+'system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getHomeDrive+'system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getHomeDrive+'system32\\ftp.exe|Name=Programa de transferência de arquivos|Desc=Programa de transferência de arquivos|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getHomeDrive+'system32\\ftp.exe|Name=FTP|Desc=Programa de transferência de arquivos|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getHomeDrive+'system32\\ftp.exe|Name=FTP|Desc=Programa de transferência de arquivos|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getHomeDrive+'system32\\ftp.exe|Name=FTP|Desc=Programa de transferência de arquivos|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\FTP-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getHomeDrive+'system32\\ftp.exe|Name=FTP|Desc=Programa de transferência de arquivos|Edge=FALSE|');
 
                     // Liberando as conexões de Saída para o Ger_Cols
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\ger_cols.exe|Name=Módulo Gerente de Coletas do Sistema CACIC|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\ger_cols.exe|Name=GerCOLS|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\ger_cols.exe|Name=GerCOLS|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\ger_cols.exe|Name=GerCOLS|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-GERCOLS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\ger_cols.exe|Name=GerCOLS|Desc=Módulo Gerente de Coletas do Sistema CACIC|Edge=FALSE|');
 
                     // Liberando as conexões de Saída para o SrCACICsrv
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\srcacicsrv.exe|Name=Módulo Suporte Remoto Seguro do Sistema CACIC|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\srcacicsrv.exe|Name=Módulo Suporte Remoto Seguro do Sistema CACIC|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\srcacicsrv.exe|Name=Módulo Suporte Remoto Seguro do Sistema CACIC|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\srcacicsrv.exe|Name=Módulo Suporte Remoto Seguro do Sistema CACIC|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\srcacicsrv.exe|Name=srCACICsrv|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\srcacicsrv.exe|Name=srCACICsrv|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\srcacicsrv.exe|Name=srCACICsrv|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-SRCACICSRV-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getCacicPath+'modulos\\srcacicsrv.exe|Name=srCACICsrv|Desc=Módulo Suporte Remoto Seguro do Sistema CACIC|Edge=FALSE|');
 
                     // Liberando as conexões de Saída para o ChkCacic
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkcacic.exe|Desc=chkcacic.exe|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkcacic.exe|Desc=chkcacic.exe|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkcacic.exe|Desc=chkcacic.exe|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkcacic.exe|Desc=chkcacic.exe|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkCACIC|Desc=Módulo Verificador de Integridade e Instalador do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkCACIC|Desc=Módulo Verificador de Integridade e Instalador do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkCACIC|Desc=Módulo Verificador de Integridade e Instalador do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKCACIC-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+ExtractFilePath(Application.Exename) + '\chkcacic.exe|Name=chkCACIC|Desc=Módulo Verificador de Integridade e Instalador do Sistema CACIC|Edge=FALSE|');
+
 
                     // Liberando as conexões de Saída para o ChkSis
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getWinDir + 'chksis.exe|Name=Módulo Verificador de Integridade do Sistema CACIC|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getWinDir + 'chksis.exe|Name=Módulo Verificador de Integridade do Sistema CACIC|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getWinDir + 'chksis.exe|Name=Módulo Verificador de Integridade do Sistema CACIC|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
-                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getWinDir + 'chksis.exe|Name=Módulo Verificador de Integridade do Sistema CACIC|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
-
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getWinDir + 'chksis.exe|Name=chkSIS|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getWinDir + 'chksis.exe|Name=chkSIS|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-TCP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=6|Profile=Private|App='+g_oCacic.getWinDir + 'chksis.exe|Name=chkSIS|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
+                    SetValorChaveRegEdit('HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Services\SharedAccess\Parameters\FirewallPolicy\FirewallRules\CACIC-CHKSIS-Out-UDP','v2.0|Action=Allow|Active=TRUE|Dir=Out|Protocol=17|Profile=Private|App='+g_oCacic.getWinDir + 'chksis.exe|Name=chkSIS|Desc=Módulo Verificador de Integridade do Sistema CACIC|Edge=FALSE|');
                   End
                 Except
                   LogDebug('Problema Liberando Policies de FireWall!');
@@ -1304,8 +1275,8 @@ begin
                 // Acrescento o ChkCacic e srCACICsrv às exceções do FireWall nativo...
                 {chkcacic}
                 LogDebug('Inserindo "'+ExtractFilePath(Application.Exename) + 'chkcacic" nas exceções do FireWall!');
-                LiberaFireWall(ExtractFilePath(Application.Exename) + 'chkcacic');
-                LiberaFireWall(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe');
+                g_oCacic.addApplicationToFirewall('chkCACIC - Instalador do Sistema CACIC',ExtractFilePath(Application.Exename) + Application.Exename,true);
+                g_oCacic.addApplicationToFirewall('srCACICsrv - Módulo de Suporte Remoto Seguro do Sistema CACIC',g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe',true);
               End;
           Except
           End;
@@ -1569,22 +1540,22 @@ begin
                    XML_RetornaValor('TE_HASH_GER_COLS', v_retorno),
                    g_oCacic.getCacicPath + 'modulos');
 
-        // Caso exista a pasta "modulos", copio todos os executáveis para a pasta Cacic\modulos, exceto cacic2.exe, ger_cols.exe e chksis.exe
-        if (v_modulos <> '') then
-          Begin
-            v_array_modulos := explode(v_modulos,'#');
-            For intAux := 0 To v_array_modulos.count -1 Do
-              Begin
-                if (v_array_modulos[intAux]<>'cacic2.exe') and
-                   (v_array_modulos[intAux]<>'ger_cols.exe') and
-                   (v_array_modulos[intAux]<>'chksis.exe') then
-                  Begin
-                    LogDiario('Copiando '+v_array_modulos[intAux]+' de '+ExtractFilePath(Application.Exename)+'modulos\');
-                    CopyFile(PChar(ExtractFilePath(Application.Exename) + 'modulos\'+v_array_modulos[intAux]), PChar(g_oCacic.getCacicPath + 'modulos\'+v_array_modulos[intAux]),false);
-                    FileSetAttr (PChar(g_oCacic.getCacicPath + 'modulos\'+v_array_modulos[intAux]),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
-                  End;
-              End;
-          End;
+      // Caso exista a pasta "modulos", copio todos os executáveis para a pasta Cacic\modulos, exceto cacic2.exe, ger_cols.exe e chksis.exe
+      if (v_modulos <> '') then
+        Begin
+          v_array_modulos := g_oCacic.explode(v_modulos,'#');
+          For intAux := 0 To v_array_modulos.count -1 Do
+            Begin
+              if (v_array_modulos[intAux]<>'cacic2.exe') and
+                 (v_array_modulos[intAux]<>'ger_cols.exe') and
+                 (v_array_modulos[intAux]<>'chksis.exe') then
+                Begin
+                  LogDiario('Copiando '+v_array_modulos[intAux]+' de '+ExtractFilePath(Application.Exename)+'modulos\');
+                  CopyFile(PChar(ExtractFilePath(Application.Exename) + 'modulos\'+v_array_modulos[intAux]), PChar(g_oCacic.getCacicPath + 'modulos\'+v_array_modulos[intAux]),false);
+                  FileSetAttr (PChar(g_oCacic.getCacicPath + 'modulos\'+v_array_modulos[intAux]),0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
+                End;
+            End;
+        End;
 
       // ATENÇÃO:
       // Após testes no Vista, percebí que o firewall nativo interrompia o FTP e truncava o agente com tamanho zero...
@@ -1611,15 +1582,18 @@ begin
 
             {chksis}
             LogDebug('Inserindo "'+g_oCacic.getWinDir + 'chksis" nas exceções do FireWall!');
-            LiberaFireWall(g_oCacic.getWinDir + 'chksis');
+            //LiberaFireWall(g_oCacic.getWinDir + 'chksis');
+            g_oCacic.addApplicationToFirewall('chkSIS - Módulo Verificador de Integridade do Sistema CACIC',g_oCacic.getWinDir + 'chksis.exe',true);
 
             {ger_cols}
             LogDebug('Inserindo "'+g_oCacic.getCacicPath + 'modulos\ger_cols" nas exceções do FireWall!');
-            LiberaFireWall(g_oCacic.getCacicPath + 'modulos\ger_cols');
+//            LiberaFireWall(g_oCacic.getCacicPath + 'modulos\ger_cols');
+            g_oCacic.addApplicationToFirewall('gerCOLS - Módulo Gerente de Coletas do Sistema CACIC',g_oCacic.getCacicPath+'modulos\ger_cols.exe',true);
 
             {srcacicsrv}
             LogDebug('Inserindo "'+g_oCacic.getCacicPath + 'modulos\srcacicsrv" nas exceções do FireWall!');
-            LiberaFireWall(g_oCacic.getCacicPath + 'modulos\srcacicsrv');
+            //LiberaFireWall(g_oCacic.getCacicPath + 'modulos\srcacicsrv');
+            g_oCacic.addApplicationToFirewall('srCACICsrv - Módulo Servidor de Suporte Remoto Seguro do Sistema CACIC',g_oCacic.getCacicPath+'modulos\srcacicsrv.exe',true);
 
           Except
           End;
@@ -1732,6 +1706,10 @@ begin
               else
                   LogDiario('Não instalei o CACICservice. Já está rodando...');
             End;
+
+          if Posso_Rodar_CACIC and not bool_CommandLine then
+            MessageDLG(#13#10+'ATENÇÃO! É recomendável a reinicialização do sistema para início de ações do CACIC.',mtError,[mbOK],0);
+
         End
       else
         LogDebug('Chave de Auto-Execução já existente ou Execução já iniciada...');

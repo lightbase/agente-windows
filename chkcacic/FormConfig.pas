@@ -53,6 +53,8 @@ type
     btSair: TButton;
     pnVersao: TPanel;
     lbVersao: TLabel;
+    Label1: TLabel;
+    Label2: TLabel;
     procedure Button_GravarClick(Sender: TObject);
     procedure ckboxExibeInformacoesClick(Sender: TObject);
     procedure btSairClick(Sender: TObject);

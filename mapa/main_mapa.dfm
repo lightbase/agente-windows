@@ -148,6 +148,7 @@ object frmMapaCacic: TfrmMapaCacic
   Visible = True
   OnActivate = FormActivate
   OnClose = FormClose
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object lbNomeServidorWEB: TLabel

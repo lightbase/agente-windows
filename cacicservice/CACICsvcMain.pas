@@ -26,11 +26,24 @@ uses
   SvcMgr,
   strUtils,
   ExtCtrls,
-  CACIC_Library;
+  CACIC_Library,
+  Psapi,
+  tlhelp32,
+  JwaWinNT,    { As units com prefixo Jwa constam do Pacote Jedi_API22a }
+  JwaWinBase,  { que pode ser obtido em  http://sourceforge.net/projects/jedi-apilib/files/JEDI%20Windows%20API/JEDI%20API%202.2a%20and%20WSCL%200.9.2a/jedi_api22a_jwscl092a.zip/download }
+  JwaWtsApi32,
+  JwaWinSvc,
+  JwaWinType,
+  JwaNtStatus;
 
 var
   boolStarted   : boolean;
   g_oCacic      : TCACIC;
+
+//
+const
+  SE_DEBUG_NAME = 'SeDebugPrivilege';
+//
 
 type
   TCACICservice = class(TService)
@@ -47,6 +60,7 @@ type
     procedure logDEBUG(Msg : String);
     Procedure WMEndSession(var Msg : TWMEndSession) ;  message WM_ENDSESSION;
     procedure ExecutaCACIC;
+    function  startapp : integer;    
   public
     { Public declarations }
 
@@ -56,9 +70,154 @@ type
 var
   CACICservice: TCACICservice;
 
+function  CreateEnvironmentBlock(var lpEnvironment: Pointer;
+                                 hToken: THandle;
+                                 bInherit: BOOL): BOOL; stdcall; external 'userenv';
+function  DestroyEnvironmentBlock(pEnvironment: Pointer): BOOL; stdcall; external 'userenv';
+
 implementation
 
 {$R *.DFM}
+
+// Solução adaptada a partir do exemplo contido em http://www.codeproject.com/KB/vista-security/VistaSessions.aspx?msg=2750630
+// para execução a partir de token do WinLogon, possibilitando a exibição do ícone da aplicação na bandeja do systray em
+// plataforma MS-VISTA.
+function TCACICservice.startapp : integer;
+var
+   pi : PROCESS_INFORMATION;
+   si : STARTUPINFO;
+   bresult : boolean;
+   dwSessionId,winlogonPid : DWORD;
+   hUserToken,hUserTokenDup,hPToken,hProcess,hsnap : THANDLE;
+   dwCreationFlags : DWORD;
+   procEntry : TPROCESSENTRY32;
+   winlogonSessId : DWORD;
+   tp : TOKEN_PRIVILEGES;
+ //  luid : TLargeInteger;
+   abcd, abc, dup : integer;
+   lpenv : pointer;
+   iResultOfCreateProcessAsUser : integer;
+
+begin
+  Result := 0;
+  bresult := false;
+
+  //TOKEN_ADJUST_SESSIONID := 256;
+
+  // Log the client on to the local computer.
+
+
+  dwSessionId := WTSGetActiveConsoleSessionId();
+  hSnap := CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (hSnap = INVALID_HANDLE_VALUE) then
+    begin
+      result := 1;
+      exit;
+    end;
+
+  procEntry.dwSize := sizeof(TPROCESSENTRY32);
+
+  if (not Process32First(hSnap, procEntry)) then
+    begin
+      result := 1;
+      exit;
+    end;
+
+  repeat
+  if (comparetext(procEntry.szExeFile, 'winlogon.exe') = 0) then
+    begin
+      // We found a winlogon process...
+
+      // make sure it's running in the console session
+
+      winlogonSessId := 0;
+      if (ProcessIdToSessionId(procEntry.th32ProcessID, winlogonSessId) and (winlogonSessId = dwSessionId)) then
+        begin
+          winlogonPid := procEntry.th32ProcessID;
+          break;
+        end;
+    end;
+
+  until (not Process32Next(hSnap, procEntry));
+
+  ////////////////////////////////////////////////////////////////////////
+
+  WTSQueryUserToken(dwSessionId, hUserToken);
+  dwCreationFlags := NORMAL_PRIORITY_CLASS or CREATE_NEW_CONSOLE;
+  ZeroMemory(@si, sizeof(STARTUPINFO));
+  si.cb := sizeof(STARTUPINFO);
+  si.lpDesktop := 'winsta0\default';
+  ZeroMemory(@pi, sizeof(pi));
+  hProcess := OpenProcess(MAXIMUM_ALLOWED,FALSE,winlogonPid);
+
+  if(not OpenProcessToken(hProcess,TOKEN_ADJUST_PRIVILEGES or TOKEN_QUERY
+                 or TOKEN_DUPLICATE or TOKEN_ASSIGN_PRIMARY or TOKEN_ADJUST_SESSIONID
+                          or TOKEN_READ or TOKEN_WRITE, hPToken)) then
+    begin
+      abcd := GetLastError();
+      logDEBUG('Process token open Error: ' + inttostr(GetLastError()));
+    end;
+
+  if (not LookupPrivilegeValue(nil,SE_DEBUG_NAME,tp.Privileges[0].Luid)) then
+    begin
+      logDEBUG('Lookup Privilege value Error: ' + inttostr(GetLastError()));
+    end;
+
+  tp.PrivilegeCount := 1;
+  tp.Privileges[0].Attributes := SE_PRIVILEGE_ENABLED;
+
+  DuplicateTokenEx(hPToken,MAXIMUM_ALLOWED,Nil,SecurityIdentification,TokenPrimary,hUserTokenDup);
+  dup := GetLastError();
+
+  // Adjust Token privilege
+
+  SetTokenInformation(hUserTokenDup,TokenSessionId,pointer(dwSessionId),sizeof(DWORD));
+
+  if (not AdjustTokenPrivileges(hUserTokenDup,FALSE,@tp,sizeof(TOKEN_PRIVILEGES),nil,nil)) then
+    begin
+      abc := GetLastError();
+      logDEBUG('Adjust Privilege value Error: ' + inttostr(GetLastError()));
+    end;
+
+  if (GetLastError() = ERROR_NOT_ALL_ASSIGNED) then
+    begin
+      logDEBUG('Token does not have the provilege');
+    end;
+
+  lpEnv := nil;
+
+  if(CreateEnvironmentBlock(lpEnv,hUserTokenDup,TRUE)) then
+    begin
+      dwCreationFlags := dwCreationFlags or CREATE_UNICODE_ENVIRONMENT;
+    end
+  else
+    lpEnv := nil;
+
+  // Launch the process in the client's logon session.
+  bResult := CreateProcessAsUser( hUserTokenDup,                        // client's access token
+                                  PAnsiChar(g_oCacic.getCacicPath + 'cacic2.exe'), // file to execute
+                                  nil,                                  // command line
+                                  nil,                                  // pointer to process SECURITY_ATTRIBUTES
+                                  nil,                                  // pointer to thread SECURITY_ATTRIBUTES
+                                  FALSE,                                // handles are not inheritable
+                                  dwCreationFlags,                      // creation flags
+                                  lpEnv,                                // pointer to new environment block
+                                  PAnsiChar(g_oCacic.getCacicPath),                // name of current directory
+                                  si,                                   // pointer to STARTUPINFO structure
+                                  pi                                    // receives information about new process
+                                 );
+
+  // End impersonation of client.
+  //GetLastError Shud be 0
+  iResultOfCreateProcessAsUser := GetLastError();
+
+  //Perform All the Close Handles tasks
+  CloseHandle(hProcess);
+  CloseHandle(hUserToken);
+  CloseHandle(hUserTokenDup);
+  CloseHandle(hPToken);
+end;
+//
 procedure TCACICservice.WMEndSession(var Msg : TWMEndSession) ;
 begin
   if Msg.EndSession = TRUE then
@@ -166,7 +325,7 @@ end;
 procedure TCACICservice.ExecutaCACIC;
 Begin
   CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : deleteFile => '+g_oCacic.getCacicPath + 'aguarde_CACIC.txt');
-  DeleteFile(g_oCacic.getCacicPath + 'aguarde_CACIC.txt');
+  DeleteFile(PAnsiChar(g_oCacic.getCacicPath + 'aguarde_CACIC.txt'));
   Sleep(3000);
 
   // Se o arquivo indicador de execução não existir...
@@ -174,7 +333,7 @@ Begin
     Begin
       // Executo o CHKsis, verificando a estrutura do sistema
       Try
-        CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : winExec => '+g_oCacic.getWinDir + 'chksis.exe');
+        CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : createSampleProcess => '+g_oCacic.getWinDir + 'chksis.exe');
         g_oCacic.createSampleProcess(g_oCacic.getWinDir + 'chksis.exe',false,SW_HIDE);
       Except
       End;
@@ -184,8 +343,17 @@ Begin
 
       // Executo o Agente Principal do CACIC
       Try
-        CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : winExec => '+g_oCacic.getCacicPath + 'cacic2.exe');
-        g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe',false,SW_NORMAL);
+        // Execução diferenciada para >= VISTA devido ao impedimento de escrita na Notification Area imposta a processos/serviços.
+        if (g_oCacic.isWindowsGEVista) then
+          Begin
+            CACICservice.logDEBUG('TCACICservice.ExecutaCACIC invocando CACICservice.startapp para execução de "'+g_oCacic.getCacicPath + 'cacic2.exe'+'"');
+            CACICservice.startapp;
+          End
+        else
+          Begin
+            CACICservice.logDEBUG('TCACICservice.ExecutaCACIC : createSampleProcess => '+g_oCacic.getCacicPath + 'cacic2.exe');
+            g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe',false,SW_NORMAL);
+          End;
       Except
       End;
     End;

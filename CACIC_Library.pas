@@ -54,7 +54,9 @@ uses
     MD5,
     DCPcrypt2,
     DCPrijndael,
-    DCPbase64;
+    DCPbase64,
+    ActiveX,
+    ComObj;
 type
 
 { ------------------------------------------------------------------------------
@@ -104,6 +106,7 @@ type
          function  isWindowsAdmin()                                     : boolean;
          function  createSampleProcess(p_cmd: string; p_wait: boolean; p_showWindow : word = SW_HIDE): boolean;
          procedure showTrayIcon(p_visible:boolean);
+         procedure addApplicationToFirewall(p_EntryName:string;p_ApplicationPathAndExe:string; p_Enabled : boolean);         
    end;
 
 {*------------------------------------------------------------------------------
@@ -245,6 +248,39 @@ end;
 function TCACIC_Windows.getHomeDrive() : string;
 begin
   Result := MidStr(getWinDir,1,3); //x:\
+end;
+
+{*------------------------------------------------------------------------------
+  Insere exceção na FireWall nativa do MS-Windows
+
+  @param p_EntryName             String  Nome da exceção
+  @param p_ApplicationPathAndExe String  Caminho e nome da aplicação
+  @param p_Enabled               Boolean Estado da exceção
+-------------------------------------------------------------------------------}
+procedure TCACIC_Windows.addApplicationToFirewall(p_EntryName:string;p_ApplicationPathAndExe:string; p_Enabled : boolean);
+var   fwMgr,app:OleVariant;
+      profile:OleVariant;
+Const NET_FW_PROFILE_DOMAIN = 0;
+      NET_FW_PROFILE_STANDARD = 1;
+      NET_FW_IP_VERSION_ANY = 2;
+      NET_FW_IP_PROTOCOL_UDP = 17;
+      NET_FW_IP_PROTOCOL_TCP = 6;
+      NET_FW_SCOPE_ALL = 0;
+      NET_FW_SCOPE_LOCAL_SUBNET = 1;
+begin
+  CoInitialize(nil);
+
+  fwMgr := CreateOLEObject('HNetCfg.FwMgr');
+  profile := fwMgr.LocalPolicy.CurrentProfile;
+  app := CreateOLEObject('HNetCfg.FwAuthorizedApplication');
+  app.ProcessImageFileName := p_ApplicationPathAndExe;
+  app.Name := p_EntryName;
+  app.Scope := NET_FW_SCOPE_ALL;
+  app.IpVersion := NET_FW_IP_VERSION_ANY;
+  app.Enabled := p_Enabled;
+  profile.AuthorizedApplications.Add(app);
+
+  CoUninitialize;
 end;
 
 {*------------------------------------------------------------------------------
@@ -890,3 +926,4 @@ begin
 end;
 
 end.
+

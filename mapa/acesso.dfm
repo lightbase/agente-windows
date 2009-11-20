@@ -143,10 +143,12 @@ object frmAcesso: TfrmAcesso
     00000007C000FC000000000FC000FC000000002FC000FC000000000FC000F800
     00000007C000F80000000007C000F80000000007C000F80000000007C000FC00
     0000000FC000FC000000000FC000FDAD8035B5BFC000}
+  KeyPreview = True
   OldCreateOrder = False
   Position = poDesktopCenter
   OnActivate = FormActivate
   OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -156,7 +158,7 @@ object frmAcesso: TfrmAcesso
     Width = 300
     Height = 12
     AutoSize = False
-    Caption = 'Servidor: ABCDEFGHIJKLMNOP'
+    Caption = 'Servidor de Aplica'#231#227'o: ABCDEFGHIJKLMNOP'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -9
@@ -253,8 +255,8 @@ object frmAcesso: TfrmAcesso
       Alignment = taCenter
       AutoSize = False
       Caption = 
-        'ATEN'#199#195'O: O usu'#225'rio deve estar cadastrado no Gerente WEB com n'#237've' +
-        'l "T'#233'cnico"'
+        'ATEN'#199#195'O: O usu'#225'rio deve estar cadastrado no Gerente WEB e deve t' +
+        'er acesso PRIM'#193'RIO ou SECUND'#193'RIO a este local'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clNavy
       Font.Height = -11

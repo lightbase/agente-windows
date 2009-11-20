@@ -1104,7 +1104,7 @@ Begin
 end;
 
 procedure GetInfoPatrimonio;
-var strDt_ultima_renovacao_patrim,
+var strDt_ultima_renovacao,
     strUltimaRedeObtida,
     strRetorno,
     strIntervaloRenovacaoPatrimonio   : string;
@@ -1121,7 +1121,7 @@ Begin
     Request_Ger_Cols.Free;
 
     strUltimaRedeObtida := GetValorDatMemoria('Patrimonio.ultima_rede_obtida', v_tstrCipherOpened);
-    strDt_ultima_renovacao_patrim := GetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim', v_tstrCipherOpened);
+    strDt_ultima_renovacao := GetValorDatMemoria('Patrimonio.dt_ultima_renovacao', v_tstrCipherOpened);
 
     // Inicializa como "N' os valores de Remanejamento e Renovação que serão lidos pelo módulo de Coleta de Informações Patrimoniais.
     SetValorDatMemoria('Patrimonio.in_alteracao_fisica', 'N', v_tstrCipherOpened);
@@ -1138,7 +1138,7 @@ Begin
       Begin
         intHoje := StrToInt(FormatDateTime('yyyymmdd', Date));
         strIntervaloRenovacaoPatrimonio := GetValorDatMemoria('Configs.NU_INTERVALO_RENOVACAO_PATRIMONIO', v_tstrCipherOpened);
-        if ((strUltimaRedeObtida <> '') and (strIntervaloRenovacaoPatrimonio <> '') and ((intHoje - StrToInt64(strDt_ultima_renovacao_patrim)) >= strtoint(strIntervaloRenovacaoPatrimonio))) or
+        if ((strUltimaRedeObtida <> '') and (strIntervaloRenovacaoPatrimonio <> '') and ((intHoje - StrToInt64(strDt_ultima_renovacao)) >= strtoint(strIntervaloRenovacaoPatrimonio))) or
            (GetValorDatMemoria('Configs.IN_COLETA_FORCADA_PATR', v_tstrCipherOpened) = 'S') Then
           Begin
             // E neste caso seto como "S" o valor de Renovação de Informações para ser lido pelo módulo de Coleta de Informações Patrimoniais.
@@ -1297,15 +1297,10 @@ Begin
    log_DEBUG('Verificando necessidade de FTP para "'+p_Nome_Modulo +'" ('+p_File+')');
    Result := 0;
    Try
-
        if (trim(p_Dir_Temp)='') then
-          Begin
-            v_Dir_Temp := p_Dir_Inst;
-          End
+         v_Dir_Temp := p_Dir_Inst
        else
-          Begin
-            v_Dir_Temp := g_oCacic.getCacicPath + p_Dir_Temp;
-          End;
+         v_Dir_Temp := g_oCacic.getCacicPath + p_Dir_Temp;
 
        v_versao_disponivel := '';
        v_versao_atual      := '';
@@ -1345,11 +1340,9 @@ Begin
        else
           Begin
             strHashLocal  := g_oCacic.getFileHash(p_Dir_Inst + p_File + '.exe');
+
             strHashRemoto := GetValorDatMemoria('Configs.TE_HASH_'+UpperCase(p_File), v_tstrCipherOpened);
-            // TESTE
-            //if (UpperCase(p_File) = 'GER_COLS') or (UpperCase(p_File) = 'CACIC2') then
-            //  strHashLocal := strHashRemoto;
-            //
+
             log_DEBUG('Ver_UPD => '+p_File+'  [strHashLocal]: '+strHashLocal+' [strHashRemoto]: '+strHashRemoto);
            if ((strHashRemoto <> '') and (strHashLocal <> strHashRemoto)) or (v_Tamanho_Arquivo = '0') or (v_Tamanho_Arquivo = '-1') or (trim(GetVersionInfo(p_Dir_Inst + p_File + '.exe'))='0.0.0.0') then
               Begin
@@ -1555,7 +1548,7 @@ End;
 
 procedure Patrimnio1Click(Sender: TObject);
 begin
-  SetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim','', v_tstrCipherOpened);
+  SetValorDatMemoria('Patrimonio.dt_ultima_renovacao','0', v_tstrCipherOpened);
   if ChecaAgente(g_oCacic.getCacicPath + 'modulos', 'ini_cols.exe') then
     g_oCacic.createSampleProcess( g_oCacic.getCacicPath + 'modulos\ini_cols.exe /CacicPath='+g_oCacic.getCacicPath+' /p_ModulosOpcoes=col_patr,wait,user#', CACIC_PROCESS_WAIT );
 
@@ -2436,6 +2429,7 @@ Begin
                 SetValorDatMemoria('Configs.TE_JANELAS_EXCECAO'             ,g_oCacic.deCrypt(XML_RetornaValor('te_janelas_excecao'                , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('TcpIp.TE_ENDERECOS_MAC_INVALIDOS'       ,g_oCacic.deCrypt(XML_RetornaValor('te_enderecos_mac_invalidos'        , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.NU_PORTA_SRCACIC'               ,g_oCacic.deCrypt(XML_RetornaValor('nu_porta_srcacic'                  , strRetorno)) , v_tstrCipherOpened);
+                SetValorDatMemoria('Configs.ID_LOCAL'                       ,g_oCacic.deCrypt(XML_RetornaValor('id_local'                          , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.NU_TIMEOUT_SRCACIC'             ,g_oCacic.deCrypt(XML_RetornaValor('nu_timeout_srcacic'                , strRetorno)) , v_tstrCipherOpened);                
                 SetValorDatMemoria('Configs.CS_PERMITIR_DESATIVAR_SRCACIC'  ,g_oCacic.deCrypt(XML_RetornaValor('cs_permitir_desativar_srcacic'     , strRetorno)) , v_tstrCipherOpened);
                 SetValorDatMemoria('Configs.DT_HR_COLETA_FORCADA'           ,stringreplace(stringreplace(stringreplace(g_oCacic.deCrypt(XML_RetornaValor('dt_hr_coleta_forcada'     , strRetorno)),'-','',[rfReplaceAll]),' ','',[rfReplaceAll]),':','',[rfReplaceAll]), v_tstrCipherOpened);
@@ -2509,6 +2503,7 @@ Begin
           //   /ip_serv_cacic =>  Endereço IP do Módulo Gerente. Ex.: 10.71.0.212
           //   /cacic_dir     =>  Diretório para instalação do Cacic na estação. Ex.: Cacic
           //   /coletas       =>  Chamada para ativação das coletas
+          //   /recuperaSR    =>  Chamada para tentativa de recuperação do módulo srCACIC
           //   /patrimonio    =>  Chamada para ativação do Formulário de Patrimônio
           // UpdatePrincipal  =>  Atualização do Agente Principal
           // Chamada com parâmetros pelo chkcacic.exe ou linha de comando
@@ -2543,6 +2538,19 @@ Begin
                   g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /atualizacao', false);
                Sair;
               end;
+
+          // Chamada efetuada pelo Cacic2.exe quando o usuário clica no menu "Ativar Suporte Remoto" e o módulo srCACICsrv.exe não
+          // tem seu HashCode validado
+          If FindCmdLineSwitch('recuperaSR', True) Then
+            Begin
+              log_DEBUG('Opção /recuperaSR recebida...');
+              v_acao_gercols := 'Verificando/Recuperando srCACIC.';
+              log_DEBUG('Chamando Verificador/Atualizador...');
+              Ver_UPD('srcacicsrv','Suporte Remoto Seguro',g_oCacic.getCacicPath + 'modulos\','',false);
+              Finalizar(false);
+              CriaTXT(g_oCacic.getCacicPath+'temp','recuperaSR');
+              Sair;
+            End;
 
           For intAux := 1 to ParamCount do
             Begin
@@ -3258,9 +3266,10 @@ Begin
      CriaTXT(g_oCacic.getCacicPath,'ger_erro');
      Finalizar(false);
      SetValorDatMemoria('Erro_Fatal_Descricao', v_acao_gercols, v_tstrCipherOpened);
+     Sair;
     End;
   End;
-  g_oCacic.Free;
+//  g_oCacic.Free;
 End;
 
 begin

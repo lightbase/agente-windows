@@ -51,10 +51,11 @@ begin
         end;
         FreeMemory(0);
      end
-     else begin
-        Application.Initialize;
-        Application.CreateForm(TfrmMapaCacic, frmMapaCacic);
-        Application.Run;
-     end;
+     else
+        begin
+          Application.Initialize;
+          Application.CreateForm(TfrmMapaCacic, frmMapaCacic);
+          Application.Run;
+        end;
      oCacic.Free();
 end.

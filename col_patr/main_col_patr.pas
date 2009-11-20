@@ -967,7 +967,7 @@ Begin
                     MessageDlg('Atenção: é necessário o preenchimento/atualização das informações de Patrimônio e Localização Física deste computador. Por favor, confirme as informações que serão apresentadas na tela que será exibida a seguir.', mtInformation, [mbOk], 0);
                     boolColeta := true;
                   end
-                Else if (GetValorDatMemoria('Patrimonio.dt_ultima_renovacao_patrim',v_tstrCipherOpened)= '') then
+                Else if (GetValorDatMemoria('Patrimonio.dt_ultima_renovacao',v_tstrCipherOpened)= '') then
                   Begin
                     // Solicita o cadastramento de informações de patrimõnio caso ainda não tenha sido cadastrado.
                     boolColeta := true;

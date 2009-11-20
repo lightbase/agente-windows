@@ -103,6 +103,42 @@ begin
   Result := VerFmt(PJVersionInfo1.FixedFileInfo.dwFileVersionMS, PJVersionInfo1.FixedFileInfo.dwFileVersionLS);
 end;
 
+// Função para fixar o HomeDrive como letra para a pasta do CACIC
+function TrataCacicDir(strCacicDir : String) : String;
+var tstrCacicDir1,
+    tstrCacicDir2 : TStrings;
+    intAUX : integer;
+Begin
+  Result := strCacicDir;
+  // Crio um array separado por ":" (Para o caso de ter sido informada a letra da unidade)
+  tstrCacicDir1 := TStrings.Create;
+  tstrCacicDir1 := g_oCacic.explode(strCacicDir,':');
+
+  if (tstrCacicDir1.Count > 1) then
+    Begin
+      tstrCacicDir2 := TStrings.Create;
+      // Ignoro a letra informada...
+      // Certifico-me de que as barras são invertidas... (erros acontecem)
+      // Crio um array quebrado por "\"
+      Result := StringReplace(tstrCacicDir1[1],'/','\',[rfReplaceAll]);
+      tstrCacicDir2 := g_oCacic.explode(Result,'\');
+
+      // Inicializo retorno com a unidade raiz do Sistema Operacional
+      // Concateno ao retorno as partes que formarão o caminho completo do CACIC
+      Result := g_oCacic.getHomeDrive;
+      for intAux := 0 to (tstrCacicDir2.Count-1) do
+        if (tstrCacicDir2[intAux] <> '') then
+            Result := Result + tstrCacicDir2[intAux] + '\';
+      tstrCacicDir2.Free;
+    End
+  else
+    Result := g_oCacic.getHomeDrive + strCacicDir + '\';
+
+  tstrCacicDir1.Free;
+
+  Result := StringReplace(Result,'\\','\',[rfReplaceAll]);
+End;
+
 procedure log_DEBUG(p_msg:string);
 Begin
   if v_Debugs then log_diario('(v.'+getVersionInfo(ParamStr(0))+') DEBUG - '+p_msg);
@@ -640,7 +676,7 @@ begin
   v_cacic_dir        := GetValorChaveRegIni('Cacic2', 'cacic_dir'    , ExtractFilePath(ParamStr(0)) + 'chksis.ini');
   v_rem_cacic_v0x    := GetValorChaveRegIni('Cacic2', 'rem_cacic_v0x', ExtractFilePath(ParamStr(0)) + 'chksis.ini');
 
-  g_oCacic.setCacicPath(v_cacic_dir);
+  g_oCacic.setCacicPath(TrataCacicDir(v_cacic_dir));
 
   v_Debugs := false;
   if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
@@ -652,36 +688,43 @@ begin
          End;
       End;
 
+  log_DEBUG('setCacicPath "'+g_oCacic.getCacicPath+'"');
+
+  log_DEBUG('Verificando recepção do parâmetro rem_cacic_v0x...');
   // Caso o parâmetro rem_cacic_v0x seja "S/s" removo a chave/valor de execução do Cacic antigo
   if (LowerCase(v_rem_cacic_v0x)='s') then
       begin
-        //log_diario('Excluindo chave de execução do CACIC',ExtractFilePath(ParamStr(0)));
+        log_DEBUG('Excluindo chave de execução do CACIC');
         DelValorReg('HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run\cacic');
       end;
 
+  log_DEBUG('Verificando existência da pasta "'+g_oCacic.getCacicPath+'"');
   // Verifico a existência do diretório configurado para o Cacic, normalmente CACIC
   if not DirectoryExists(g_oCacic.getCacicPath) then
       begin
-        //log_diario('Criando diretório ' + Dir,ExtractFilePath(ParamStr(0)));
+        log_DEBUG('Criando diretório ' + g_oCacic.getCacicPath);
         ForceDirectories(g_oCacic.getCacicPath);
       end;
 
+  log_DEBUG('Verificando existência da pasta "'+g_oCacic.getCacicPath+'modulos"');
   // Para eliminar versão 20014 e anteriores que provavelmente não fazem corretamente o AutoUpdate
   if not DirectoryExists(g_oCacic.getCacicPath+'modulos') then
       begin
-        log_diario('Excluindo '+ g_oCacic.getCacicPath + 'cacic2.exe');
+        log_DEBUG('Excluindo '+ g_oCacic.getCacicPath + 'cacic2.exe');
         Matar(g_oCacic.getCacicPath,'cacic2.exe');
-        log_diario('Criando diretório ' + g_oCacic.getCacicPath + 'modulos');
+        log_DEBUG('Criando diretório ' + g_oCacic.getCacicPath + 'modulos');
         ForceDirectories(g_oCacic.getCacicPath + 'modulos');
       end;
 
+  log_DEBUG('Verificando existência da pasta "'+g_oCacic.getCacicPath+'temp"');
   // Crio o SubDiretório TEMP, caso não exista
   if not DirectoryExists(g_oCacic.getCacicPath+'temp') then
       begin
-        log_diario('Criando diretório ' + g_oCacic.getCacicPath + 'temp');
+        log_DEBUG('Criando diretório ' + g_oCacic.getCacicPath + 'temp');
         ForceDirectories(g_oCacic.getCacicPath + 'temp');
       end;
 
+  log_DEBUG('Verificando existência dos agentes principais "'+g_oCacic.getCacicPath+'cacic2.exe" e "'+g_oCacic.getCacicPath + 'modulos\ger_cols.exe"');
   // Verifico existência dos dois principais objetos
   If (not FileExists(g_oCacic.getCacicPath + 'cacic2.exe')) or (not FileExists(g_oCacic.getCacicPath + 'modulos\ger_cols.exe')) Then
       Begin
@@ -705,27 +748,28 @@ begin
           v_te_senha_login_serv_updates   := XML_RetornaValor('te_senha_login_serv_updates'  , Response_Config.DataString);
           v_te_path_serv_updates          := XML_RetornaValor('te_path_serv_updates'         , Response_Config.DataString);
 
-          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
-          log_diario(':::::::::::::::: VALORES OBTIDOS NO Gerente WEB :::::::::::::::');
-          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
-          log_diario('Servidor de updates......................: '+v_te_serv_updates);
-          log_diario('Porta do servidor de updates.............: '+v_nu_porta_serv_updates);
-          log_diario('Usuário para login no servidor de updates: '+v_nm_usuario_login_serv_updates);
-          log_diario('Pasta no servidor de updates.............: '+v_te_path_serv_updates);
-          log_diario(' ');
-          log_diario('Versões dos Agentes Principais:');
-          log_diario('------------------------------');
-          log_diario('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno));
-          log_diario('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno));
-          log_diario('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno));
-          log_diario(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+          log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+          log_DEBUG(':::::::::::::::: VALORES OBTIDOS NO Gerente WEB :::::::::::::::');
+          log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
+          log_DEBUG('Servidor de updates......................: '+v_te_serv_updates);
+          log_DEBUG('Porta do servidor de updates.............: '+v_nu_porta_serv_updates);
+          log_DEBUG('Usuário para login no servidor de updates: '+v_nm_usuario_login_serv_updates);
+          log_DEBUG('Pasta no servidor de updates.............: '+v_te_path_serv_updates);
+          log_DEBUG(' ');
+          log_DEBUG('Versões dos Agentes Principais:');
+          log_DEBUG('------------------------------');
+          log_DEBUG('Cacic2   - Agente do Systray.........: '+XML_RetornaValor('CACIC2', v_retorno));
+          log_DEBUG('Ger_Cols - Gerente de Coletas........: '+XML_RetornaValor('GER_COLS', v_retorno));
+          log_DEBUG('ChkSis   - Verificador de Integridade: '+XML_RetornaValor('CHKSIS', v_retorno));
+          log_DEBUG(':::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::');
 
-        Except log_diario('Falha no contato com ' + 'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php');
+        Except log_DEBUG('Falha no contato com ' + 'http://' + v_ip_serv_cacic + '/cacic2/ws/get_config.php');
         End;
 
         Request_Config.Free;
         Response_Config.Free;
 
+  log_DEBUG('Verificando existência do agente "'+g_oCacic.getCacicPath+'cacic2.exe"');
   // Verificação de versão do cacic2.exe e exclusão em caso de versão antiga
   If (FileExists(g_oCacic.getCacicPath + 'cacic2.exe')) Then
       Begin
@@ -745,6 +789,7 @@ begin
            Matar(g_oCacic.getCacicPath, 'cacic2.exe');
       End;
 
+    log_DEBUG('Verificando existência do agente "'+g_oCacic.getCacicPath+'modulos\ger_cols.exe"');
     // Verificação de versão do ger_cols.exe e exclusão em caso de versão antiga
     If (FileExists(g_oCacic.getCacicPath + 'modulos\ger_cols.exe')) Then
         Begin
@@ -764,7 +809,7 @@ begin
 
         End;
 
-
+      log_DEBUG('Nova Verificação de existência do agente "'+g_oCacic.getCacicPath+'cacic2.exe"');
       // Tento detectar o Agente Principal e faço FTP caso não exista
       If not FileExists(g_oCacic.getCacicPath + 'cacic2.exe') Then
           begin
@@ -782,6 +827,7 @@ begin
             bool_download_CACIC2 := true;
           end;
 
+      log_DEBUG('Nova Verificação de existência do agente "'+g_oCacic.getCacicPath+'modulos\ger_cols.exe"');
       // Tento detectar o Gerente de Coletas e faço FTP caso não exista
       If (not FileExists(g_oCacic.getCacicPath + 'modulos\ger_cols.exe')) Then
           begin
@@ -806,16 +852,16 @@ begin
   Sleep(5000);
 
   // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
-      if Posso_Rodar_CACIC or not bool_ExistsAutoRun then
-        Begin
-          log_diario('Executando '+g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
+  if Posso_Rodar_CACIC or not bool_ExistsAutoRun then
+    Begin
+      log_diario('Executando '+g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic);
 
-          // Caso tenha havido download de agentes principais, executar coletas imediatamente...
-          if (bool_download_CACIC2) then
-            g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute', false)
-          else
-            g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             , false);
-        End;
+      // Caso tenha havido download de agentes principais, executar coletas imediatamente...
+      if (bool_download_CACIC2) then
+        g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic+ ' /execute', false)
+      else
+        g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'cacic2.exe /ip_serv_cacic=' + v_ip_serv_cacic             , false);
+    End;
 end;
 
 const
