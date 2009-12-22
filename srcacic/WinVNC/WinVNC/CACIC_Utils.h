@@ -9,10 +9,38 @@
 
 #include <string>
 using namespace std;
-#include <sstream>
-#include <iostream>
 
-#include "CACIC_Exception.h"
+#include "windows.h"
+
+/**
+ * Struct referente a um usuário cliente.
+ */
+struct ClienteSRC {
+	short vncCID;
+	string peerName;
+	string id_usuario_visitante; 
+	string id_usuario_cli; 
+	string id_conexao; 
+	string nm_usuario_completo; 
+	string te_node_address_visitante; 
+	string te_node_address_cli; 
+	string te_documento_referencial; 
+	string te_motivo_conexao; 
+	string te_so_visitante; 
+	string te_so_cli; 
+	string dt_hr_inicio_sessao; 
+};
+
+/**
+ * Struct referente a um domínio de autenticação.
+ */
+struct Dominio {
+	Dominio(string p_id, string p_nome) : id(p_id), nome(p_nome) {}
+	Dominio() : id(""), nome("") {}
+	Dominio(const Dominio& d) : id(d.id), nome(d.nome) {}
+	string id;
+	string nome;
+};
 
 class CACIC_Utils {
 
@@ -25,10 +53,10 @@ public:
 	 * Método bruto para ler uma tag específica de um arquivo xml.
 	 * @param xml String no formato de arquivo xml.
 	 * @param tagname String com o nome da tag a ser pesquisada.
-	 * @return String com o conteúdo da tag pesquisada.
+	 * @param conteudo String com o conteúdo da tag pesquisada.
 	 * @trows CACIC_Exception caso a tag não seja encontrada.
 	 */
-	static string leTag(char xml[], char tagname[]);
+	static void leTag(char xml[], char tagname[], string &conteudo);
 
 	/**
 	 * Troca caracteres específicos de uma string.
@@ -89,6 +117,30 @@ public:
 	static void changeFont(HWND dlgHandle, int dlgItem, 
 						   int fontSize, string fontName, 
 						   bool fontIsBold = false);
+
+	/**
+	 * Método para separar a string em partes delimitadas por um, ou um conjunto,
+	 * de caracteres.
+	 * @param str String a ser tokenizada.
+	 * @param tokens Vetor de saída dos tokens gerados.
+	 * @param delimiters Delimitadores que serão usados para separar a string.
+	 * @note http://www.linuxselfhelp.com/HOWTO/C++Programming-HOWTO-7.html
+	 */
+	//static void tokenize(const string &str, vector<string> &tokens, const string &delimiters = " ");
+
+	/**
+	 * Obtém o MAC Address da placa de rede.<br />
+	 * TODO: Quando houver mais de uma placa de rede no pc, verificar qual
+	 * está se comunicando com o servidor para enviar o MAC certo.
+	 */
+	static string getMACAddress();
+
+	/**
+	 * Obtém a identificação do sistema operacional.<br />
+	 * Artigo sobre SOID:<br />
+	 * http://www.codeguru.com/cpp/w-p/system/systeminformation/article.php/c8973__2/
+	 */
+	static string getSOID();
 
 private:
 

@@ -148,7 +148,12 @@
 #define IDC_INFO_IP                     1153
 #define IDC_INFO_INICIO                 1154
 #define IDC_STATIC_INFO_REF             1155
+#define IDC_DOC_LBL                     1155
 #define IDC_INFO_REFERENCIA             1156
+#define IDC_AVISO_LOGOUT                1157
+#define IDC_NOME_LBL                    1158
+#define IDC_IP_LBL                      1159
+#define IDC_INICIO_LBL                  1160
 #define IDC_FINGER                      9000
 #define IDC_GAMMAGRAY                   9001
 #define IDC_STATIC_SPLIT                9002
@@ -230,7 +235,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        164
 #define _APS_NEXT_COMMAND_VALUE         40019
-#define _APS_NEXT_CONTROL_VALUE         1157
+#define _APS_NEXT_CONTROL_VALUE         1161
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

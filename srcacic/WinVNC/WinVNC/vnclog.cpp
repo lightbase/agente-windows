@@ -185,10 +185,9 @@ inline void VNCLog::ReallyPrintLine(const char* line)
     struct tm ts;
     char data_buf[20];
 
-    // Formata a data, "ddd yyyy-mm-dd hh:mm:ss zzz"
     ts = *localtime(&now);
-    strftime(data_buf, sizeof(data_buf), "%Y-%m-%d %H:%M:%S", &ts);
-
+	strftime(data_buf, sizeof(data_buf), "%d/%m %X", &ts);
+	
 	if (m_toscript) enviaLog(data_buf, (char*)line, SCRIPT); // ADICIONADO
     if (m_todebug) OutputDebugString(line);
     if (m_toconsole) {
@@ -196,9 +195,21 @@ inline void VNCLog::ReallyPrintLine(const char* line)
         WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), line, strlen(line), &byteswritten, NULL); 
     };
     if (m_tofile && (hlogfile != NULL)) {
+		string strLine;
+		strLine.append(data_buf);
+		strLine.append(" : ");
+		strLine.append("[Suporte Remoto]");
+		//if (/*Verificar modo DEBUG!*/){
+		//	strLine.append(" (");
+		//	strLine.append(/*Funcao de retorno da Versao: v.2.6.0.0*/);
+		//	strLine.append(")");
+		//	strLine.append(" DEBUG -");
+		//}
+		strLine.append(" ");
+		strLine.append(line);
         DWORD byteswritten;
-        WriteFile(hlogfile, line, strlen(line), &byteswritten, NULL); 
-    }
+		WriteFile(hlogfile, strLine.c_str(), strLine.length(), &byteswritten, NULL);
+	}
 }
 
 void VNCLog::ReallyPrint(const char* format, va_list ap) 
@@ -225,6 +236,7 @@ void VNCLog::ReallyPrint(const char* format, va_list ap)
     }
 	ReallyPrintLine(line);
 }
+
 
 VNCLog::~VNCLog()
 {

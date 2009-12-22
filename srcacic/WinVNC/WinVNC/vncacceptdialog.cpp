@@ -37,6 +37,9 @@
 //	[v1.0.2-jp1 fix] Load resouce from dll
 extern HINSTANCE	hInstResDLL;
 
+DWORD WINAPI makeWndBlink(LPVOID lParam);
+HANDLE isWindowActivated = 0;
+
 // Constructor
 
 vncAcceptDialog::vncAcceptDialog(UINT timeoutSecs,BOOL acceptOnTimeout, const char *ipAddress)
@@ -149,6 +152,18 @@ BOOL CALLBACK vncAcceptDialog::vncAcceptDlgProc(HWND hwnd,
 
 			// Beep
 			MessageBeep(MB_ICONEXCLAMATION);
+
+			// Faz a janela piscar na barra de tarefas
+			PFLASHWINFO fhwInfo = new FLASHWINFO();
+			fhwInfo->cbSize = sizeof (FLASHWINFO);
+			fhwInfo->dwFlags = FLASHW_ALL | FLASHW_TIMERNOFG;
+			fhwInfo->dwTimeout = 1000;
+			fhwInfo->hwnd = hwnd;
+			fhwInfo->uCount = 60;
+			FlashWindowEx(fhwInfo);
+
+			DWORD threadID;
+			CreateThread(NULL, 0, makeWndBlink, (LPVOID) hwnd, 0, &threadID);
             
             // Return success!
 			return TRUE;
@@ -207,6 +222,10 @@ BOOL CALLBACK vncAcceptDialog::vncAcceptDlgProc(HWND hwnd,
 
 		break;
 
+	case WM_ACTIVATE:
+	case WM_MOUSEACTIVATE:
+		SetEvent(isWindowActivated);
+		break;
 		// Window is being destroyed!  (Should never happen)
 	case WM_DESTROY:
 		EndDialog(hwnd, IDREJECT);
@@ -215,3 +234,29 @@ BOOL CALLBACK vncAcceptDialog::vncAcceptDlgProc(HWND hwnd,
 	return 0;
 }
 
+DWORD WINAPI makeWndBlink(LPVOID lParam) {
+	HWND hwnd = (HWND) lParam;
+	int percentage = 100;
+	int flip = -1;
+	isWindowActivated = CreateEvent(0, FALSE, FALSE, 0);
+
+	while (WaitForSingleObject(isWindowActivated, 10)) {
+		if (percentage == 25) {
+			flip = 1;
+		} else if (percentage == 100) {
+			flip = -1;
+			Sleep(1000);
+		}
+		percentage += (1 * flip);
+
+		LONG ExtendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+		SetWindowLong(hwnd, GWL_EXSTYLE, ExtendedStyle | WS_EX_LAYERED);
+		double TransparencyPercentage = (double) percentage;
+		double fAlpha = TransparencyPercentage * (255.0 /100);
+		BYTE byAlpha = static_cast<BYTE>(fAlpha);
+		SetLayeredWindowAttributes(hwnd, 0, byAlpha, LWA_ALPHA);
+	}
+	SetLayeredWindowAttributes(hwnd, 0, static_cast<BYTE>(100 * (255.0 /100)), LWA_ALPHA);
+
+	return 0;
+}

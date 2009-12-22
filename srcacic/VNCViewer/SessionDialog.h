@@ -29,7 +29,7 @@
 #include "MRU.h"
 #include <DSMPlugin/DSMPlugin.h>
 
-class SessionDialog  
+class SessionDialog
 {
 public:
 

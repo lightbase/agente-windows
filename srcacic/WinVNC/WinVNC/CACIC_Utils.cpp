@@ -6,13 +6,25 @@
 
 #include "CACIC_Utils.h"
 
+#include <Iphlpapi.h>
+#pragma comment(lib, "iphlpapi.lib")
+
+#include <math.h>
+
+#include <sstream>
+#include <iostream>
+
+#include "CACIC_Exception.h"
+
 const string CACIC_Utils::F_SANS_SERIF = "Microsoft Sans Serif";
 
-string CACIC_Utils::leTag(char xml[], char tagname[])
+void CACIC_Utils::leTag(char xml[], char tagname[],  string &conteudo)
 {
-	char* tag;
-	char* a_xml = new char[strlen(xml)];
+	// 1 posição maior por causa do null character
+	const int xmlLen = strlen(xml) + 1;
+	char* a_xml = new char[xmlLen];
 	strcpy(a_xml, xml);
+	char* tag;
 
 	// pega o conteudo da tag de resposta tagname
 	tag = strtok(a_xml, "<>");
@@ -21,17 +33,16 @@ string CACIC_Utils::leTag(char xml[], char tagname[])
 		tag = strtok(NULL, "<>");
 	}
 
-	string errorMsg = "Falha ao ler arquivo xml.";
+	string errorMsg = "Falha na comunicação com o módulo Gerente WEB.";
 	//string errorMsg = "Tag ";
 	//errorMsg.append(tagname);
 	//errorMsg.append(" não encontrada!");
 	if (tag == NULL) throw SRCException(errorMsg);
 
 	tag = strtok(NULL, "<>");
-	string content;
-	content = tag;
-
-	return content;
+	
+	conteudo = string(tag);
+	delete a_xml;
 }
 
 void CACIC_Utils::replaceAll(string &str, string key, string newkey)
@@ -161,4 +172,108 @@ void CACIC_Utils::changeFont(HWND dlgHandle, int dlgItem, int fontSize, string f
 	hFont = CreateFontIndirect (&lfFont);
 
 	SendMessage(GetDlgItem(dlgHandle, dlgItem), WM_SETFONT, (int)hFont, MAKELONG(TRUE, 0));
+}
+
+//void tokenize(const string &str, vector<string> &tokens, const string &delimiters)
+//{
+//    string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+//    string::size_type pos = str.find_first_of(delimiters, lastPos);
+//
+//    while (string::npos != pos || string::npos != lastPos)
+//    {
+//        tokens.push_back(str.substr(lastPos, pos - lastPos));
+//
+//		lastPos = str.find_first_not_of(delimiters, pos);
+//        pos = str.find_first_of(delimiters, lastPos);
+//    }
+//}
+
+string CACIC_Utils::getMACAddress() {
+
+	IP_ADAPTER_INFO AdapterInfo[16];			// Allocate information for up to 16 NICs
+	DWORD dwBufLen = sizeof(AdapterInfo);		// Save the memory size of buffer
+
+	DWORD dwStatus = GetAdaptersInfo(			// Call GetAdapterInfo
+		AdapterInfo,							// [out] buffer to receive data
+		&dwBufLen);								// [in] size of receive data buffer
+	//assert(dwStatus == ERROR_SUCCESS);			// Verify return value is valid, no buffer overflow
+
+	PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;// Contains pointer to current adapter info
+	//do {
+	//	PrintMACaddress(pAdapterInfo->Address); // Print MAC address
+	//	pAdapterInfo = pAdapterInfo->Next;    // Progress through linked list
+	//} while(pAdapterInfo);                    // Terminate if last adapter
+
+	char mac[18];
+	
+	sprintf(mac, "%02X-%02X-%02X-%02X-%02X-%02X", 
+		pAdapterInfo->Address[0], pAdapterInfo->Address[1], pAdapterInfo->Address[2],
+		pAdapterInfo->Address[3], pAdapterInfo->Address[4], pAdapterInfo->Address[5]);
+
+	string macstr = mac;
+
+	return macstr;
+
+}
+
+string CACIC_Utils::getSOID() {
+	OSVERSIONINFO osver;
+	ZeroMemory(&osver, sizeof(OSVERSIONINFO));
+	osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&osver);
+
+	std::stringstream spid;
+	std::stringstream smajorv;
+	std::stringstream sminorv;
+	std::stringstream csd;
+
+	std::string soIDStr;
+	
+	spid << osver.dwPlatformId;
+	soIDStr = spid.str();
+	smajorv << osver.dwMajorVersion;
+	soIDStr += ".";
+	soIDStr += smajorv.str();
+	sminorv << osver.dwMinorVersion;
+	soIDStr += ".";
+	soIDStr += sminorv.str();
+
+	int major;
+	smajorv >> major;
+	int minor;
+	sminorv >> minor;
+	if (major <= 4)
+	{//         Win95          Win98         WinME
+		if (minor == 0 || minor == 10 || minor == 90)
+		{
+			if (osver.szCSDVersion != NULL)
+			{
+				csd << osver.szCSDVersion;
+				soIDStr += ".";
+				soIDStr += csd.str();
+			}
+		}
+	}
+	else
+	{// Win2K acima
+		OSVERSIONINFOEX osverex;
+		ZeroMemory(&osverex, sizeof(OSVERSIONINFOEX));
+		osverex.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+		GetVersionEx((LPOSVERSIONINFOA) &osverex);
+
+		soIDStr += ".";
+		switch (osverex.wProductType)
+		{
+			case VER_NT_WORKSTATION: soIDStr += "1"; break;
+			case VER_NT_DOMAIN_CONTROLLER: soIDStr += "2"; break;
+			case VER_NT_SERVER: soIDStr += "3"; break;
+		}
+
+		std::stringstream scsd;
+		scsd << osverex.wSuiteMask;
+		soIDStr += ".";
+		soIDStr += scsd.str();
+	}
+
+	return soIDStr;
 }

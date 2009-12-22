@@ -609,8 +609,8 @@ vncClientThread::InitAuthenticate()
 	// TODO: aqui é o local provável para o recebimento do usuario e senha do técnico.
 	vnclog.Print(LL_INTINFO, "password authentication");
 
-	// Tirando o timeout do socket para esperar o cliente enviar as informações do técnico.
-	if (!m_socket->SetTimeout(0))
+	// Alterando o timeout para que o cliente tenha tempo de enviar as informações do técnico.
+	if (!m_socket->SetTimeout(60000))
 		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
 
 	// Lê o username
@@ -634,7 +634,7 @@ vncClientThread::InitAuthenticate()
 	if (!m_socket->ReadExact(te_so_cli, sizeof(te_so_cli)))
 		return FALSE;
 	
-	// Colocando o timeout denovo.
+	// Voltando o timeout ao normal.
 	if (!m_socket->SetTimeout(30000))
 		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
 
@@ -1059,7 +1059,6 @@ vncClientThread::run(void *arg)
 	if (!InitVersion())
 	{
 		m_server->RemoveClient(m_client->GetClientId());
-		CACIC_Auth::getInstance()->removeCliente(m_client->GetClientId());
 		
 		// wa@2005 - AutoReconnection attempt if required
 		if (m_server->AutoReconnect())
@@ -1073,7 +1072,6 @@ vncClientThread::run(void *arg)
 	if (!InitAuthenticate())
 	{
 		m_server->RemoveClient(m_client->GetClientId());
-		CACIC_Auth::getInstance()->removeCliente(m_client->GetClientId());
 		return;
 	}
 	CACIC_Auth::getInstance()->m_infoDlg.showInfoDialog();
@@ -1153,13 +1151,11 @@ vncClientThread::run(void *arg)
 	if (!m_socket->SendExact((char *)&server_ini, sizeof(server_ini)))
 	{
 		m_server->RemoveClient(m_client->GetClientId());
-		CACIC_Auth::getInstance()->removeCliente(m_client->GetClientId());
 		return;
 	}
 	if (!m_socket->SendExact(desktopname, strlen(desktopname)))
 	{
 		m_server->RemoveClient(m_client->GetClientId());
-		CACIC_Auth::getInstance()->removeCliente(m_client->GetClientId());
 		return;
 	}
 	vnclog.Print(LL_INTINFO, VNCLOG("sent pixel format to client\n"));
@@ -1185,6 +1181,11 @@ vncClientThread::run(void *arg)
 	// added jeff
 	BOOL need_to_disable_input = m_server->LocalInputsDisabled();
     bool need_to_clear_keyboard = true;
+
+	// TODO CACIC tirando o timeout do socket. Quando o chat está aberto sem mensagens,
+	// não há fluxo no socket, fazendo com que ele de timeout,
+	if (!m_socket->SetTimeout(0))
+		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
 	while (connected)
 	{
 		rfbClientToServerMsg msg;
@@ -1236,6 +1237,10 @@ vncClientThread::run(void *arg)
 		// What to do is determined by the message id
 		switch(msg.type)
 		{
+
+		case rfbNoLogout:
+			CACIC_Auth::getInstance()->m_efetuarLogout = false;
+			break;
 
 		case rfbSetPixelFormat:
 			// Read the rest of the message:
@@ -2674,6 +2679,9 @@ vncClientThread::run(void *arg)
 		}
 
 	}
+	// TODO CACIC voltando o timeout ao normal
+	if (!m_socket->SetTimeout(30000))
+		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
 
 	// Move into the thread's original desktop
 	// TAG 14

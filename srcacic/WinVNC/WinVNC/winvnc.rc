@@ -117,15 +117,16 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     CTEXT           "ESTAÇÃO DE TRABALHO EM SUPORTE REMOTO",IDC_AVISO_SUPORTE,54,12,205,11
     CTEXT           "ATENÇÃO",IDC_ATENCAO_STATIC,54,2,205,10
-    LTEXT           "Nome:",IDC_STATIC,54,22,24,8
-    LTEXT           "IP:",IDC_STATIC,54,32,10,8
-    LTEXT           "Início:",IDC_STATIC,54,42,20,8
+    LTEXT           "Nome:",IDC_NOME_LBL,54,22,24,8
+    LTEXT           "IP:",IDC_IP_LBL,54,32,10,8
+    LTEXT           "Início:",IDC_INICIO_LBL,54,42,20,8
     LTEXT           "",IDC_INFO_NOME,78,23,181,8,0,WS_EX_TRANSPARENT
     LTEXT           "",IDC_INFO_IP,78,32,181,8,0,WS_EX_TRANSPARENT
     LTEXT           "",IDC_INFO_INICIO,78,41,181,8,0,WS_EX_TRANSPARENT
-    LTEXT           "Doc. Referência:",IDC_STATIC_INFO_REF,54,51,57,8
+    LTEXT           "Doc. Referência:",IDC_DOC_LBL,54,51,57,8
     LTEXT           "",IDC_INFO_REFERENCIA,111,51,148,8
     CONTROL         163,IDC_SRCACIC_IMG,"Static",SS_BITMAP,0,0,54,62
+    CTEXT           "ATENÇÃO: O sistema efetuará logout em 20 segundos!",IDC_AVISO_LOGOUT,54,2,205,58,NOT WS_VISIBLE,WS_EX_TRANSPARENT
 END
 
 
@@ -222,8 +223,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,5,0,804
- PRODUCTVERSION 2,5,0,804
+ FILEVERSION 2,5,9,0
+ PRODUCTVERSION 2,6,0,0
  FILEFLAGSMASK 0x37L
 #ifdef _DEBUG
  FILEFLAGS 0x25L
@@ -236,20 +237,21 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "000004b0"
+        BLOCK "080004b0"
         BEGIN
-            VALUE "CompanyName", "Dataprev - Unidade Regional Espírito Santo"
-            VALUE "FileDescription", "Módulo Suporte Remoto Seguro do Sistema CACIC"
-            VALUE "FileVersion", "2, 5, 0, 804"
+            VALUE "Comments", "Licença: GNU/LGPL"
+            VALUE "CompanyName", "Dataprev-Emp. de TI da Prev Social - UDSL/SSLC"
+            VALUE "FileDescription", "Sistema CACIC - Módulo Suporte Remoto Seguro"
+            VALUE "FileVersion", "2.5.9.0"
             VALUE "InternalName", "srCACICsrv"
             VALUE "LegalCopyright", "Copyright © 2008 DATAPREV"
-            VALUE "LegalTrademarks", "srCACIC"
-            VALUE "ProductVersion", "2, 5, 0, 804"
+            VALUE "ProductName", "srCACIC"
+            VALUE "ProductVersion", "2.6.0.0"
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x0, 1200
+        VALUE "Translation", 0x800, 1200
     END
 END
 
@@ -393,7 +395,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",ID_POK,55,130,50,13
     PUSHBUTTON      "Cancelar",ID_PCANCELAR,117,130,50,13
     COMBOBOX        IDC_DOMAIN_CB,84,59,83,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "v2.5.0.804",IDC_AUTHDLG_VERSION,187,145,36,8,SS_CENTERIMAGE,WS_EX_STATICEDGE
+    CTEXT           "v2.6.0.0",IDC_AUTHDLG_VERSION,187,145,36,8,SS_CENTERIMAGE,WS_EX_STATICEDGE
     CTEXT           "Por favor, preencha as informações solicitadas abaixo, para a autenticação de seu usuário.",IDC_AUTH_INFO,3,38,216,18
     EDITTEXT        IDC_MSG,3,111,216,17,ES_CENTER | ES_MULTILINE | ES_READONLY | NOT WS_BORDER
     CTEXT           "ATENÇÃO: Esta autenticação, que precede a abertura de sessão para suporte remoto, atribui ao usuário a total responsabilidade por todo e qualquer tipo de dano lógico à estação que porventura seja causado por acesso externo indevido.",IDC_ATT_MSG,3,3,216,33
@@ -409,7 +411,7 @@ BEGIN
     EDITTEXT        IDC_USER_EDIT,69,58,83,12,ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",ID_POK,45,76,45,13
     PUSHBUTTON      "Cancelar",ID_PCANCELAR,102,76,45,13
-    CTEXT           "v2.5.0.804",IDC_AUTHDLG_VERSION,159,90,36,8,SS_CENTERIMAGE,WS_EX_STATICEDGE
+    CTEXT           "v2.6.0.0",IDC_AUTHDLG_VERSION,159,90,36,8,SS_CENTERIMAGE,WS_EX_STATICEDGE
     CTEXT           "Por favor, digite seu nome no campo abaixo.",IDC_AUTH_INFO,3,46,188,10
     CTEXT           "ATENÇÃO: Esta autenticação, que precede a abertura de sessão para suporte remoto, atribui ao usuário a total responsabilidade por todo e qualquer tipo de dano lógico à estação que porventura seja causado por acesso externo indevido.",IDC_ATT_MSG,3,3,188,40
 END

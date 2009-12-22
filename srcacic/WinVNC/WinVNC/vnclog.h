@@ -84,6 +84,11 @@ public:
 	// the log mode includes ToFile
     void SetFile(const char* filename, bool append = false);
 
+	/**
+	* Verifica a existencia do diretorio debugs.
+	*/
+
+
 	virtual ~VNCLog();
 
 private:

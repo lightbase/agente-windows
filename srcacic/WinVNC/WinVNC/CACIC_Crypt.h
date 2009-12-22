@@ -7,12 +7,8 @@
 #ifndef _CACIC_CRYPT_
 #define _CACIC_CRYPT_
 
-#include <math.h>
-
-#include "CACIC_Utils.h"
-
-#include "Rijndael.h"
-#include "base64.h"
+#include <string>
+using namespace std;
 
 class CACIC_Crypt {
 
@@ -22,14 +18,14 @@ public:
 	 * Remove da String de entrada os caracteres colocados pela URLEncode, 
 	 * tira do Base64 e depois decodifica usando o Rijndael.
 	 * @param entrada String a ser decodificada.
-	 * @return string String decodificada.
+	 * @param saida String decodificada.
 	 */
 	static string decodifica(const char* entrada);
 
 	/**
 	 * Codifica a String passada com o algoritmo Rijndael e coloca no Base64.
 	 * @param entrada String a ser codificada.
-	 * @return string String codificada.
+	 * @param saida String codificada.
 	 */
 	static string codifica(const char* entrada);
 

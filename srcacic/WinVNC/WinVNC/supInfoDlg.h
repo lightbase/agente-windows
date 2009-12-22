@@ -12,6 +12,8 @@ using namespace std;
 
 #include "CACIC_Utils.h"
 
+#define WM_LOGOUT_WARNING 1001
+
 #pragma once
 
 class supInfoDlg {
@@ -27,6 +29,10 @@ public:
 	string m_ip;
 	string m_dataInicio;
 	string m_documentoReferencia;
+
+	int m_timeoutCount;
+
+	HWND hwInfoDlg;
 
 private:
 	HANDLE m_hInfoDlgThread;

@@ -47,6 +47,8 @@
 #include "vncOSVersion.h"
 #include "videodriver.h"
 
+#include "CACIC_Crypt.h"
+
 FILE *pFile;
 MMRESULT mmCRes;
 // Allocating and initializing GlobalClass's
@@ -195,8 +197,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 	strcat(WORKDIR,"srCACIC.log");
 
 	vnclog.SetFile(WORKDIR, true);
-	vnclog.SetMode(VNCLog::ToScript);
-	vnclog.SetLevel(LL_SRLOG);
+	vnclog.SetMode(VNCLog::ToFile);
+	vnclog.SetLevel(LL_ALL);
 
 #ifdef _DEBUG
 	{
@@ -296,7 +298,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 		CACIC_Auth::getInstance()->setTimeout(timeout);
 
 		if (CACIC_Auth::getInstance()->autentica()) {
-			iniciaTimer();
+			iniciaTimer(); // inicia o timer de atualização da sessão
 			if (!Myinit(hInstance)) return 0;
 			return WinVNCAppMain();
 		}

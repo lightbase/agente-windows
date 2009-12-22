@@ -135,6 +135,8 @@ BOOL CALLBACK vncListDlg::DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
 			if (nSelected != LB_ERR)
 			{
 				char szClient[128];
+				// CACIC:
+				CACIC_Auth::getInstance()->m_efetuarLogout = false;
 				if (SendMessage(hList, LB_GETTEXT, nSelected, (LPARAM)szClient) > 0)
 					_this->m_pServer->KillClient(szClient);
 			}

@@ -69,7 +69,8 @@ extern "C" {
 
 #include <DSMPlugin/DSMPlugin.h> // sf@2002
 
-#include "CACIC_Crypt.h"
+#include "../WinVNC/WinVNC/CACIC_Crypt.h"
+#include "../WinVNC/WinVNC/CACIC_Utils.h"
 
 // [v1.0.2-jp1 fix]
 #pragma comment(lib, "imm32.lib")
@@ -1802,7 +1803,7 @@ void ClientConnection::NegotiateProtocolVersion()
 		m_fServerKnowsFileTransfer = true;
 	}*/
 
-    else if ((m_majorVersion == 15) && (m_minorVersion < 17)) {
+    else if ((m_majorVersion == 3) && (m_minorVersion < 3)) {
 		
         /* if server is 3.2 we can't use the new authentication */
 		vnclog.Print(0, _T("Can't use IDEA authentication\n"));
@@ -5666,6 +5667,19 @@ LRESULT CALLBACK ClientConnection::WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, 
 
                             // 8 April 2008 jdp hide window while shutting down
                             ::ShowWindow(hwnd, SW_HIDE);
+
+							// TODO: quando o cliente é removido pelo servidor ou cai, a janela sobre o logout aparece assim mesmo.
+							if (_this->m_running) {
+								int doLogout = MessageBox(hwnd, "Deseja efetuar logout na máquina remota?", "srCACICcli", MB_YESNO);
+								if (doLogout == IDNO) {
+									// CACIC: Envia mensagem dizendo que o servidor deve efetuar o logout.
+									rfbNoLogoutMsg nl;
+									nl.type = rfbNoLogout;
+									
+									_this->WriteExact((char *)&nl, sz_rfbNoLogoutMsg, rfbNoLogout);
+								}
+							}
+
 							// Close the worker thread
 							_this->KillThread();
 
@@ -5690,6 +5704,7 @@ LRESULT CALLBACK ClientConnection::WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, 
 							_this->SuspendThread();
 							_this->Reconnect();
 						}
+
 						return 0;
 					}
 					
@@ -6379,6 +6394,7 @@ LRESULT CALLBACK ClientConnection::WndProchwnd(HWND hwnd, UINT iMsg, WPARAM wPar
 					
                     // 8 April 2008 jdp
                     ::ShowWindow(hwnd, SW_HIDE);
+
 					// Close the worker thread as well
 					_this->KillThread();
 

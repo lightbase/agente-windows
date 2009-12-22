@@ -289,6 +289,7 @@ typedef struct {
 
 /* client -> server */
 
+#define rfbNoLogout 100
 #define rfbSetPixelFormat 0
 #define rfbFixColourMapEntries 1	/* not currently supported */
 #define rfbSetEncodings 2
@@ -877,6 +878,11 @@ typedef struct {
  *
  *****************************************************************************/
 
+typedef struct {
+    CARD8 type;
+} rfbNoLogoutMsg;
+
+#define sz_rfbNoLogoutMsg 3
 
 /*-----------------------------------------------------------------------------
  * SetPixelFormat - tell the RFB server the format in which the client wants
@@ -1091,6 +1097,7 @@ typedef struct _rfbSetSWMsg {
 
 typedef union {
     CARD8 type;
+	rfbNoLogoutMsg nl;
     rfbSetPixelFormatMsg spf;
     rfbFixColourMapEntriesMsg fcme;
     rfbSetEncodingsMsg se;

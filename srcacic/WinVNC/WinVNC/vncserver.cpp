@@ -131,7 +131,7 @@ vncServer::vncServer()
 	
 	m_querysetting = 4;
 	m_queryaccept = 0;
-	m_querytimeout = 30;
+	m_querytimeout = 60;
 	m_retry_timeout = 0;
 
 	// Autolock settings
@@ -994,7 +994,6 @@ vncServer::RemoveClient(vncClientId clientid)
 
 	// Notify anyone interested of the change
 	DoNotify(WM_SRV_CLIENT_DISCONNECT, 0, 0);
-
 	vnclog.Print(LL_INTINFO, VNCLOG("RemoveClient() done\n"));
 }
 

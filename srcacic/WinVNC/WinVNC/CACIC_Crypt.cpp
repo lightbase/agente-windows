@@ -6,6 +6,13 @@
 
 #include "CACIC_Crypt.h"
 
+#include "CACIC_Utils.h"
+
+#include <math.h>
+
+#include "Rijndael.h"
+#include "base64.h"
+
 const unsigned int CACIC_Crypt::SRCACIC_BLOCK_SIZE = 16;
 const unsigned int CACIC_Crypt::SRCACIC_KEY_SIZE = 16;
 const char CACIC_Crypt::SRCACIC_KEY[17] = "CacicBrasil";
@@ -20,41 +27,40 @@ string CACIC_Crypt::decodifica(const char* entrada)
 
 	decode_base64 = base64_decode(entradaStr);
 
-	unsigned int saida_len = decode_base64.length();
+	const unsigned int saidaLen = decode_base64.length();
 
-	char* saida = new char[saida_len + 1];
-	memset(saida, 0, saida_len + 1);
+	const unsigned int buffLen = saidaLen + 1;
+	char* saidaBuff = new char[buffLen];
+	memset(saidaBuff, 0, buffLen);
 
 	CRijndael oRijndael;
 	oRijndael.MakeKey(SRCACIC_KEY, SRCACIC_IV, SRCACIC_KEY_SIZE, SRCACIC_BLOCK_SIZE);
-	oRijndael.Decrypt(decode_base64.c_str(), saida, saida_len, CRijndael::CBC);
+	oRijndael.Decrypt(decode_base64.c_str(), saidaBuff, saidaLen, CRijndael::CBC);
 
-	string out(saida);
-
-	delete []saida;
-	return out;
+	string saida = string(saidaBuff);
+	delete []saidaBuff;
+	return saida;
 }
 
 string CACIC_Crypt::codifica(const char* entrada)
 {
-	unsigned int entrada_len = strlen(entrada);
-	unsigned int saida_len = (int)ceil((float)(entrada_len)/SRCACIC_BLOCK_SIZE)*SRCACIC_BLOCK_SIZE;
+	const unsigned int entradaLen = strlen(entrada);
+	const unsigned int saidaLen = (int)ceil((float)(entradaLen)/SRCACIC_BLOCK_SIZE)*SRCACIC_BLOCK_SIZE;
 
-	char* saida = new char[saida_len + 1];
-	memset(saida, 0, saida_len + 1);
-	char* zerof_entrada = new char[saida_len + 1];
-	memset(zerof_entrada, 0, saida_len + 1);
+	const unsigned int buffLen = saidaLen + 1;
+	char* saidaBuff = new char[buffLen];
+	memset(saidaBuff, 0, buffLen);
+	char* zerofEntrada = new char[buffLen];
+	memset(zerofEntrada, 0, buffLen);
 
-	strncpy(zerof_entrada, entrada, entrada_len);
+	strncpy(zerofEntrada, entrada, entradaLen);
 
 	CRijndael oRijndael;
 	oRijndael.MakeKey(SRCACIC_KEY, SRCACIC_IV, SRCACIC_KEY_SIZE, SRCACIC_BLOCK_SIZE);
-	oRijndael.Encrypt(zerof_entrada, saida, saida_len, CRijndael::CBC);
+	oRijndael.Encrypt(zerofEntrada, saidaBuff, saidaLen, CRijndael::CBC);
 
-	string encode_base64;
-	encode_base64 = base64_encode(reinterpret_cast<const unsigned char*>(saida), saida_len);
-
-	delete []saida;
-	delete []zerof_entrada;
-	return encode_base64;
+	string saida = base64_encode(reinterpret_cast<const unsigned char*>(saidaBuff), saidaLen);
+	delete []saidaBuff;
+	delete []zerofEntrada;
+	return saida;
 }

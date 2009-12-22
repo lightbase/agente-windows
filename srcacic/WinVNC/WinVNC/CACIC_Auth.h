@@ -7,44 +7,11 @@
 #ifndef _CACIC_AUTH_
 #define _CACIC_AUTH_
 
-#include "stdhdrs.h"
-
 #include <vector>
-using namespace std;
-#include <sstream>
 #include <string>
 using namespace std;
 
-#include <math.h>
-
-#include "vncPassDlg.h"
 #include "supInfoDlg.h"
-
-#include "CACIC_Con.h"
-#include "CACIC_Crypt.h"
-#include "CACIC_Exception.h"
-#include "CACIC_Utils.h"
-
-#include "vncClient.h"
-
-/**
- * Struct referente a um usuário cliente.
- */
-struct ClienteSRC {
-	vncClientId vncCID;
-	string peerName;
-	string id_usuario_visitante; 
-	string id_usuario_cli; 
-	string id_conexao; 
-	string nm_usuario_completo; 
-	string te_node_address_visitante; 
-	string te_node_address_cli; 
-	string te_documento_referencial; 
-	string te_motivo_conexao; 
-	string te_so_visitante; 
-	string te_so_cli; 
-	string dt_hr_inicio_sessao; 
-};
 
 class CACIC_Auth {
 
@@ -72,6 +39,11 @@ public:
 	 * Exibida enquanto há suporte em andamento.
 	 */
 	supInfoDlg m_infoDlg;
+
+	/**
+	 * Variável de decisão sobre o logout do sistema após o suporte.
+	 */
+	bool m_efetuarLogout;
 
 	/** Singleton. */
 	static CACIC_Auth* getInstance()
@@ -107,7 +79,7 @@ public:
 	 * @param vncCID ID do cliente VNC, utilizado para
 	 * diferenciar os clientes, caso haja mais de um.
 	 */
-	void removeCliente(vncClientId vncCID);
+	void removeCliente(short vncCID);
 
 	/**
 	 * Faz a comunicação com o gerente web para validar a palavra chave
@@ -130,7 +102,7 @@ public:
 	 */
 	bool validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char te_node_address_cli[],
 					   char te_documento_referencial[], char te_motivo_conexao[], char te_so_cli[], 
-					   const vncClientId vncCID, const char peerName[]);
+					   const short vncCID, const char peerName[]);
 	
 	/**
 	 * Se comunica com o gerente web para atualizar a sessão de suporte.
@@ -154,6 +126,7 @@ private:
 
 	CACIC_Auth() {
 		m_idleTime = TEMPO_IDLE;
+		m_efetuarLogout = true;
 	}
 
 	virtual ~CACIC_Auth() {}
@@ -229,7 +202,7 @@ private:
 	 */
 	bool verificaAuthTecnico(char resposta[], char te_node_address_cli[], char te_documento_referencial[],
 							 char te_motivo_conexao[], char te_so_cli[], 
-							 const vncClientId vncCID, const char peerName[]);
+							 const short vncCID, const char peerName[]);
 
 	/**
 	 * Verifica o valor de retorno STATUS que é enviado pelo gerente web

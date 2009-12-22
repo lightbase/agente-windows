@@ -23,17 +23,6 @@ using namespace std;
 
 #pragma once
 
-/**
- * Struct referente a um domínio de autenticação.
- */
-struct Dominio {
-	Dominio(string p_id, string p_nome) : id(p_id), nome(p_nome) {}
-	Dominio() : id(""), nome("") {}
-
-	string id;
-	string nome;
-};
-
 class vncPassDlg {
 
 public:
@@ -53,6 +42,9 @@ public:
 
 	EAuthCode m_authStat;
 	string m_msgInfo;
+
+	// Campo extra para fazer o timeout da janela!
+	UINT m_timeoutPassDlg;
 
 	BOOL DoDialog();
 

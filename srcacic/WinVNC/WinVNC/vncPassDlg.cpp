@@ -54,7 +54,14 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 
 	switch (uMsg)
 	{
+		/**	Os cases desse switch se referem as mensagens de notificação lançadas
+		por processos de threads.*/
+
 		case WM_INITDIALOG:
+		/**	Case 1: Case de construção da janela de Autenticação. É um estado
+		estático. Aqui a primeira janela de dialogo do suporte remoto é
+		montada. De acordo com as respostas obtidas pela interação do usuario,
+		essa janela é tambem aqui, reformulada.*/
 		{
 			// Save the lParam into our user data so that subsequent calls have
 			// access to the parent C++ object
@@ -91,7 +98,7 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 			}
 
 			if (_this->m_authStat == vncPassDlg::FALHA_AUTENTICACAO)
-			{
+			{	// Mensagem da faixa na cor vermelha, informando falha.
 				msgBkColor = CreateSolidBrush(RGB(242, 0, 28));
 
 				SendMessage(hDominios, CB_SELECTSTRING, 0, (LPARAM) _this->m_listaDominios.at(_this->m_indiceDominio).nome.c_str());
@@ -101,7 +108,7 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				SetDlgItemText(hwnd, IDC_MSG, (LPSTR) "Falha na Autenticação!");
 			}
 			else if (_this->m_authStat == vncPassDlg::AUTENTICADO)
-			{
+			{	// Mensagem da faixa na cor verde, validando o suporte.
 				msgBkColor = CreateSolidBrush(RGB(102, 255, 0));
 
 				SendMessage(hDominios, CB_SELECTSTRING, 0, (LPARAM) _this->m_listaDominios.at(_this->m_indiceDominio).nome.c_str());
@@ -116,13 +123,18 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				EnableWindow( hSenha, FALSE );
 
 				SetDlgItemText( hwnd, IDC_MSG, (LPSTR)_this->m_msgInfo.c_str() );
-			}
 
+				//Lança um timeout sobre o botao de OK, confirmando a autenticação.
+				_this->m_timeoutPassDlg = (UINT)5;
+				SetTimer(hwnd,1,1000,NULL);
+			}
 			return TRUE;
 		}
 		break;
 
 		case WM_COMMAND:
+		/**	Case 2: Estado dinâmico interativo, onde os comandos são captados e exibidos
+		em tempo de uso.*/
 		{
 			switch (LOWORD(wParam))
 			{
@@ -163,7 +175,25 @@ BOOL CALLBACK vncPassDlg::vncAuthDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 			}
 		}
 		break;
-
+	
+		case WM_TIMER:
+		/**	Case 3: Estado de detecção de um timeout. Ele verifica que um timeout
+		ocorreu em algum momento e a partir dele, toma as devidas ações.*/
+		{
+			//Atualiza a Mensagem no botão de OK da janela de Autenticação.
+			char temp[256];
+			sprintf(temp, "OK [%u]", (_this->m_timeoutPassDlg));
+			SetDlgItemText(hwnd, ID_POK, temp);
+			
+			/**	Fecha a janela de autenticação "clicando automaticamente
+			no botao OK".*/
+			if (!(_this->m_timeoutPassDlg))	EndDialog(hwnd, ID_POK);
+			_this->m_timeoutPassDlg--;
+		}
+		break;
+		
+		/**	Case 4: Estado de atualização da janela. De acordo com a interação
+		com o menu, os campos mudam de layout, se tornando transparentes.*/
 		case WM_CTLCOLORSTATIC:
 		{
 			HDC hdc = (HDC)wParam;
