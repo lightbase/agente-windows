@@ -1310,9 +1310,12 @@ begin
               // Procedimento para que sejam igualadas as informações de patrimônio caso seja usado o MapaCACIC
               EqualizaInformacoesPatrimoniais;
 
-              // Inicializo bloqueando o módulo de suporte remoto seguro na FireWall nativa.
-              if FileExists(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe') then
-                g_oCacic.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe', false);
+              Try
+                // Inicializo bloqueando o módulo de suporte remoto seguro na FireWall nativa.
+                if FileExists(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe') then
+                  g_oCacic.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe', false);
+              Except
+              End;
 
               if (ParamCount > 0) then //Caso o Cacic2 seja chamado com passagem de parâmetros...
                 Begin
@@ -2433,8 +2436,11 @@ begin
 
       g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -kill',false,SW_HIDE);
 
-      // Bloqueio o módulo de suporte remoto seguro na FireWall nativa.
-      g_oCacic.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe', false);
+      Try
+        // Bloqueio o módulo de suporte remoto seguro na FireWall nativa.
+        g_oCacic.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe', false);
+      Except
+      End;
 
       boolServerON := false;
     End
@@ -2499,8 +2505,11 @@ begin
                                                                                         '[' + v_strNuPortaSR                                                                                                + ']' +
                                                                                         '[' + v_strNuTimeOutSR                                                                                              + ']');
 
-          // Libero o módulo de suporte remoto seguro na FireWall nativa.
-          g_oCacic.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe', true);
+          Try
+            // Libero o módulo de suporte remoto seguro na FireWall nativa.
+            g_oCacic.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe', true);
+          Except
+          End;
 
           g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\srcacicsrv.exe -start [' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.EnderecoServidor', v_tstrCipherOpened)) + ']' +
                                                                                              '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
