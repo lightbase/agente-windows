@@ -102,10 +102,10 @@ vncEncodeZlib::~vncEncodeZlib()
 	}
 	compStreamInited = false;
 
-	vnclog.Print(LL_INTINFO, VNCLOG("Zlib Xor encoder stats: rawdata=%d  protocol=%d compressed=%d transmitted=%d\n"),dataSize, rectangleOverhead, encodedSize,transmittedSize);
+	vnclog.Print(LL_INTINFO, VNCLOG("Zlib Xor encoder stats: rawdata=%d  protocol=%d compressed=%d transmitted=%d"),dataSize, rectangleOverhead, encodedSize,transmittedSize);
 
 	if (dataSize != 0) {
-		vnclog.Print(LL_INTINFO, VNCLOG("Zlib Xor encoder efficiency: %.3f%%\n"),(double)((double)((dataSize - transmittedSize) * 100) / dataSize));
+		vnclog.Print(LL_INTINFO, VNCLOG("Zlib Xor encoder efficiency: %.3f%%"),(double)((double)((dataSize - transmittedSize) * 100) / dataSize));
 	}
 }
 
@@ -182,7 +182,7 @@ vncEncodeZlib::EncodeRect(BYTE *source,BYTE *source2, VSocket *outConn, BYTE *de
 	partialRect.bottom = rect.br.y;
 
 	/* WBB: For testing purposes only! */
-	// vnclog.Print(LL_INTINFO, VNCLOG("rect.right=%d rect.left=%d rect.top=%d rect.bottom=%d\n"), rect.right, rect.left, rect.top, rect.bottom);
+	// vnclog.Print(LL_INTINFO, VNCLOG("rect.right=%d rect.left=%d rect.top=%d rect.bottom=%d"), rect.right, rect.left, rect.top, rect.bottom);
 
 	maxLines = ( ZLIB_MAX_SIZE(rectW) / rectW );
 	linesRemaining = rectH;
@@ -199,7 +199,7 @@ vncEncodeZlib::EncodeRect(BYTE *source,BYTE *source2, VSocket *outConn, BYTE *de
 		partialRect.bottom = partialRect.top + linesToComp;
 
 		/* WBB: For testing purposes only! */
-		// vnclog.Print(LL_INTINFO, VNCLOG("partialRect.right=%d partialRect.left=%d partialRect.top=%d partialRect.bottom=%d\n"), partialRect.right, partialRect.left, partialRect.top, partialRect.bottom);
+		// vnclog.Print(LL_INTINFO, VNCLOG("partialRect.right=%d partialRect.left=%d partialRect.top=%d partialRect.bottom=%d"), partialRect.right, partialRect.left, partialRect.top, partialRect.bottom);
 
 		partialSize = EncodeOneRect( source,source2, dest, partialRect,outConn );
 		totalSize += partialSize;
@@ -302,7 +302,7 @@ vncEncodeZlib::EncodeOneRect(BYTE *source,BYTE *source2, BYTE *dest, const RECT 
 			{
 				surh->encoding = Swap32IfLE(rfbEncodingSolidColor);
 				memcpy(dest+sz_rfbFramebufferUpdateRectHeader,m_buffer,compStream.avail_in);
-				//vnclog.Print(LL_INTINFO, VNCLOG("Solid \n"));
+				//vnclog.Print(LL_INTINFO, VNCLOG("Solid "));
 				if (m_queueEnable)
 				{
 				AddToQueu(dest,sz_rfbFramebufferUpdateRectHeader +newsize,outConn,0);
@@ -314,7 +314,7 @@ vncEncodeZlib::EncodeOneRect(BYTE *source,BYTE *source2, BYTE *dest, const RECT 
 			{
 				compStream.avail_in = newsize;
 				surh->encoding = Swap32IfLE(rfbEncodingXORMonoColor_Zlib);
-				//vnclog.Print(LL_INTINFO, VNCLOG("Mono \n"));
+				//vnclog.Print(LL_INTINFO, VNCLOG("Mono "));
 				if (m_queueEnable)
 				{
 				memcpy(dest+sz_rfbFramebufferUpdateRectHeader,m_buffer,newsize);
@@ -328,7 +328,7 @@ vncEncodeZlib::EncodeOneRect(BYTE *source,BYTE *source2, BYTE *dest, const RECT 
 			{
 				compStream.avail_in = newsize;
 				surh->encoding = Swap32IfLE(rfbEncodingXORMultiColor_Zlib);
-				///vnclog.Print(LL_INTINFO, VNCLOG("MultiColor \n"));
+				///vnclog.Print(LL_INTINFO, VNCLOG("MultiColor "));
 				break;
 			}
 
@@ -342,7 +342,7 @@ vncEncodeZlib::EncodeOneRect(BYTE *source,BYTE *source2, BYTE *dest, const RECT 
 					AddToQueu(dest,sz_rfbFramebufferUpdateRectHeader +newsize,outConn,1);
 					return 0;
 				}
-				///vnclog.Print(LL_INTINFO, VNCLOG("XOR \n"));
+				///vnclog.Print(LL_INTINFO, VNCLOG("XOR "));
 				break;
 			}
 
@@ -357,7 +357,7 @@ vncEncodeZlib::EncodeOneRect(BYTE *source,BYTE *source2, BYTE *dest, const RECT 
 				}
 
 				surh->encoding = Swap32IfLE(rfbEncodingZlib);
-				///vnclog.Print(LL_INTINFO, VNCLOG("Pure \n"));
+				///vnclog.Print(LL_INTINFO, VNCLOG("Pure "));
 				break;
 			}
 	}
@@ -377,7 +377,7 @@ vncEncodeZlib::EncodeOneRect(BYTE *source,BYTE *source2, BYTE *dest, const RECT 
 			compStream.zfree = Z_NULL;
 			compStream.opaque = Z_NULL;
 	
-			//vnclog.Print(LL_INTINFO, VNCLOG("calling deflateInit2 with zlib level:%d\n"), m_compresslevel);
+			//vnclog.Print(LL_INTINFO, VNCLOG("calling deflateInit2 with zlib level:%d"), m_compresslevel);
 	
 			deflateResult = deflateInit2( &compStream,
 										m_compresslevel,
@@ -387,7 +387,7 @@ vncEncodeZlib::EncodeOneRect(BYTE *source,BYTE *source2, BYTE *dest, const RECT 
 										Z_DEFAULT_STRATEGY );
 			if ( deflateResult != Z_OK )
 			{
-				vnclog.Print(LL_INTINFO, VNCLOG("deflateInit2 returned error:%d:%s\n"), deflateResult, compStream.msg);
+				vnclog.Print(LL_INTINFO, VNCLOG("deflateInit2 returned error:%d:%s"), deflateResult, compStream.msg);
 				return vncEncoder::EncodeRect(source, dest, rect);
 			}
 			compStreamInited = true;
@@ -401,7 +401,7 @@ vncEncodeZlib::EncodeOneRect(BYTE *source,BYTE *source2, BYTE *dest, const RECT 
 
 		if ( deflateResult != Z_OK )
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("deflate returned error:%d:%s\n"), deflateResult, compStream.msg);
+			vnclog.Print(LL_INTINFO, VNCLOG("deflate returned error:%d:%s"), deflateResult, compStream.msg);
 			return vncEncoder::EncodeRect(source, dest, rect);
 		}
 	
@@ -665,7 +665,7 @@ vncEncodeZlib::SendZlibrects(VSocket *outConn)
 	rfbZlibHeader CacheZipHeader;
 	CacheZipHeader.nBytes = Swap32IfLE(maxCompSize);
 
-	vnclog.Print(LL_INTINFO, VNCLOG("********QUEUEQUEUE********** %d %d %d\r\n"),maxCompSize,rawDataSize,NRects);
+	vnclog.Print(LL_INTINFO, VNCLOG("********QUEUEQUEUE********** %d %d %d"),maxCompSize,rawDataSize,NRects);
 	outConn->SendExactQueue((char *)&CacheRectsHeader, sizeof(CacheRectsHeader));
 	outConn->SendExactQueue((char *)&CacheZipHeader, sizeof(CacheZipHeader));
 	outConn->SendExactQueue((char *)m_QueueCompressedbuffer, maxCompSize);

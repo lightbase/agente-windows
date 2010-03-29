@@ -118,7 +118,7 @@ BEGIN
     CTEXT           "ESTAÇÃO DE TRABALHO EM SUPORTE REMOTO",IDC_AVISO_SUPORTE,54,12,205,11
     CTEXT           "ATENÇÃO",IDC_ATENCAO_STATIC,54,2,205,10
     LTEXT           "Nome:",IDC_NOME_LBL,54,22,24,8
-    LTEXT           "IP:",IDC_IP_LBL,54,32,10,8
+    LTEXT           "IP:",IDC_IP_LBL,54,32,10,8 //IDC_IP_LBL
     LTEXT           "Início:",IDC_INICIO_LBL,54,42,20,8
     LTEXT           "",IDC_INFO_NOME,78,23,181,8,0,WS_EX_TRANSPARENT
     LTEXT           "",IDC_INFO_IP,78,32,181,8,0,WS_EX_TRANSPARENT
@@ -223,7 +223,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,5,9,0
+ FILEVERSION 2,6,0,0
  PRODUCTVERSION 2,6,0,0
  FILEFLAGSMASK 0x37L
 #ifdef _DEBUG
@@ -242,7 +242,7 @@ BEGIN
             VALUE "Comments", "Licença: GNU/LGPL"
             VALUE "CompanyName", "Dataprev-Emp. de TI da Prev Social - UDSL/SSLC"
             VALUE "FileDescription", "Sistema CACIC - Módulo Suporte Remoto Seguro"
-            VALUE "FileVersion", "2.5.9.0"
+            VALUE "FileVersion", "2.6.0.0"
             VALUE "InternalName", "srCACICsrv"
             VALUE "LegalCopyright", "Copyright © 2008 DATAPREV"
             VALUE "ProductName", "srCACIC"

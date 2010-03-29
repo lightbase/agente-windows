@@ -73,7 +73,7 @@ BOOL vncSockConnectThread::Init(VSocket *socket, vncServer *server)
 // Code to be executed by the thread
 void *vncSockConnectThread::run_undetached(void * arg)
 {
-	vnclog.Print(LL_STATE, VNCLOG("Thread de conexão iniciada.\n"));
+	vnclog.Print(LL_STATE, VNCLOG("Thread de conexão iniciada."));
 
 	// Go into a loop, listening for connections on the given socket
 	while (!m_shutdown)
@@ -84,7 +84,7 @@ void *vncSockConnectThread::run_undetached(void * arg)
 			break;
 		else
 		{
-			vnclog.Print(LL_CLIENTS, VNCLOG("accepted connection from %s\n"), new_socket->GetPeerName());
+			vnclog.Print(LL_CLIENTS, VNCLOG("accepted connection from %s"), new_socket->GetPeerName());
 			m_server->AddClient(new_socket, FALSE, FALSE,NULL);
 		}
 
@@ -135,7 +135,7 @@ void *vncSockConnectThread::run_undetached(void * arg)
 					//We need at least a RFB start in the message
 					if (strncmp(protocol_ver,"RFB",3)==NULL)
 					{
-						vnclog.Print(LL_CLIENTS, VNCLOG("accepted connection from %s\n"), new_socket->GetPeerName());
+						vnclog.Print(LL_CLIENTS, VNCLOG("accepted connection from %s"), new_socket->GetPeerName());
 						// Successful accept - start the client unauthenticated
 						m_server->AddClient(new_socket, FALSE, FALSE,&protocol_ver);
 					}
@@ -153,7 +153,7 @@ void *vncSockConnectThread::run_undetached(void * arg)
 	//if (new_socket != null)
 	//	delete new_socket;
 
-	vnclog.Print(LL_STATE, VNCLOG("Terminando a thread de socket...\n"));
+	vnclog.Print(LL_STATE, VNCLOG("Terminando a thread de socket..."));
 
 	return NULL;
 }

@@ -102,7 +102,7 @@ BOOL vncDesktop:: CalculateSWrect(RECT &rect)
 			//eliminate other little windows
 			if ((m_SWHeight!=(rect.bottom-rect.top)) || (m_SWWidth!=(rect.right-rect.left)))
 				m_SWSizeChanged=TRUE;
-			//vnclog.Print(LL_INTINFO, VNCLOG("screen format %d %d %d %d\n"),
+			//vnclog.Print(LL_INTINFO, VNCLOG("screen format %d %d %d %d"),
 			//		rect.top,
 			//		rect.bottom,rect.right,rect.left);
 			if ((rect.bottom-rect.top)<64||(rect.right-rect.left)<128 || rect.bottom<0 ||rect.top<0 || rect.right<0 ||
@@ -145,13 +145,13 @@ void vncDesktop::SWinit()
 	m_SWmoved=FALSE;
 	m_SWOffsetx=0;
 	m_SWOffsety=0;
-	vnclog.Print(LL_INTINFO, VNCLOG("SWinit \n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("SWinit "));
 }
 
 rfb::Rect
 vncDesktop::GetSize()
 {
-//vnclog.Print(LL_INTINFO, VNCLOG("GetSize \n"));
+//vnclog.Print(LL_INTINFO, VNCLOG("GetSize "));
 if (m_server->SingleWindow())
 	{
 	RECT rect;
@@ -170,7 +170,7 @@ else if (!m_videodriver)
 	}
  else
 	{
-//		vnclog.Print(LL_INTINFO, VNCLOG("GetSize \n"));
+//		vnclog.Print(LL_INTINFO, VNCLOG("GetSize "));
 		return rfb::Rect(0,0,mymonitor[current_monitor-1].Width,mymonitor[current_monitor-1].Height);											
 	}
 }
@@ -178,7 +178,7 @@ else if (!m_videodriver)
 rfb::Rect
 vncDesktop::GetQuarterSize()
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("GetQuarterSize \n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("GetQuarterSize "));
 if (m_server->SingleWindow())
 	{
 	RECT rect;
@@ -217,7 +217,7 @@ else
 	m_Cliprect.tl.y=0;
 	m_Cliprect.br.x=m_bmrect.br.x;
 	m_Cliprect.br.y=m_bmrect.br.y;
-	vnclog.Print(LL_INTINFO, VNCLOG("GetQuarterSize \n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("GetQuarterSize "));
 	return rfb::Rect(0, 0, m_bmrect.br.x, m_bmrect.br.y/4);
 	}
 }

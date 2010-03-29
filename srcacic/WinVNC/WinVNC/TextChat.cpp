@@ -347,8 +347,8 @@ LRESULT CALLBACK TextChat::DoDialogThread(LPVOID lpParameter)
 	_this->m_fTextChatRunning = true;
 	// TODO: Place code here.
 	HDESK desktop;
-	//vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop \n"));
-	//vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL\n"));
+	//vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop "));
+	//vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL"));
 	desktop = OpenInputDesktop(0, FALSE,
 								DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
 								DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
@@ -357,9 +357,9 @@ LRESULT CALLBACK TextChat::DoDialogThread(LPVOID lpParameter)
 								);
 
 	if (desktop == NULL)
-		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop Error \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop Error "));
 	else 
-		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop OK\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop OK"));
 
 	HDESK old_desktop = GetThreadDesktop(GetCurrentThreadId());
 	DWORD dummy;
@@ -368,18 +368,18 @@ LRESULT CALLBACK TextChat::DoDialogThread(LPVOID lpParameter)
 
 	if (!GetUserObjectInformation(desktop, UOI_NAME, &new_name, 256, &dummy))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation "));
 	}
 
-	vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x\n"), new_name, desktop, old_desktop);
+	vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x"), new_name, desktop, old_desktop);
 
 	if (!SetThreadDesktop(desktop))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop "));
 	}
 
 	if (!CloseDesktop(old_desktop))
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d)\n"), old_desktop, GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d)"), old_desktop, GetLastError());
 
 	 //	[v1.0.2-jp1 fix]
  	 //DialogBoxParam(hAppInstance, MAKEINTRESOURCE(IDD_TEXTCHAT_DLG), 

@@ -41,14 +41,14 @@ vncEncoder::SendCursorShape(VSocket *outConn, vncDesktop *desktop)
 	// Check mouse cursor handle
 	HCURSOR hcursor = desktop->GetCursor();
 	if (hcursor == NULL) {
-		vnclog.Print(LL_INTINFO, VNCLOG("cursor handle is NULL.\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("cursor handle is NULL."));
 		return FALSE;
 	}
 
 	// Get cursor info
 	ICONINFO IconInfo;
 	if (!GetIconInfo(hcursor, &IconInfo)) {
-		vnclog.Print(LL_INTINFO, VNCLOG("GetIconInfo() failed.\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("GetIconInfo() failed."));
 		return FALSE;
 	}
 	BOOL isColorCursor = FALSE;
@@ -57,19 +57,19 @@ vncEncoder::SendCursorShape(VSocket *outConn, vncDesktop *desktop)
 		DeleteObject(IconInfo.hbmColor);
 	}
 	if (IconInfo.hbmMask == NULL) {
-		vnclog.Print(LL_INTINFO, VNCLOG("cursor bitmap handle is NULL.\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("cursor bitmap handle is NULL."));
 		return FALSE;
 	}
 
 	// Check bitmap info for the cursor
 	BITMAP bmMask;
 	if (!GetObject(IconInfo.hbmMask, sizeof(BITMAP), (LPVOID)&bmMask)) {
-		vnclog.Print(LL_INTINFO, VNCLOG("GetObject() for bitmap failed.\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("GetObject() for bitmap failed."));
 		DeleteObject(IconInfo.hbmMask);
 		return FALSE;
 	}
 	if (bmMask.bmPlanes != 1 || bmMask.bmBitsPixel != 1) {
-		vnclog.Print(LL_INTINFO, VNCLOG("incorrect data in cursor bitmap.\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("incorrect data in cursor bitmap."));
 		DeleteObject(IconInfo.hbmMask);
 		return FALSE;
 	}
@@ -85,7 +85,7 @@ vncEncoder::SendCursorShape(VSocket *outConn, vncDesktop *desktop)
 	DeleteObject(IconInfo.hbmMask);
 
 	if (!success) {
-		vnclog.Print(LL_INTINFO, VNCLOG("GetBitmapBits() failed.\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("GetBitmapBits() failed."));
 		delete[] mbits;
 		return FALSE;
 	}
@@ -109,7 +109,7 @@ vncEncoder::SendCursorShape(VSocket *outConn, vncDesktop *desktop)
 			return FALSE;
 		}
 		if (!desktop->GetRichCursorData(cbits, hcursor, width, height)) {
-			vnclog.Print(LL_INTINFO, VNCLOG("vncDesktop::GetRichCursorData() failed.\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("vncDesktop::GetRichCursorData() failed."));
 			delete[] mbits;
 			delete[] cbits;
 			return FALSE;

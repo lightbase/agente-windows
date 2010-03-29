@@ -277,3 +277,11 @@ string CACIC_Utils::getSOID() {
 
 	return soIDStr;
 }
+
+int CACIC_Utils::DateCompare (SYSTEMTIME d1, SYSTEMTIME d2){
+	if (Compare(d1.wYear,d2.wYear)!=0)
+		return Compare(d1.wYear,d2.wYear);
+		else if (Compare(d1.wMonth,d2.wMonth)!=0)
+			return Compare(d1.wMonth,d2.wMonth);
+			else return Compare(d1.wDay,d2.wDay);	
+};

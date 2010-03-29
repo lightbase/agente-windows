@@ -241,8 +241,8 @@ DWORD WINAPI BlackWindow(LPVOID lpParam)
 {
  	// TODO: Place code here.
 	HDESK desktop;
-	//vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop \n"));
-	//vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL\n"));
+	//vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop "));
+	//vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL"));
 	desktop = OpenInputDesktop(0, FALSE,
 								DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
 								DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
@@ -251,9 +251,9 @@ DWORD WINAPI BlackWindow(LPVOID lpParam)
 								);
 
 	if (desktop == NULL)
-		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop Error \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop Error "));
 	else 
-		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop OK\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop OK"));
 
 	HDESK old_desktop = GetThreadDesktop(GetCurrentThreadId());
 	DWORD dummy;
@@ -262,18 +262,18 @@ DWORD WINAPI BlackWindow(LPVOID lpParam)
 
 	if (!GetUserObjectInformation(desktop, UOI_NAME, &new_name, 256, &dummy))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation "));
 	}
 
-	vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x\n"), new_name, desktop, old_desktop);
+	vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x"), new_name, desktop, old_desktop);
 
 	if (!SetThreadDesktop(desktop))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop "));
 	}
 
 	if (!CloseDesktop(old_desktop))
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d)\n"), old_desktop, GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d)"), old_desktop, GetLastError());
 
 	create_window();
 	MSG msg;
@@ -282,7 +282,7 @@ DWORD WINAPI BlackWindow(LPVOID lpParam)
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
-	vnclog.Print(LL_INTERR, VNCLOG("end BlackWindow \n"));
+	vnclog.Print(LL_INTERR, VNCLOG("end BlackWindow "));
 	CloseDesktop(desktop);
 
 	return 0;

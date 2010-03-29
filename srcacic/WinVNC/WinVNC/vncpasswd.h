@@ -53,7 +53,7 @@ public:
     public:
 	inline ToText(const char encrypted[MAXPWLEN])
 	{
-	    vnclog.Print(LL_INTINFO, VNCLOG("PASSWD : ToText called\n"));
+	    vnclog.Print(LL_INTINFO, VNCLOG("PASSWD : ToText called"));
 	    plaintext = vncDecryptPasswd((char *)encrypted);
 	}
 	inline ~ToText()
@@ -74,7 +74,7 @@ public:
     public:
 	inline FromText(char *unencrypted)
 	{
-	    vnclog.Print(LL_INTINFO, VNCLOG("PASSWD : FromText called\n"));
+	    vnclog.Print(LL_INTINFO, VNCLOG("PASSWD : FromText called"));
 	    vncEncryptPasswd(unencrypted, encrypted);
 	    // ZeroMemory(unencrypted, strlen(unencrypted));
 	}
@@ -91,7 +91,7 @@ public:
     public:
 	inline FromClear()
 	{
-	    vnclog.Print(LL_INTINFO, VNCLOG("PASSWD : FromClear called\n"));
+	    vnclog.Print(LL_INTINFO, VNCLOG("PASSWD : FromClear called"));
 	    vncEncryptPasswd("", encrypted);
 	}
 	inline ~FromClear()

@@ -229,7 +229,7 @@ vncServer::vncServer()
 
 vncServer::~vncServer()
 {
-	//vnclog.Print(LL_STATE, VNCLOG("shutting down server object1\n"));
+	//vnclog.Print(LL_STATE, VNCLOG("shutting down server object1"));
 
 	// We don't want to retry when we are shutting down...
 	m_fAutoReconnect = FALSE;
@@ -272,7 +272,7 @@ vncServer::~vncServer()
 	while (g_Desktop_running)
 	{
 		Sleep(100);
-		vnclog.Print(LL_STATE, VNCLOG("Waiting for desktop to shutdown\n"));
+		vnclog.Print(LL_STATE, VNCLOG("Waiting for desktop to shutdown"));
 	}
 
 	// Don't free the authhosts string until no more connections are possible
@@ -299,7 +299,7 @@ vncServer::~vncServer()
 	{
 		delete(m_pDSMPlugin);
 		m_pDSMPlugin=NULL;
-		vnclog.Print(LL_SOCKINFO, VNCLOG("~server m_pDSMPlugin = NULL \n"));
+		vnclog.Print(LL_SOCKINFO, VNCLOG("~server m_pDSMPlugin = NULL "));
 	}
 
 	// Free the host blacklist
@@ -314,14 +314,14 @@ vncServer::~vncServer()
 	// bad hack
 	//Sleep(500);
 	//sometimes crash, vnclog seems already removed
-	//	vnclog.Print(LL_STATE, VNCLOG("shutting down server object(4)\n"));
+	//	vnclog.Print(LL_STATE, VNCLOG("shutting down server object(4)"));
 	g_Server_running=false;
 }
 
 void
 vncServer::ShutdownServer()
 {
-	vnclog.Print(LL_STATE, VNCLOG("shutting down server object2\n"));
+	vnclog.Print(LL_STATE, VNCLOG("shutting down server object2"));
 
 	// We don't want to retry when we are shutting down...
 	m_fAutoReconnect = FALSE;
@@ -364,7 +364,7 @@ vncServer::ShutdownServer()
 	while (g_Desktop_running)
 	{
 		Sleep(100);
-		vnclog.Print(LL_STATE, VNCLOG("Waiting for desktop to shutdown\n"));
+		vnclog.Print(LL_STATE, VNCLOG("Waiting for desktop to shutdown"));
 	}
 
 	// Don't free the authhosts string until no more connections are possible
@@ -391,7 +391,7 @@ vncServer::ShutdownServer()
 	{
 		delete(m_pDSMPlugin);
 		m_pDSMPlugin=NULL;
-		vnclog.Print(LL_SOCKINFO, VNCLOG("ShutdownServer m_pDSMPlugin = NULL \n"));
+		vnclog.Print(LL_SOCKINFO, VNCLOG("ShutdownServer m_pDSMPlugin = NULL "));
 	}
 
 	// Free the host blacklist
@@ -406,7 +406,7 @@ vncServer::ShutdownServer()
 	// bad hack
 	//Sleep(500);
 	//sometimes crash, vnclog seems already removed
-//	vnclog.Print(LL_STATE, VNCLOG("shutting down server object(4)\n"));
+//	vnclog.Print(LL_STATE, VNCLOG("shutting down server object(4)"));
 	g_Server_running=false;
 }
 
@@ -428,7 +428,7 @@ vncClientId vncServer::AddClient(VSocket *socket,
 					 /*BOOL keysenabled, BOOL ptrenabled,*/
 					 rfbProtocolVersionMsg *protocolMsg)
 {
-	vnclog.Print(LL_STATE, VNCLOG("AddClient() started\n"));
+	vnclog.Print(LL_STATE, VNCLOG("AddClient() started"));
 	
 	vncClient *client;
 
@@ -469,7 +469,7 @@ vncClientId vncServer::AddClient(VSocket *socket,
 	if (!client->Init(this, socket, auth, shared, clientid))
 	{
 		// The client will delete the socket for us...
-		vnclog.Print(LL_CONNERR, VNCLOG("failed to initialise client object\n"));
+		vnclog.Print(LL_CONNERR, VNCLOG("failed to initialise client object"));
 		delete client;
 		return -1;
 	}
@@ -482,7 +482,7 @@ vncClientId vncServer::AddClient(VSocket *socket,
 	// Notify anyone interested about this event
 	DoNotify(WM_SRV_CLIENT_CONNECT, 0, 0);
 
-	vnclog.Print(LL_INTINFO, VNCLOG("AddClient() done\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("AddClient() done"));
 
 	return clientid;
 }
@@ -492,9 +492,9 @@ vncServer::Authenticated(vncClientId clientid)
 {
 	vncClientList::iterator i;
 	BOOL authok = TRUE;
-//	vnclog.Print(LL_INTINFO, VNCLOG("Lock2\n"));
+//	vnclog.Print(LL_INTINFO, VNCLOG("Lock2"));
 	omni_mutex_lock l1(m_desktopLock);
-//	vnclog.Print(LL_INTINFO, VNCLOG("Lock3\n"));
+//	vnclog.Print(LL_INTINFO, VNCLOG("Lock3"));
 	omni_mutex_lock l2(m_clientsLock);
 
 	// Search the unauthenticated client list
@@ -521,7 +521,7 @@ vncServer::Authenticated(vncClientId clientid)
 				}
 				if (!m_desktop->Init(this))
 				{
-					vnclog.Print(LL_INTINFO, VNCLOG("Desktop init failed, unlock in application mode ? \n"));
+					vnclog.Print(LL_INTINFO, VNCLOG("Desktop init failed, unlock in application mode ? "));
 					client->Kill();
 					authok = FALSE;
 					delete m_desktop;
@@ -544,7 +544,7 @@ vncServer::Authenticated(vncClientId clientid)
 	// Notify anyone interested of this event
 	DoNotify(WM_SRV_CLIENT_AUTHENTICATED, 0, 0);
 
-	vnclog.Print(LL_INTINFO, VNCLOG("Authenticated() done\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("Authenticated() done"));
 
 	return authok;
 }
@@ -563,7 +563,7 @@ vncServer::KillClient(vncClientId clientid)
 		// Is this the right client?
 		if ((*i) == clientid)
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("killing unauth client\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("killing unauth client"));
 
 			// Ask the client to die
 			vncClient *client = GetClient(clientid);
@@ -580,7 +580,7 @@ vncServer::KillClient(vncClientId clientid)
 			// Is this the right client?
 			if ((*i) == clientid)
 			{
-				vnclog.Print(LL_INTINFO, VNCLOG("killing auth client\n"));
+				vnclog.Print(LL_INTINFO, VNCLOG("killing auth client"));
 
 				// Yes, so kill it
 				vncClient *client = GetClient(clientid);
@@ -592,7 +592,7 @@ vncServer::KillClient(vncClientId clientid)
 		}
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("KillClient() done\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("KillClient() done"));
 }
 
 //
@@ -609,11 +609,11 @@ void vncServer::KillClient(LPSTR szClientName)
 		pClient = GetClient(*i);
 		if (!_stricmp(pClient->GetClientName(), szClientName))
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("Killing client named: %s\n"), szClientName);
+			vnclog.Print(LL_INTINFO, VNCLOG("Killing client named: %s"), szClientName);
 			pClient->Kill();
 		}
 	}
-	vnclog.Print(LL_INTINFO, VNCLOG("KillClient() from name done\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("KillClient() from name done"));
 }
 
 
@@ -633,7 +633,7 @@ void vncServer::TextChatClient(LPSTR szClientName)
 		{
 			if (!pClient->IsUltraViewer())
 			{
-				vnclog.Print(LL_INTINFO, VNCLOG("Client %s is not Ultra. Doesn't know TextChat\n"), szClientName);
+				vnclog.Print(LL_INTINFO, VNCLOG("Client %s is not Ultra. Doesn't know TextChat"), szClientName);
 				vncTimedMsgBox::Do(
 									sz_ID_ULTRAVNC_TEXTCHAT,
 									sz_ID_ULTRAVNC_WARNING,
@@ -641,12 +641,12 @@ void vncServer::TextChatClient(LPSTR szClientName)
 									);
 				break;
 			}
-			vnclog.Print(LL_INTINFO, VNCLOG("TextChat with client named: %s\n"), szClientName);
+			vnclog.Print(LL_INTINFO, VNCLOG("TextChat with client named: %s"), szClientName);
 			pClient->GetTextChatPointer()->OrderTextChat();
 			break;
 		}
 	}
-	vnclog.Print(LL_INTINFO, VNCLOG("KillClient() from name done\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("KillClient() from name done"));
 }
 
 
@@ -659,13 +659,13 @@ vncServer::KillAuthClients()
 	// Tell all the authorised clients to die!
 	for (i = m_authClients.begin(); i != m_authClients.end(); i++)
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("killing auth client\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("killing auth client"));
 
 		// Kill the client
 		GetClient(*i)->Kill();
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("KillAuthClients() done\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("KillAuthClients() done"));
 }
 
 //
@@ -753,13 +753,13 @@ vncServer::KillUnauthClients()
 	// Tell all the authorised clients to die!
 	for (i = m_unauthClients.begin(); i != m_unauthClients.end(); i++)
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("killing unauth client\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("killing unauth client"));
 
 		// Kill the client
 		GetClient(*i)->Kill();
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("KillUnauthClients() done\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("KillUnauthClients() done"));
 }
 
 
@@ -914,9 +914,9 @@ vncServer::RemoveClient(vncClientId clientid)
 {
 	vncClientList::iterator i;
 	BOOL done = FALSE;
-//	vnclog.Print(LL_INTINFO, VNCLOG("Lock1\n"));
+//	vnclog.Print(LL_INTINFO, VNCLOG("Lock1"));
 	omni_mutex_lock l1(m_desktopLock);
-//	vnclog.Print(LL_INTINFO, VNCLOG("Lock3\n"));
+//	vnclog.Print(LL_INTINFO, VNCLOG("Lock3"));
 	{	omni_mutex_lock l2(m_clientsLock);
 
 		// Find the client in one of the two lists
@@ -925,7 +925,7 @@ vncServer::RemoveClient(vncClientId clientid)
 			// Is this the right client?
 			if ((*i) == clientid)
 			{
-				vnclog.Print(LL_INTINFO, VNCLOG("removing unauthorised client\n"));
+				vnclog.Print(LL_INTINFO, VNCLOG("removing unauthorised client"));
 
 				// Yes, so remove the client and kill it
 				m_unauthClients.erase(i);
@@ -941,7 +941,7 @@ vncServer::RemoveClient(vncClientId clientid)
 				// Is this the right client?
 				if ((*i) == clientid)
 				{
-					vnclog.Print(LL_INTINFO, VNCLOG("removing authorised client\n"));
+					vnclog.Print(LL_INTINFO, VNCLOG("removing authorised client"));
 
 					// Yes, so remove the client and kill it
 					m_authClients.erase(i);
@@ -961,7 +961,7 @@ vncServer::RemoveClient(vncClientId clientid)
 	// Are there any authorised clients connected?
 	if (m_authClients.empty() && (m_desktop != NULL))
 	{
-		vnclog.Print(LL_STATE, VNCLOG("deleting desktop server\n"));
+		vnclog.Print(LL_STATE, VNCLOG("deleting desktop server"));
 
 		// sf@2007 - Do not lock/logoff even if required when WinVNC autorestarts (on desktop change (XP FUS / Vista))
 		if (!AutoRestartFlag())
@@ -981,7 +981,7 @@ vncServer::RemoveClient(vncClientId clientid)
 				{
 					// Yes - force a user logoff on disconnect!
 					if (!ExitWindowsEx(EWX_LOGOFF, 0))
-						vnclog.Print(LL_CONNERR, VNCLOG("client disconnect - failed to logoff user!\n"));
+						vnclog.Print(LL_CONNERR, VNCLOG("client disconnect - failed to logoff user!"));
 				}
 			}
 		}
@@ -989,12 +989,12 @@ vncServer::RemoveClient(vncClientId clientid)
 		// Delete the screen server
 		delete m_desktop;
 		m_desktop = NULL;
-		vnclog.Print(LL_STATE, VNCLOG("desktop deleted\n"));
+		vnclog.Print(LL_STATE, VNCLOG("desktop deleted"));
 	}
 
 	// Notify anyone interested of the change
 	DoNotify(WM_SRV_CLIENT_DISCONNECT, 0, 0);
-	vnclog.Print(LL_INTINFO, VNCLOG("RemoveClient() done\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("RemoveClient() done"));
 }
 
 // NOTIFICATION HANDLING!
@@ -1123,7 +1123,7 @@ vncServer::UpdateLocalFormat()
 void
 vncServer::UpdateLocalClipText(LPSTR text)
 {
-//	vnclog.Print(LL_INTINFO, VNCLOG("Lock5\n"));
+//	vnclog.Print(LL_INTINFO, VNCLOG("Lock5"));
 	omni_mutex_lock l(m_desktopLock);
 
 	if (m_desktop != NULL)
@@ -1219,7 +1219,7 @@ BOOL
 vncServer::SockConnect(BOOL On)
 {
 	// Are we being asked to switch socket connects on or off?
-	vnclog.Print(20, VNCLOG("SockConnect %d\n"), On);
+	vnclog.Print(20, VNCLOG("SockConnect %d"), On);
 	if (On)
 	{
 		// Is there a listening socket?
@@ -1239,7 +1239,7 @@ vncServer::SockConnect(BOOL On)
 				{
 					m_port = DISPLAY_TO_PORT(i);
 
-					vnclog.Print(LL_CLIENTS, VNCLOG("Tentando usar a porta %d...\n"), m_port);
+					vnclog.Print(LL_CLIENTS, VNCLOG("Tentando usar a porta %d..."), m_port);
 
 					// Attempt to connect to the port
 					VSocket tempsock;
@@ -1278,13 +1278,13 @@ vncServer::SockConnect(BOOL On)
 
 			// Now let's start the HTTP connection stuff
 			EnableXDMCPConnect(m_enableXdmcpConn);
-			vnclog.Print(20, VNCLOG("SockConnect  Done %d\n"), On);
+			vnclog.Print(20, VNCLOG("SockConnect  Done %d"), On);
 		}
 	}
 	else
 	{
 		// *** JNW - Trying to fix up a lock-up when the listening socket closes
-		vnclog.Print(LL_INTINFO, VNCLOG("KillAuthClients() fix up a lock-up \n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("KillAuthClients() fix up a lock-up "));
 		KillAuthClients();
 		KillUnauthClients();
 		WaitUntilAuthEmpty();
@@ -1387,10 +1387,10 @@ void
 vncServer::GetScreenInfo(int &width, int &height, int &depth)
 {
 	rfbServerInitMsg scrinfo;
-//	vnclog.Print(LL_INTINFO, VNCLOG("Lock6\n"));
+//	vnclog.Print(LL_INTINFO, VNCLOG("Lock6"));
 	omni_mutex_lock l(m_desktopLock);
 
-	//vnclog.Print(LL_INTINFO, VNCLOG("GetScreenInfo called\n"));
+	//vnclog.Print(LL_INTINFO, VNCLOG("GetScreenInfo called"));
 
 	// Is a desktop object currently active?
 	// No, so create a dummy desktop and interrogate it
@@ -1399,7 +1399,7 @@ vncServer::GetScreenInfo(int &width, int &height, int &depth)
 		HDC				hrootdc;
 		hrootdc = GetDC(NULL);
 		if (hrootdc == NULL) {
-				vnclog.Print(LL_INTERR, VNCLOG("Failed rootdc \n"));
+				vnclog.Print(LL_INTERR, VNCLOG("Failed rootdc "));
 				scrinfo.framebufferWidth = 0;
 				scrinfo.framebufferHeight = 0;
 				scrinfo.format.bitsPerPixel = 0;
@@ -1493,12 +1493,12 @@ vncServer::SetAuthHosts(const char*hostlist) {
 	omni_mutex_lock l(m_clientsLock);
 
 	if (hostlist == 0) {
-		vnclog.Print(LL_INTINFO, VNCLOG("authhosts cleared\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("authhosts cleared"));
 		m_auth_hosts = 0;
 		return;
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("authhosts set to \"%s\"\n"), hostlist);
+	vnclog.Print(LL_INTINFO, VNCLOG("authhosts set to \"%s\""), hostlist);
 	if (m_auth_hosts != 0)
 		free(m_auth_hosts);
 
@@ -1586,7 +1586,7 @@ vncServer::VerifyHost(const char *hostname) {
 
 	// Has a hostname been specified?
 	if (hostname == 0) {
-		vnclog.Print(LL_INTWARN, VNCLOG("verify failed - null hostname\n"));
+		vnclog.Print(LL_INTWARN, VNCLOG("verify failed - null hostname"));
 		return vncServer::aqrReject;
 	}
 
@@ -1623,7 +1623,7 @@ vncServer::VerifyHost(const char *hostname) {
 					patternStart = authHostsPos+1;
 					machineMode = vh_ExpectPattern;
 				} else if (m_auth_hosts[authHostsPos] != '\0') {
-					vnclog.Print(LL_INTWARN, VNCLOG("verify host - malformed AuthHosts string\n"));
+					vnclog.Print(LL_INTWARN, VNCLOG("verify host - malformed AuthHosts string"));
 					machineMode = vh_ExpectDelimiter;
 				}
 				break;
@@ -1636,7 +1636,7 @@ vncServer::VerifyHost(const char *hostname) {
 					(m_auth_hosts[authHostsPos] == '\0')) {
 					if (machineMode == vh_ExpectPattern) {
 						if (patternStart == 0) {
-							vnclog.Print(LL_INTWARN, VNCLOG("verify host - pattern processing failed!\n"));
+							vnclog.Print(LL_INTWARN, VNCLOG("verify host - pattern processing failed!"));
 						} else {
 							// Process the match
 							if (MatchStringToTemplate(hostname, hostNameLen,
@@ -1775,7 +1775,7 @@ vncServer::SetNewSWSize(long w,long h,BOOL desktop)
 	{
 		// Post the update
 		if (!GetClient(*i)->SetNewSWSize(w,h,desktop)) {
-			vnclog.Print(LL_INTINFO, VNCLOG("Unable to set new desktop size\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("Unable to set new desktop size"));
 			KillClient(*i);
 		}
 	}
@@ -1895,19 +1895,19 @@ void vncServer::SetDSMPluginName(char* szDSMPlugin)
 //
 BOOL vncServer::SetDSMPlugin(BOOL bForceReload)
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Entry \n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Entry "));
 	if (AuthClientCount() > 0) return FALSE;
 
 	if (!IsDSMPluginEnabled()) return FALSE;
 
-	vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Enabled \n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Enabled "));
 
 	// If the plugin is loaded, unload it first
 	// sf@2003 - it has been possibly pre-configured by
 	// clicking on the plugin config button
 	if (m_pDSMPlugin->IsLoaded())
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Is Loaded \n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Is Loaded "));
 
 		// sf@2003 - We check if the loaded plugin is the same than
 		// the currently selected one or not
@@ -1915,8 +1915,8 @@ BOOL vncServer::SetDSMPlugin(BOOL bForceReload)
 		if (_stricmp(m_pDSMPlugin->GetPluginFileName(), GetDSMPluginName()) || bForceReload)
 		{
 			if (bForceReload)
-				vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - FORCE RELOADING OF THE PLUGIN \n"));
-			vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - New one - Unload the current \n"));
+				vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - FORCE RELOADING OF THE PLUGIN "));
+			vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - New one - Unload the current "));
 			m_pDSMPlugin->SetEnabled(false);
 			m_pDSMPlugin->UnloadPlugin();
 		}
@@ -1924,20 +1924,20 @@ BOOL vncServer::SetDSMPlugin(BOOL bForceReload)
 
 	if (!m_pDSMPlugin->IsLoaded())
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Plugin NOT loaded - Try to load it \n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Plugin NOT loaded - Try to load it "));
 		if (!m_pDSMPlugin->LoadPlugin(GetDSMPluginName(), false))
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ DSMPlugin cannot be loaded\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ DSMPlugin cannot be loaded"));
 			return FALSE;
 		}
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Plugin successfully loaded \n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Plugin successfully loaded "));
 
 	// Now that it is loaded, init it
 	if (m_pDSMPlugin->InitPlugin())
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Init plugin call \n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - Init plugin call "));
 		char szParams[MAXPWLEN + 64];
 		char password[MAXPWLEN];
 		GetPassword(password);
@@ -1954,25 +1954,25 @@ BOOL vncServer::SetDSMPlugin(BOOL bForceReload)
 
 		//::MessageBox(NULL, szParams, "SetDSMPlugin info", MB_OK);
 
-		vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - SetPluginParams call \n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("$$$$$$$$$$ SetDSMPlugin - SetPluginParams call "));
 
 
 		if (m_pDSMPlugin->SetPluginParams(NULL, szParams/*vncDecryptPasswd((char *)password)*/))
 		{
 			m_pDSMPlugin->SetEnabled(true); // The plugin is ready to be used
-			vnclog.Print(LL_INTINFO, VNCLOG("DSMPlugin Params OK\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("DSMPlugin Params OK"));
 			return TRUE;
 		}
 		else
 		{
 			m_pDSMPlugin->SetEnabled(false);
-			vnclog.Print(LL_INTINFO, VNCLOG("Unable to set DSMPlugin Params\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("Unable to set DSMPlugin Params"));
 		}
 	}
 	else
 	{
 		m_pDSMPlugin->SetEnabled(false);
-		vnclog.Print(LL_INTINFO, VNCLOG("Unable to init DSMPlugin\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("Unable to init DSMPlugin"));
 	}
 
 	/*
@@ -2095,7 +2095,7 @@ void vncServer::AutoConnectRetry( )
 {
 	if ( m_fAutoReconnect )
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("AutoConnectRetry(): started\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("AutoConnectRetry(): started"));
 		m_retry_timeout = SetTimer( NULL, 0, (1000*30), (TIMERPROC)_timerRetryHandler );
 	}
 }
@@ -2106,7 +2106,7 @@ void CALLBACK vncServer::_timerRetryHandler( HWND /*hWnd*/, UINT /*uMsg*/, UINT_
 }
 void vncServer::_actualTimerRetryHandler()
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("Attempting AutoReconnect....\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("Attempting AutoReconnect...."));
 	
 	KillTimer( NULL, m_retry_timeout );
 	m_retry_timeout = 0;

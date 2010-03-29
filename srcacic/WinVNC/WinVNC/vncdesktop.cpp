@@ -148,13 +148,13 @@ vncDesktop::FastDetectChanges(rfb::Region2D &rgn, rfb::Rect &rect, int nZone, bo
 			if (pList != NULL)
 			{
 				m_lGridsList.push_back(pList);
-			    vnclog.Print(LL_INTINFO, VNCLOG("### PixelsGrid %d created !\n"), i);
+			    vnclog.Print(LL_INTINFO, VNCLOG("### PixelsGrid %d created !"), i);
 			}
 		}
 	}
 
 	// We test one zone at a time 
-	// vnclog.Print(LL_INTINFO, VNCLOG("### Polling Grid %d - SubGrid %d\n"), nZone, m_nGridCycle); 
+	// vnclog.Print(LL_INTINFO, VNCLOG("### Polling Grid %d - SubGrid %d"), nZone, m_nGridCycle); 
 	GridsList::iterator iGrid;
 	int nIndex = 0;
 	int nGridPos = (nZone * PIXEL_BLOCK_SIZE / GRID_OFFSET) + m_nGridCycle;
@@ -171,13 +171,13 @@ vncDesktop::FastDetectChanges(rfb::Region2D &rgn, rfb::Rect &rect, int nZone, bo
 
 	if (nZone == 0 || nZone == 4)
 	{
-	   // vnclog.Print(LL_INTINFO, VNCLOG("### IncCycle Please !\n")); 
+	   // vnclog.Print(LL_INTINFO, VNCLOG("### IncCycle Please !")); 
 	   fIncCycle = true;
 	}
 
 	if (pThePixelGrid->empty())
 	{
-		// vnclog.Print(LL_INTINFO, VNCLOG("### PixelsGrid Init\n"));
+		// vnclog.Print(LL_INTINFO, VNCLOG("### PixelsGrid Init"));
 		fInitGrid = true;
 	}
 
@@ -199,7 +199,7 @@ vncDesktop::FastDetectChanges(rfb::Region2D &rgn, rfb::Rect &rect, int nZone, bo
 			   if (OSversion()==2) PixelColor= CapturePixel( xo, yo);
 			   else PixelColor= GetPixel(m_hrootdc, xo, yo);
 			   pThePixelGrid->push_back(PixelColor);
-			   // vnclog.Print(LL_INTINFO, VNCLOG("### PixelsGrid Init : Pixel xo=%d - yo=%d - C=%ld\n"), xo, yo, (long)PixelColor); 
+			   // vnclog.Print(LL_INTINFO, VNCLOG("### PixelsGrid Init : Pixel xo=%d - yo=%d - C=%ld"), xo, yo, (long)PixelColor); 
 			   continue;
 			}
 
@@ -207,7 +207,7 @@ vncDesktop::FastDetectChanges(rfb::Region2D &rgn, rfb::Rect &rect, int nZone, bo
 			COLORREF PixelColor=0;
 		    if (OSversion()==2 ) PixelColor = CapturePixel( xo, yo);
 			else PixelColor = GetPixel(m_hrootdc, xo, yo);
-//			vnclog.Print(LL_INTINFO, VNCLOG("### GetPixel %i\n"),OSversion());
+//			vnclog.Print(LL_INTINFO, VNCLOG("### GetPixel %i"),OSversion());
 			// If the pixel has changed
 			if (*iPixelColor != PixelColor )
 			{
@@ -253,7 +253,7 @@ vncDesktop::FastDetectChanges(rfb::Region2D &rgn, rfb::Rect &rect, int nZone, bo
 					}
 					// char szName[64];
 					// GetWindowText(hwnd, szName, 64);
-					// vnclog.Print(LL_INTINFO, VNCLOG("### Changed Window : %s (at x=%d - y=%d)\n"), szName, x, y); 
+					// vnclog.Print(LL_INTINFO, VNCLOG("### Changed Window : %s (at x=%d - y=%d)"), szName, x, y); 
 					// return;
 				}
 			}
@@ -380,7 +380,7 @@ vncDesktop::vncDesktop()
 
 vncDesktop::~vncDesktop()
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("killing screen server\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("killing screen server"));
 
 	// If we created a thread then here we delete it
 	// The thread itself does most of the cleanup
@@ -472,12 +472,12 @@ vncDesktop::Startup()
 
 	if (!InitDesktop())
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("InitDesktop Failed\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("InitDesktop Failed"));
 			return FALSE;
 		}
 
 	// Modif rdv@2002 - v1.1.x - videodriver
-	vnclog.Print(LL_INTINFO, VNCLOG("InitVideo driver Called\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("InitVideo driver Called"));
 	if (FALSE != DriverWantedSet)
 			{
 			m_server->Driver(DriverWanted);
@@ -486,29 +486,29 @@ vncDesktop::Startup()
 			}
 	if (m_server->Driver())
 				{
-					vnclog.Print(LL_INTINFO, VNCLOG("Driver option enabled \n"));
+					vnclog.Print(LL_INTINFO, VNCLOG("Driver option enabled "));
 					if(OSversion()==1 || OSversion()==2 )
 						{
 							InitVideoDriver();
 						}
 				}
-	vnclog.Print(LL_INTINFO, VNCLOG("Driver option disabled \n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("Driver option disabled "));
 	if (m_Origpolling) m_server->PollFullScreen(m_Origpolling);
 	m_OrigpollingSet=false;
 	
 	if (VideoBuffer())
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("Break log\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("Break log"));
 	}
 	if (!InitBitmap())
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("InitBitmap Failed\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("InitBitmap Failed"));
 			return FALSE;
 		}
 
 	if (!ThunkBitmapInfo())
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("ThunkBitmapInfo Failed\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("ThunkBitmapInfo Failed"));
 			return FALSE;
 		}
 
@@ -517,25 +517,25 @@ vncDesktop::Startup()
 
 	if (!SetPixFormat())
 		{
-		vnclog.Print(LL_INTINFO, VNCLOG("SetPixFormat Failed\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("SetPixFormat Failed"));
 		return FALSE;
 		}
 
 	if (!SetPixShifts())
 		{
-		vnclog.Print(LL_INTINFO, VNCLOG("SetPixShift Failed\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("SetPixShift Failed"));
 		return FALSE;
 		}
 	
 	if (!SetPalette())
 		{
-		vnclog.Print(LL_INTINFO, VNCLOG("SetPalette Failed\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("SetPalette Failed"));
 		return FALSE;
 		}
 	
 	if (!InitWindow())
 		{
-		vnclog.Print(LL_INTINFO, VNCLOG("InitWindow failed\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("InitWindow failed"));
 		return FALSE;
 		}
 
@@ -543,7 +543,7 @@ vncDesktop::Startup()
 	{
 		if (VideoBuffer())
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("Removing real Dib buffer and replace by driver communication buffer\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("Removing real Dib buffer and replace by driver communication buffer"));
 			if (m_membitmap != NULL)
 				{
 					DeleteObject(m_membitmap);
@@ -597,7 +597,7 @@ vncDesktop::Shutdown()
 	if (m_hrootdc != NULL)
 	{
 		if (!DeleteDC(m_hrootdc))
-				vnclog.Print(LL_INTERR, VNCLOG("failed to DeleteDC hrootdc\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("failed to DeleteDC hrootdc"));
 		m_hrootdc = NULL;
 	}
 	if (m_hmemdc != NULL)
@@ -605,7 +605,7 @@ vncDesktop::Shutdown()
 		// Release our device context
 		if (!DeleteDC(m_hmemdc))
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("failed to DeleteDC hmemdc\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("failed to DeleteDC hmemdc"));
 		}
 		m_hmemdc = NULL;
 	}
@@ -614,7 +614,7 @@ vncDesktop::Shutdown()
 		// Release the custom bitmap, if any
 		if (!DeleteObject(m_membitmap))
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("failed to DeleteObject\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("failed to DeleteObject"));
 		}
 		m_membitmap = NULL;
 	}
@@ -659,7 +659,7 @@ vncDesktop::KillScreenSaver()
 	if (!GetVersionEx(&osversioninfo))
 		return;
 
-	vnclog.Print(LL_INTINFO, VNCLOG("KillScreenSaver...\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("KillScreenSaver..."));
 
 	// How to kill the screen saver depends on the OS
 	switch (osversioninfo.dwPlatformId)
@@ -687,7 +687,7 @@ vncDesktop::KillScreenSaver()
 				);
 			if (hDesk != NULL)
 			{
-				vnclog.Print(LL_INTINFO, VNCLOG("Killing ScreenSaver\n"));
+				vnclog.Print(LL_INTINFO, VNCLOG("Killing ScreenSaver"));
 
 				// Close all windows on the screen saver desktop
 				EnumDesktopWindows(hDesk, (WNDENUMPROC) &KillScreenSaverFunc, 0);
@@ -794,7 +794,7 @@ vncDesktop::InitBitmap()
 	}
 
 	if (m_hrootdc == NULL) {
-		vnclog.Print(LL_INTERR, VNCLOG("No driver used \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("No driver used "));
 		//Multi-Monitor changes
 		Checkmonitors();
 		asked_display=m_buffer.GetDisplay();
@@ -822,19 +822,19 @@ vncDesktop::InitBitmap()
 			m_ScreenOffsety=mymonitor[2].offsety;;
 		}
 		if (m_hrootdc == NULL) {
-				vnclog.Print(LL_INTERR, VNCLOG("Failed m_rootdc \n"));
+				vnclog.Print(LL_INTERR, VNCLOG("Failed m_rootdc "));
 				return FALSE;
 		}
 		
 	}
 	if (current_monitor==3 && !VideoBuffer()) m_bmrect = rfb::Rect(0, 0,mymonitor[2].Width,mymonitor[2].Height);
 	else m_bmrect = rfb::Rect(0, 0,GetDeviceCaps(m_hrootdc, HORZRES),GetDeviceCaps(m_hrootdc, VERTRES));
-	vnclog.Print(LL_INTINFO, VNCLOG("bitmap dimensions are %d x %d\n"), m_bmrect.br.x, m_bmrect.br.y);
+	vnclog.Print(LL_INTINFO, VNCLOG("bitmap dimensions are %d x %d"), m_bmrect.br.x, m_bmrect.br.y);
 
 	// Create a compatible memory DC
 	m_hmemdc = CreateCompatibleDC(m_hrootdc);
 	if (m_hmemdc == NULL) {
-		vnclog.Print(LL_INTERR, VNCLOG("failed to create compatibleDC(%d)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("failed to create compatibleDC(%d)"), GetLastError());
 		return FALSE;
 	}
 
@@ -865,10 +865,10 @@ vncDesktop::InitBitmap()
 	// Create the bitmap to be compatible with the ROOT DC!!!
 	m_membitmap = CreateCompatibleBitmap(m_hrootdc, m_bmrect.br.x, m_bmrect.br.y);
 	if (m_membitmap == NULL) {
-		vnclog.Print(LL_INTERR, VNCLOG("failed to create memory bitmap(%d)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("failed to create memory bitmap(%d)"), GetLastError());
 		return FALSE;
 	}
-	vnclog.Print(LL_INTINFO, VNCLOG("created memory bitmap\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("created memory bitmap"));
 
 	// Get the bitmap's format and colour details
 	int result;
@@ -877,15 +877,15 @@ vncDesktop::InitBitmap()
 	m_bminfo.bmi.bmiHeader.biBitCount = 0;
 	result = ::GetDIBits(m_hmemdc, m_membitmap, 0, 1, NULL, &m_bminfo.bmi, DIB_RGB_COLORS);
 	if (result == 0) {
-		vnclog.Print(LL_INTERR, VNCLOG("unable to get display format\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("unable to get display format"));
 		return FALSE;
 	}
 	result = ::GetDIBits(m_hmemdc, m_membitmap,  0, 1, NULL, &m_bminfo.bmi, DIB_RGB_COLORS);
 	if (result == 0) {
-		vnclog.Print(LL_INTERR, VNCLOG("unable to get display colour info\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("unable to get display colour info"));
 		return FALSE;
 	}
-	vnclog.Print(LL_INTINFO, VNCLOG("got bitmap format\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("got bitmap format"));
 
 	// Henceforth we want to use a top-down scanning representation
 	m_bminfo.bmi.bmiHeader.biHeight = - abs(m_bminfo.bmi.bmiHeader.biHeight);
@@ -913,7 +913,7 @@ vncDesktop::ThunkBitmapInfo()
 	{
 	case 1:
 	case 4:
-		vnclog.Print(LL_INTINFO, VNCLOG("DBG:used/bits/planes/comp/size = %d/%d/%d/%d/%d\n"),
+		vnclog.Print(LL_INTINFO, VNCLOG("DBG:used/bits/planes/comp/size = %d/%d/%d/%d/%d"),
 			(int)m_bminfo.bmi.bmiHeader.biClrUsed,
 			(int)m_bminfo.bmi.bmiHeader.biBitCount,
 			(int)m_bminfo.bmi.bmiHeader.biPlanes,
@@ -958,9 +958,9 @@ vncDesktop::SetPixFormat()
  // If we are using a memory bitmap then check how many planes it uses
   // The VNC code can only handle formats with a single plane (CHUNKY pixels)
   if (!m_DIBbits) {
-	  vnclog.Print(LL_INTINFO, VNCLOG("DBG:display context has %d planes!\n"),
+	  vnclog.Print(LL_INTINFO, VNCLOG("DBG:display context has %d planes!"),
       GetDeviceCaps(m_hrootdc, PLANES));
-	  vnclog.Print(LL_INTINFO, VNCLOG("DBG:memory context has %d planes!\n"),
+	  vnclog.Print(LL_INTINFO, VNCLOG("DBG:memory context has %d planes!"),
       GetDeviceCaps(m_hmemdc, PLANES));
 	  if (GetDeviceCaps(m_hmemdc, PLANES) != 1)
 	  {
@@ -1039,7 +1039,7 @@ vncDesktop::SetPixShifts()
 		// Other pixel formats are only valid if they're palette-based
 		if (m_bminfo.truecolour)
 		{
-			vnclog.Print(LL_INTERR, "unsupported truecolour pixel format for setpixshifts\n");
+			vnclog.Print(LL_INTERR, "unsupported truecolour pixel format for setpixshifts");
 			return FALSE;
 		}
 		return TRUE;
@@ -1069,7 +1069,7 @@ vncDesktop::SetPalette()
 			
 			palette = (LOGPALETTE *) new char[size];
 			if (palette == NULL) {
-				vnclog.Print(LL_INTERR, VNCLOG("unable to allocate logical palette\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("unable to allocate logical palette"));
 				return FALSE;
 			}
 			
@@ -1081,7 +1081,7 @@ vncDesktop::SetPalette()
 			if (GetSystemPaletteEntries(m_hrootdc,
 				0, 256, palette->palPalEntry) == 0)
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("unable to get system palette entries\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("unable to get system palette entries"));
 				delete [] palette;
 				return FALSE;
 			}
@@ -1090,7 +1090,7 @@ vncDesktop::SetPalette()
 			HPALETTE pal = CreatePalette(palette);
 			if (pal == NULL)
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("unable to create HPALETTE\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("unable to create HPALETTE"));
 				delete [] palette;
 				return FALSE;
 			}
@@ -1099,7 +1099,7 @@ vncDesktop::SetPalette()
 			HPALETTE oldpalette = SelectPalette(m_hmemdc, pal, FALSE);
 			if (oldpalette == NULL)
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("unable to select() HPALETTE\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("unable to select() HPALETTE"));
 				delete [] palette;
 				DeleteObject(pal);
 				return FALSE;
@@ -1107,13 +1107,13 @@ vncDesktop::SetPalette()
 			
 			// Worked, so realise the palette
 			if (RealizePalette(m_hmemdc) == GDI_ERROR)
-				vnclog.Print(LL_INTWARN, VNCLOG("warning - failed to RealizePalette\n"));
+				vnclog.Print(LL_INTWARN, VNCLOG("warning - failed to RealizePalette"));
 			
 			// It worked!
 			delete [] palette;
 			DeleteObject(oldpalette);
 			
-			vnclog.Print(LL_INTINFO, VNCLOG("initialised palette OK\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("initialised palette OK"));
 			return TRUE;
 		}
 		else
@@ -1167,7 +1167,7 @@ vncDesktop::SetPalette()
     }
  
 	// Not a palette based local screen - forget it!
-	vnclog.Print(LL_INTERR, VNCLOG("no palette data for truecolour display\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("no palette data for truecolour display"));
 	return TRUE;
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -1282,7 +1282,7 @@ vncDesktop::InitWindow()
 		// Register it
 		m_wndClass = RegisterClassEx(&wndclass);
 		if (!m_wndClass) {
-			vnclog.Print(LL_INTERR, VNCLOG("failed to register window class\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("failed to register window class"));
 			return FALSE;
 		}
 	}
@@ -1300,7 +1300,7 @@ vncDesktop::InitWindow()
 				NULL);
 
 	if (m_hwnd == NULL) {
-		vnclog.Print(LL_INTERR, VNCLOG("failed to create hook window\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("failed to create hook window"));
 		return FALSE;
 	}
 
@@ -1331,13 +1331,13 @@ vncDesktop::InitWindow()
 void
 vncDesktop::EnableOptimisedBlits()
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("attempting to enable DIBsection blits\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("attempting to enable DIBsection blits"));
 
 	// Create a new DIB section
 	//HBITMAP tempbitmap=NULL;
 	HBITMAP tempbitmap = CreateDIBSection(m_hmemdc, &m_bminfo.bmi, DIB_RGB_COLORS, &m_DIBbits, NULL, 0);
 	if (tempbitmap == NULL) {
-		vnclog.Print(LL_INTINFO, VNCLOG("failed to build DIB section - reverting to slow blits\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("failed to build DIB section - reverting to slow blits"));
 		m_DIBbits = NULL;
 		return;
 	}
@@ -1350,13 +1350,13 @@ vncDesktop::EnableOptimisedBlits()
 
 	// Replace old membitmap with DIB section
 	m_membitmap = tempbitmap;
-	vnclog.Print(LL_INTINFO, VNCLOG("enabled fast DIBsection blits OK\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("enabled fast DIBsection blits OK"));
 }
 
 BOOL
 vncDesktop::Init(vncServer *server)
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("initialising desktop handler\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("initialising desktop handler"));
 
 	// Save the server pointer
 	m_server = server;
@@ -1374,7 +1374,7 @@ vncDesktop::Init(vncServer *server)
 	// Spawn a thread to handle that window's message queue
 	vncDesktopThread *thread = new vncDesktopThread;
 	if (thread == NULL) {
-		vnclog.Print(LL_INTERR, VNCLOG("failed to start hook thread\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("failed to start hook thread"));
 		return FALSE;
 	}
 	m_thread = thread;
@@ -1444,7 +1444,7 @@ vncDesktop::CaptureMouse(BYTE *scrBuff, UINT scrBuffSize)
 	// Get the cursor position
 	if (!GetCursorPos(&CursorPos))
 		return;
-	//vnclog.Print(LL_INTINFO, VNCLOG("CursorPos %i %i\n"),CursorPos.x, CursorPos.y);
+	//vnclog.Print(LL_INTINFO, VNCLOG("CursorPos %i %i"),CursorPos.x, CursorPos.y);
 	// Translate position for hotspot
 	if (GetIconInfo(m_hcursor, &IconInfo))
 	{
@@ -1642,7 +1642,7 @@ vncDesktop::CopyToBuffer(const rfb::Rect &rect, BYTE *destbuff, UINT destbuffsiz
 					&m_bminfo.bmi, DIB_RGB_COLORS) == 0)
 		{
 #ifdef _MSC_VER
-			_RPT1(_CRT_WARN, "vncDesktop : [1] GetDIBits failed! %d\n", GetLastError());
+			_RPT1(_CRT_WARN, "vncDesktop : [1] GetDIBits failed! %d", GetLastError());
 			_RPT3(_CRT_WARN, "vncDesktop : thread = %d, DC = %d, bitmap = %d\n", omni_thread::self(), m_hmemdc, m_membitmap);
 			_RPT2(_CRT_WARN, "vncDesktop : y = %d, height = %d\n", y_inv, (rect.br.y-rect.tl.y));
 #endif
@@ -1758,9 +1758,9 @@ DesktopWndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		switch (wParam)
 		{
 			case SC_MONITORPOWER:
-				vnclog.Print(LL_INTINFO, VNCLOG("Monitor22 %i\n"),lParam);
+				vnclog.Print(LL_INTINFO, VNCLOG("Monitor22 %i"),lParam);
 		}
-		vnclog.Print(LL_INTINFO, VNCLOG("Monitor3 %i %i\n"),wParam,lParam);
+		vnclog.Print(LL_INTINFO, VNCLOG("Monitor3 %i %i"),wParam,lParam);
 		return DefWindowProc(hwnd, iMsg, wParam, lParam);
 	case WM_POWER:
 	case WM_POWERBROADCAST:
@@ -1768,9 +1768,9 @@ DesktopWndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		switch (wParam)
 		{
 			case SC_MONITORPOWER:
-				vnclog.Print(LL_INTINFO, VNCLOG("Monitor222 %i\n"),lParam);
+				vnclog.Print(LL_INTINFO, VNCLOG("Monitor222 %i"),lParam);
 		}
-		vnclog.Print(LL_INTINFO, VNCLOG("Power3 %i %i\n"),wParam,lParam);
+		vnclog.Print(LL_INTINFO, VNCLOG("Power3 %i %i"),wParam,lParam);
 		return DefWindowProc(hwnd, iMsg, wParam, lParam);
 
 	case WM_COPYDATA:
@@ -1795,7 +1795,7 @@ DesktopWndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 					}
 					
 			}
-			//vnclog.Print(LL_INTINFO, VNCLOG("copydata\n"));	
+			//vnclog.Print(LL_INTINFO, VNCLOG("copydata"));	
 			return 0;
 
 	// GENERAL
@@ -1804,7 +1804,7 @@ DesktopWndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		// The display resolution is changing
 		// We must kick off any clients since their screen size will be wrong
 		// WE change the clients screensize, if they support it.
-		vnclog.Print(LL_INTERR, VNCLOG("WM_DISPLAYCHANGE\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("WM_DISPLAYCHANGE"));
 		// We First check if the Resolution changed is caused by a temp resolution switch
 		// For a temp resolution we don't use the driver, to fix the mirror driver
 		// to the new change, a resolution switch is needed, preventing screensaver locking.
@@ -1816,20 +1816,20 @@ DesktopWndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				_this->m_displaychanged = TRUE;
 				_this->m_hookdriver=true;
 				_this->m_videodriver->blocked=true;
-				vnclog.Print(LL_INTERR, VNCLOG("Resolution switch detected, driver active\n"));	
+				vnclog.Print(LL_INTERR, VNCLOG("Resolution switch detected, driver active"));	
 			}
 			else
 			{
 				//Remove display change, cause by driver activation
 				_this->m_videodriver->blocked=false;
-				vnclog.Print(LL_INTERR, VNCLOG("Resolution switch by driver activation removed\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("Resolution switch by driver activation removed"));
 			}
 		}
 		else 
 		{
 				_this->m_displaychanged = TRUE;
 				_this->m_hookdriver=true;
-				vnclog.Print(LL_INTERR, VNCLOG("Resolution switch detected, driver NOT active\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("Resolution switch detected, driver NOT active"));
 			
 		}
 		return 0;
@@ -1947,7 +1947,7 @@ void vncDesktop::SetBlankMonitor(bool enabled)
 	if (!pSetLayeredWindowAttributes) m_server->BlackAlphaBlending(false);
 	//if (VideoBuffer()) m_server->BlackAlphaBlending(false);
 
-    vnclog.Print(LL_INTINFO, VNCLOG("SetBlankMonitor: monitor %s, using alpha %s\n"), 
+    vnclog.Print(LL_INTINFO, VNCLOG("SetBlankMonitor: monitor %s, using alpha %s"), 
         enabled ? "off" : "on",
         m_server->BlackAlphaBlending() ? "true" : "false");
 
@@ -2003,7 +2003,7 @@ void
 vncDesktop::SetDisableInput(bool enabled)
 {
     CARD32 state = enabled ? rfbServerState_Disabled : rfbServerState_Enabled;
-    vnclog.Print(LL_INTINFO, VNCLOG("SetDisableInput: inputs %s\n"), enabled ? "disbled" : "enabled");
+    vnclog.Print(LL_INTINFO, VNCLOG("SetDisableInput: inputs %s"), enabled ? "disbled" : "enabled");
 
 	//BlockInput block everything on non w2k and XP
 	//if hookdll is used, he take care of input blocking
@@ -2015,7 +2015,7 @@ vncDesktop::SetDisableInput(bool enabled)
             {
                 blocked = (*pbi)(enabled);
                 if (!blocked)
-                    vnclog.Print(LL_INTINFO, VNCLOG("BlockInput failed:  Last error %08X\n"), ::GetLastError());
+                    vnclog.Print(LL_INTINFO, VNCLOG("BlockInput failed:  Last error %08X"), ::GetLastError());
 				if(!enabled) Sleep(1000);
 				blocked = (*pbi)(enabled);
             }
@@ -2036,7 +2036,7 @@ void vncDesktop::SetSW(int x,int y)
 	POINT point;
 	point.x=x;
 	point.y=y;
-	vnclog.Print(LL_INTERR, VNCLOG("SETW %i %i\n"),x,y);
+	vnclog.Print(LL_INTERR, VNCLOG("SETW %i %i"),x,y);
 	if (x <= 5 && y<=5 && x>-5 && y>-5) 
 		{
 			switch(asked_display)
@@ -2147,7 +2147,7 @@ BOOL vncDesktop::InitVideoDriver()
 	omni_mutex_lock l(m_videodriver_lock);
 	
 	if(!(OSversion()==1  || OSversion()==2)) return true; //we need w2k or xp
-	vnclog.Print(LL_INTERR, VNCLOG("Driver option is enabled\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("Driver option is enabled"));
 	// If m_videodriver exist, the driver was activated.
 	// This does not mean he is still active
 	// Screen switching disable the driver at kernel level
@@ -2159,7 +2159,7 @@ BOOL vncDesktop::InitVideoDriver()
 	if (m_videodriver!=NULL) 
 	{
 		
-								vnclog.Print(LL_INTERR, VNCLOG("Closing pending driver driver version\n"));
+								vnclog.Print(LL_INTERR, VNCLOG("Closing pending driver driver version"));
 								if (m_videodriver!=NULL) delete m_videodriver;
 			
 	}
@@ -2180,14 +2180,14 @@ BOOL vncDesktop::InitVideoDriver()
 			m_ScreenOffsety=mymonitor[2].offsety;
 			m_videodriver->VIDEODRIVER_start(mymonitor[2].offsetx,mymonitor[2].offsety,mymonitor[2].Width,mymonitor[2].Height);
 		}		
-	vnclog.Print(LL_INTERR, VNCLOG("Start Mirror driver\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("Start Mirror driver"));
 	m_hookdriver=true;
 	m_hookdll=false;
 	// check if driver has mapped the shared memory
 	if (!m_videodriver->mypVideoMemory) 
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("Start Mirror driver Failed\n"));
-		vnclog.Print(LL_INTERR, VNCLOG("Using non driver mode\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("Start Mirror driver Failed"));
+		vnclog.Print(LL_INTERR, VNCLOG("Using non driver mode"));
 		if (m_videodriver!=NULL) delete m_videodriver;
 		m_videodriver=NULL;
 		// If driver selected and fialed to start default to hookdll
@@ -2206,10 +2206,10 @@ BOOL vncDesktop::InitVideoDriver()
 	
 	if (m_videodriver->mypVideoMemory)
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("Driver Used\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("Driver Used"));
 		if (!m_videodriver->mypVideoMemory)
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("Unable to map memory\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("Unable to map memory"));
 			delete m_videodriver;
 			m_videodriver=NULL;
 			// If driver selected and fialed to start default to hookdll
@@ -2218,7 +2218,7 @@ BOOL vncDesktop::InitVideoDriver()
 			m_hookdll=true;
 			return false;
 		}
-		vnclog.Print(LL_INTERR, VNCLOG("Shared memory mapped\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("Shared memory mapped"));
 		InvalidateRect(NULL,NULL,TRUE);
 
 		return true;
@@ -2258,7 +2258,7 @@ void vncDesktop::SethookMechanism(BOOL hookall,BOOL hookdriver)
 	}
 
 	// 9,x case 
-	vnclog.Print(LL_INTERR, VNCLOG("SethookMechanism called\r\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("SethookMechanism calledCR\LF"));
 	if(OSversion()==4 || OSversion()==5)
 	{
 		m_hookdriver=false;//(user driver updates)
@@ -2290,14 +2290,14 @@ void vncDesktop::SethookMechanism(BOOL hookall,BOOL hookdriver)
 		else Hookdll_Changed=false;
 		if (OSversion()==2) Hookdll_Changed=true;
 		
-		vnclog.Print(LL_INTERR, VNCLOG("Sethook_restart_wanted hook=%d driver=%d \r\n"),m_hookdll,m_hookdriver);
+		vnclog.Print(LL_INTERR, VNCLOG("Sethook_restart_wanted hook=%d driver=%d "),m_hookdll,m_hookdriver);
 		if (Hookdll_Changed)
-			vnclog.Print(LL_INTERR, VNCLOG("Hookdll status changed \r\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("Hookdll status changed"));
 
 		if ((m_hookdriver && !VideoBuffer()) || (!m_hookdriver && VideoBuffer()))
 		{
 			m_hookswitch=true;
-			vnclog.Print(LL_INTERR, VNCLOG("Driver Status changed\r\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("Driver Status changed"));
 		}
 	}
 	else //NT4
@@ -2335,12 +2335,12 @@ void vncDesktop::StartStopddihook(BOOL enabled)
 		// Start the child process. 
 		if( !CreateProcess( NULL,szCurrentDir, NULL,NULL,FALSE,NULL,NULL,NULL,&ssi,&ppi ) ) 
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("set ddihooks Failed\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("set ddihooks Failed"));
 			ddihook=false;
 		}
 		else
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("set ddihooks OK\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("set ddihooks OK"));
 			ddihook=true;
 			WaitForInputIdle(ppi.hProcess, 10000);
 			m_hddihook=ppi.hProcess;
@@ -2365,7 +2365,7 @@ void vncDesktop::StartStophookdll(BOOL enabled)
 		if (SetHook)
 		{
 			SetHook(m_hwnd);
-			vnclog.Print(LL_INTERR, VNCLOG("set SC hooks OK\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("set SC hooks OK"));
 			m_hookinited = TRUE;
 		}
 		else if (SetHooks)
@@ -2377,14 +2377,14 @@ void vncDesktop::StartStophookdll(BOOL enabled)
 				RFB_MOUSE_UPDATE, ddihook
 				))
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("failed to set system hooks\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("failed to set system hooks"));
 				// Switch on full screen polling, so they can see something, at least...
 				m_server->PollFullScreen(TRUE);
 				m_hookinited = FALSE;
 			} 
 			else 
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("set hooks OK\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("set hooks OK"));
 				m_hookinited = TRUE;
 				// Start up the keyboard and mouse filters
 				if (SetKeyboardFilterHook) SetKeyboardFilterHook(m_server->LocalInputsDisabled());
@@ -2402,8 +2402,8 @@ void vncDesktop::StartStophookdll(BOOL enabled)
 		else if (UnSetHooks)
 		{
 		if(!UnSetHooks(GetCurrentThreadId()) )
-			vnclog.Print(LL_INTERR, VNCLOG("Unsethooks Failed\n"));
-		else vnclog.Print(LL_INTERR, VNCLOG("Unsethooks OK\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("Unsethooks Failed"));
+		else vnclog.Print(LL_INTERR, VNCLOG("Unsethooks OK"));
 		}
 		
 	}

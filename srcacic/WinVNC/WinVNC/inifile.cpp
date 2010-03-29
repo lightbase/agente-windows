@@ -118,7 +118,7 @@ IniFile::~IniFile()
 bool
 IniFile::WriteString(char *key1, char *key2,char *value)
 {
-	//vnclog.Print(LL_INTERR, VNCLOG("%s \n"),myInifile); 
+	//vnclog.Print(LL_INTERR, VNCLOG("%s "),myInifile); 
 	return (FALSE != WritePrivateProfileString(key1,key2, value,myInifile));
 }
 
@@ -127,21 +127,21 @@ IniFile::WriteInt(char *key1, char *key2,int value)
 {
 	char       buf[32];
 	wsprintf(buf, "%d", value);
-	//vnclog.Print(LL_INTERR, VNCLOG("%s \n"),myInifile);
+	//vnclog.Print(LL_INTERR, VNCLOG("%s "),myInifile);
 	return (FALSE != WritePrivateProfileString(key1,key2, buf,myInifile));
 }
 
 int
 IniFile::ReadInt(char *key1, char *key2,int Defaultvalue)
 {
-	//vnclog.Print(LL_INTERR, VNCLOG("%s \n"),myInifile);
+	//vnclog.Print(LL_INTERR, VNCLOG("%s "),myInifile);
 	return GetPrivateProfileInt(key1, key2, Defaultvalue, myInifile);
 }
 
 void 
 IniFile::ReadString(char *key1, char *key2,char *value,int valuesize)
 {
-	//vnclog.Print(LL_INTERR, VNCLOG("%s \n"),myInifile);
+	//vnclog.Print(LL_INTERR, VNCLOG("%s "),myInifile);
 	GetPrivateProfileString(key1,key2, "",value,valuesize,myInifile);
 }
 
@@ -149,7 +149,7 @@ void
 IniFile::ReadPassword(char *value,int valuesize)
 {
 	//int size=ReadInt("ultravnc", "passwdsize",0);
-	//vnclog.Print(LL_INTERR, VNCLOG("%s \n"),myInifilePasswd);
+	//vnclog.Print(LL_INTERR, VNCLOG("%s "),myInifilePasswd);
 	GetPrivateProfileStruct("ultravnc","passwd",value,8,myInifile);
 }
 
@@ -157,7 +157,7 @@ bool
 IniFile::WritePassword(char *value)
 {
 		//WriteInt("ultravnc", "passwdsize",sizeof(value));
-		//vnclog.Print(LL_INTERR, VNCLOG("%s \n"),myInifile);
+		//vnclog.Print(LL_INTERR, VNCLOG("%s "),myInifile);
 		return (FALSE != WritePrivateProfileStruct("ultravnc","passwd", value,8,myInifile));
 }
 

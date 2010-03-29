@@ -182,7 +182,7 @@ vncBuffer::CheckBuffer()
 	// Check that the local format buffers are sufficient
 	if ((m_backbuffsize != m_desktop->ScreenBuffSize()) || !m_freemainbuff)
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("request local buffer[%d]\n"), m_desktop->ScreenBuffSize());
+		vnclog.Print(LL_INTINFO, VNCLOG("request local buffer[%d]"), m_desktop->ScreenBuffSize());
 		if (m_freemainbuff) {
 			// Slow blits were enabled - free the slow blit buffer
 			// Modif rdv@2002 - v1.1.x - Videodriver
@@ -223,13 +223,13 @@ vncBuffer::CheckBuffer()
 			if (m_mainbuff) {
 				// Prevent us from freeing the DIBsection buffer
 				m_freemainbuff = FALSE;
-				vnclog.Print(LL_INTINFO, VNCLOG("fast blits detected - using DIBsection buffer\n"));
+				vnclog.Print(LL_INTINFO, VNCLOG("fast blits detected - using DIBsection buffer"));
 			} else {
 				// Create our own buffer to copy blits through
 				m_freemainbuff = TRUE;
 				if ((m_mainbuff = new BYTE [m_desktop->ScreenBuffSize()]) == NULL)
 				{
-					vnclog.Print(LL_INTERR, VNCLOG("unable to allocate main buffer[%d]\n"), m_desktop->ScreenBuffSize());
+					vnclog.Print(LL_INTERR, VNCLOG("unable to allocate main buffer[%d]"), m_desktop->ScreenBuffSize());
 					return FALSE;
 				}
 				memset(m_mainbuff, 0, m_desktop->ScreenBuffSize());
@@ -238,7 +238,7 @@ vncBuffer::CheckBuffer()
 		// Always create a back buffer
 		if ((m_backbuff = new BYTE [m_desktop->ScreenBuffSize()]) == NULL)
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("unable to allocate back buffer[%d]\n"), m_desktop->ScreenBuffSize());
+			vnclog.Print(LL_INTERR, VNCLOG("unable to allocate back buffer[%d]"), m_desktop->ScreenBuffSize());
 			return FALSE;
 		}
 
@@ -246,7 +246,7 @@ vncBuffer::CheckBuffer()
 		{
 			if ((m_cachebuff = new BYTE [m_desktop->ScreenBuffSize()]) == NULL)
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("unable to allocate cache buffer[%d]\n"), m_desktop->ScreenBuffSize());
+				vnclog.Print(LL_INTERR, VNCLOG("unable to allocate cache buffer[%d]"), m_desktop->ScreenBuffSize());
 				return FALSE;
 			}
 			ClearCache();
@@ -261,7 +261,7 @@ vncBuffer::CheckBuffer()
 			// Modif sf@2002 - Scaling
 			if ((m_ScaledBuff = new BYTE [m_desktop->ScreenBuffSize()]) == NULL)
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("unable to allocate scaled buffer[%d]\n"), m_desktop->ScreenBuffSize());
+				vnclog.Print(LL_INTERR, VNCLOG("unable to allocate scaled buffer[%d]"), m_desktop->ScreenBuffSize());
 				return FALSE;
 			}
 			m_ScaledSize = m_desktop->ScreenBuffSize();
@@ -277,7 +277,7 @@ vncBuffer::CheckBuffer()
 
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("local buffer=%d\n"), m_backbuffsize);
+	vnclog.Print(LL_INTINFO, VNCLOG("local buffer=%d"), m_backbuffsize);
 
 	return TRUE;
 }
@@ -1053,7 +1053,7 @@ vncBuffer::EnableCache(BOOL enable)
 		}
 		if ((m_cachebuff = new BYTE [m_desktop->ScreenBuffSize()]) == NULL)
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("unable to allocate cache buffer[%d]\n"), m_desktop->ScreenBuffSize());
+			vnclog.Print(LL_INTERR, VNCLOG("unable to allocate cache buffer[%d]"), m_desktop->ScreenBuffSize());
 			return;
 		}
 		ClearCache();

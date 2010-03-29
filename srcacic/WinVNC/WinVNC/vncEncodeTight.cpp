@@ -743,13 +743,13 @@ vncEncodeTight::CompressData(BYTE *dest, int streamId, int dataLen,
 		pz->opaque = Z_NULL;
 
 		vnclog.Print(LL_INTINFO,
-					 VNCLOG("calling deflateInit2 with zlib level:%d\n"),
+					 VNCLOG("calling deflateInit2 with zlib level:%d"),
 					 zlibLevel);
 		int err = deflateInit2 (pz, zlibLevel, Z_DEFLATED, MAX_WBITS,
 								MAX_MEM_LEVEL, zlibStrategy);
 		if (err != Z_OK) {
 			vnclog.Print(LL_INTINFO,
-						 VNCLOG("deflateInit2 returned error:%d:%s\n"),
+						 VNCLOG("deflateInit2 returned error:%d:%s"),
 						 err, pz->msg);
 			return -1;
 		}
@@ -769,12 +769,12 @@ vncEncodeTight::CompressData(BYTE *dest, int streamId, int dataLen,
 	// Change compression parameters if needed.
 	if (zlibLevel != m_zsLevel[streamId]) {
 		vnclog.Print(LL_INTINFO,
-					 VNCLOG("calling deflateParams with zlib level:%d\n"),
+					 VNCLOG("calling deflateParams with zlib level:%d"),
 					 zlibLevel);
 		int err = deflateParams (pz, zlibLevel, zlibStrategy);
 		if (err != Z_OK) {
 			vnclog.Print(LL_INTINFO,
-						 VNCLOG("deflateParams returned error:%d:%s\n"),
+						 VNCLOG("deflateParams returned error:%d:%s"),
 						 err, pz->msg);
 			return -1;
 		}
@@ -784,7 +784,7 @@ vncEncodeTight::CompressData(BYTE *dest, int streamId, int dataLen,
 	// Actual compression.
 	if ( deflate (pz, Z_SYNC_FLUSH) != Z_OK ||
 		 pz->avail_in != 0 || pz->avail_out == 0 ) {
-		vnclog.Print(LL_INTINFO, VNCLOG("deflate() call failed.\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("deflate() call failed."));
 		return -1;
 	}
 

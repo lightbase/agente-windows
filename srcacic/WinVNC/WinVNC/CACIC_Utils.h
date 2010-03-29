@@ -10,7 +10,7 @@
 #include <string>
 using namespace std;
 
-#include "windows.h"
+#include <windows.h>
 
 /**
  * Struct referente a um usuário cliente.
@@ -18,6 +18,7 @@ using namespace std;
 struct ClienteSRC {
 	short vncCID;
 	string peerName;
+	
 	string id_usuario_visitante; 
 	string id_usuario_cli; 
 	string id_conexao; 
@@ -41,6 +42,23 @@ struct Dominio {
 	string id;
 	string nome;
 };
+
+/**
+* Função de Comparação de objetos de mesmo tipo. Resultados possíveis:
+* maior, menor ou igual.
+*/
+template <typename T>
+int Compare (T a, T b){
+	if (a > b) return 1;
+	else if (a < b) return -1;
+	return 0;
+};
+
+	/**
+	* Função que compara Datas do sistema, atraves da função declarada
+	* anteriormente: Compare.
+	*/
+	//int DateCompare (SYSTEMTIME d1, SYSTEMTIME d2);
 
 class CACIC_Utils {
 
@@ -141,6 +159,12 @@ public:
 	 * http://www.codeguru.com/cpp/w-p/system/systeminformation/article.php/c8973__2/
 	 */
 	static string getSOID();
+
+	/**
+	* Função que compara Datas do sistema, atraves da função declarada
+	* anteriormente: Compare.
+	*/
+	static int DateCompare (SYSTEMTIME d1, SYSTEMTIME d2);
 
 private:
 

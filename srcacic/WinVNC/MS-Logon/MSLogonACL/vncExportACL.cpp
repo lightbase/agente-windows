@@ -35,7 +35,7 @@ bool vncExportACL::GetACL(PACL *pACL){
 		if (ERROR_SUCCESS != RegOpenKeyEx( HKEY_LOCAL_MACHINE,
 			_T("Software\\ORL\\WinVNC3"),
 			0, KEY_QUERY_VALUE, &hk )){
-			_ftprintf(stderr, _T("== Error %d: RegOpenKeyEx\n"), GetLastError());
+			_ftprintf(stderr, _T("== Error %d: RegOpenKeyEx"), GetLastError());
 			__leave;
 		}
 		// Read the ACL value from the VNC registry key

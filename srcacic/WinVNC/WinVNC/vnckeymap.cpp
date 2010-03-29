@@ -364,24 +364,24 @@ public:
   void press() {
     if (!(GetAsyncKeyState(vkCode) & 0x8000)) {
       doKeyboardEvent(vkCode, flags);
-      vnclog.Print(LL_INTINFO, "fake %d down\n", vkCode);
+      vnclog.Print(LL_INTINFO, "fake %d down", vkCode);
       pressed = true;
     }
   }
   void release() {
     if (GetAsyncKeyState(vkCode) & 0x8000) {
       doKeyboardEvent(vkCode, flags | KEYEVENTF_KEYUP);
-      vnclog.Print(LL_INTINFO, "fake %d up\n", vkCode);
+      vnclog.Print(LL_INTINFO, "fake %d up", vkCode);
       released = true;
     }
   }
   ~KeyStateModifier() {
     if (pressed) {
       doKeyboardEvent(vkCode, flags | KEYEVENTF_KEYUP);
-      vnclog.Print(LL_INTINFO, "fake %d up\n", vkCode);
+      vnclog.Print(LL_INTINFO, "fake %d up", vkCode);
     } else if (released) {
       doKeyboardEvent(vkCode, flags);
-      vnclog.Print(LL_INTINFO, "fake %d down\n", vkCode);
+      vnclog.Print(LL_INTINFO, "fake %d down", vkCode);
     }
   }
   int vkCode;
@@ -455,11 +455,11 @@ public:
 
   void keyEvent(rdr::U32 keysym, bool down, bool jap)
   {
-	  vnclog.Print(LL_INTWARN, " keysym 0x%x",keysym);
+	  vnclog.Print(LL_INTWARN, "keysym 0x%x",keysym);
 	if (keysym>=XK_dead_grave && keysym <=XK_dead_belowdot)// && down)
 	{
 		keysymDead=keysym;
-		vnclog.Print(LL_INTWARN, " ************** DEAD KEY");
+		vnclog.Print(LL_INTWARN, "************** DEAD KEY");
 		//we have a dead key
 		//Record dead key
 		return;
@@ -470,7 +470,7 @@ public:
     {
 	if (keysymDead!=0 && down)
 	{
-		vnclog.Print(LL_INTWARN, " Compose dead 0x%x 0x%x",keysymDead,keysym);
+		vnclog.Print(LL_INTWARN, "Compose dead 0x%x 0x%x",keysymDead,keysym);
 		switch (keysymDead)
 		{
 		case XK_dead_grave:
@@ -552,7 +552,7 @@ public:
 			}
 		}
 		keysymDead=0;
-		vnclog.Print(LL_INTWARN, " Composed 0x%x",keysym);
+		vnclog.Print(LL_INTWARN, "Composed 0x%x",keysym);
 
 	}
       // ordinary Latin-1 character
@@ -572,7 +572,7 @@ public:
 		  }
 	  }
 
-	  vnclog.Print(LL_INTWARN, " SHORT s %i",s);
+	  vnclog.Print(LL_INTWARN, "SHORT s %i",s);
 
 	 if (s == -1)
 	 {
@@ -581,7 +581,7 @@ public:
 		  vnclog.Print(LL_INTWARN, "down");
         // not a single keypress - try synthesizing dead chars.
 			{
-			  vnclog.Print(LL_INTWARN, " Found key");
+			  vnclog.Print(LL_INTWARN, "Found key");
 			  //Lookup ascii representation
 			  int ascii=0;
 			  for (ascii=0;ascii<256;ascii++)
@@ -614,7 +614,7 @@ public:
     }
 
       /*if (s == -1) {
-        vnclog.Print(LL_INTWARN, "ignoring unrecognised Latin-1 keysym %d\n",
+        vnclog.Print(LL_INTWARN, "ignoring unrecognised Latin-1 keysym %d",
                      keysym);
 		keybd_event( VK_MENU, MapVirtualKey(VK_MENU, 0),0, 0);
 		keybd_event( VK_MENU, MapVirtualKey(VK_MENU, 0),KEYEVENTF_KEYUP, 0);
@@ -657,7 +657,7 @@ public:
         }
       }
       vnclog.Print(LL_INTINFO,
-                   "latin-1 key: keysym %d(0x%x) vkCode 0x%x down %d capslockOn %d\n",
+                   "latin-1 key: keysym %d(0x%x) vkCode 0x%x down %d capslockOn %d",
                    keysym, keysym, vkCode, down, capslockOn);
 
       doKeyboardEvent(vkCode, down ? 0 : KEYEVENTF_KEYUP);
@@ -667,7 +667,7 @@ public:
       // see if it's a recognised keyboard key, otherwise ignore it
 
       if (vkMap.find(keysym) == vkMap.end()) {
-        vnclog.Print(LL_INTWARN, "ignoring unknown keysym %d\n",keysym);
+        vnclog.Print(LL_INTWARN, "ignoring unknown keysym %d",keysym);
         return;
       }
       BYTE vkCode = vkMap[keysym];
@@ -676,7 +676,7 @@ public:
       if (!down) flags |= KEYEVENTF_KEYUP;
 
 //      vnclog.Print(LL_INTINFO,
-  //                "keyboard key: keysym %d(0x%x) vkCode 0x%x ext %d down %d\n",
+  //                "keyboard key: keysym %d(0x%x) vkCode 0x%x ext %d down %d",
     //               keysym, keysym, vkCode, extendedMap[keysym], down);
 
       if (down && (vkCode == VK_DELETE) &&
@@ -685,12 +685,12 @@ public:
           vncService::IsWinNT())
       {
 		vnclog.Print(LL_INTINFO,
-                 "CAD\n");
+                 "CAD");
 		// If running under Vista and started from Session0 in Application mode
 		if (vncService::VersionMajor()>=6 && vncService::RunningFromExternalService() )
 		{
 			      vnclog.Print(LL_INTINFO,
-                 "Vista and runnning as system -> CAD\n");
+                 "Vista and runnning as system -> CAD");
 
 				// Try to run the special Vista cad.exe file...
 				HANDLE ThreadHandle2;
@@ -701,13 +701,13 @@ public:
 		else if (vncService::VersionMajor()>=6)
 		{
 			vnclog.Print(LL_INTINFO,
-                 "Vista and runnning as user -> Taskmgr\n");
+                 "Vista and runnning as user -> Taskmgr");
 			WinExec("taskmgr.exe", SW_SHOWNORMAL);
 		}
 		else
 		{
 			vnclog.Print(LL_INTINFO,
-                 "Not Vista, use old method\n");
+                 "Not Vista, use old method");
 			vncService::SimulateCtrlAltDel();
 		}
         return;
@@ -747,7 +747,7 @@ SetShiftState(BYTE key, BOOL down)
 		return;
 
 	vnclog.Print(LL_INTINFO,
-		VNCLOG("setshiftstate %d - (%s->%s)\n"),
+		VNCLOG("setshiftstate %d - (%s->%s)"),
 		key, keystate ? "down" : "up",
 		down ? "down" : "up");
 
@@ -756,7 +756,7 @@ SetShiftState(BYTE key, BOOL down)
 	keystate = (GetAsyncKeyState(key) & 0x8000) != 0;
 
 	vnclog.Print(LL_INTINFO,
-		VNCLOG("new state %d (%s)\n"),
+		VNCLOG("new state %d (%s)"),
 		key, keystate ? "down" : "up");
 }
 

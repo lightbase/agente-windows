@@ -154,7 +154,7 @@ PCHAR VIDEODRIVER::VideoMemory_GetSharedMemory(void)
    }
    else
    {
-	   vnclog.Print(LL_INTERR, VNCLOG("Error video.dat \n")); 
+	   vnclog.Print(LL_INTERR, VNCLOG("Error video.dat ")); 
    }
    
    return pVideoMemory;

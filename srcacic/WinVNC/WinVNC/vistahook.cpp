@@ -48,7 +48,7 @@ DWORD WINAPI hookwatch(LPVOID lpParam)
 bool
 vncDesktopThread::Handle_Ringbuffer(mystruct *ringbuffer,rfb::Region2D &rgncache)
 {
-	vnclog.Print(LL_INTERR, VNCLOG("counter,g_Oldcounter %i %i  \n"),ringbuffer->counter,g_Oldcounter);
+	vnclog.Print(LL_INTERR, VNCLOG("counter,g_Oldcounter %i %i  "),ringbuffer->counter,g_Oldcounter);
 	if (ringbuffer->counter==g_Oldcounter) return 0;
 	int counter=ringbuffer->counter;
 	if (counter<1 || counter>1999) return 0;
@@ -67,7 +67,7 @@ vncDesktopThread::Handle_Ringbuffer(mystruct *ringbuffer,rfb::Region2D &rgncache
 				rect.br.x-=m_desktop->m_ScreenOffsetx;
 				rect.tl.y-=m_desktop->m_ScreenOffsety;
 				rect.br.y-=m_desktop->m_ScreenOffsety;
-				//vnclog.Print(LL_INTERR, VNCLOG("REct %i %i %i %i  \n"),rect.tl.x,rect.br.x,rect.tl.y,rect.br.y);
+				//vnclog.Print(LL_INTERR, VNCLOG("REct %i %i %i %i  "),rect.tl.x,rect.br.x,rect.tl.y,rect.br.y);
 				
 				rect = rect.intersect(m_desktop->m_Cliprect);
 				if (!rect.is_empty())
@@ -83,7 +83,7 @@ vncDesktopThread::Handle_Ringbuffer(mystruct *ringbuffer,rfb::Region2D &rgncache
 						cinfo.cbSize=sizeof(MyCURSORINFO);
 						MyGetCursorInfo(&cinfo);
 						m_desktop->SetCursor(cinfo.hCursor);
-						//vnclog.Print(LL_INTERR, VNCLOG("Cursor %i  \n"),cinfo.hCursor);
+						//vnclog.Print(LL_INTERR, VNCLOG("Cursor %i  "),cinfo.hCursor);
 					}*/
 	
 				
@@ -107,7 +107,7 @@ vncDesktopThread::Handle_Ringbuffer(mystruct *ringbuffer,rfb::Region2D &rgncache
 				rect.br.x-=m_desktop->m_ScreenOffsetx;
 				rect.tl.y-=m_desktop->m_ScreenOffsety;
 				rect.br.y-=m_desktop->m_ScreenOffsety;
-				//vnclog.Print(LL_INTERR, VNCLOG("REct %i %i %i %i  \n"),rect.tl.x,rect.br.x,rect.tl.y,rect.br.y);
+				//vnclog.Print(LL_INTERR, VNCLOG("REct %i %i %i %i  "),rect.tl.x,rect.br.x,rect.tl.y,rect.br.y);
 				
 				rect = rect.intersect(m_desktop->m_Cliprect);
 				if (!rect.is_empty())
@@ -123,7 +123,7 @@ vncDesktopThread::Handle_Ringbuffer(mystruct *ringbuffer,rfb::Region2D &rgncache
 						cinfo.cbSize=sizeof(MyCURSORINFO);
 						MyGetCursorInfo(&cinfo);
 						m_desktop->SetCursor(cinfo.hCursor);
-						//vnclog.Print(LL_INTERR, VNCLOG("Cursor %i  \n"),cinfo.hCursor);
+						//vnclog.Print(LL_INTERR, VNCLOG("Cursor %i  "),cinfo.hCursor);
 					}*/
 				
 			}
@@ -141,7 +141,7 @@ vncDesktopThread::Handle_Ringbuffer(mystruct *ringbuffer,rfb::Region2D &rgncache
 				rect.br.x-=m_desktop->m_ScreenOffsetx;
 				rect.tl.y-=m_desktop->m_ScreenOffsety;
 				rect.br.y-=m_desktop->m_ScreenOffsety;
-				//vnclog.Print(LL_INTERR, VNCLOG("REct %i %i %i %i  \n"),rect.tl.x,rect.br.x,rect.tl.y,rect.br.y);
+				//vnclog.Print(LL_INTERR, VNCLOG("REct %i %i %i %i  "),rect.tl.x,rect.br.x,rect.tl.y,rect.br.y);
 				
 				rect = rect.intersect(m_desktop->m_Cliprect);
 				if (!rect.is_empty())
@@ -157,7 +157,7 @@ vncDesktopThread::Handle_Ringbuffer(mystruct *ringbuffer,rfb::Region2D &rgncache
 						cinfo.cbSize=sizeof(MyCURSORINFO);
 						MyGetCursorInfo(&cinfo);
 						m_desktop->SetCursor(cinfo.hCursor);
-						//vnclog.Print(LL_INTERR, VNCLOG("Cursor %i  \n"),cinfo.hCursor);
+						//vnclog.Print(LL_INTERR, VNCLOG("Cursor %i  "),cinfo.hCursor);
 					}*/
 				
 			}
@@ -171,8 +171,8 @@ vncDesktopThread::Handle_Ringbuffer(mystruct *ringbuffer,rfb::Region2D &rgncache
 DWORD WINAPI Cadthread(LPVOID lpParam)
 {
 	HDESK desktop;
-	//vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop \n"));
-	//vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL\n"));
+	//vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop "));
+	//vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL"));
 	desktop = OpenInputDesktop(0, FALSE,
 								DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
 								DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
@@ -181,9 +181,9 @@ DWORD WINAPI Cadthread(LPVOID lpParam)
 								);
 
 	if (desktop == NULL)
-		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop Error \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop Error "));
 	else 
-		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop OK\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop OK"));
 
 	HDESK old_desktop = GetThreadDesktop(GetCurrentThreadId());
 	DWORD dummy;
@@ -192,21 +192,21 @@ DWORD WINAPI Cadthread(LPVOID lpParam)
 
 	if (!GetUserObjectInformation(desktop, UOI_NAME, &new_name, 256, &dummy))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation "));
 	}
 
-	vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x\n"), new_name, desktop, old_desktop);
+	vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x"), new_name, desktop, old_desktop);
 
 	if (!SetThreadDesktop(desktop))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop "));
 	}
 	char user[150];
 	DWORD length=150;
 	GetUserName(user, &length);
 
 	if (!CloseDesktop(old_desktop))
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d) %s\n"), old_desktop, GetLastError(),user);
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d) %s"), old_desktop, GetLastError(),user);
 
 //Full path needed, sometimes it just default to system32
 	char WORKDIR[MAX_PATH];

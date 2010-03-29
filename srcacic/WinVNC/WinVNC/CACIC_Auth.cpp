@@ -25,7 +25,7 @@ const UINT CACIC_Auth::TEMPO_IDLE = 15;
 
 bool CACIC_Auth::autentica()
 {
-	vnclog.Print(LL_SRLOG, VNCLOG("Autenticando o usuário no gerente web.\n"));
+	vnclog.Print(LL_SRLOG, VNCLOG("Autenticando o usuário no gerente web."));
 
 	string post = getPostComum();
 
@@ -40,15 +40,16 @@ bool CACIC_Auth::autentica()
 
 	if (!autenticaUsuario(listaDominios)) return false;
 
-	vnclog.Print(LL_SRLOG, VNCLOG("Autenticação OK!\n"));
+	vnclog.Print(LL_SRLOG, VNCLOG("Autenticação OK!"));
 
 	return true;
 }
 
 bool CACIC_Auth::autenticaUsuario(vector<Dominio> &listaDominios)
 {
-	string post;
+	string post ;
 	char resposta[TAMANHO_RESPOSTA];
+
 
 	vncPassDlg passDlg(listaDominios);
 
@@ -59,8 +60,7 @@ bool CACIC_Auth::autenticaUsuario(vector<Dominio> &listaDominios)
 	}
 
 	// apresenta o dialogo de autenticação
-	do
-	{
+	do{
 		if (!passDlg.DoDialog()) return false;
 		
 		post.clear();
@@ -73,32 +73,46 @@ bool CACIC_Auth::autenticaUsuario(vector<Dominio> &listaDominios)
 		post += "&id_servidor_autenticacao=";
 		post += CACIC_Crypt::codifica(passDlg.m_dominio);
 
+
 		vnclog.Print(LL_SRLOG, post.data());
 
 		string session_script = m_scriptsPath;
 		session_script.append(SET_SESSION_SCRIPT);
-
+		
 		CACIC_Con::sendHtppPost(m_servidorWeb, session_script, post, resposta, TAMANHO_RESPOSTA);
 		
-		if(verificaAuthDominio(resposta)) {
+		
+		if(verificaAuthDominio(resposta)) {	
 			passDlg.m_authStat = vncPassDlg::AUTENTICADO;
 		} else {
 			passDlg.m_authStat = vncPassDlg::FALHA_AUTENTICACAO;
 		}
 	}
 	while (passDlg.m_authStat != vncPassDlg::AUTENTICADO);
-
+    
+	
 	if (passDlg.m_authStat != vncPassDlg::SEM_AUTENTICACAO)
 	{
 		string msginfo = "Usuário Autenticado: ";
 		msginfo += m_usuario;
 		passDlg.m_authStat = vncPassDlg::AUTENTICADO;
 		passDlg.m_msgInfo = msginfo;
-		if (!passDlg.DoDialog()) return false;
-	}
 
+	   
+		if (listaDominios.at(0).id.compare("0") == 0) {
+			//Usuario sem autenticação
+			//Não necessita da atualização da "Janela"
+		    return true;
+		} else {
+			//Usuario autenticado.
+			//Ocorre atualização da "Janela" de autenticação.
+			if (!passDlg.DoDialog()) return false;
+		 }
+	}
+   
 	return true;
 }
+
 
 bool CACIC_Auth::validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char te_node_address_cli[], 
 							   char te_documento_referencial[], char te_motivo_conexao[], char te_so_cli[], 
@@ -121,20 +135,48 @@ bool CACIC_Auth::validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char 
 	post += te_motivo_conexao;
 	post += "&te_so_cli=";
 	post += te_so_cli;
+	
+	
+
+    FILE *arq = NULL;
+	arq = fopen("ip_log5.txt","w");
+	fprintf(arq, "IP1 > %d\n", (int)peerName);
+	fprintf(arq, "IP1 > %s\n",peerName);
 
 	string auth_client_script = m_scriptsPath;
 	auth_client_script += AUTH_CLIENT_SCRIPT;
 
 	char resposta[TAMANHO_RESPOSTA];
-	CACIC_Con::sendHtppPost(m_servidorWeb, auth_client_script, post, resposta, TAMANHO_RESPOSTA);
+	char ip_cliente[16];
 
+	//(Provisório)
+	//Salva ip do cliente para ser utilizado na estação de trabalho de suporte remoto.
+	//Após sendHttpPost() peerName irá possuir o IP do servidor.
+	sprintf(ip_cliente, "%s",peerName);
+
+	fprintf(arq, "IP2 > %d\n", (int)peerName);
+	fprintf(arq, "IP2 > %s\n",peerName);
+    
+
+	CACIC_Con::sendHtppPost(m_servidorWeb, auth_client_script, post, resposta, TAMANHO_RESPOSTA);
+		
+	fprintf(arq, "IP3 > %d\n", (int)peerName);
+	fprintf(arq, "IP3 > %s\n",peerName);
+	
+    //Passando ip_cliente no lugar de peerName
 	if (!verificaAuthTecnico(resposta, te_node_address_cli, te_documento_referencial, 
-							 te_motivo_conexao, te_so_cli, vncCID, peerName))
+							 te_motivo_conexao, te_so_cli, vncCID, ip_cliente))
 	{
+		fprintf(arq, "IP4 > %d\n", (int)peerName);
+		fprintf(arq, "IP4 > %s\n",peerName);
+		fclose(arq);
+		arq = NULL;
+
 		m_efetuarLogout = false;
 		return false;
 	}
-
+		fclose(arq);
+		arq = NULL;
 	return true;
 }
 
@@ -250,7 +292,8 @@ bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[]
 		novoCliente.te_motivo_conexao = te_motivo_conexao_dec;
 		novoCliente.te_so_visitante = te_so_cli;
 		novoCliente.dt_hr_inicio_sessao = dt_hr_inicio_sessao_dec;
-		novoCliente.peerName = peerName;
+		novoCliente.peerName = peerName;		
+
 
 		// adiciona o novo usuario a lista de usuarios visitantes
 		m_listaClientes.push_back(novoCliente);

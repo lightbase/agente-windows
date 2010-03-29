@@ -209,7 +209,7 @@ GetCurrentUser(char *buffer, UINT size) // RealVNC 336 change
 {	
 	if (vncService::RunningFromExternalService())
 	{
-//		vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Forcing g_impersonating_user \n"));
+//		vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Forcing g_impersonating_user "));
 		g_impersonating_user = TRUE;
 	}
 
@@ -224,7 +224,7 @@ GetCurrentUser(char *buffer, UINT size) // RealVNC 336 change
 		HWINSTA station = GetProcessWindowStation();
 		if (station == NULL)
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - ERROR : No window station \n"));
+			vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - ERROR : No window station "));
 			return FALSE;
 		}
 
@@ -245,12 +245,12 @@ GetCurrentUser(char *buffer, UINT size) // RealVNC 336 change
 			// Return "" as the name...
 			if (strlen("") >= size)
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: Bad buffer size \n"));
+				vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: Bad buffer size "));
 				return FALSE;
 			}
 			strcpy(buffer, "");
 
-			vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: Usersize 0\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: Usersize 0"));
 			return TRUE;
 		}
 
@@ -258,7 +258,7 @@ GetCurrentUser(char *buffer, UINT size) // RealVNC 336 change
 		//     them then we can't continue!
 		if (!g_impersonating_user)
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: NOT impersonating user \n"));
+			vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: NOT impersonating user "));
 			// Return "" as the name...
 			if (strlen("") >= size)
 				return FALSE;
@@ -280,7 +280,7 @@ GetCurrentUser(char *buffer, UINT size) // RealVNC 336 change
 			// Just call GetCurrentUser
 			DWORD length = size;
 
-//			vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - GetUserName call \n"));
+//			vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - GetUserName call "));
 			if ( GetConsoleUser(buffer, size) == 0)
 			{
 				if (GetUserName(buffer, &length) == 0)
@@ -289,7 +289,7 @@ GetCurrentUser(char *buffer, UINT size) // RealVNC 336 change
 
 					if (error == ERROR_NOT_LOGGED_ON)
 					{
-						vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: No user logged on \n"));
+						vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: No user logged on "));
 						// No user logged on
 						if (strlen("") >= size)
 							return FALSE;
@@ -299,18 +299,18 @@ GetCurrentUser(char *buffer, UINT size) // RealVNC 336 change
 					else
 					{
 						// Genuine error...
-						vnclog.Print(LL_INTERR, VNCLOG("getusername error %d\n"), GetLastError());
+						vnclog.Print(LL_INTERR, VNCLOG("getusername error %d"), GetLastError());
 						return FALSE;
 					}
 				}
 			}
 		}
-		vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - UserNAme found: %s \n"), buffer);
+		vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - UserNAme found: %s "), buffer);
 		return TRUE;
 	};
 
 	// OS was not recognised!
-	vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: Unknown OS \n"));
+	vnclog.Print(LL_INTERR, VNCLOG("@@@@@@@@@@@@@ GetCurrentUser - Error: Unknown OS "));
 	return FALSE;
 }
 
@@ -428,21 +428,21 @@ vncService::SelectHDESK(HDESK new_desktop)
 		char new_name[256];
 
 		if (!GetUserObjectInformation(new_desktop, UOI_NAME, &new_name, 256, &dummy)) {
-			vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation \n"));
+			vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation "));
 			return FALSE;
 		}
 
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x\n"), new_name, new_desktop, old_desktop);
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x"), new_name, new_desktop, old_desktop);
 
 		// Switch the desktop
 		if(!SetThreadDesktop(new_desktop)) {
-			vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop \n"));
+			vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop "));
 			return FALSE;
 		}
 
 		// Switched successfully - destroy the old desktop
 		if (!CloseDesktop(old_desktop))
-			vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d)\n"), old_desktop, GetLastError());
+			vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d)"), old_desktop, GetLastError());
 
 		return TRUE;
 	}
@@ -462,10 +462,10 @@ vncService::SelectDesktop(char *name)
 	if (IsWinNT())
 	{
 		HDESK desktop;
-		vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop "));
 		if (name != NULL)
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 named\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 named"));
 			// Attempt to open the named desktop
 			desktop = OpenDesktop(name, 0, FALSE,
 				DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
@@ -475,7 +475,7 @@ vncService::SelectDesktop(char *name)
 		}
 		else
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL"));
 			// No, so open the input desktop
 			desktop = OpenInputDesktop(0, FALSE,
 				DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
@@ -486,16 +486,16 @@ vncService::SelectDesktop(char *name)
 
 		// Did we succeed?
 		if (desktop == NULL) {
-				vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 \n"));
+				vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 "));
 				return FALSE;
 		}
-		else vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 OK\n"));
+		else vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 OK"));
 
 		// Switch to the new desktop
 		if (!SelectHDESK(desktop)) {
 			// Failed to enter the new desktop, so free it!
 			if (!CloseDesktop(desktop))
-				vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop failed to close desktop\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop failed to close desktop"));
 			return FALSE;
 		}
 
@@ -541,7 +541,7 @@ BOOL CALLBACK WinStationEnumProc(LPTSTR name, LPARAM param) {
 BOOL
 vncService::InputDesktopSelected()
 {
-//	vnclog.Print(LL_INTERR, VNCLOG("InputDesktopSelected()\n"));
+//	vnclog.Print(LL_INTERR, VNCLOG("InputDesktopSelected()"));
 	// Are we running on NT?
 	if (IsWinNT())
 	{
@@ -560,9 +560,9 @@ vncService::InputDesktopSelected()
 		{
 			DWORD lasterror;
 			lasterror=GetLastError();
-			vnclog.Print(LL_INTERR, VNCLOG("OpenInputDesktop I\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("OpenInputDesktop I"));
 			if (lasterror==170) return TRUE;
-			vnclog.Print(LL_INTERR, VNCLOG("OpenInputDesktop II\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("OpenInputDesktop II"));
 			return FALSE;
 		}
 
@@ -572,25 +572,25 @@ vncService::InputDesktopSelected()
 
 		if (!GetUserObjectInformation(threaddesktop, UOI_NAME, &threadname, 256, &dummy)) {
 			if (!CloseDesktop(inputdesktop))
-				vnclog.Print(LL_INTERR, VNCLOG("failed to close input desktop\n"));
-			vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation(threaddesktop\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("failed to close input desktop"));
+			vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation(threaddesktop)"));
 			return FALSE;
 		}
 		_ASSERT(dummy <= 256);
 		if (!GetUserObjectInformation(inputdesktop, UOI_NAME, &inputname, 256, &dummy)) {
 			if (!CloseDesktop(inputdesktop))
-				vnclog.Print(LL_INTERR, VNCLOG("failed to close input desktop\n"));
-			vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation(inputdesktop\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("failed to close input desktop"));
+			vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation(inputdesktop)"));
 			return FALSE;
 		}
 		_ASSERT(dummy <= 256);
 
 		if (!CloseDesktop(inputdesktop))
-			vnclog.Print(LL_INTERR, VNCLOG("failed to close input desktop\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("failed to close input desktop"));
 
 		if (strcmp(threadname, inputname) != 0)
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("threadname, inputname differ\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("threadname, inputname differ"));
 		   return FALSE;
 		}	
 	}
@@ -609,7 +609,7 @@ SimulateCtrlAltDelThreadFn(void *context)
 	// Switch into the Winlogon desktop
 	if (!vncService::SelectDesktop("Winlogon"))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("failed to select logon desktop\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("failed to select logon desktop"));
 		vncTimedMsgBox::Do(
 									sz_ID_CADERROR,
 									sz_ID_ULTRAVNC_WARNING,
@@ -621,7 +621,7 @@ SimulateCtrlAltDelThreadFn(void *context)
     // 9 April 2008 jdp
     // turn off capslock if on
     ClearKeyState(VK_CAPITAL);
-	vnclog.Print(LL_ALL, VNCLOG("generating ctrl-alt-del\n"));
+	vnclog.Print(LL_ALL, VNCLOG("generating ctrl-alt-del"));
 
 	// Fake a hotkey event to any windows we find there.... :(
 	// Winlogon uses hotkeys to trap Ctrl-Alt-Del...
@@ -638,12 +638,12 @@ SimulateCtrlAltDelThreadFn(void *context)
 BOOL
 vncService::SimulateCtrlAltDel()
 {
-	vnclog.Print(LL_ALL, VNCLOG("preparing to generate ctrl-alt-del\n"));
+	vnclog.Print(LL_ALL, VNCLOG("preparing to generate ctrl-alt-del"));
 
 	// Are we running on NT?
 	if (IsWinNT())
 	{
-		vnclog.Print(LL_ALL, VNCLOG("spawn ctrl-alt-del thread...\n"));
+		vnclog.Print(LL_ALL, VNCLOG("spawn ctrl-alt-del thread..."));
 
 		// *** This is an unpleasant hack.  Oh dear.
 
@@ -670,16 +670,16 @@ BOOL
 vncService::LockWorkstation()
 {
 	if (!IsWinNT()) {
-		vnclog.Print(LL_INTERR, VNCLOG("unable to lock workstation - not NT\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("unable to lock workstation - not NT"));
 		return FALSE;
 	}
 
-	vnclog.Print(LL_ALL, VNCLOG("locking workstation\n"));
+	vnclog.Print(LL_ALL, VNCLOG("locking workstation"));
 
 	// Load the user32 library
 	HMODULE user32 = LoadLibrary("user32.dll");
 	if (!user32) {
-		vnclog.Print(LL_INTERR, VNCLOG("unable to load User32 DLL (%u)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("unable to load User32 DLL (%u)"), GetLastError());
 		return FALSE;
 	}
 
@@ -687,7 +687,7 @@ vncService::LockWorkstation()
 	typedef BOOL (*LWProc) ();
 	LWProc lockworkstation = (LWProc)GetProcAddress(user32, "LockWorkStation");
 	if (!lockworkstation) {
-		vnclog.Print(LL_INTERR, VNCLOG("unable to locate LockWorkStation - requires Windows 2000 or above (%u)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("unable to locate LockWorkStation - requires Windows 2000 or above (%u)"), GetLastError());
 		FreeLibrary(user32);
 		return FALSE;
 	}
@@ -696,7 +696,7 @@ vncService::LockWorkstation()
 	BOOL result = (lockworkstation)();
 
 	if (!result) {
-		vnclog.Print(LL_INTERR, VNCLOG("call to LockWorkstation failed\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("call to LockWorkstation failed"));
 		FreeLibrary(user32);
 		return FALSE;
 	}

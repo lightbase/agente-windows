@@ -289,7 +289,7 @@ vncEncodeMgr::GetPalette(RGBQUAD *quadlist, UINT ncolours)
 	// in which case the encoder will be storing RGBQUAD data
 	if (m_encoder == NULL)
 	{
-		vnclog.Print(LL_INTWARN, VNCLOG("GetPalette called but no encoder set\n"));
+		vnclog.Print(LL_INTWARN, VNCLOG("GetPalette called but no encoder set"));
 		return FALSE;
 	}
 
@@ -319,7 +319,7 @@ vncEncodeMgr::CheckBuffer()
 									m_scrinfo.framebufferHeight);
 	if (m_clientbuffsize != clientbuffsize)
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("request client buffer[%u]\n"), clientbuffsize);
+		vnclog.Print(LL_INTINFO, VNCLOG("request client buffer[%u]"), clientbuffsize);
 	    if (m_clientbuff != NULL)
 	    {
 			delete [] m_clientbuff;
@@ -330,7 +330,7 @@ vncEncodeMgr::CheckBuffer()
 	    m_clientbuff = new BYTE [clientbuffsize];
 	    if (m_clientbuff == NULL)
 	    {		
-			vnclog.Print(LL_INTERR, VNCLOG("unable to allocate client buffer[%u]\n"), clientbuffsize);
+			vnclog.Print(LL_INTERR, VNCLOG("unable to allocate client buffer[%u]"), clientbuffsize);
 			return FALSE;
 	    }
 		memset(m_clientbuff, 0, clientbuffsize);
@@ -341,7 +341,7 @@ vncEncodeMgr::CheckBuffer()
 	const UINT backbuffsize = m_buffer->m_backbuffsize;
 	if (m_clientbackbuffsize != backbuffsize)
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("request client back buffer[%u]\n"), backbuffsize);
+		vnclog.Print(LL_INTINFO, VNCLOG("request client back buffer[%u]"), backbuffsize);
 		if (m_clientbackbuff) {
 			delete [] m_clientbackbuff;
 			m_clientbackbuff = 0;
@@ -350,14 +350,14 @@ vncEncodeMgr::CheckBuffer()
 
 		m_clientbackbuff = new BYTE[backbuffsize];
 		if (!m_clientbackbuff) {
-			vnclog.Print(LL_INTERR, VNCLOG("unable to allocate client back buffer[%u]\n"), backbuffsize);
+			vnclog.Print(LL_INTERR, VNCLOG("unable to allocate client back buffer[%u]"), backbuffsize);
 			return FALSE;
 		}
 		memset(m_clientbackbuff, 0, backbuffsize);
 		m_clientbackbuffsize = backbuffsize;
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("remote buffer=%u\n"), m_clientbuffsize);*/
+	vnclog.Print(LL_INTINFO, VNCLOG("remote buffer=%u"), m_clientbuffsize);*/
 
 	return TRUE;
 }
@@ -410,7 +410,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 	case rfbEncodingRaw:
 
-		vnclog.Print(LL_INTINFO, VNCLOG("raw encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("raw encoder requested"));
 
 		// Create a RAW encoder
 		m_encoder = new vncEncoder;
@@ -420,7 +420,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 	case rfbEncodingRRE:
 
-		vnclog.Print(LL_INTINFO, VNCLOG("RRE encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("RRE encoder requested"));
 
 		// Create a RRE encoder
 		m_encoder = new vncEncodeRRE;
@@ -430,7 +430,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 	case rfbEncodingCoRRE:
 
-		vnclog.Print(LL_INTINFO, VNCLOG("CoRRE encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("CoRRE encoder requested"));
 
 		// Create a CoRRE encoder
 		m_encoder = new vncEncodeCoRRE;
@@ -440,7 +440,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 	case rfbEncodingHextile:
 
-		vnclog.Print(LL_INTINFO, VNCLOG("Hextile encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("Hextile encoder requested"));
 
 		// Create a CoRRE encoder
 		m_encoder = new vncEncodeHexT;
@@ -450,7 +450,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 	case rfbEncodingUltra:
 
-		vnclog.Print(LL_INTINFO, VNCLOG("Ultra encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("Ultra encoder requested"));
 
 		// Create a Zlib encoder, if needed.
 		// If a Zlib encoder was used previously, then reuse it here
@@ -476,7 +476,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 		break;
 
 	case rfbEncodingZRLE:
-		vnclog.Print(LL_INTINFO, VNCLOG("ZRLE encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("ZRLE encoder requested"));
 		if (!zrleEncoder)
 			zrleEncoder = new vncEncodeZRLE;
 		m_encoder = zrleEncoder;
@@ -484,7 +484,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 		break;
 
 	case rfbEncodingZYWRLE:
-		vnclog.Print(LL_INTINFO, VNCLOG("ZYWRLE encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("ZYWRLE encoder requested"));
 		if (!zrleEncoder)
 			zrleEncoder = new vncEncodeZRLE;
 		m_encoder = zrleEncoder;
@@ -493,7 +493,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 	case rfbEncodingZlib:
 
-		vnclog.Print(LL_INTINFO, VNCLOG("Zlib encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("Zlib encoder requested"));
 
 		// Create a Zlib encoder, if needed.
 		// If a Zlib encoder was used previously, then reuse it here
@@ -513,7 +513,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 
 	case rfbEncodingZlibHex:
-		vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex encoder requested"));
 
 		// Create a ZlibHex encoder, if needed.
 		// If a Zlibhex encoder was used previously, then reuse it here
@@ -533,7 +533,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 
 	case rfbEncodingTight:
-		vnclog.Print(LL_INTINFO, VNCLOG("Tight encoder requested\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("Tight encoder requested"));
 
 		// Create a Tight encoder, if needed.
 		// If a Tight encoder was used previously, then reuse it here
@@ -553,7 +553,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 
 	default:
 		// An unknown encoding was specified
-		vnclog.Print(LL_INTERR, VNCLOG("unknown encoder requested\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("unknown encoder requested"));
 
 		return FALSE;
 	}
@@ -567,7 +567,7 @@ vncEncodeMgr::SetEncoding(CARD32 encoding,BOOL reinitialize)
 	if (m_clientfmtset)
 		if (!m_encoder->SetRemoteFormat(m_clientformat))
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("client pixel format is not supported\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("client pixel format is not supported"));
 
 			return FALSE;
 		}
@@ -634,7 +634,7 @@ vncEncodeMgr::SetServerFormat()
 inline BOOL
 vncEncodeMgr::SetClientFormat(rfbPixelFormat &format)
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("SetClientFormat called\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("SetClientFormat called"));
 	
 	// Save the desired format
 	m_clientfmtset = TRUE;
@@ -658,7 +658,7 @@ vncEncodeMgr::EncodeRect(const rfb::Rect &rect,VSocket *outconn)
 	// Call the encoder to encode the rectangle into the client buffer...
 	/*if (!m_clientbackbuffif){*/
 	if (!m_buffer->m_backbuff){
-		vnclog.Print(LL_INTERR, "no client back-buffer available in EncodeRect\n");
+		vnclog.Print(LL_INTERR, "no client back-buffer available in EncodeRect");
 		return 0;
 	}
 	if (zlib_encoder_in_use)
@@ -839,7 +839,7 @@ vncEncodeMgr::ResetZRLEEncoding(void)
 		{
 			if (!m_encoder->SetRemoteFormat(m_clientformat))
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("client pixel format is not supported\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("client pixel format is not supported"));
 
 				return FALSE;
 			}

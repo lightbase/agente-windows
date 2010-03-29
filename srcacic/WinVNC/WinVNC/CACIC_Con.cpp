@@ -16,7 +16,7 @@ void CACIC_Con::conecta()
 
 	if (!m_hSession)
 	{
-		throw SRCException("Erro na conexão com o gerente web.");
+		throw SRCException("Circuito não disponível para abertura de sessão com o gerente web.");
 		return;
 	}
 
@@ -25,7 +25,7 @@ void CACIC_Con::conecta()
 
 	if (!m_hConnect)
 	{
-		throw SRCException("Erro na conexão com o gerente web.");
+		throw SRCException("Protocolo HTTP não disponível para conexão com o gerente web.");
 		return;
 	}
 }
@@ -69,8 +69,9 @@ bool CACIC_Con::getResponse(char buff[], unsigned long sz)
 }
 
 void CACIC_Con::sendHtppPost(const string &servidor, const string &script, string &post,
-							 char resposta[], unsigned long sz)
+							  char resposta[], unsigned long sz)
 {
+	
 	memset(resposta, 0, sz);
 
 	CACIC_Con cCon;
@@ -82,6 +83,7 @@ void CACIC_Con::sendHtppPost(const string &servidor, const string &script, strin
 		CACIC_Utils::simpleUrlEncode(post);
 		cCon.sendRequest(HTTP_POST, script.c_str(), (char*) post.c_str());
 		cCon.getResponse(resposta, sz);
+		
 	}
 	catch(SRCException ex)
 	{

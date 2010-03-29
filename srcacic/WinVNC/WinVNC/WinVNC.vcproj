@@ -2955,6 +2955,10 @@
 			RelativePath=".\ClassDiagram.cd"
 			>
 		</File>
+		<File
+			RelativePath=".\ClassDiagram1.cd"
+			>
+		</File>
 	</Files>
 	<Globals>
 		<Global

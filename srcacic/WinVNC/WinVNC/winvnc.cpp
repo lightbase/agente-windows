@@ -103,6 +103,7 @@ void Set_uninstall_service_as_admin();
 void Set_install_service_as_admin();
 void winvncSecurityEditorHelper_as_admin();
 
+
 // [v1.0.2-jp1 fix] Load resouce from dll
 HINSTANCE	hInstResDLL;
 
@@ -229,7 +230,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
 	if (strncmp(&szCmdLine[0], winvncKill, strlen(winvncKill)) == 0)
 	{
-		vnclog.Print(LL_SRLOG, VNCLOG("---> Comando -kill recebido.\n"));
+		vnclog.Print(LL_SRLOG, VNCLOG("---> Comando -kill recebido."));
 
 		argfound = TRUE;
 
@@ -250,7 +251,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
 	if (strncmp(&szCmdLine[0], winvncStart, strlen(winvncStart)) == 0)
 	{
-		vnclog.Print(LL_SRLOG, VNCLOG("---> Comando -start recebido.\n"));
+		vnclog.Print(LL_SRLOG, VNCLOG("---> Comando -start recebido."));
 		argfound = TRUE;
 
 		char* cmdln[8];
@@ -263,7 +264,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
 		if (i < 7) {
 			MessageBox(NULL, "Número de parâmetros menor do que o esperado!", "ERRO!", MB_OK | MB_ICONERROR);
-			vnclog.Print(LL_SRLOG, VNCLOG("Número de parâmetros menor do que o esperado!\n"));
+			vnclog.Print(LL_SRLOG, VNCLOG("Número de parâmetros menor do que o esperado!"));
 			return 0;
 		}
 
@@ -274,7 +275,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 		string filePath = string(cmdln[5]);
 		filePath += CACIC_Auth::AGUARDE_FILENAME;
 		pFile = fopen(filePath.data(), "w+");
-		vnclog.Print(LL_SRLOG, VNCLOG("Criando arquivo temporário: aguarde_SRCACIC.txt!\n"));
+		vnclog.Print(LL_SRLOG, VNCLOG("Criando arquivo temporário: aguarde_SRCACIC.txt!"));
 
 		// decodifica o host e o script do gerente web
 		string te_end_serv_dec;
@@ -308,7 +309,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 	if (!argfound) {
 		// If no arguments were given then do not run
 		MessageBox(NULL, "Execução incorreta!", "ERRO!", MB_OK | MB_ICONERROR);
-		vnclog.Print(LL_SRLOG, VNCLOG("Tentativa incorreta de execução!\n"));
+		vnclog.Print(LL_SRLOG, VNCLOG("Tentativa incorreta de execução!"));
 		return 0;
 	}
 
@@ -350,11 +351,11 @@ bool ImpersonateCurrentUser_()
 	Token_=NULL;
 	if (GetCurrentUserToken_()==0)
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("!GetCurrentUserToken_ \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("!GetCurrentUserToken_ "));
 		return false;
 	}
 	bool test=(FALSE != ImpersonateLoggedOnUser(Token_));
-	if (test==1) vnclog.Print(LL_INTERR, VNCLOG("ImpersonateLoggedOnUser OK \n"));
+	if (test==1) vnclog.Print(LL_INTERR, VNCLOG("ImpersonateLoggedOnUser OK "));
 	if (process_) CloseHandle(process_);
 	if (Token_) CloseHandle(Token_);
 	return test;
@@ -366,8 +367,8 @@ DWORD WINAPI imp_desktop_thread(LPVOID lpParam)
 	vncServer *server = (vncServer *)lpParam;
 
 	HDESK desktop;
-	//vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop \n"));
-	//vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL\n"));
+	//vnclog.Print(LL_INTERR, VNCLOG("SelectDesktop "));
+	//vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop2 NULL"));
 	desktop = OpenInputDesktop(0, FALSE,
 		DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
 		DESKTOP_ENUMERATE | DESKTOP_HOOKCONTROL |
@@ -376,9 +377,9 @@ DWORD WINAPI imp_desktop_thread(LPVOID lpParam)
 		);
 
 	if (desktop == NULL)
-		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop Error \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop Error "));
 	else 
-		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop OK\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("OpenInputdesktop OK"));
 
 	HDESK old_desktop = GetThreadDesktop(GetCurrentThreadId());
 	DWORD dummy;
@@ -387,18 +388,18 @@ DWORD WINAPI imp_desktop_thread(LPVOID lpParam)
 
 	if (!GetUserObjectInformation(desktop, UOI_NAME, &new_name, 256, &dummy))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("!GetUserObjectInformation "));
 	}
 
-	vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x\n"), new_name, desktop, old_desktop);
+	vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK to %s (%x) from %x"), new_name, desktop, old_desktop);
 
 	if (!SetThreadDesktop(desktop))
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop \n"));
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK:!SetThreadDesktop "));
 	}
 
 	if (!CloseDesktop(old_desktop))
-		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d)\n"), old_desktop, GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("SelectHDESK failed to close old desktop %x (Err=%d)"), old_desktop, GetLastError());
 
 	//	ImpersonateCurrentUser_();
 
@@ -421,19 +422,19 @@ DWORD WINAPI imp_desktop_thread(LPVOID lpParam)
 				}
 				else
 				{
-					vnclog.Print(LL_INTERR, VNCLOG("getusername error %d\n"), GetLastError());
+					vnclog.Print(LL_INTERR, VNCLOG("getusername error %d"), GetLastError());
 					return FALSE;
 				}
 			}
 		}
 	}
-	vnclog.Print(LL_INTERR, VNCLOG("Username %s \n"),m_username);
+	vnclog.Print(LL_INTERR, VNCLOG("Username %s "),m_username);
 
 	// Create tray icon and menu
 	vncMenu *menu = new vncMenu(server);
 	if (menu == NULL)
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("failed to create tray menu\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("failed to create tray menu"));
 		PostQuitMessage(0);
 	}
 
@@ -458,7 +459,7 @@ DWORD WINAPI imp_desktop_thread(LPVOID lpParam)
 	if (menu != NULL)
 		delete menu;
 
-	//vnclog.Print(LL_INTERR, VNCLOG("GetMessage stop \n"));
+	//vnclog.Print(LL_INTERR, VNCLOG("GetMessage stop "));
 	CloseDesktop(desktop);
 	//	RevertToSelf();
 	return 0;
@@ -472,13 +473,13 @@ void CALLBACK fpTimer(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
 	if (hShutdownEvent)
 	{
-		// vnclog.Print(LL_INTERR, VNCLOG("****************** SDTimer tic\n"));
+		// vnclog.Print(LL_INTERR, VNCLOG("****************** SDTimer tic"));
 		DWORD result=WaitForSingleObject(hShutdownEvent, 0);
 		if (WAIT_OBJECT_0==result)
 		{
 			ResetEvent(hShutdownEvent);
 			fShutdownOrdered = true;
-			vnclog.Print(LL_INTERR, VNCLOG("****************** WaitForSingleObject - Shutdown server\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("****************** WaitForSingleObject - Shutdown server"));
 		}
 	}
 }
@@ -486,14 +487,14 @@ void CALLBACK fpTimer(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
 void InitSDTimer()
 {
 	if (mmRes != -1) return;
-	vnclog.Print(LL_INTERR, VNCLOG("****************** Init SDTimer\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("****************** Init SDTimer"));
 	mmRes = timeSetEvent( 2000, 0, (LPTIMECALLBACK)fpTimer, NULL, TIME_PERIODIC );
 }
 
 
 void KillSDTimer()
 {
-	vnclog.Print(LL_INTERR, VNCLOG("****************** Kill SDTimer\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("****************** Kill SDTimer"));
 	timeKillEvent(mmRes);
 	mmRes = -1;
 }
@@ -507,7 +508,7 @@ void KillSDTimer()
 int WinVNCAppMain()
 {
 	SetOSVersion();
-	vnclog.Print(LL_INTINFO, VNCLOG("***** DBG - WinVNCAPPMain\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("***** DBG - WinVNCAPPMain"));
 #ifdef CRASH_ENABLED
 	LPVOID lpvState = Install(NULL,  "rudi.de.vos@skynet.be", "UltraVnc");
 #endif
@@ -523,7 +524,7 @@ int WinVNCAppMain()
 		return 0;
 	}
 
-	//vnclog.Print(LL_INTINFO, VNCLOG("***** DBG - Previous instance checked - Trying to create server\n"));
+	//vnclog.Print(LL_INTINFO, VNCLOG("***** DBG - Previous instance checked - Trying to create server"));
 	// CREATE SERVER
 	vncServer server;
 
@@ -532,7 +533,7 @@ int WinVNCAppMain()
 	server.SetPort(CACIC_Auth::getInstance()->getPorta());
 	server.SetAutoIdleDisconnectTimeout(CACIC_Auth::getInstance()->getTimeout());
 	server.SockConnect(TRUE);
-	vnclog.Print(LL_STATE, VNCLOG("Servidor inicializado com sucesso!\n"));
+	vnclog.Print(LL_STATE, VNCLOG("Servidor inicializado com sucesso!"));
 	//uninstall driver before cont
 
 	// sf@2007 - Set Application0 special mode
@@ -542,14 +543,14 @@ int WinVNCAppMain()
 	// Subscribe to shutdown event
 	hShutdownEvent = OpenEvent(EVENT_ALL_ACCESS, FALSE, "Global\\SessionEventUltra");
 	if (hShutdownEvent) ResetEvent(hShutdownEvent);
-	vnclog.Print(LL_STATE, VNCLOG("SDEvent criado.\n"));
+	vnclog.Print(LL_STATE, VNCLOG("SDEvent criado."));
 	// Create the timer that looks periodicaly for shutdown event
 	mmRes = -1;
 	InitSDTimer();
 
 	while (!fShutdownOrdered)
 	{
-		//vnclog.Print(LL_STATE, VNCLOG("################## Creating Imp Thread : %d \n"), nn);
+		//vnclog.Print(LL_STATE, VNCLOG("################## Creating Imp Thread : %d "), nn);
 
 		HANDLE threadHandle;
 		DWORD dwTId;
@@ -557,14 +558,14 @@ int WinVNCAppMain()
 
 		WaitForSingleObject( threadHandle, INFINITE );
 		CloseHandle(threadHandle);
-		vnclog.Print(LL_STATE, VNCLOG("Fechando a imp thread...\n"));
+		vnclog.Print(LL_STATE, VNCLOG("Fechando a imp thread..."));
 	}
 
 	if (instancehan!=NULL)
 		delete instancehan;
 
 	if (hShutdownEvent)CloseHandle(hShutdownEvent);
-	vnclog.Print(LL_STATE, VNCLOG("Finalizando o servidor...\n"));
+	vnclog.Print(LL_STATE, VNCLOG("Finalizando o servidor..."));
 	return 1;
 };
 

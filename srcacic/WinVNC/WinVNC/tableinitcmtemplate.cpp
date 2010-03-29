@@ -30,7 +30,7 @@ rfbInitColourMapSingleTableOUTVNC (char **table,
 								rfbPixelFormat *in,
 								rfbPixelFormat *out)
 {
-	vnclog.Print(LL_ALL, VNCLOG("rfbInitColourMapSingleTable called\n"));
+	vnclog.Print(LL_ALL, VNCLOG("rfbInitColourMapSingleTable called"));
 
 	// ALLOCATE SPACE FOR COLOUR TABLE
 
@@ -41,18 +41,18 @@ rfbInitColourMapSingleTableOUTVNC (char **table,
     *table = (char *)malloc(nEntries * sizeof(OUT_T));
 	if (*table == NULL)
 	{
-		vnclog.Print(LL_INTERR, VNCLOG("failed to allocate translation table\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("failed to allocate translation table"));
 		return;
 	}
 
 	// Obtain the system palette
 	HDC hDC = GetDcMirror();
-	if (hDC==NULL) vnclog.Print(LL_ALL, VNCLOG("Using video Palette\n"));
-	else vnclog.Print(LL_ALL, VNCLOG("Using mirror video Palette\n"));
+	if (hDC==NULL) vnclog.Print(LL_ALL, VNCLOG("Using video Palette"));
+	else vnclog.Print(LL_ALL, VNCLOG("Using mirror video Palette"));
 	if (hDC==NULL) hDC = GetDC(NULL);
 	PALETTEENTRY palette[256];
   UINT entries = ::GetSystemPaletteEntries(hDC,	0, 256, palette);
-	vnclog.Print(LL_INTINFO, VNCLOG("got %u palette entries\n"), GetLastError());
+	vnclog.Print(LL_INTINFO, VNCLOG("got %u palette entries"), GetLastError());
 	ReleaseDC(NULL, hDC);
 
   // - Set the rest of the palette to something nasty but usable
@@ -88,7 +88,7 @@ rfbInitColourMapSingleTableOUTVNC (char **table,
 #endif
 	}
 
-	vnclog.Print(LL_ALL, VNCLOG("rfbInitColourMapSingleTable done\n"));
+	vnclog.Print(LL_ALL, VNCLOG("rfbInitColourMapSingleTable done"));
 }
 
 #undef OUT_T

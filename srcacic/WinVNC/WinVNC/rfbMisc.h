@@ -69,7 +69,7 @@ namespace rfb {
 			: timer_name(_strdup(name)),
 			  kernel_time(0), user_time(0), iterations(0), max_user_time(0) {}
 		~CpuTime() {
-			vnclog.Print(0, "timer %s : %I64ums (krnl), %I64ums (user), %I64uus (user-max) (%I64u its)\n",
+			vnclog.Print(0, "timer %s : %I64ums (krnl), %I64ums (user), %I64uus (user-max) (%I64u its)",
 				timer_name, kernel_time/10000, user_time/10000, max_user_time/10,
 				iterations);
 			delete [] timer_name;

@@ -201,10 +201,10 @@ vncEncodeZlibHex::zlibCompress(BYTE *from_buf, BYTE *to_buf, UINT length, struct
 			if (lzo_init() == LZO_E_OK) lzo=true;
 		}
 	if (lzo1x_1_compress(from_buf,length,to_buf,&out_len,wrkmem)!=LZO_E_OK)
-		vnclog.Print(LL_INTINFO, VNCLOG("Error compressing  \n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("Error compressing  "));
 	return out_len;*/
 
-	//vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d %d \n"), length,out_len);
+	//vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d %d "), length,out_len);
 
 
 	// If necessary, the first time, initialize the compressor state.
@@ -217,7 +217,7 @@ vncEncodeZlibHex::zlibCompress(BYTE *from_buf, BYTE *to_buf, UINT length, struct
 		compressor->zfree = Z_NULL;
 		compressor->opaque = Z_NULL;
 
-		vnclog.Print(LL_INTINFO, VNCLOG("calling deflateInit2 with zlib level:%d\n"), m_compresslevel);
+		vnclog.Print(LL_INTINFO, VNCLOG("calling deflateInit2 with zlib level:%d"), m_compresslevel);
 
 		deflateResult = deflateInit2( compressor,
 			                          m_compresslevel,
@@ -227,7 +227,7 @@ vncEncodeZlibHex::zlibCompress(BYTE *from_buf, BYTE *to_buf, UINT length, struct
 					                  Z_DEFAULT_STRATEGY );
 		if ( deflateResult != Z_OK )
 		{
-			vnclog.Print(LL_INTINFO, VNCLOG("deflateInit2 returned error:%d:%s\n"), deflateResult, compressor->msg);
+			vnclog.Print(LL_INTINFO, VNCLOG("deflateInit2 returned error:%d:%s"), deflateResult, compressor->msg);
 			return -1;
 		}
 
@@ -241,13 +241,13 @@ vncEncodeZlibHex::zlibCompress(BYTE *from_buf, BYTE *to_buf, UINT length, struct
 
 	if ( deflateResult != Z_OK )
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("deflate returned error:%d:%s\n"), deflateResult, compressor->msg);
+		vnclog.Print(LL_INTINFO, VNCLOG("deflate returned error:%d:%s"), deflateResult, compressor->msg);
 		return -1;
 	}
-//	vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d %d %d \n"), length,compressor->total_out - previousTotalOut,out_len);
-//	if (length/2>out_len) vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d #####50######### \n"), length);
-//	if (length/3*2>out_len) vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d #####33######### \n"), length);
-//	if (length/4*3>out_len) vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d #####25######### \n"), length);
+//	vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d %d %d "), length,compressor->total_out - previousTotalOut,out_len);
+//	if (length/2>out_len) vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d #####50######### "), length);
+//	if (length/3*2>out_len) vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d #####33######### "), length);
+//	if (length/4*3>out_len) vnclog.Print(LL_INTINFO, VNCLOG("ZlibHex length %d #####25######### "), length);
 
 	return compressor->total_out - previousTotalOut;
 }
@@ -622,7 +622,7 @@ vncEncodeZlibHex::AddToQueu(BYTE *source,int sizerect,VSocket *outConn)
 			outConn->SendExactQueue( (char *)source,sizerect);
 			return;
 		}
-//	vnclog.Print(LL_INTINFO, VNCLOG("Add %i %i \n"),sizerect,m_Queuelen);
+//	vnclog.Print(LL_INTINFO, VNCLOG("Add %i %i "),sizerect,m_Queuelen);
 	memcpy(m_Queuebuffer+m_Queuelen,source,sizerect);
 	m_Queuelen+=sizerect;
 }

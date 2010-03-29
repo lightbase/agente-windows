@@ -30,6 +30,8 @@
 #include "CACIC_Con.h"
 #include "CACIC_Auth.h"
 
+using namespace std;
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -42,6 +44,10 @@ const int VNCLog::ToConsole =  4;
 const int VNCLog::ToScript =  8;
 
 static const int LINE_BUFFER_SIZE = 1024;
+
+
+
+//static const string srVersion = "2.6.0.0";
 
 VNCLog::VNCLog()
     : m_tofile(false)
@@ -128,7 +134,7 @@ void VNCLog::OpenFile()
 	{
         m_todebug = true;
         m_tofile = false;
-        Print(0, "Error opening log file\n");
+        Print(0, "Error opening log file");
 		return;
 	}
 
@@ -161,7 +167,7 @@ void VNCLog::OpenFile()
         // We should throw an exception here
         m_todebug = true;
         m_tofile = false;
-        Print(0, "Error opening log file %s\n", m_filename);
+        Print(0, "Error opening log file %s", m_filename);
     }
     if (m_append) {
         SetFilePointer( hlogfile, 0, NULL, FILE_END );
@@ -199,12 +205,21 @@ inline void VNCLog::ReallyPrintLine(const char* line)
 		strLine.append(data_buf);
 		strLine.append(" : ");
 		strLine.append("[Suporte Remoto]");
+		
 		//if (/*Verificar modo DEBUG!*/){
 		//	strLine.append(" (");
 		//	strLine.append(/*Funcao de retorno da Versao: v.2.6.0.0*/);
 		//	strLine.append(")");
 		//	strLine.append(" DEBUG -");
 		//}
+
+		if (IsDebugModeON()) {
+			strLine.append(" (v.");
+			strLine.append(SRVersion());
+			strLine.append(")");
+			strLine.append(" DEBUG -");
+		}
+
 		strLine.append(" ");
 		strLine.append(line);
         DWORD byteswritten;
@@ -229,11 +244,14 @@ void VNCLog::ReallyPrint(const char* format, va_list ap)
     if (dwErrorCode != 0) {
 	    FormatMessage( 
              FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErrorCode,
+			 //FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dwErrorCode,
+			 //FORMAT_MESSAGE_MAX_WIDTH_MASK, NULL, dwErrorCode,
              MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),(char *)&szErrorMsg,
              LINE_BUFFER_SIZE, NULL);
-	strcat(line," --");
+	strcat(line," -- ");
 	strcat(line,szErrorMsg);
     }
+	else strcat(line,"\r\n");
 	ReallyPrintLine(line);
 }
 
@@ -249,6 +267,58 @@ VNCLog::~VNCLog()
     catch(...)
     {
     }
+}
+
+bool VNCLog::IsDebugModeON(){
+//	LPCTSTR diretorio_debugs;
+
+/**	Trecho especifico para teste com o Path fixo do Cacic.
+	string caminho = "C:\\Cacic\\Temp\\debugs";
+	diretorio_debugs = caminho.c_str();
+*/
+
+//	LPTSTR diretorio_corrente;
+//	string diretorio;
+//	string diretorio = "Temp\\debugs";
+//	SetCurrentDirectory("..");
+//	GetCurrentDirectory(MAX_PATH,diretorio_corrente);
+//	diretorio.append(diretorio_corrente);
+//	diretorio.replace(diretorio.begin(),diretorio.end(),'\',"\\");
+//	diretorio.append ("Temp\\debugs");
+/*
+	diretorio_corrente = (LPTSTR)diretorio.c_str();
+	MessageBox (NULL,diretorio_corrente,"Warning! Nussa!!! o.O", MB_OKCANCEL| MB_ICONASTERISK);
+*/
+//	diretorio_debugs = diretorio.c_str();
+
+	HANDLE hDir = CreateFile("Temp\\debugs",
+		GENERIC_ALL,
+		FILE_SHARE_READ,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_BACKUP_SEMANTICS,
+		NULL);
+	if (hDir == INVALID_HANDLE_VALUE){
+		CloseHandle(hDir);
+		return false;
+	}
+
+	FILETIME dirCreationTime;
+	SYSTEMTIME dirCreationTimeSystem, currentSystemTime;
+
+	if (GetFileTime(hDir, &dirCreationTime, NULL, NULL)) {
+        FileTimeToSystemTime (&dirCreationTime,&dirCreationTimeSystem);
+        GetSystemTime(&currentSystemTime);
+		CloseHandle(hDir);
+		if (CACIC_Utils::DateCompare (currentSystemTime,dirCreationTimeSystem) == 0){
+            return true;
+		}
+		else {
+            return false;
+		}
+    }
+	CloseHandle(hDir);
+    return false;
 }
 
 void VNCLog::GetLastErrorMsg(LPSTR szErrorMsg) const {

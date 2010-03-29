@@ -87,10 +87,10 @@ vncEncodeUltra::~vncEncodeUltra()
 		m_QueueCompressedbuffer = NULL;
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("Ultra  encoder stats: rawdata=%d  protocol=%d compressed=%d transmitted=%d\n"),dataSize, rectangleOverhead, encodedSize,transmittedSize);
+	vnclog.Print(LL_INTINFO, VNCLOG("Ultra  encoder stats: rawdata=%d  protocol=%d compressed=%d transmitted=%d"),dataSize, rectangleOverhead, encodedSize,transmittedSize);
 
 	if (dataSize != 0) {
-		vnclog.Print(LL_INTINFO, VNCLOG("Ultra  encoder efficiency: %.3f%%\n"),(double)((double)((dataSize - transmittedSize) * 100) / dataSize));
+		vnclog.Print(LL_INTINFO, VNCLOG("Ultra  encoder efficiency: %.3f%%"),(double)((double)((dataSize - transmittedSize) * 100) / dataSize));
 	}
 }
 
@@ -154,7 +154,7 @@ vncEncodeUltra::EncodeRect(BYTE *source, VSocket *outConn, BYTE *dest, const rfb
 	partialRect.bottom = rect.br.y;
 
 	/* WBB: For testing purposes only! */
-	// vnclog.Print(LL_INTINFO, VNCLOG("rect.right=%d rect.left=%d rect.top=%d rect.bottom=%d\n"), rect.right, rect.left, rect.top, rect.bottom);
+	// vnclog.Print(LL_INTINFO, VNCLOG("rect.right=%d rect.left=%d rect.top=%d rect.bottom=%d"), rect.right, rect.left, rect.top, rect.bottom);
 
 	if (rectW==0) return 0;
 	if (rectH==0) return 0;
@@ -173,7 +173,7 @@ vncEncodeUltra::EncodeRect(BYTE *source, VSocket *outConn, BYTE *dest, const rfb
 		partialRect.bottom = partialRect.top + linesToComp;
 
 		/* WBB: For testing purposes only! */
-		// vnclog.Print(LL_INTINFO, VNCLOG("partialRect.right=%d partialRect.left=%d partialRect.top=%d partialRect.bottom=%d\n"), partialRect.right, partialRect.left, partialRect.top, partialRect.bottom);
+		// vnclog.Print(LL_INTINFO, VNCLOG("partialRect.right=%d partialRect.left=%d partialRect.top=%d partialRect.bottom=%d"), partialRect.right, partialRect.left, partialRect.top, partialRect.bottom);
 
 		partialSize = EncodeOneRect( source,dest, partialRect,outConn );
 		totalSize += partialSize;
@@ -332,7 +332,7 @@ vncEncodeUltra::AddToQueu2(BYTE *source,int sizerect,VSocket *outConn,int update
 	// Format the UltraHeader
 	CacheZipHeader->nBytes = Swap32IfLE(out_len);
 
-	vnclog.Print(LL_INTINFO, VNCLOG("********QUEUEQUEUE********** %d %d %d\r\n"),out_len,rawDataSize,1);
+	vnclog.Print(LL_INTINFO, VNCLOG("********QUEUEQUEUE********** %d %d %d"),out_len,rawDataSize,1);
 	outConn->SendExactQueue((char *)m_QueueCompressedbuffer, out_len+sz_rfbFramebufferUpdateRectHeader+sz_rfbZlibHeader);
 	// Update statistics
 	encodedSize += sz_rfbZlibHeader + out_len;
@@ -389,7 +389,7 @@ vncEncodeUltra::SendUltrarects(VSocket *outConn)
 	rfbZlibHeader CacheZipHeader;
 	CacheZipHeader.nBytes = Swap32IfLE(out_len);
 
-	vnclog.Print(LL_INTINFO, VNCLOG("********QUEUEQUEUE********** %d %d %d\r\n"),out_len,rawDataSize,NRects);
+	vnclog.Print(LL_INTINFO, VNCLOG("********QUEUEQUEUE********** %d %d %d"),out_len,rawDataSize,NRects);
 	outConn->SendExactQueue((char *)&CacheRectsHeader, sizeof(CacheRectsHeader));
 	outConn->SendExactQueue((char *)&CacheZipHeader, sizeof(CacheZipHeader));
 	outConn->SendExactQueue((char *)m_QueueCompressedbuffer, out_len);

@@ -69,7 +69,7 @@ BOOL CALLBACK supInfoDlg::supInfoDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 			ShowWindow(GetDlgItem(hwnd, IDC_ATENCAO_STATIC), TRUE);
 			ShowWindow(GetDlgItem(hwnd, IDC_AVISO_SUPORTE), TRUE);
 			ShowWindow(GetDlgItem(hwnd, IDC_NOME_LBL), TRUE);
-			ShowWindow(GetDlgItem(hwnd, IDC_IP_LBL), TRUE);
+			ShowWindow(GetDlgItem(hwnd, IDC_IP_LBL), TRUE); // 
 			ShowWindow(GetDlgItem(hwnd, IDC_INICIO_LBL), TRUE);
 			ShowWindow(GetDlgItem(hwnd, IDC_DOC_LBL), TRUE);
 			ShowWindow(GetDlgItem(hwnd, IDC_INFO_NOME), TRUE);
@@ -100,6 +100,7 @@ BOOL CALLBACK supInfoDlg::supInfoDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 				dlgRect.bottom - dlgRect.top,
 				SWP_SHOWWINDOW);
 
+			//Set valores no diálogo
 			SetDlgItemText(hwnd, IDC_INFO_NOME, (LPSTR) _this->m_nomeVisitante.data());
 			SetDlgItemText(hwnd, IDC_INFO_IP, (LPSTR) _this->m_ip.data());
 			SetDlgItemText(hwnd, IDC_INFO_INICIO, (LPSTR) _this->m_dataInicio.data());
@@ -142,7 +143,7 @@ BOOL CALLBACK supInfoDlg::supInfoDlgProc(HWND hwnd, UINT uMsg, WPARAM wParam, LP
 			ShowWindow(GetDlgItem(hwnd, IDC_ATENCAO_STATIC), FALSE);
 			ShowWindow(GetDlgItem(hwnd, IDC_AVISO_SUPORTE), FALSE);
 			ShowWindow(GetDlgItem(hwnd, IDC_NOME_LBL), FALSE);
-			ShowWindow(GetDlgItem(hwnd, IDC_IP_LBL), FALSE);
+			ShowWindow(GetDlgItem(hwnd, IDC_IP_LBL), FALSE); // 
 			ShowWindow(GetDlgItem(hwnd, IDC_INICIO_LBL), FALSE);
 			ShowWindow(GetDlgItem(hwnd, IDC_DOC_LBL), FALSE);
 			ShowWindow(GetDlgItem(hwnd, IDC_INFO_NOME), FALSE);

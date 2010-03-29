@@ -125,7 +125,7 @@ VSocket::VSocket()
 {
 	// Clear out the internal socket fields
 	sock = -1;
-	vnclog.Print(LL_SOCKINFO, VNCLOG("VSocket() m_pDSMPlugin = NULL \n"));
+	vnclog.Print(LL_SOCKINFO, VNCLOG("VSocket() m_pDSMPlugin = NULL "));
 	m_pDSMPlugin = NULL;
 	m_fUsePlugin = false;
 	
@@ -196,7 +196,7 @@ VSocket::Close()
 {
   if (sock >= 0)
     {
-	  vnclog.Print(LL_SOCKINFO, VNCLOG("closing socket\n"));
+	  vnclog.Print(LL_SOCKINFO, VNCLOG("closing socket"));
 
 	  shutdown(sock, SD_BOTH);
 #ifdef __WIN32__
@@ -216,7 +216,7 @@ VSocket::Shutdown()
 {
   if (sock >= 0)
     {
-	  vnclog.Print(LL_SOCKINFO, VNCLOG("shutdown socket\n"));
+	  vnclog.Print(LL_SOCKINFO, VNCLOG("shutdown socket"));
 
 	  shutdown(sock, SD_BOTH);
 //	  sock = -1;
@@ -376,8 +376,9 @@ VSocket::GetPeerName()
 	name = inet_ntoa(address);
 	if (name == NULL)
 		return "<unavailable>";
-	else
+	else{
 		return name;
+	}
 }
 
 ////////////////////////////
@@ -463,14 +464,14 @@ VSocket::Send(const char *buff, const VCard bufflen)
 	{
 		    memcpy(queuebuffer+queuebuffersize,buff2,8192-queuebuffersize);
 			send(sock,queuebuffer,8192,0);
-//			vnclog.Print(LL_SOCKERR, VNCLOG("SEND  %i\n") ,8192);
+//			vnclog.Print(LL_SOCKERR, VNCLOG("SEND  %i") ,8192);
 			buff2+=(8192-queuebuffersize);
 			bufflen2-=(8192-queuebuffersize);
 			queuebuffersize=0;
 			while (bufflen2 > 8192)
 			{
 				if (!send(sock,buff2,8192,0)) return false;
-//				vnclog.Print(LL_SOCKERR, VNCLOG("SEND 1 %i\n") ,8192);
+//				vnclog.Print(LL_SOCKERR, VNCLOG("SEND 1 %i") ,8192);
 				buff2+=8192;
 				bufflen2-=8192;
 			}
@@ -478,7 +479,7 @@ VSocket::Send(const char *buff, const VCard bufflen)
 	memcpy(queuebuffer+queuebuffersize,buff2,bufflen2);
 	queuebuffersize+=bufflen2;
 	if (!send(sock,queuebuffer,queuebuffersize,0)) return false;
-//	vnclog.Print(LL_SOCKERR, VNCLOG("SEND 2 %i\n") ,queuebuffersize);
+//	vnclog.Print(LL_SOCKERR, VNCLOG("SEND 2 %i") ,queuebuffersize);
 	queuebuffersize=0;
 	return bufflen;
 }
@@ -495,14 +496,14 @@ VSocket::SendQueued(const char *buff, const VCard bufflen)
 	{
 		    memcpy(queuebuffer+queuebuffersize,buff2,8192-queuebuffersize);
 			send(sock,queuebuffer,8192,0);
-		//	vnclog.Print(LL_SOCKERR, VNCLOG("SEND Q  %i\n") ,8192);
+		//	vnclog.Print(LL_SOCKERR, VNCLOG("SEND Q  %i") ,8192);
 			buff2+=(8192-queuebuffersize);
 			bufflen2-=(8192-queuebuffersize);
 			queuebuffersize=0;
 			while (bufflen2 > 8192)
 			{
 				if (!send(sock,buff2,8192,0)) return false;
-			//	vnclog.Print(LL_SOCKERR, VNCLOG("SEND Q  %i\n") ,8192);
+			//	vnclog.Print(LL_SOCKERR, VNCLOG("SEND Q  %i") ,8192);
 				buff2+=8192;
 				bufflen2-=8192;
 			}
@@ -517,7 +518,7 @@ VSocket::SendQueued(const char *buff, const VCard bufflen)
 VBool
 VSocket::SendExact(const char *buff, const VCard bufflen, unsigned char msgType)
 {
-	//vnclog.Print(LL_SOCKERR, VNCLOG("SendExactMsg %i\n") ,bufflen);
+	//vnclog.Print(LL_SOCKERR, VNCLOG("SendExactMsg %i") ,bufflen);
 	if (m_fUsePlugin && m_pDSMPlugin->IsEnabled())
 	{
 		// Send the transformed message type first
@@ -536,7 +537,7 @@ VSocket::SendExact(const char *buff, const VCard bufflen, unsigned char msgType)
 VBool
 VSocket::SendExact(const char *buff, const VCard bufflen)
 {
-//	vnclog.Print(LL_SOCKERR, VNCLOG("SendExact %i\n") ,bufflen);
+//	vnclog.Print(LL_SOCKERR, VNCLOG("SendExact %i") ,bufflen);
 	// sf@2002 - DSMPlugin
 	VCard nBufflen = bufflen;
 	char* pBuffer = NULL;
@@ -573,8 +574,8 @@ VSocket::SendExact(const char *buff, const VCard bufflen)
 VBool
 VSocket::SendExactQueue(const char *buff, const VCard bufflen)
 {
-//	vnclog.Print(LL_SOCKERR, VNCLOG("SendExactQueue %i %i\n") ,bufflen,queuebuffersize);
-//	vnclog.Print(LL_SOCKERR, VNCLOG("socket size %i\n") ,bufflen);
+//	vnclog.Print(LL_SOCKERR, VNCLOG("SendExactQueue %i %i") ,bufflen,queuebuffersize);
+//	vnclog.Print(LL_SOCKERR, VNCLOG("socket size %i") ,bufflen);
 	// sf@2002 - DSMPlugin
 	VCard nBufflen = bufflen;
 	char* pBuffer = NULL;
@@ -646,7 +647,7 @@ VSocket::ReadExact(char *buff, const VCard bufflen)
 		{
 			// m_pDSMPlugin->RestoreBufferUnlock();
 			// throw WarningException("WriteExact: DSMPlugin-RestoreBuffer Alloc Error.");
-			vnclog.Print(LL_SOCKERR, VNCLOG("WriteExact: DSMPlugin-RestoreBuffer Alloc Error\n"));
+			vnclog.Print(LL_SOCKERR, VNCLOG("WriteExact: DSMPlugin-RestoreBuffer Alloc Error"));
 			return VFalse;
 		}
 		
@@ -663,13 +664,13 @@ VSocket::ReadExact(char *buff, const VCard bufflen)
 				nTransDataLen -= n;
 			} else if (n == 0) {
 				//m_pDSMPlugin->RestoreBufferUnlock();
-				vnclog.Print(LL_SOCKERR, VNCLOG("zero bytes read1\n"));
+				vnclog.Print(LL_SOCKERR, VNCLOG("zero bytes read1"));
 				return VFalse;
 			} else {
 				if (WSAGetLastError() != WSAEWOULDBLOCK)
 				{
 					//m_pDSMPlugin->RestoreBufferUnlock();
-					vnclog.Print(LL_SOCKERR, VNCLOG("socket error 1: %d\n"), WSAGetLastError());
+					vnclog.Print(LL_SOCKERR, VNCLOG("socket error 1: %d"), WSAGetLastError());
 					return VFalse;
 				}
 			}
@@ -699,14 +700,14 @@ VSocket::ReadExact(char *buff, const VCard bufflen)
 				buff += n;
 				currlen -= n;
 			} else if (n == 0) {
-				vnclog.Print(LL_SOCKERR, VNCLOG("zero bytes read2\n"));
+				vnclog.Print(LL_SOCKERR, VNCLOG("zero bytes read2"));
 				
 				return VFalse;
 			} else {
 				if (WSAGetLastError() != WSAEWOULDBLOCK)
 				{
 					//int aa=WSAGetLastError();
-					//vnclog.Print(LL_SOCKERR, VNCLOG("socket error 2: %d\n"), aa);
+					//vnclog.Print(LL_SOCKERR, VNCLOG("socket error 2: %d"), aa);
 					return VFalse;
 				}
 			}
@@ -777,13 +778,13 @@ VSocket::ReadExactHTTP(char *buff, const VCard bufflen)
 			buff += n;
 			currlen -= n;
 		} else if (n == 0) {
-			vnclog.Print(LL_SOCKERR, VNCLOG("zero bytes read3\n"));
+			vnclog.Print(LL_SOCKERR, VNCLOG("zero bytes read3"));
 
 			return VFalse;
 		} else {
 			if (WSAGetLastError() != WSAEWOULDBLOCK)
 			{
-				vnclog.Print(LL_SOCKERR, VNCLOG("HTTP socket error: %d\n"), WSAGetLastError());
+				vnclog.Print(LL_SOCKERR, VNCLOG("HTTP socket error: %d"), WSAGetLastError());
 				return VFalse;
 			}
 		}

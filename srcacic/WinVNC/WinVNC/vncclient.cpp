@@ -163,7 +163,7 @@ public:
 
 		if(WAIT_OBJECT_0 != WaitForSingleObject(*phMutex, INFINITE))
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("Could not get access to the mutex\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("Could not get access to the mutex"));
 		}
 	}
 	~MutexAutoLock() 
@@ -178,7 +178,7 @@ public:
 BOOL
 vncClientUpdateThread::Init(vncClient *client)
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("init update thread\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("init update thread"));
 
 	m_client = client;
 	omni_mutex_lock l(m_client->GetUpdateLock());
@@ -197,7 +197,7 @@ vncClientUpdateThread::~vncClientUpdateThread()
 {
 	if (m_signal) delete m_signal;
 	if (m_sync_sig) delete m_sync_sig;
-	vnclog.Print(LL_INTINFO, VNCLOG("update thread gone\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("update thread gone"));
 	m_client->m_updatethread=NULL;
 }
 
@@ -214,7 +214,7 @@ vncClientUpdateThread::Trigger()
 void
 vncClientUpdateThread::Kill()
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("kill update thread\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("kill update thread"));
 
 	omni_mutex_lock l(m_client->GetUpdateLock());
 	m_active=FALSE;
@@ -250,9 +250,9 @@ vncClientUpdateThread::EnableUpdates(BOOL enable)
 {
 	// ALWAYS call this with the UpdateLock held!
 	if (enable) {
-		vnclog.Print(LL_INTINFO, VNCLOG("enable update thread\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("enable update thread"));
 	} else {
-		vnclog.Print(LL_INTINFO, VNCLOG("disable update thread\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("disable update thread"));
 	}
 
 	m_enable = enable;
@@ -263,9 +263,9 @@ vncClientUpdateThread::EnableUpdates(BOOL enable)
 	/*if  (m_sync_sig->timedwait(now_sec+1,0)==0)
 		{
 //			m_signal->signal();
-			vnclog.Print(LL_INTINFO, VNCLOG("thread timeout\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("thread timeout"));
 		} */
-	vnclog.Print(LL_INTINFO, VNCLOG("enable/disable synced\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("enable/disable synced"));
 }
 
 void*
@@ -279,7 +279,7 @@ vncClientUpdateThread::run_undetached(void *arg)
 
 	updates_sent=0;
 
-	vnclog.Print(LL_INTINFO, VNCLOG("starting update thread\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("starting update thread"));
 
 	// Set client update threads to high priority
 	// *** set_priority(omni_thread::PRIORITY_HIGH);
@@ -476,9 +476,9 @@ vncClientUpdateThread::run_undetached(void *arg)
 		yield();
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("stopping update thread\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("stopping update thread"));
 	
-	vnclog.Print(LL_INTERR, "client sent %lu updates\n", updates_sent);
+	vnclog.Print(LL_INTERR, "client sent %lu updates", updates_sent);
 	return 0;
 }
 
@@ -611,7 +611,7 @@ vncClientThread::InitAuthenticate()
 
 	// Alterando o timeout para que o cliente tenha tempo de enviar as informações do técnico.
 	if (!m_socket->SetTimeout(60000))
-		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)"), GetLastError());
 
 	// Lê o username
 	if (!m_socket->ReadExact(nm_usuario_cli, sizeof(nm_usuario_cli)))
@@ -636,9 +636,12 @@ vncClientThread::InitAuthenticate()
 	
 	// Voltando o timeout ao normal.
 	if (!m_socket->SetTimeout(30000))
-		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)"), GetLastError());
 
 	BOOL auth_ok = TRUE;
+
+
+	char *name = m_socket->GetPeerName();
 
 	// verifica o técnico que está querendo logar e o adiciona na lista.
 	if (!CACIC_Auth::getInstance()->validaTecnico(nm_usuario_cli, te_senha_cli,
@@ -658,6 +661,10 @@ vncClientThread::InitAuthenticate()
 		if (m_auth) {
 			verified = vncServer::aqrAccept;
 		} else {
+		char *name;
+
+		name = m_socket->GetPeerName();
+	
 			verified = m_server->VerifyHost(m_socket->GetPeerName());
 		}
 		
@@ -734,7 +741,7 @@ vncClientThread::InitAuthenticate()
 
 				if (!ok)
 				{
-					vnclog.Print(LL_CONNERR, VNCLOG("loopback connection attempted - client rejected\n"));
+					vnclog.Print(LL_CONNERR, VNCLOG("loopback connection attempted - client rejected"));
 					
 					// Send an error message to the client
 					CARD32 auth_val = Swap32IfLE(rfbConnFailed);
@@ -769,7 +776,7 @@ vncClientThread::InitAuthenticate()
 
 				if (!ok)
 				{
-					vnclog.Print(LL_CONNERR, VNCLOG("loopback connection attempted - client accepted\n"));
+					vnclog.Print(LL_CONNERR, VNCLOG("loopback connection attempted - client accepted"));
 					m_client->m_IsLoopback=true;
 				}
 			}
@@ -787,7 +794,7 @@ vncClientThread::InitAuthenticate()
 	CARD32 authmsg;
 	if (!auth_ok)
 	{
-		vnclog.Print(LL_CONNERR, VNCLOG("authentication failed\n"));
+		vnclog.Print(LL_CONNERR, VNCLOG("authentication failed"));
 		//////////////////
 		// LOG it also in the event
 		//////////////////
@@ -856,7 +863,7 @@ vncClientThread::InitAuthenticate()
 		// Existing
 			if (m_server->AuthClientCount() > 0)
 			{
-				vnclog.Print(LL_CLIENTS, VNCLOG("connections already exist - client rejected\n"));
+				vnclog.Print(LL_CLIENTS, VNCLOG("connections already exist - client rejected"));
 				return FALSE;
 			}
 	}
@@ -866,14 +873,14 @@ vncClientThread::InitAuthenticate()
 		if (m_server->ConnectPriority() < 1)
 		{
 			// Incoming
-			vnclog.Print(LL_INTINFO, VNCLOG("non-shared connection - disconnecting old clients\n"));
+			vnclog.Print(LL_INTINFO, VNCLOG("non-shared connection - disconnecting old clients"));
 			m_server->KillAuthClients();
 		} else if (m_server->ConnectPriority() > 1)
 		{
 			// Existing
 			if (m_server->AuthClientCount() > 0)
 			{
-				vnclog.Print(LL_CLIENTS, VNCLOG("connections already exist - client rejected\n"));
+				vnclog.Print(LL_CLIENTS, VNCLOG("connections already exist - client rejected"));
 				return FALSE;
 			}
 		}
@@ -912,12 +919,12 @@ vncClientThread::AuthMsLogon() {
 	if (!m_socket->ReadExact(passwd, sizeof(passwd))) return FALSE;
 
 	int64ToBytes(dh.createEncryptionKey(bytesToInt64(resp)), (char*) key);
-	vnclog.Print(0, "After DH: g=%I64u, m=%I64u, i=%I64u, key=%I64u\n", bytesToInt64(gen), bytesToInt64(mod), bytesToInt64(pub), bytesToInt64((char*) key));
+	vnclog.Print(0, "After DH: g=%I64u, m=%I64u, i=%I64u, key=%I64u", bytesToInt64(gen), bytesToInt64(mod), bytesToInt64(pub), bytesToInt64((char*) key));
 	vncDecryptBytes((unsigned char*) user, sizeof(user), key); user[255] = '\0';
 	vncDecryptBytes((unsigned char*) passwd, sizeof(passwd), key); passwd[63] = '\0';
 
 	int result = CheckUserGroupPasswordUni(user, passwd, m_client->GetClientName());
-	vnclog.Print(LL_INTINFO, "CheckUserGroupPasswordUni result=%i\n", result);
+	vnclog.Print(LL_INTINFO, "CheckUserGroupPasswordUni result=%i", result);
 	if (result == 2) {
 		m_client->EnableKeyboard(false);
 		m_client->EnablePointer(false);
@@ -928,7 +935,7 @@ vncClientThread::AuthMsLogon() {
 		return FALSE;
 		
 	if (!result) {
-		vnclog.Print(LL_CONNERR, VNCLOG("authentication failed\n"));
+		vnclog.Print(LL_CONNERR, VNCLOG("authentication failed"));
 		return FALSE;
 	}
 	return TRUE;
@@ -1002,7 +1009,7 @@ vncClientThread::run(void *arg)
 	// IMPORTANT : ALWAYS call RemoveClient on the server before quitting
 	// this thread.
 
-	vnclog.Print(LL_CLIENTS, VNCLOG("client connected : %s (%hd)\n"),
+	vnclog.Print(LL_CLIENTS, VNCLOG("client connected : %s (%hd)"),
 								m_client->GetClientName(),
 								m_client->GetClientId());
 	// Save the handle to the thread's original desktop
@@ -1010,17 +1017,17 @@ vncClientThread::run(void *arg)
 	
 	// To avoid people connecting and then halting the connection, set a timeout
 	if (!m_socket->SetTimeout(30000))
-		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)"), GetLastError());
 
 	// sf@2002 - DSM Plugin - Tell the client's socket where to find the DSMPlugin 
 	if (m_server->GetDSMPluginPointer() != NULL)
 	{
 		m_socket->SetDSMPluginPointer(m_server->GetDSMPluginPointer());
-		vnclog.Print(LL_INTINFO, VNCLOG("DSMPlugin Pointer to socket OK\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("DSMPlugin Pointer to socket OK"));
 	}
 	else
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("Invalid DSMPlugin Pointer\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("Invalid DSMPlugin Pointer"));
 		return;
 	}
 
@@ -1042,7 +1049,7 @@ vncClientThread::run(void *arg)
 		// This is a dirty workaround. We ignore all Multi Viewer connection settings...
 		if (m_server->AuthClientCount() > 0)
 		{
-			vnclog.Print(LL_CLIENTS, VNCLOG("A connection using DSM already exist - client rejected to avoid crash \n"));
+			vnclog.Print(LL_CLIENTS, VNCLOG("A connection using DSM already exist - client rejected to avoid crash "));
 			return;
 		} 
 
@@ -1066,7 +1073,7 @@ vncClientThread::run(void *arg)
 
 		return;
 	}
-	vnclog.Print(LL_INTINFO, VNCLOG("negotiated version\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("negotiated version"));
 
 	// AUTHENTICATE LINK
 	if (!InitAuthenticate())
@@ -1079,7 +1086,7 @@ vncClientThread::run(void *arg)
 	// Authenticated OK - remove from blacklist and remove timeout
 	m_server->RemAuthHostsBlacklist(m_client->GetClientName());
 	m_socket->SetTimeout(m_server->AutoIdleDisconnectTimeout()*1000);
-	vnclog.Print(LL_INTINFO, VNCLOG("authenticated connection\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("authenticated connection"));
 
 	// Set Client Connect time
 	m_client->SetConnectTime(timeGetTime());
@@ -1158,7 +1165,7 @@ vncClientThread::run(void *arg)
 		m_server->RemoveClient(m_client->GetClientId());
 		return;
 	}
-	vnclog.Print(LL_INTINFO, VNCLOG("sent pixel format to client\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("sent pixel format to client"));
 
 	// UNLOCK INITIAL SETUP
 	// Initial negotiation is complete, so set the protocol ready flag
@@ -1185,7 +1192,7 @@ vncClientThread::run(void *arg)
 	// TODO CACIC tirando o timeout do socket. Quando o chat está aberto sem mensagens,
 	// não há fluxo no socket, fazendo com que ele de timeout,
 	if (!m_socket->SetTimeout(0))
-		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)"), GetLastError());
 	while (connected)
 	{
 		rfbClientToServerMsg msg;
@@ -1264,7 +1271,7 @@ vncClientThread::run(void *arg)
 			// Tell the buffer object of the change			
 			if (!m_client->m_encodemgr.SetClientFormat(msg.spf.format))
 			{
-				vnclog.Print(LL_CONNERR, VNCLOG("remote pixel format invalid\n"));
+				vnclog.Print(LL_CONNERR, VNCLOG("remote pixel format invalid"));
 
 				connected = FALSE;
 			}
@@ -1345,7 +1352,7 @@ vncClientThread::run(void *arg)
 					if (Swap32IfLE(encoding) == rfbEncodingCacheEnable)
 					{
 						m_client->m_encodemgr.EnableCache(TRUE);
-						vnclog.Print(LL_INTINFO, VNCLOG("Cache protocol extension enabled\n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("Cache protocol extension enabled"));
 						continue;
 					}
 
@@ -1353,7 +1360,7 @@ vncClientThread::run(void *arg)
 					// XOR zlib
 					if (Swap32IfLE(encoding) == rfbEncodingXOREnable) {
 						m_client->m_encodemgr.AvailableXOR(TRUE);
-						vnclog.Print(LL_INTINFO, VNCLOG("XOR protocol extension enabled\n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("XOR protocol extension enabled"));
 						continue;
 					}
 
@@ -1365,7 +1372,7 @@ vncClientThread::run(void *arg)
 						// Client specified encoding-specific compression level
 						int level = (int)(Swap32IfLE(encoding) - rfbEncodingCompressLevel0);
 						m_client->m_encodemgr.SetCompressLevel(level);
-						vnclog.Print(LL_INTINFO, VNCLOG("compression level requested: %d\n"), level);
+						vnclog.Print(LL_INTINFO, VNCLOG("compression level requested: %d"), level);
 						continue;
 					}
 
@@ -1376,14 +1383,14 @@ vncClientThread::run(void *arg)
 						// Client specified image quality level used for JPEG compression
 						int level = (int)(Swap32IfLE(encoding) - rfbEncodingQualityLevel0);
 						m_client->m_encodemgr.SetQualityLevel(level);
-						vnclog.Print(LL_INTINFO, VNCLOG("image quality level requested: %d\n"), level);
+						vnclog.Print(LL_INTINFO, VNCLOG("image quality level requested: %d"), level);
 						continue;
 					}
 
 					// Is this a LastRect encoding request?
 					if (Swap32IfLE(encoding) == rfbEncodingLastRect) {
 						m_client->m_encodemgr.EnableLastRect(TRUE); // We forbid Last Rect for now 
-						vnclog.Print(LL_INTINFO, VNCLOG("LastRect protocol extension enabled\n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("LastRect protocol extension enabled"));
 						continue;
 					}
 
@@ -1391,7 +1398,7 @@ vncClientThread::run(void *arg)
 					if (Swap32IfLE(encoding) == rfbEncodingXCursor) {
 						m_client->m_encodemgr.EnableXCursor(TRUE);
 						m_server->EnableXRichCursor(TRUE);
-						vnclog.Print(LL_INTINFO, VNCLOG("X-style cursor shape updates enabled\n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("X-style cursor shape updates enabled"));
 						continue;
 					}
 
@@ -1399,34 +1406,34 @@ vncClientThread::run(void *arg)
 					if (Swap32IfLE(encoding) == rfbEncodingRichCursor) {
 						m_client->m_encodemgr.EnableRichCursor(TRUE);
 						m_server->EnableXRichCursor(TRUE);
-						vnclog.Print(LL_INTINFO, VNCLOG("Full-color cursor shape updates enabled\n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("Full-color cursor shape updates enabled"));
 						continue;
 					}
 
 					// Is this a PointerPos encoding request? nyama/marscha - PointerPos
 					if (Swap32IfLE(encoding) == rfbEncodingPointerPos) {
 						m_client->m_use_PointerPos = TRUE;
-						vnclog.Print(LL_INTINFO, VNCLOG("PointerPos protocol extension enabled\n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("PointerPos protocol extension enabled"));
 						continue;
 					}
 					// 21 March 2008 jdp - client wants server state updates
 					if (Swap32IfLE(encoding) == rfbEncodingServerState) {
 						m_client->m_wants_ServerStateUpdates = true;
                         m_server->EnableServerStateUpdates(true);
-						vnclog.Print(LL_INTINFO, VNCLOG("ServerState protocol extension enabled\n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("ServerState protocol extension enabled"));
                         continue;
 					}
 
 					// RDV - We try to detect which type of viewer tries to connect
 					if (Swap32IfLE(encoding) == rfbEncodingZRLE) {
 						m_client->m_encodemgr.AvailableZRLE(TRUE);
-						vnclog.Print(LL_INTINFO, VNCLOG("ZRLE found \n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("ZRLE found "));
 						// continue;
 					}
 
 					if (Swap32IfLE(encoding) == rfbEncodingTight) {
 						m_client->m_encodemgr.AvailableTight(TRUE);
-						vnclog.Print(LL_INTINFO, VNCLOG("Tight found\n"));
+						vnclog.Print(LL_INTINFO, VNCLOG("Tight found"));
 						// continue;
 					}
 
@@ -1443,11 +1450,11 @@ vncClientThread::run(void *arg)
 				// If no encoding worked then default to RAW!
 				if (!encoding_set)
 				{
-					vnclog.Print(LL_INTINFO, VNCLOG("defaulting to raw encoder\n"));
+					vnclog.Print(LL_INTINFO, VNCLOG("defaulting to raw encoder"));
 					omni_mutex_lock l(m_client->GetUpdateLock());
 					if (!m_client->m_encodemgr.SetEncoding(Swap32IfLE(rfbEncodingRaw),FALSE))
 					{
-						vnclog.Print(LL_INTERR, VNCLOG("failed to select raw encoder!\n"));
+						vnclog.Print(LL_INTERR, VNCLOG("failed to select raw encoder!"));
 
 						connected = FALSE;
 					}
@@ -1481,7 +1488,7 @@ vncClientThread::run(void *arg)
 				int sendtime=m_client->Sendtimer.read()*1000;
 				if (m_client->Totalsend>1500 && sendtime!=0) 
 					{
-						//vnclog.Print(LL_SOCKERR, VNCLOG("Send Size %i %i %i %i\n"),m_socket->Totalsend,sendtime,m_socket->Totalsend/sendtime,m_client->m_encodemgr.m_encoding);
+						//vnclog.Print(LL_SOCKERR, VNCLOG("Send Size %i %i %i %i"),m_socket->Totalsend,sendtime,m_socket->Totalsend/sendtime,m_client->m_encodemgr.m_encoding);
 						m_client->timearray[m_client->m_encodemgr.m_encoding][m_client->roundrobin_counter]=sendtime;
 						m_client->sizearray[m_client->m_encodemgr.m_encoding][m_client->roundrobin_counter]=m_client->Totalsend;
 						m_client->Sendtimer.reset();
@@ -1495,7 +1502,7 @@ vncClientThread::run(void *arg)
 								tottime+=m_client->timearray[j][i];
 								}
 							if (tottime!=0 && totsize>1500)
-								vnclog.Print(LL_SOCKERR, VNCLOG("Send Size %i %i %i %i\n"),totsize,tottime,totsize/tottime,j);
+								vnclog.Print(LL_SOCKERR, VNCLOG("Send Size %i %i %i %i"),totsize,tottime,totsize/tottime,j);
 						}
 						m_client->roundrobin_counter++;
 						if (m_client->roundrobin_counter>30) m_client->roundrobin_counter=0;
@@ -1519,11 +1526,11 @@ vncClientThread::run(void *arg)
 			//	update.br.x = 2880;
 			//	update.br.y = 1200;
 				rfb::Region2D update_rgn = update;
-//				vnclog.Print(LL_SOCKERR, VNCLOG("Update asked for region %i %i %i %i %i\n"),update.tl.x,update.tl.y,update.br.x,update.br.y,m_client->m_SWOffsetx);
+//				vnclog.Print(LL_SOCKERR, VNCLOG("Update asked for region %i %i %i %i %i"),update.tl.x,update.tl.y,update.br.x,update.br.y,m_client->m_SWOffsetx);
 
 				// RealVNC 336
 				if (update_rgn.is_empty()) {
-					vnclog.Print(LL_INTERR, VNCLOG("FATAL! client update region is empty!\n"));
+					vnclog.Print(LL_INTERR, VNCLOG("FATAL! client update region is empty!"));
 					connected = FALSE;
 					break;
 				}
@@ -1660,14 +1667,14 @@ vncClientThread::run(void *arg)
 					// offset for multi display
 					int screenX, screenY, screenDepth;
 					m_server->GetScreenInfo(screenX, screenY, screenDepth);
-//					vnclog.Print(LL_INTINFO, VNCLOG("########mouse :%i %i %i %i \n"),screenX, screenY,m_client->m_ScreenOffsetx,m_client->m_ScreenOffsety );
+//					vnclog.Print(LL_INTINFO, VNCLOG("########mouse :%i %i %i %i "),screenX, screenY,m_client->m_ScreenOffsetx,m_client->m_ScreenOffsety );
 					if (m_client->m_display_type==1)
 						{//primary display always have (0,0) as corner
 							unsigned long x = (msg.pe.x *  65535) / (screenX-1);
 							unsigned long y = (msg.pe.y * 65535) / (screenY-1);
 							// Do the pointer event
 							::mouse_event(flags, (DWORD) x, (DWORD) y, wheel_movement, 0);
-//							vnclog.Print(LL_INTINFO, VNCLOG("########mouse_event :%i %i \n"),x,y);
+//							vnclog.Print(LL_INTINFO, VNCLOG("########mouse_event :%i %i "),x,y);
 						}
 					else
 						{//second or spanned
@@ -1803,7 +1810,7 @@ vncClientThread::run(void *arg)
 					//if (msg.sim.status==1) m_client->m_encodemgr.m_buffer->m_desktop->SetDisableInput(true);
 					//if (msg.sim.status==0) m_client->m_encodemgr.m_buffer->m_desktop->SetDisableInput(false);
 					// added jeff
-                vnclog.Print(LL_INTINFO, VNCLOG("rfbSetServerInput: inputs %s\n"), (msg.sim.status==1) ? "disabled" : "enabled");
+                vnclog.Print(LL_INTINFO, VNCLOG("rfbSetServerInput: inputs %s"), (msg.sim.status==1) ? "disabled" : "enabled");
 
                 // only allow change if this is the client that originally changed the input state
                 if (m_server->GetDesktopPointer()->GetBlockInputState() && !m_client->m_bClientHasBlockedInput) 
@@ -1843,7 +1850,7 @@ vncClientThread::run(void *arg)
 			m_client->m_pTextChat->ProcessTextChatMsg(nTO);
 			break;
 
-
+		/**	Trecho referente a parte de Transferencia de Arquivo!*/
 		// Modif sf@2002 - FileTransfer
 		// File Transfer Message
 		case rfbFileTransfer:
@@ -1863,7 +1870,8 @@ vncClientThread::run(void *arg)
 			{
 				switch (msg.ft.contentType)
 				{
-				// A new file is received from the client
+					/**	UPLOAD: O Cliente faz UPLOAD de um arquivo para o Servidor.*/
+					// A new file is received from the client
 					// case rfbFileHeader:
 					case rfbFileTransferOffer:
 						{
@@ -1877,7 +1885,7 @@ vncClientThread::run(void *arg)
 						if (!m_socket->ReadExact(m_client->m_szFullDestName, length)) 
 						{
 							//MessageBox(NULL, "1. Abort !", "Ultra WinVNC", MB_OK);
-							// vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Failed to receive FileName from Viewer. Abort !\n"));
+							// vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Failed to receive FileName from Viewer. Abort !"));
 							break;
 						}
 						
@@ -1888,7 +1896,7 @@ vncClientThread::run(void *arg)
 						if (!m_socket->ReadExact((char*)&sizeHtmp, sizeof(CARD32)))
 						{
 							//MessageBox(NULL, "2. Abort !", "Ultra WinVNC", MB_OK);
-							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Failed to receive SizeH from Viewer. Abort !\n"));
+							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Failed to receive SizeH from Viewer. Abort !"));
 							break;
 						}
 						sizeH = Swap32IfLE(sizeHtmp);
@@ -2014,7 +2022,7 @@ vncClientThread::run(void *arg)
 								delete m_client->m_pBuff;
 
 							//MessageBox(NULL, "3. Abort !", "Ultra WinVNC", MB_OK);
-							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Wrong Dest File size. Abort !\n"));
+							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Wrong Dest File size. Abort !"));
 							break;
 						}
 
@@ -2030,7 +2038,7 @@ vncClientThread::run(void *arg)
 
 						}
 						break;
-
+					/**	DOWNLOAD: O Cliente Solicita o Download de um arquivo no Server.*/
 					// The client requests a File
 					case rfbFileTransferRequest:
 						{
@@ -2044,7 +2052,7 @@ vncClientThread::run(void *arg)
 						if (!m_socket->ReadExact(m_client->m_szSrcFileName, length))
 						{
 							//MessageBox(NULL, "4. Abort !", "Ultra WinVNC", MB_OK);
-							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Cannot read requested filename. Abort !\n"));
+							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Cannot read requested filename. Abort !"));
 							break;
 						}
 						
@@ -2055,7 +2063,7 @@ vncClientThread::run(void *arg)
 						if (nDirZipRet == -1)
 						{
 							//MessageBox(NULL, "5. Abort !", "Ultra WinVNC", MB_OK);
-							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Failed to zip requested dir. Abort !\n"));
+							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Failed to zip requested dir. Abort !"));
 
 							//	[v1.0.2-jp1 fix] Empty directory receive problem
 							rfbFileTransferMsg ft;
@@ -2134,6 +2142,14 @@ vncClientThread::run(void *arg)
 											FileTime.wHour,
 											FileTime.wMinute
 											);
+
+									/**	ATENCAO!!! Aqui faz um append que pode não ser muito legal. Ele
+									*	incrementa virgula, data e hora ao nome do arquivo para
+									*	posteriormente imprimir como sendo uma string de um log qualquer.
+									*	A integridade do nome do arquivo eh alterada. Deve-se entaum, obter
+									*	o nome do arquivo transferido de outra forma. Verificar outros
+									*	campos disponíveis. 
+									**/
 									strcat(m_client->m_szSrcFileName, ",");
 									strcat(m_client->m_szSrcFileName, szSrcFileTime);
 								}
@@ -2149,6 +2165,10 @@ vncClientThread::run(void *arg)
 						m_client->m_nCSOffset = 0;
 						m_client->m_nCSBufferSize = 0;
 
+						/**	Próximo passo na transferencia do arquivo: Pegar o Header do arquivo.
+						*	mens_transf.type = rfbFileTransfer (valor constante pra qqer transferencia).
+						*	mens_transf.contentType = rfbFileHeader (pegar o header do file no proximo ciclo).
+						*/
 						// Send the FileTransferMsg with rfbFileHeader
 						rfbFileTransferMsg ft;
 						
@@ -2167,7 +2187,7 @@ vncClientThread::run(void *arg)
 						if (n2SrcSize.LowPart == 0xFFFFFFFF && n2SrcSize.HighPart == 0xFFFFFFFF)
 						{
 							//MessageBox(NULL, "6. Abort !", "Ultra WinVNC", MB_OK);
-							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Wrong Src File size. Abort !\n"));
+							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: Wrong Src File size. Abort !"));
 							break; // If error, we don't send anything else
 						}
 						}
@@ -2187,7 +2207,7 @@ vncClientThread::run(void *arg)
 						{
 							CloseHandle(m_client->m_hSrcFile);
 							// MessageBox(NULL, "7. Abort !", "Ultra WinVNC", MB_OK);
-							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: File not created on client side. Abort !\n"));
+							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: File not created on client side. Abort !"));
 							break;
 						}
 
@@ -2197,7 +2217,7 @@ vncClientThread::run(void *arg)
 						{
 							CloseHandle(m_client->m_hSrcFile);
 							//MessageBox(NULL, "8. Abort !", "Ultra WinVNC", MB_OK);
-							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: rfbFileHeader - Unable to allocate buffer. Abort !\n"));
+							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: rfbFileHeader - Unable to allocate buffer. Abort !"));
 							break;
 						}
 
@@ -2210,7 +2230,7 @@ vncClientThread::run(void *arg)
 							if (m_client->m_pBuff != NULL)
 								delete m_client->m_pBuff;
 							//MessageBox(NULL, "9. Abort !", "Ultra WinVNC", MB_OK);
-							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: rfbFileHeader - Unable to allocate comp. buffer. Abort !\n"));
+							//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: rfbFileHeader - Unable to allocate comp. buffer. Abort !"));
 							break;
 						}
 
@@ -2241,7 +2261,7 @@ vncClientThread::run(void *arg)
 							m_client->FinishFileReception();
 						}
 						break;
-
+					/**	ABORT: Trecho referente ao trato com o comando Abort.*/
 					// We use this message for FileTransfer rights (<=RC18 versions)
 					// The client asks for FileTransfer permission
 					case rfbAbortFileTransfer:
@@ -2607,7 +2627,7 @@ vncClientThread::run(void *arg)
 					m_client->m_fFileDownloadError = true;
 					FlushFileBuffers(m_client->m_hDestFile);
 				}
-				//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: message content reading error\n"));
+				//vnclog.Print(LL_INTINFO, VNCLOG("*** FileTransfer: message content reading error"));
 			}
 			/*
 			// sf@2005 - Cancel FT User impersonation if possible
@@ -2661,7 +2681,7 @@ vncClientThread::run(void *arg)
 				}				
 				else
 				{
-					vnclog.Print(LL_INTERR, VNCLOG("[rfbKeyFrameRequest] Unable to Reset ZRLE Encoding\n"));
+					vnclog.Print(LL_INTERR, VNCLOG("[rfbKeyFrameRequest] Unable to Reset ZRLE Encoding"));
 				}
 			}
 			break;
@@ -2681,7 +2701,7 @@ vncClientThread::run(void *arg)
 	}
 	// TODO CACIC voltando o timeout ao normal
 	if (!m_socket->SetTimeout(30000))
-		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)\n"), GetLastError());
+		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)"), GetLastError());
 
 	// Move into the thread's original desktop
 	// TAG 14
@@ -2694,7 +2714,7 @@ vncClientThread::run(void *arg)
 
 	// Quit this thread.  This will automatically delete the thread and the
 	// associated client.
-	vnclog.Print(LL_CLIENTS, VNCLOG("client disconnected : %s (%hd)\n"),
+	vnclog.Print(LL_CLIENTS, VNCLOG("client disconnected : %s (%hd)"),
 									m_client->GetClientName(),
 									m_client->GetClientId());
 	//////////////////
@@ -2746,7 +2766,7 @@ vncClientThread::run(void *arg)
 
 vncClient::vncClient()
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("vncClient() executing...\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("vncClient() executing..."));
 
 	m_socket = NULL;
 	m_client_name = 0;
@@ -2775,7 +2795,7 @@ vncClient::vncClient()
 	//SINGLE WINDOW
 	m_use_NewSWSize = FALSE;
 	m_SWOffsetx=0;
-	vnclog.Print(LL_INTINFO, VNCLOG("TEST 4\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("TEST 4"));
 	m_SWOffsety=0;
 	m_ScreenOffsetx=0;
 	m_ScreenOffsety=0;
@@ -2860,7 +2880,7 @@ vncClient::vncClient()
 
 vncClient::~vncClient()
 {
-	vnclog.Print(LL_INTINFO, VNCLOG("~vncClient() executing...\n"));
+	vnclog.Print(LL_INTINFO, VNCLOG("~vncClient() executing..."));
 
 	// Modif sf@2002 - Text Chat
 	if (m_pTextChat) 
@@ -2881,7 +2901,7 @@ vncClient::~vncClient()
 	// If we have a socket then kill it
 	if (m_socket != NULL)
 	{
-		vnclog.Print(LL_INTINFO, VNCLOG("deleting socket\n"));
+		vnclog.Print(LL_INTINFO, VNCLOG("deleting socket"));
 
 		delete m_socket;
 		m_socket = NULL;
@@ -2905,7 +2925,7 @@ vncClient::~vncClient()
 #endif
 
 	//thos give sometimes errors, hlogfile is already removed at this point
-	//vnclog.Print(LL_INTINFO, VNCLOG("cached %d \n"),totalraw);
+	//vnclog.Print(LL_INTINFO, VNCLOG("cached %d "),totalraw);
 }
 
 // Init
@@ -2924,8 +2944,9 @@ vncClient::Init(vncServer *server,
 
 	// Save the name of the connecting client
 	char *name = m_socket->GetPeerName();
-	if (name != 0)
+	if (name != 0){
 		m_client_name = _strdup(name);
+	}
 	else
 		m_client_name = _strdup("<unknown>");
 
@@ -2993,7 +3014,7 @@ vncClient::UpdateMouse()
 	if (m_use_PointerPos && !m_cursor_pos_changed) {
 		POINT cursorPos;
 		GetCursorPos(&cursorPos);
-		//vnclog.Print(LL_INTINFO, VNCLOG("UpdateMouse m_cursor_pos(%d, %d), new(%d, %d)\n"), 
+		//vnclog.Print(LL_INTINFO, VNCLOG("UpdateMouse m_cursor_pos(%d, %d), new(%d, %d)"), 
 		//  m_cursor_pos.x, m_cursor_pos.y, cursorPos.x, cursorPos.y);
 		if (cursorPos.x != m_cursor_pos.x || cursorPos.y != m_cursor_pos.y) {
 			// This movement isn't by this client, but generated locally or by other client.
@@ -3037,7 +3058,7 @@ void
 vncClient::UpdateLocalFormat()
 {
 	DisableProtocol();
-	vnclog.Print(LL_INTERR, VNCLOG("updating local pixel format\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("updating local pixel format"));
 	m_encodemgr.SetServerFormat();
 	EnableProtocol();
 }
@@ -3048,7 +3069,7 @@ vncClient::SetNewSWSize(long w,long h,BOOL Desktop)
 	if (!m_use_NewSWSize) return FALSE;
 	DisableProtocol();
 
-	vnclog.Print(LL_INTERR, VNCLOG("updating local pixel format and buffer size\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("updating local pixel format and buffer size"));
 	m_encodemgr.SetServerFormat();
 	m_palettechanged = TRUE;
 	// no lock needed Called from desktopthread
@@ -3088,7 +3109,7 @@ vncClient::EnableProtocol()
 {
 	{	omni_mutex_lock l(GetUpdateLock());
 		if (m_disable_protocol == 0) {
-			vnclog.Print(LL_INTERR, VNCLOG("protocol enabled too many times!\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("protocol enabled too many times!"));
 			m_socket->Close();
 			return;
 		}
@@ -3108,7 +3129,7 @@ vncClient::SendRFBMsg(CARD8 type, BYTE *buffer, int buflen)
 	// Send the message
 	if (!m_socket->SendExact((char *) buffer, buflen, type))
 	{
-		vnclog.Print(LL_CONNERR, VNCLOG("failed to send RFB message to client\n"));
+		vnclog.Print(LL_CONNERR, VNCLOG("failed to send RFB message to client"));
 
 		Kill();
 		return FALSE;
@@ -3165,7 +3186,7 @@ vncClient::SendUpdate(rfb::SimpleUpdateTracker &update)
 		else 
 		{
 			updates += update_info.cached.size();
-			//vnclog.Print(LL_INTERR, "cached %d\n", updates);
+			//vnclog.Print(LL_INTERR, "cached %d", updates);
 		}
 	}
 	
@@ -3183,7 +3204,7 @@ vncClient::SendUpdate(rfb::SimpleUpdateTracker &update)
 				break;
 			}
 			updates += numsubrects;
-			//vnclog.Print(LL_INTERR, "changed %d\n", updates);
+			//vnclog.Print(LL_INTERR, "changed %d", updates);
 		}
 	}	
 	
@@ -3202,7 +3223,7 @@ vncClient::SendUpdate(rfb::SimpleUpdateTracker &update)
 				break;
 			}	
 			updates += numsubrects;
-			//vnclog.Print(LL_INTERR, "cached2 %d\n", updates);
+			//vnclog.Print(LL_INTERR, "cached2 %d", updates);
 		}
 	}
 	
@@ -3281,7 +3302,7 @@ vncClient::SendUpdate(rfb::SimpleUpdateTracker &update)
 			return FALSE;
 	}
 	m_socket->ClearQueue();
-	// vnclog.Print(LL_INTINFO, VNCLOG("Update cycle\n"));
+	// vnclog.Print(LL_INTINFO, VNCLOG("Update cycle"));
 	return TRUE;
 }
 
@@ -3501,7 +3522,7 @@ vncClient::SendCacheRectangles(const rfb::RectVector &rects)
 	rfb::RectVector::const_iterator i;
 
 	if (rects.size() == 0) return TRUE;
-	vnclog.Print(LL_INTINFO, VNCLOG("******** Sending %d Cache Rects \r\n"), rects.size());
+	vnclog.Print(LL_INTINFO, VNCLOG("******** Sending %d Cache Rects "), rects.size());
 
 	// Work through the list of rectangles, sending each one
 	for (i= rects.begin();i != rects.end();i++)
@@ -3658,7 +3679,7 @@ BOOL vncClient::SendCacheZip(const rfb::RectVector &rects)
 		return false;
 	}
 
-	vnclog.Print(LL_INTINFO, VNCLOG("*** Sending CacheZip Rects=%d Size=%d (%d)\r\n"), nNbCacheRects, maxCompSize, nNbCacheRects * 14);
+	vnclog.Print(LL_INTINFO, VNCLOG("*** Sending CacheZip Rects=%d Size=%d (%d)"), nNbCacheRects, maxCompSize, nNbCacheRects * 14);
 
 	// Send the Update Rect header
 	rfbFramebufferUpdateRectHeader CacheRectsHeader;
@@ -3854,7 +3875,9 @@ void vncClient::ReceiveFileChunk(int nLen, int nSize)
 	return;
 }
 
-
+/**	Funcao que desativa o status de downloading, seta os tempos do arquivo
+	atraves do handle e esvazia o buffer.
+*/
 void vncClient::FinishFileReception()
 {
 	if (!m_fFileDownloadRunning)
@@ -3928,6 +3951,14 @@ void vncClient::FinishFileReception()
 	if (m_pBuff != NULL)
 		delete [] m_pBuff;
 
+	time_t now = time(0);
+    struct tm ts;
+    char data_tf[20];
+	ts = *localtime(&now);
+	strftime(data_tf, sizeof(data_tf), "%d/%m/%Y %H:%M:%S", &ts);
+
+	vnclog.Print(LL_INTINFO,VNCLOG(">>>>>UPLOAD: %s - %s - %s - %s"),
+		data_tf, m_szFullDestName, m_szFileTime, m_szSrcFileName);
 	return;
 
 }
@@ -3979,6 +4010,10 @@ void vncClient::SendFileChunk()
 
 		if (fAlreadyThere)
 		{
+			/**	Aqui seta um terceiro passo na sequencia de transferencia. Logo apos iniciada (UPLOAD ou DOWNLOAD),
+			*	foi setada a transferencia de header, e agora como terceiro passo, a transferencia de packet VAZIO.
+			*	Isso porque o arquivo ja foi constatado estar no destino.
+			*/
 			// Send the FileTransferMsg with empty rfbFilePacket
 			rfbFileTransferMsg ft;
 			ft.type = rfbFileTransfer;
@@ -4003,7 +4038,7 @@ void vncClient::SendFileChunk()
 
 				if (nRetC != 0)
 				{
-					vnclog.Print(LL_INTINFO, VNCLOG("Compress returned error in File Send :%d\n"), nRetC);
+					vnclog.Print(LL_INTINFO, VNCLOG("Compress returned error in File Send :%d"), nRetC);
 					// Todo: send data uncompressed instead
 					m_fFileUploadError = true;
 					FinishFileSending();
@@ -4016,7 +4051,9 @@ void vncClient::SendFileChunk()
 			if (nMaxCompSize > m_dwNbBytesRead)
 				fCompressed = false;
 				// m_fCompressionEnabled = false;
-
+			/**	Nesse momento, como no case anterior, ele seta o terceiro passo na transferencia, a transferencia de Packet.
+			*	Em diferenca, no passo anterior, o arquivo foi comprimido, e agora segue em sequencia a transferencia de Packet.
+			*/
 			rfbFileTransferMsg ft;
 
 			ft.type = rfbFileTransfer;
@@ -4110,7 +4147,7 @@ bool vncClient::GetSpecialFolderPath(int nId, char* szPath)
 //
 int vncClient::ZipPossibleDirectory(LPSTR szSrcFileName)
 {
-//	vnclog.Print(0, _T("ZipPossibleDirectory\n"));
+//	vnclog.Print(0, _T("ZipPossibleDirectory"));
 	char* p1 = strrchr(szSrcFileName, '\\') + 1;
 	char* p2 = strrchr(szSrcFileName, rfbDirSuffix[0]);
 	if (
@@ -4196,7 +4233,7 @@ int vncClient::CheckAndZipDirectoryForChecksuming(LPSTR szSrcFileName)
 //
 int vncClient::UnzipPossibleDirectory(LPSTR szFileName)
 {
-//	vnclog.Print(0, _T("UnzipPossibleDirectory\n"));
+//	vnclog.Print(0, _T("UnzipPossibleDirectory"));
 	if (!m_fFileDownloadError 
 		&& 
 		!strncmp(strrchr(szFileName, '\\') + 1, rfbZipDirectoryPrefix, strlen(rfbZipDirectoryPrefix))
@@ -4253,26 +4290,26 @@ bool vncClient::MyGetFileSize(char* szFilePath, ULARGE_INTEGER *n2FileSize)
 
 bool vncClient::DoFTUserImpersonation()
 {
-	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - Call\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - Call"));
 	omni_mutex_lock l(GetUpdateLock());
 
 	if (m_fFileDownloadRunning) return true;
 	if (m_fFileUploadRunning) return true;
 	if (m_fFTUserImpersonatedOk) return true;
 
-	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - 1\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - 1"));
 	bool fUserOk = true;
 
 	if (vncService::IsWSLocked())
 	{
 		m_fFTUserImpersonatedOk = false;
-		vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - WSLocked\n"));
+		vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - WSLocked"));
 		return false;
 	}
 
 	char username[UNLEN+1];
 	vncService::CurrentUser((char *)&username, sizeof(username));
-	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - currentUser = %s\n"), username);
+	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - currentUser = %s"), username);
 	if (strcmp(username, "") != 0)
 	{
 		// sf@2007 - New method to achieve FTUserImpersonation - Still needs to be further tested...
@@ -4287,14 +4324,14 @@ bool vncClient::DoFTUserImpersonation()
 								 )
 			) 
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - OpenProcessToken Error\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - OpenProcessToken Error"));
 				fUserOk = false;
 			}
 			else
 			{
 				if (!ImpersonateLoggedOnUser(hPToken))
 				{
-					vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - ImpersonateLoggedOnUser Failed\n"));
+					vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - ImpersonateLoggedOnUser Failed"));
 					fUserOk = false;
 				}
 			}
@@ -4307,27 +4344,27 @@ bool vncClient::DoFTUserImpersonation()
 		// Modif Byteboon (Jeremy C.) - Impersonnation
 		if (m_server->m_impersonationtoken)
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - Impersonationtoken exists\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - Impersonationtoken exists"));
 			HANDLE newToken;
 			if (DuplicateToken(m_server->m_impersonationtoken, SecurityImpersonation, &newToken))
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - DuplicateToken ok\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - DuplicateToken ok"));
 				if(!ImpersonateLoggedOnUser(newToken))
 				{
-					vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - failed to impersonate [%d]\n"),GetLastError());
+					vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - failed to impersonate [%d]"),GetLastError());
 					fUserOk = false;
 				}
 				CloseHandle(newToken);
 			}
 			else
 			{
-				vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - DuplicateToken FAILEDk\n"));
+				vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - DuplicateToken FAILEDk"));
 				fUserOk = false;
 			}
 		}
 		else
 		{
-			vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - No impersonationtoken\n"));
+			vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::DoFTUserImpersonation - No impersonationtoken"));
 			fUserOk = false;
 		}
 		*/
@@ -4352,17 +4389,17 @@ bool vncClient::DoFTUserImpersonation()
 
 void vncClient::UndoFTUserImpersonation()
 {
-	//vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::UNDoFTUserImpersonation - Call\n"));
+	//vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::UNDoFTUserImpersonation - Call"));
 	omni_mutex_lock l(GetUpdateLock());
 
 	if (!m_fFTUserImpersonatedOk) return;
 	if (m_fFileDownloadRunning) return;
 	if (m_fFileUploadRunning) return;
 
-	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::UNDoFTUserImpersonation - 1\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::UNDoFTUserImpersonation - 1"));
 	DWORD lTime = timeGetTime();
 	if (lTime - m_lLastFTUserImpersonationTime < 10000) return;
-	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::UNDoFTUserImpersonation - Impersonationtoken exists\n"));
+	vnclog.Print(LL_INTERR, VNCLOG("%%%%%%%%%%%%% vncClient::UNDoFTUserImpersonation - Impersonationtoken exists"));
 	RevertToSelf();
 	m_fFTUserImpersonatedOk = false;
 }

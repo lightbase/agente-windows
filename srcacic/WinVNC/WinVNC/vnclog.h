@@ -32,7 +32,7 @@
 //       Log log;
 //       log.SetFile( _T("myapp.log") );
 //       ...
-//       log.Print(2, _T("x = %d\n"), x);
+//       log.Print(2, _T("x = %d"), x);
 //
 
 #ifndef VNCLOGGING
@@ -42,7 +42,11 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "CACIC_Utils.h"
+
 #define SCRIPT "srcacic_set_session.php"
+
+#define SRVERSION "2.6.0.0"
 
 class VNCLog  
 {
@@ -84,12 +88,11 @@ public:
 	// the log mode includes ToFile
     void SetFile(const char* filename, bool append = false);
 
-	/**
-	* Verifica a existencia do diretorio debugs.
-	*/
-
+	/** Verifica a existencia do diretorio debugs em "..\Temp\debugs.*/
+	bool IsDebugModeON();
 
 	virtual ~VNCLog();
+	string SRVersion(){return SRVERSION;};
 
 private:
 	void ReallyPrintLine(const char* line);

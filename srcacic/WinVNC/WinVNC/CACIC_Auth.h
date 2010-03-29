@@ -39,7 +39,7 @@ public:
 	 * Exibida enquanto há suporte em andamento.
 	 */
 	supInfoDlg m_infoDlg;
-
+ 
 	/**
 	 * Variável de decisão sobre o logout do sistema após o suporte.
 	 */
