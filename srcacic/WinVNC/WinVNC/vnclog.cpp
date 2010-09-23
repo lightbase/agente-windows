@@ -47,7 +47,7 @@ static const int LINE_BUFFER_SIZE = 1024;
 
 
 
-//static const string srVersion = "2.6.0.0";
+//static const string srVersion = "2.6.0.2";
 
 VNCLog::VNCLog()
     : m_tofile(false)
@@ -208,7 +208,7 @@ inline void VNCLog::ReallyPrintLine(const char* line)
 		
 		//if (/*Verificar modo DEBUG!*/){
 		//	strLine.append(" (");
-		//	strLine.append(/*Funcao de retorno da Versao: v.2.6.0.0*/);
+		//	strLine.append(/*Funcao de retorno da Versao: v.2.6.0.2*/);
 		//	strLine.append(")");
 		//	strLine.append(" DEBUG -");
 		//}

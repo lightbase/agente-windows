@@ -530,8 +530,9 @@ void ClientConnection::Run()
 	// The rest of the processing continues in run_undetached.
 	LowLevelHook::Initialize(m_hwndMain);
 	start_undetached();
-	
+
 	EndDialog(m_hwndStatus,0);
+
 }
 
 // sf@2007 - Autoreconnect
@@ -612,13 +613,15 @@ void ClientConnection::CreateButtons(BOOL mini,BOOL ultra)
 {
 	if (ultra)	  
 	{
-		int nr_buttons = 14;
+		// alterando a quantidade de botões (14-1)
+		int nr_buttons = 13;
 		TBADDBITMAP tbab; 
 		TBBUTTON tbButtons []=
 		{
 			{0,ID_BUTTON_CAD,TBSTATE_ENABLED,TBSTYLE_BUTTON,0L,0},
 			{1,ID_BUTTON_FULLSCREEN,TBSTATE_ENABLED,TBSTYLE_BUTTON,0L,1},
-			{2,ID_BUTTON_PROPERTIES,TBSTATE_ENABLED,TBSTYLE_BUTTON,0L,2},
+			// desativando botão "Opções da Conexão"
+			//{2,ID_BUTTON_PROPERTIES,TBSTATE_ENABLED,TBSTYLE_BUTTON,0L,2},
 			{3,ID_BUTTON_REFRESH,TBSTATE_ENABLED,TBSTYLE_BUTTON,0L,3},
 			{4,ID_BUTTON_STRG_ESC,TBSTATE_ENABLED,TBSTYLE_BUTTON,0L,4},
 			{5,ID_BUTTON_SEP,TBSTATE_ENABLED,TBSTYLE_BUTTON,0L,5},
@@ -632,11 +635,13 @@ void ClientConnection::CreateButtons(BOOL mini,BOOL ultra)
 			{13,ID_BUTTON_TEXTCHAT,TBSTATE_ENABLED,TBSTYLE_BUTTON,0L,13},
 			
 		};
-		static char *szTips[14] = 
+		// reduz a quantidade de mensagens relacionadas aos botões (14-1)
+		static char *szTips[13] = 
 		{
 				sz_L2,
 				sz_L3,
-				sz_L4,
+				// desativando a mensagem relacionadas ao botão "Opções da Conexão"
+				//sz_L4,
 				sz_L5,
 				sz_L6,
 				sz_L7,
@@ -846,7 +851,7 @@ void ClientConnection::CreateButtons(BOOL mini,BOOL ultra)
 				
 				SendMessage(m_hwndTT, TTM_ADDTOOL, 0, 
                     (LPARAM) (LPTOOLINFO) &ti); 
-				
+			
 			}
 			SendMessage(m_hwndTB,TB_SETTOOLTIPS,(WPARAM)(HWND)m_hwndTT,(LPARAM)0);
 			SendMessage(m_hwndTT,TTM_SETTIPBKCOLOR,(WPARAM)(COLORREF)0x00404040,(LPARAM)0);
@@ -1082,7 +1087,8 @@ void ClientConnection::GTGBS_CreateToolbar()
 	RECT r;
 	
 	GetClientRect(m_hwndTBwin,&r);
-	m_TrafficMonitor = CreateWindowEx(WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE,
+	// Removendo o monitoramento de tráfego
+	/*m_TrafficMonitor = CreateWindowEx(WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE,
 											"Static",
 											NULL,
 											WS_CHILD | WS_VISIBLE ,
@@ -1093,7 +1099,7 @@ void ClientConnection::GTGBS_CreateToolbar()
 											m_hwndTBwin,
 											NULL,
 											m_pApp->m_instance,
-											NULL);
+											NULL);*/
 
 	m_bitmapNONE = LoadImage(m_pApp->m_instance,MAKEINTRESOURCE(IDB_STAT_NONE),IMAGE_BITMAP,22,20,LR_SHARED);
 	m_bitmapFRONT = LoadImage(m_pApp->m_instance,MAKEINTRESOURCE(IDB_STAT_FRONT),IMAGE_BITMAP,22,20,LR_SHARED);
@@ -1108,7 +1114,8 @@ void ClientConnection::GTGBS_CreateToolbar()
 	ReleaseDC(m_TrafficMonitor,hdc);
 
 	///////////////////////////////////////////////////
-	m_logo_wnd = CreateWindow(
+	// Removendo opção de nova conexão a partir da barra de ferramentas
+	/*m_logo_wnd = CreateWindow(
 									"combobox",
 									"",
 									WS_CHILD | WS_VISIBLE | WS_TABSTOP|CBS_SIMPLE | CBS_AUTOHSCROLL | WS_VSCROLL,
@@ -1131,7 +1138,7 @@ void ClientConnection::GTGBS_CreateToolbar()
 									m_hwndTBwin,
 									(HMENU)9998,
 									m_pApp->m_instance,
-									NULL);
+									NULL);*/
 	TCHAR valname[256];
 	MRU *m_pMRU;
 	m_pMRU = new MRU(SESSION_MRU_KEY_NAME,26);
@@ -1267,9 +1274,9 @@ void ClientConnection::CreateDisplay()
 		AppendMenu(hsysmenu, MF_STRING, ID_HALFSCREEN,		sz_L26);
 		AppendMenu(hsysmenu, MF_STRING, ID_FUZZYSCREEN,		sz_L27);
 		AppendMenu(hsysmenu, MF_STRING, ID_NORMALSCREEN,	sz_L28);
-		AppendMenu(hsysmenu, MF_SEPARATOR, NULL, NULL);
-		AppendMenu(hsysmenu, MF_STRING, ID_MAXCOLORS,		sz_L29);
-		AppendMenu(hsysmenu, MF_STRING, ID_256COLORS,		sz_L30);
+		//AppendMenu(hsysmenu, MF_SEPARATOR, NULL, NULL);
+		//AppendMenu(hsysmenu, MF_STRING, ID_MAXCOLORS,		sz_L29);
+		//AppendMenu(hsysmenu, MF_STRING, ID_256COLORS,		sz_L30);
 		AppendMenu(hsysmenu, MF_SEPARATOR, NULL, NULL);
  		AppendMenu(hsysmenu, MF_STRING, ID_CONN_CTLALTDEL,	sz_L31);
 		AppendMenu(hsysmenu, MF_STRING, ID_CONN_CTLESC,		sz_L32);
@@ -1278,7 +1285,7 @@ void ClientConnection::CreateDisplay()
 		AppendMenu(hsysmenu, MF_STRING, ID_CONN_ALTDOWN,	sz_L35);
 		AppendMenu(hsysmenu, MF_STRING, ID_CONN_ALTUP,		sz_L36);
 		AppendMenu(hsysmenu, MF_SEPARATOR, NULL, NULL);
-		AppendMenu(hsysmenu, MF_STRING, ID_NEWCONN,			sz_L37);
+		//AppendMenu(hsysmenu, MF_STRING, ID_NEWCONN,			sz_L37);
 		AppendMenu(hsysmenu, MF_STRING | (m_serverInitiated ? MF_GRAYED : 0), 
 			ID_CONN_SAVE_AS,	sz_L38);
 	}
@@ -1425,7 +1432,7 @@ void ClientConnection::HandleQuickOption()
 {
 	switch (m_opts.m_quickoption)
 	{
-	case 1:
+	/*case 1:
 		m_opts.m_PreferredEncoding = rfbEncodingZRLE;
 		m_opts.m_Use8Bit = rfbPFFullColors; //false; 
 		m_opts.m_fEnableCache = true;
@@ -1480,15 +1487,18 @@ void ClientConnection::HandleQuickOption()
 		m_opts.m_requestShapeUpdates = false;
 		m_opts.m_ignoreShapeUpdates = true;
 //		m_opts.m_localCursor = NOCURSOR;
-		break;
+		break;*/
+		
 
+
+	//Set Cor e modo de cache
 	default: // 0 can be set by noauto command line option. Do not chnage any setting in this case
-		/* sf@2005
+		 //sf@2005
 		m_opts.m_PreferredEncoding = rfbEncodingZRLE;
 		m_opts.m_Use8Bit = rfbPF256Colors; //false; 
 		m_opts.m_fEnableCache = true;
 		m_opts.autoDetect = false;
-		*/
+		
 		break;
 	}
 
@@ -2336,6 +2346,7 @@ void ClientConnection::SizeWindow()
 	else
 		m_winheight = min(m_fullwinheight, workheight);
 
+	// cria a janela de suporte remoto
 	SetWindowPos(m_hwndMain, HWND_TOP,
 				workrect.left + (workwidth-m_winwidth) / 2,
 				workrect.top + (workheight-m_winheight) / 2,
@@ -5670,14 +5681,14 @@ LRESULT CALLBACK ClientConnection::WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, 
 
 							// TODO: quando o cliente é removido pelo servidor ou cai, a janela sobre o logout aparece assim mesmo.
 							if (_this->m_running) {
-								int doLogout = MessageBox(hwnd, "Deseja efetuar logout na máquina remota?", "srCACICcli", MB_YESNO);
-								if (doLogout == IDNO) {
+								//int doLogout = MessageBox(hwnd, "Deseja efetuar logout na máquina remota?", "srCACICcli", MB_YESNO);
+								//if (doLogout == IDNO) {
 									// CACIC: Envia mensagem dizendo que o servidor deve efetuar o logout.
 									rfbNoLogoutMsg nl;
 									nl.type = rfbNoLogout;
 									
 									_this->WriteExact((char *)&nl, sz_rfbNoLogoutMsg, rfbNoLogout);
-								}
+								//}
 							}
 
 							// Close the worker thread

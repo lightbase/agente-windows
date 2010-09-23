@@ -892,8 +892,10 @@ void VNCOptions::ShowUsage(LPTSTR info) {
 int VNCOptions::DoDialog(bool running)
 {
   m_running = running;
-  return DialogBoxParam(pApp->m_instance, DIALOG_MAKEINTRESOURCE(IDD_OPTIONDIALOG), 
-                        NULL, (DLGPROC) OptDlgProc, (LONG) this);
+  //desativa a instanciação janela de opções
+  /*return DialogBoxParam(pApp->m_instance, DIALOG_MAKEINTRESOURCE(IDD_OPTIONDIALOG), 
+                        NULL, (DLGPROC) OptDlgProc, (LONG) this);*/
+  return NULL;
 }
 
 BOOL CALLBACK VNCOptions::OptDlgProc(  HWND hwnd,  UINT uMsg,  

@@ -513,6 +513,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CACIC_FileTransferLog.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\CACIC_Utils.cpp"
 				>
 			</File>
@@ -2631,6 +2635,10 @@
 			</File>
 			<File
 				RelativePath=".\CACIC_Exception.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CACIC_FileTransferLog.h"
 				>
 			</File>
 			<File

@@ -107,6 +107,7 @@
 #define IDC_ALTGR                       1043
 #define IDD_AUTH_DIALOG1                1043
 #define IDD_AUTH_DIALOG                 1043
+#define IDD_AUTH_DIALOG_LOGIN_TEXT      1043
 #define IDC_DOWNLOAD_B                  1044
 #define IDC_STRG                        1044
 #define IDC_PROGRESS                    1045
@@ -212,6 +213,8 @@
 #define IDC_DOC_REF_EDIT                1165
 #define IDC_KEY_COUNT                   1166
 #define IDC_CHAR_COUNT                  1166
+#define IDC_MIDOCVIEW1                  1167
+#define IDC_EDIT4                       1168
 #define IDC_ENCODING_BASE               1999
 #define IDC_RAWRADIO                    2000
 #define IDC_RRERADIO                    2002
@@ -514,7 +517,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        199
 #define _APS_NEXT_COMMAND_VALUE         50025
-#define _APS_NEXT_CONTROL_VALUE         1167
+#define _APS_NEXT_CONTROL_VALUE         1169
 #define _APS_NEXT_SYMED_VALUE           154
 #endif
 #endif

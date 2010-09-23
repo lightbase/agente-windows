@@ -46,7 +46,7 @@
 
 #define SCRIPT "srcacic_set_session.php"
 
-#define SRVERSION "2.6.0.0"
+#define SRVERSION "2.6.0.2"
 
 class VNCLog  
 {

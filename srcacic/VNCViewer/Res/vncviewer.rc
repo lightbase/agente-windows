@@ -101,7 +101,7 @@ BEGIN
         MENUITEM "Nova Conexão",                ID_NEWCONN
         MENUITEM "Opções Padrão",               IDC_OPTIONBUTTON
         MENUITEM SEPARATOR
-        MENUITEM "Sobre o CacicRC...",          IDD_ABOUT
+        MENUITEM "Sobre o srCACIC...",          IDD_ABOUT
         MENUITEM SEPARATOR
         MENUITEM "Ativar/Desativar Modo Escuta", ID_LISTEN_MODE
         MENUITEM "Fechar o srCACIC Cliente",    ID_CLOSEAPP
@@ -232,18 +232,16 @@ BEGIN
     PUSHBUTTON      "Renomear",IDC_RENAME_B,248,239,60,14,BS_FLAT
 END
 
-IDD_SESSION_DLG DIALOGEX 0, 0, 186, 86
+IDD_SESSION_DLG DIALOGEX 0, 0, 195, 50
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Sistema CACIC - Módulo srCACICcli - Conexão"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    COMBOBOX        IDC_HOSTNAME_EDIT,5,38,176,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    DEFPUSHBUTTON   "Conectar",IDOK,50,62,40,19
-    PUSHBUTTON      "Cancelar",IDCANCEL,94,62,40,19
-    CONTROL         108,IDC_STATIC,"Static",SS_BITMAP,5,6,21,20
-    CONTROL         "Observar Somente",IDC_VIEWONLY_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,5,77,12
-    CONTROL         "Auto Ajuste da Tela",IDC_AUTOSCALING_CHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,14,80,15
-    LTEXT           "Servidor:",IDC_STATIC,5,29,30,8
+    COMBOBOX        IDC_HOSTNAME_EDIT,37,14,146,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "Conectar",IDOK,51,31,40,14
+    PUSHBUTTON      "Cancelar",IDCANCEL,100,31,40,14
+    CONTROL         108,IDC_STATIC,"Static",SS_BITMAP,5,11,21,20
+    LTEXT           "Servidor:",IDC_STATIC,39,5,30,8
 END
 
 IDD_SERVINFO_DLG DIALOG  0, 0, 224, 170
@@ -298,23 +296,23 @@ BEGIN
     LTEXT           "Encoder:",IDC_STATIC,13,45,63,8
 END
 
-IDD_AUTH_DIALOG DIALOGEX 101, 66, 217, 164
+IDD_AUTH_DIALOG DIALOGEX 101, 66, 229, 165
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "Sistema CACIC - Módulo srCACICcli - Autenticação"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    EDITTEXT        IDC_USER_EDIT,119,21,91,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_PASSWD_EDIT,119,38,91,14,ES_PASSWORD | ES_AUTOHSCROLL
-    EDITTEXT        IDC_DOC_REF_EDIT,119,55,91,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_MOTIVO_EDIT,7,80,203,56,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "C&onectar",IDOK,102,142,54,15
-    PUSHBUTTON      "&Cancelar",IDCANCEL,160,142,50,15
+    EDITTEXT        IDC_USER_EDIT,124,21,98,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_PASSWD_EDIT,124,38,98,14,ES_PASSWORD | ES_AUTOHSCROLL
+    EDITTEXT        IDC_DOC_REF_EDIT,123,55,99,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_MOTIVO_EDIT,7,80,215,56,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | WS_VSCROLL
+    DEFPUSHBUTTON   "C&onectar",IDOK,102,143,54,15
+    PUSHBUTTON      "&Cancelar",IDCANCEL,172,143,50,15
     RTEXT           "Usuário:",IDC_STATIC,76,24,39,10
     RTEXT           "Senha:",IDC_STATIC,80,41,35,8
     LTEXT           "Doc. Referência:",IDC_DOC_REF,61,58,55,8
     LTEXT           "Motivo do Suporte: (tamanho máximo 5120 caracteres)",IDC_MOTIVO_SUPORTE,7,70,179,8
     CONTROL         156,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | SS_SUNKEN,7,21,50,45
-    LTEXT           "Por favor, digite seu nome de usuário e senha no gerente web.",IDC_STATIC,7,7,203,11
+    CTEXT           "Digite usuário e senha utilizados no Gerente Web CACIC",IDD_AUTH_DIALOG_LOGIN_TEXT,7,2,215,10
     LTEXT           "",IDC_CHAR_COUNT,7,136,43,8,0,WS_EX_TRANSPARENT
 END
 
@@ -408,9 +406,9 @@ BEGIN
     IDD_SESSION_DLG, DIALOG
     BEGIN
         LEFTMARGIN, 5
-        RIGHTMARGIN, 181
+        RIGHTMARGIN, 190
         TOPMARGIN, 5
-        BOTTOMMARGIN, 81
+        BOTTOMMARGIN, 45
     END
 
     IDD_SERVINFO_DLG, DIALOG
@@ -440,10 +438,10 @@ BEGIN
     IDD_AUTH_DIALOG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 210
+        RIGHTMARGIN, 222
         VERTGUIDE, 102
         TOPMARGIN, 7
-        BOTTOMMARGIN, 157
+        BOTTOMMARGIN, 158
     END
 
     IDD_FTPARAM_DLG, DIALOG
@@ -535,8 +533,8 @@ IDB_VNC32               BITMAP                  "vnc32.BMP"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,5,9,0
- PRODUCTVERSION 2,6,0,0
+ FILEVERSION 2,6,0,2
+ PRODUCTVERSION 2,6,0,2
  FILEFLAGSMASK 0x37L
 #ifdef _DEBUG
  FILEFLAGS 0x25L
@@ -549,21 +547,20 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "080004b0"
+        BLOCK "000004b0"
         BEGIN
-            VALUE "Comments", "Licença: GNU/LGPL"
-            VALUE "CompanyName", "Dataprev-Emp. de TI da Prev Social - UDSL/SSLC"
-            VALUE "FileDescription", "Sistema CACIC - Módulo Cliente para Suporte Remoto Seguro"
-            VALUE "FileVersion", "2.5.9.0"
+            VALUE "CompanyName", "Dataprev - Unidade Regional Espírito Santo"
+            VALUE "FileDescription", "Visualizador do Suporte Remoto Seguro do Sistema CACIC"
+            VALUE "FileVersion", "2, 5, 0, 991"
             VALUE "InternalName", "srCACICcli"
             VALUE "LegalCopyright", "Copyright © 2008 DATAPREV"
-            VALUE "ProductName", "srCACIC"
-            VALUE "ProductVersion", "2.6.0.0"
+            VALUE "LegalTrademarks", "srCACIC"
+            VALUE "ProductVersion", "2, 5, 0, 991"
         END
     END
     BLOCK "VarFileInfo"
     BEGIN
-        VALUE "Translation", 0x800, 1200
+        VALUE "Translation", 0x0, 1200
     END
 END
 
@@ -777,7 +774,7 @@ BEGIN
     IDS_L18                 "Mostrar Barra de Ferramentas \tCtrl+Alt+F9"
     IDS_L19                 "Desabilitar Remote Input/Monitor"
     IDS_L20                 "Habilitar Remote Input/Monitor "
-    IDS_L21                 "&Opções da Conexão... \tCtrl+Alt+F6"
+    IDS_L21                 "&Opções da Conexão..."
     IDS_L22                 "&Informações da Conexão"
     IDS_L23                 "Solicita&r Atualização da Tela"
     IDS_L24                 "&Full Screen \tCtrl+Alt+F12"
@@ -789,8 +786,6 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_L29                 "&Todas Cores"
-    IDS_L30                 "&256  Cores"
     IDS_L31                 "Enviar Ctrl+Alt+Del \tCtrl+Alt+F4"
     IDS_L32                 "Enviar Ctrl+Esc (Start menu)"
     IDS_L33                 "Ctrl Key Down"

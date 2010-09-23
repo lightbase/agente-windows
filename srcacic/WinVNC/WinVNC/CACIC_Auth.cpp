@@ -1,6 +1,8 @@
 /**
  * Copyright (C) 2009 DATAPREV-ES
  * @author Vinicius Avellar Moreira
+ *         Roberto Guimaraes Morati Junior
+ *		   Fylippe Meneses Coello	
  * Classe singleton responsável pela autenticação no gerente web.
  */
 
@@ -14,14 +16,24 @@
 #include "CACIC_Crypt.h"
 #include "CACIC_Exception.h"
 #include "CACIC_Utils.h"
+#include "string"
+#include <stdlib.h>
+
+using namespace std;
 
 const string CACIC_Auth::GET_CONFIG_SCRIPT = "srcacic_get_config.php";
 const string CACIC_Auth::SET_SESSION_SCRIPT = "srcacic_set_session.php";
 const string CACIC_Auth::AUTH_CLIENT_SCRIPT = "srcacic_auth_client.php";
 const unsigned int CACIC_Auth::TAMANHO_RESPOSTA = 1025;
-const string CACIC_Auth::AGUARDE_FILENAME = "aguarde_srCACIC.txt";
+const string CACIC_Auth::AGUARDE_FILENAME = "Temp/aguarde_srCACIC.txt";
 const string CACIC_Auth::COOKIE_FILENAME = "cacic_ck.txt";
-const UINT CACIC_Auth::TEMPO_IDLE = 15;
+const string CACIC_Auth::TOKEN_FILENAME = "Temp/ck_conexao.dat";
+const UINT CACIC_Auth::TEMPO_IDLE = 30;
+
+string ID_SESSAO_CK;
+string sm_TempPath;
+
+using namespace std;
 
 bool CACIC_Auth::autentica()
 {
@@ -73,7 +85,7 @@ bool CACIC_Auth::autenticaUsuario(vector<Dominio> &listaDominios)
 		post += "&id_servidor_autenticacao=";
 		post += CACIC_Crypt::codifica(passDlg.m_dominio);
 
-
+		
 		vnclog.Print(LL_SRLOG, post.data());
 
 		string session_script = m_scriptsPath;
@@ -118,6 +130,8 @@ bool CACIC_Auth::validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char 
 							   char te_documento_referencial[], char te_motivo_conexao[], char te_so_cli[], 
 							   const short vncCID, const char peerName[])
 {
+
+
 	string post = getPostComum();
 
 	post += "&id_sessao=";
@@ -135,14 +149,34 @@ bool CACIC_Auth::validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char 
 	post += te_motivo_conexao;
 	post += "&te_so_cli=";
 	post += te_so_cli;
-	
-	
 
-    FILE *arq = NULL;
-	arq = fopen("ip_log5.txt","w");
-	fprintf(arq, "IP1 > %d\n", (int)peerName);
-	fprintf(arq, "IP1 > %s\n",peerName);
+    //Arquivo token para reconexão do suporte remoto.
+	FILE *fileToken = NULL;
+	string filePathToken = m_tempPath + CACIC_Auth::TOKEN_FILENAME;
 
+	fileToken = fopen(filePathToken.data(),"w");
+	//fileToken = fopen("C:/Cacic/Temp/ck_conexao.dat","w"); 
+
+    fprintf(fileToken, "[startsession]\n");
+	fprintf(fileToken, "[startconnection]\n");
+	fprintf(fileToken, "m_idSessao=%s\n",ID_SESSAO_CK.c_str());
+	fprintf(fileToken, "nm_usuario_cli=%s\n",nm_usuario_cli);
+	fprintf(fileToken, "te_senha_cli=%s\n",te_senha_cli);
+	
+	//Fecha arquivo token
+	fclose(fileToken);
+
+	/*FILE *arq = NULL;
+
+	arq = fopen("C:/Cacic/Temp/ck_conexao.dat","w");
+	
+	fprintf(arq,"[startsession]\n");
+
+    fprintf(arq, "nm_usuario_cli=%s\n",nm_usuario_cli);
+	fprintf(arq, "te_senha_cli=%s\n",te_senha_cli);
+	
+	fclose(arq);*/
+	
 	string auth_client_script = m_scriptsPath;
 	auth_client_script += AUTH_CLIENT_SCRIPT;
 
@@ -153,30 +187,20 @@ bool CACIC_Auth::validaTecnico(char nm_usuario_cli[], char te_senha_cli[], char 
 	//Salva ip do cliente para ser utilizado na estação de trabalho de suporte remoto.
 	//Após sendHttpPost() peerName irá possuir o IP do servidor.
 	sprintf(ip_cliente, "%s",peerName);
-
-	fprintf(arq, "IP2 > %d\n", (int)peerName);
-	fprintf(arq, "IP2 > %s\n",peerName);
     
 
 	CACIC_Con::sendHtppPost(m_servidorWeb, auth_client_script, post, resposta, TAMANHO_RESPOSTA);
-		
-	fprintf(arq, "IP3 > %d\n", (int)peerName);
-	fprintf(arq, "IP3 > %s\n",peerName);
+
+	
 	
     //Passando ip_cliente no lugar de peerName
 	if (!verificaAuthTecnico(resposta, te_node_address_cli, te_documento_referencial, 
 							 te_motivo_conexao, te_so_cli, vncCID, ip_cliente))
 	{
-		fprintf(arq, "IP4 > %d\n", (int)peerName);
-		fprintf(arq, "IP4 > %s\n",peerName);
-		fclose(arq);
-		arq = NULL;
-
 		m_efetuarLogout = false;
 		return false;
 	}
-		fclose(arq);
-		arq = NULL;
+
 	return true;
 }
 
@@ -231,6 +255,19 @@ bool CACIC_Auth::verificaAuthDominio(char resposta[])
 
 		m_usuario = nome_dec;
 		m_idSessao = id_sessao;
+        ID_SESSAO_CK = m_idSessao;
+
+		FILE *fileToken = NULL;
+	    string filePathToken = m_tempPath + CACIC_Auth::TOKEN_FILENAME;
+        fileToken = fopen(filePathToken.data(),"w");
+		sm_TempPath = filePathToken;
+
+	    fprintf(fileToken,"[startsession]\n");
+	    fprintf(fileToken,"m_idSessao=");
+		fprintf(fileToken,"%s\n",ID_SESSAO_CK.c_str());
+
+		fclose(fileToken);
+
 
 		return true;
 	}
@@ -314,10 +351,34 @@ bool CACIC_Auth::verificaAuthTecnico(char resposta[], char te_node_address_cli[]
 		return false;
 	}
 }
+/**
+*Não esta sendo usado nesta versao
+*
+void CACIC_Auth::verifyTimeOutCon()
+{
+
+	time_t now, before = 0;
+	now = time(NULL);
+
+	// abre o arquivo e verifica se a hora atual é superior a do arquivo em 30 minutos
+	// caso positivo, deleta o arquivo
+	FILE * arqT;
+	arqT = fopen("C:/Cacic/Temp/last_con_timer.dat","r");
+	fscanf(arqT,"%ld",before);
+
+	if((now - before) > 120)
+	{
+		remove("C:/Cacic/Temp/ck_conexao.dat");
+	}	
+	
+}*/
 
 
 void CACIC_Auth::atualizaSessao()
 {
+	// Verifica se a última sessão foi finalizada há mais de 30 minutos
+	// verifyTimeOutCon();
+
 	// Verifica, antes de atualizar a sessão, se a palavra 
 	// chave foi trocada enquanto o servidor estava aberto.
 	FILE *pFile;
@@ -356,20 +417,50 @@ void CACIC_Auth::atualizaSessao()
 		string listaIDConexao = "&id_conexao=";
 		string listaNodeAddress = "&te_node_address_visitante=";
 		string listaID_SO = "&te_so_visitante=";
+		
+	//Desabilitado nesta versão. 
+	    //FILE *arq = NULL;
+		//FILE *arqT = NULL;
+		//FILE *arqV = NULL;
+		BOOL verif = true;
+
+		// arqT = fopen("C:/Cacic/Temp/last_con_timer.dat","w");
+		// arqV = arq;
+	    
+		/*if(!verificaArq("m_idSessao",ID_SESSAO_CK.c_str(),arqV)){
+			 fprintf(arq, "m_idSessao=%s\n",m_idSessao.c_str());
+		}*/
+		   //time_t now;
+		   //now = time(NULL);
+
+		   //fprintf(arqT,"%ld",now);
+
 		for (int i = 0; i < m_listaClientes.size(); i++)
 		{
+		
+		 
 			listaIDUsuario += m_listaClientes[i].id_usuario_visitante;
+			//if(!verificaArq("id_usuario_visitante",CACIC_Crypt::decodifica(m_listaClientes[i].id_usuario_visitante.c_str()),arqV))
+				//fprintf(arq, "id_usuario_visitante=%s\n",CACIC_Crypt::decodifica(m_listaClientes[i].id_usuario_visitante.c_str()).c_str());
 			if (i < m_listaClientes.size() - 1) listaIDUsuario += "<REG>";
 
 			listaIDConexao += m_listaClientes[i].id_conexao;
+			//if(!verificaArq("id_conexao",CACIC_Crypt::decodifica(m_listaClientes[i].id_conexao.c_str()),arqV))
+				//fprintf(arq, "id_conexao=%s\n",CACIC_Crypt::decodifica(m_listaClientes[i].id_conexao.c_str()).c_str());
 			if (i < m_listaClientes.size() - 1) listaIDConexao += "<REG>";
 
 			listaNodeAddress += m_listaClientes[i].te_node_address_visitante;
+			//fprintf(arq, "%s\n",CACIC_Crypt::decodifica(m_listaClientes[i].te_node_address_visitante.c_str()).c_str());
 			if (i < m_listaClientes.size() - 1) listaNodeAddress += "<REG>";
 
 			listaID_SO += m_listaClientes[i].te_so_visitante;
+			//fprintf(arq, "%s\n",CACIC_Crypt::decodifica(m_listaClientes[i].te_so_visitante.c_str()).c_str());
 			if (i < m_listaClientes.size() - 1) listaID_SO += "<REG>";
 		}
+
+		//fclose(arq);
+		//arq = NULL;
+
 		post += listaIDUsuario;
 		post += listaIDConexao;
 		post += listaNodeAddress;
@@ -388,14 +479,42 @@ void CACIC_Auth::atualizaSessao()
 		finalizaServidor();
 	}
 
+    string filePathToken = m_tempPath + CACIC_Auth::TOKEN_FILENAME;
 	// verifica se o servidor está sem receber conexão por 
 	// mais tempo que o limite, caso esteja, o processo é finalizado.
 	if (m_listaClientes.empty())
 	{
 		m_idleTime--;
-		if (m_idleTime <= 0)
+
+		if(m_idleTime == 15)
 		{
-			vnclog.Print(LL_SRLOG, "Fechando o servidor por atingir o tempo máximo de idle.");
+			FILE * arqE;
+			if((arqE = fopen(filePathToken.data(), "r")) != NULL)
+			{
+				if(verificaArq("[startconnection]",arqE) == 1)
+				{
+					fclose(arqE);
+
+					FILE *arq = NULL;
+					arq  = fopen(filePathToken.data(),"w");
+					fprintf(arq, "[endsession4idle@re-con]\n");
+					fclose(arq);
+				}
+				else
+				{
+					fclose(arqE);
+					m_idleTime = 0;
+				}
+			}
+		}
+		if(m_idleTime == 0)
+		{
+			FILE *arq = NULL;
+			arq  = fopen(filePathToken.data(),"w");
+			fprintf(arq, "[endsession4idle@srcacic]\n");
+			fclose(arq);
+
+			vnclog.Print(LL_SRLOG, "Fechando o servidor por atingir o tempo máximo de ociosidade.");
 			finalizaServidor();
 		}
 	}
@@ -444,15 +563,29 @@ void CACIC_Auth::removeCliente(short vncCID)
 	// Apagando os dados do último cliente conectado.
 	ClienteSRC novoCliente = {0};
 	m_novoCliente = novoCliente;
-
+	
+	// Teste para demonstração ao Anderson
 	if (m_efetuarLogout == true) {
+
 		// Envia uma mensagem para o diáligo, dizendo para ele
 		// trocar o label que é mostrado.
-		PostMessage(m_infoDlg.hwInfoDlg, WM_LOGOUT_WARNING, 0, 0);
+		//PostMessage(m_infoDlg.hwInfoDlg, WM_LOGOUT_WARNING, 0, 0);
 
-		Sleep(20000);
-		CACIC_Auth::getInstance()->finalizaServidor();
-		ExitWindowsEx(EWX_LOGOFF | EWX_FORCE, 0);
+		//Sleep(20000);
+		//CACIC_Auth::getInstance()->finalizaServidor();
+		//ExitWindowsEx(EWX_LOGOFF | EWX_FORCE, 0);
+	}
+	else {
+		
+		// update cookie
+		string filePathToken = m_tempPath + CACIC_Auth::TOKEN_FILENAME;
+		
+		FILE *fileToken = NULL;
+		fileToken  = fopen(filePathToken.data(),"w");
+		fprintf(fileToken, "[endconnection]\n");
+		fclose(fileToken);
+
+		// remove(filePathToken.data());
 	}
 	m_infoDlg.closeInfoDialog();
 	m_efetuarLogout = true;
@@ -498,4 +631,116 @@ void CACIC_Auth::finalizaServidor()
 		PostMessage(hservwnd, WM_COMMAND, 40002, 0);
 		PostMessage(hservwnd, WM_CLOSE, 0, 0);
 	}
+}
+
+
+BOOL CACIC_Auth::verificaArq(string name, string value, FILE* arq){
+
+	// o ponteiro arq passa a apontar para o início do arquivo
+	rewind(arq);
+
+	if (arq == NULL)
+		return false;
+
+	//FILE *arq2;
+	char* end;
+	char linha[100];
+	//arq2 = fopen("linha.txt","a");
+	string busca;
+	busca = name + "=" + value + "\n";
+	
+
+	/*fputs("\n",arq2);
+	fputs("\n",arq2);
+	fputs("Abriu o arquivo\n",arq2);
+	fputs("\n",arq2);
+	fputs("\n",arq2);*/
+								
+	while(true){	
+		end = fgets(linha,99,arq);
+	 if(end == NULL){
+		 //fputs("Fechou o arquivo\n",arq2);
+		 //fputs("false\n",arq2);
+		//fclose(arq2);
+		return false;
+	  }else{
+		
+		 /* fputs(busca.c_str(),arq2);
+		  fputs("\n",arq2);
+		  fputs(linha ,arq2);
+		  fputs("\n",arq2);*/
+
+		  if(strcmp(linha, busca.c_str()) == 0){
+			 // fputs("true\n",arq2);
+			 // fclose(arq2);
+			  return true;
+		  }
+	   }
+	}
+}
+
+BOOL CACIC_Auth::verificaArq(string name, FILE* arq){
+
+	// o ponteiro arq passa a apontar para o início do arquivo
+	rewind(arq);
+
+	if (arq == NULL)
+		return false;
+
+	char* end;
+	char linha[100];
+	string busca;
+	busca = name + "\n";
+								
+	while(true){	
+		end = fgets(linha,99,arq);
+	 if(end == NULL){
+		return false;
+	  }else{
+		  if(strcmp(linha, busca.c_str()) == 0){
+			  return true;
+		  }
+	   }
+	}
+}
+
+bool CACIC_Auth::autorizaReconexao(char nm_usuario_cli[],char te_senha_cli[]){
+	bool permissao = false;
+	FILE * arq;
+	// string filePathToken = sm_tempPath;
+	//filePathToken += CACIC_Auth::TOKEN_FILENAME;
+
+	if((arq = fopen(sm_TempPath.data(),"r")) != NULL){
+	//arq = fopen(filePathToken.data(),"r");
+
+		if(verificaArq("nm_usuario_cli",nm_usuario_cli,arq) == 1){
+			permissao = true;
+		}else{
+			permissao = false;
+		}
+
+		if(verificaArq("te_senha_cli",te_senha_cli,arq) == 1 && permissao == true){
+			permissao = true;
+		}else {
+			permissao = false;
+		}
+		
+		if(verificaArq("m_idSessao",ID_SESSAO_CK,arq) == 1 && permissao == true){
+			permissao = true;
+		}else {
+			permissao = false;
+		}
+	}
+	else{
+		arq = fopen(sm_TempPath.data(),"w");
+	}
+
+	fclose(arq);
+	arq = NULL;
+
+return permissao;
+}
+
+void CACIC_Auth::deletaDataServer(){
+	//nao implementado
 }

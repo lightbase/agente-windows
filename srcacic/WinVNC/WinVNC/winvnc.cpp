@@ -268,12 +268,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 			return 0;
 		}
 
+		// seta o caminho da pasta de instalação do cacic
+		filePathGlobal = string(cmdln[4]);
+
 		// seta o caminho da pasta temp do cacic
-		CACIC_Auth::getInstance()->setTempPath(cmdln[5]);
+		CACIC_Auth::getInstance()->setTempPath(cmdln[4]);
 
 		// Cria o arquivo temporário de travamento do CACIC
-		string filePath = string(cmdln[5]);
-		filePath += CACIC_Auth::AGUARDE_FILENAME;
+		string filePath = filePathGlobal + CACIC_Auth::AGUARDE_FILENAME;
+		
 		pFile = fopen(filePath.data(), "w+");
 		vnclog.Print(LL_SRLOG, VNCLOG("Criando arquivo temporário: aguarde_SRCACIC.txt!"));
 
@@ -288,13 +291,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 		CACIC_Auth::getInstance()->setScriptsPath(te_end_ws_dec);
 		CACIC_Auth::getInstance()->setSOVersion(cmdln[2]);
 		CACIC_Auth::getInstance()->setNodeAdress(cmdln[3]);
-		CACIC_Auth::getInstance()->setPalavraChave(cmdln[4]);
+		// CACIC_Auth::getInstance()->setPalavraChave(cmdln[4]);
+		CACIC_Auth::getInstance()->setPalavraChave(getPalavraChave().c_str());
 		UINT porta;
-		stringstream portBuffer(cmdln[6]);
+		stringstream portBuffer(cmdln[5]);
 		portBuffer >> porta;
 		CACIC_Auth::getInstance()->setPorta(porta);
 		UINT timeout;
-		stringstream timeoutBuffer(cmdln[7]);
+		stringstream timeoutBuffer(cmdln[6]);
 		timeoutBuffer >> timeout;
 		CACIC_Auth::getInstance()->setTimeout(timeout);
 
@@ -315,6 +319,47 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 
 	return 0;
 }
+
+string getPalavraChave()
+{
+	ifstream file;
+	string dat = filePathGlobal + "cacic2.dat";
+	file.open(dat.c_str());
+	
+	if(!file.is_open()){
+		return "";
+	} 
+	else
+	{	
+		// descriptografar texto
+		string texto;
+
+		getline(file,texto,'\n');
+		texto = CACIC_Crypt::decodifica(texto.c_str());
+
+		file.close();
+
+		size_t pos_ini = texto.find("Configs.te_palavra_chave=CacicIsFree=");
+		
+		pos_ini+=37;
+		
+		char* chave = new char[50];
+
+		char c = texto.at(pos_ini);
+		int i=0;
+		
+		while((c!='=') && (c!= EOF))
+		{
+			chave[i] = c;
+			i++;
+			c = texto.at(pos_ini+i);
+		}
+		
+		chave[i] = '\0';
+		return CACIC_Crypt::codifica(chave);
+	}
+}
+
 
 // rdv&sf@2007 - New TrayIcon impuDEsktop/impersonation thread stuff
 // Todo: cleanup
@@ -579,6 +624,7 @@ void iniciaTimer()
 {
 	if (mmCRes != -1) mmCRes = -1;
 	mmCRes = timeSetEvent( 60000, 0, (LPTIMECALLBACK) atualizaSessao, NULL, TIME_PERIODIC );
+
 }
 
 void paraTimer()

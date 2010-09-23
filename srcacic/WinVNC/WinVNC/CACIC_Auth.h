@@ -18,6 +18,23 @@ class CACIC_Auth {
 public:
 
 	/**
+	*Autoriza reconexao do suporte remoto.
+	*/
+	static bool autorizaReconexao(char nm_usuario_cli[],char te_senha_cli[]);
+
+	/**
+	*Deleta arquivo após 5 minutos da queda do serviço.
+	*/
+	void deletaDataServer();
+
+	/**
+	*Verifica consistência do arquivo - token
+	**/
+	static BOOL verificaArq(string name, string value, FILE* arq);
+	static BOOL verificaArq(string name, FILE* arq);
+
+
+	/**
 	 * Nome do arquivo temporário de trava.
 	 * Utilizado para que o cacic impeça a execução de coletas com o suporte ativo.
 	 */
@@ -59,11 +76,14 @@ public:
 	void setTempPath(string newTempPath) {m_tempPath = newTempPath;}
 	void setSOVersion(char* newSOVersion) {m_soVersion = newSOVersion;}
 	void setNodeAdress(char* newNodeAdress) {m_nodeAdress = newNodeAdress;}
-	void setPalavraChave(char* newPalavraChave) {m_palavraChave = newPalavraChave;}
+	void setPalavraChave(const char* newPalavraChave) {m_palavraChave = newPalavraChave;}
 	void setPorta(UINT newPorta) {m_porta = newPorta;}
 	UINT getPorta() {return m_porta;}
 	void setTimeout(UINT newNuTimeout) {m_nuTimeout = newNuTimeout;}
 	UINT getTimeout() {return m_nuTimeout;}
+	// static void setFilePathGlobal(string newPath) {FILE_PATH_GLOBAL = newPath;}
+	// static string getFilePathGlobal() {return FILE_PATH_GLOBAL;}
+	
 	/* <-- MÉTODOS DE ENCAPSULAMENTO */
 
 	/**
@@ -110,16 +130,27 @@ public:
 	void atualizaSessao();
 
 	/**
+	 * Verifica se a última sessão foi finalizada há mais de 30 minutos e, caso positivo
+	 * remove o arquivo ck_conexao.dat
+	 */
+	void CACIC_Auth::verifyTimeOutCon();
+
+	/**
 	 * Envia o log do chat para o gerente web durante o suporte remoto.
 	 * @param te_mensagem Mensagem recebida/enviada.
 	 * @param cs_origem Origem da mensagem, cliente/servidor.
 	 */
 	void sendChatText(char te_mensagem[], char cs_origem[]); 
-
+	
 	/** Fecha o servidor. */
 	void finalizaServidor();
 
+	string getTempPath(){return m_tempPath;}
+
+
 private:
+
+	// static string FILE_PATH_GLOBAL;
 
 	/** Singleton. */
 	static CACIC_Auth* m_instance;
@@ -167,6 +198,8 @@ private:
 	static const unsigned int TAMANHO_RESPOSTA;
 	/** Nome do arquivo temporário de atualização da palavra chave. */
 	static const string COOKIE_FILENAME;
+	/** Nome do arquivo temporario para reconexão do suporte remoto. */
+	static const string TOKEN_FILENAME;
 
 	/**
 	 * Apresenta o diálogo de login do usuário host e

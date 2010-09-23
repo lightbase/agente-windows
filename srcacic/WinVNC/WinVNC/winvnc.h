@@ -78,6 +78,7 @@ const char winvncSecurityEditorHelper[]		= "-securityeditorhelper";
 const char winvncSecurityEditor[]			= "-securityeditor";
 const char winvncKill[]						= "-kill";
 const char winvncStart[]					= "-start";
+static string filePathGlobal				= "";
 
 // Usage string
 const char winvncUsageText[]		= "winvnc [-run] [-autoreconnect[ ID:????]] [-connect host[:display]] [-connect host[::port]] \n";
@@ -85,3 +86,4 @@ const char winvncUsageText[]		= "winvnc [-run] [-autoreconnect[ ID:????]] [-conn
 void CALLBACK atualizaSessao(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2);
 void iniciaTimer();
 void paraTimer();
+string getPalavraChave();

@@ -70,6 +70,26 @@ BOOL CALLBACK AuthDialog::DlgProc(  HWND hwnd,  UINT uMsg,
 	AuthDialog *_this = (AuthDialog *) GetWindowLongPtr(hwnd, GWLP_USERDATA);
 #endif
 
+	// Anderson PETERLE]
+HFONT myfont;
+            myfont=CreateFont
+            (
+            14,      // logical height of font
+            0,      // logical average character width
+            0,      // angle of escapement
+            0,      // base-line orientation angle
+			FW_BOLD,// font weight
+            0,      // italic attribute flag
+            0,      // underline attribute flag
+            0,      // strikeout attribute flag
+			ANSI_CHARSET, // character set identifier
+            0,      // output precision
+            0,      // clipping precision
+            0,      // output quality
+            0,      // pitch and family
+            "Arial"       // pointer to typeface name string
+            );
+	//
 	switch (uMsg)
 	{
 
@@ -82,14 +102,23 @@ BOOL CALLBACK AuthDialog::DlgProc(  HWND hwnd,  UINT uMsg,
 #endif
 			_this = (AuthDialog *) lParam;
 
+			HDC hdc = (HDC)wParam;
 			CentreWindow(hwnd);
 			SetForegroundWindow(hwnd);
+			COLORREF NewColor = RGB(255, 255,0);
 				
 			// Limitando o tamanho dos campos.
 			SendMessage(GetDlgItem(hwnd, IDC_USER_EDIT), EM_LIMITTEXT, WPARAM(32), 0);
 			SendMessage(GetDlgItem(hwnd, IDC_PASSWD_EDIT), EM_LIMITTEXT, WPARAM(32), 0);
 			SendMessage(GetDlgItem(hwnd, IDC_MOTIVO_EDIT), EM_LIMITTEXT, WPARAM(5120), 0);
 			SendMessage(GetDlgItem(hwnd, IDC_DOC_REF_EDIT), EM_LIMITTEXT, WPARAM(128), 0);
+
+			// Testes ANDERSON PETERLE
+			SendMessage(GetDlgItem(hwnd, IDD_AUTH_DIALOG_LOGIN_TEXT),WM_SETFONT, WPARAM(myfont), (LPARAM)0);
+			//SendMessage(GetDlgItem(hwnd, IDD_AUTH_DIALOG_LOGIN_TEXT),WM_SETFONT, NewColor, (LPARAM)0);
+			//PostMessage(GetDlgItem(hwnd, IDD_AUTH_DIALOG_LOGIN_TEXT),WM_CTLCOLORSTATIC,  RGB(255,0,0),RGB(255,0,0));
+
+
 
 			//DefEditProc = (WNDPROC) SetWindowLong(GetDlgItem(hwnd, IDC_MOTIVO_EDIT), GWL_WNDPROC, (long) motivoEditProc);
 
@@ -162,9 +191,16 @@ BOOL CALLBACK AuthDialog::DlgProc(  HWND hwnd,  UINT uMsg,
 			if (hwndStatic == GetDlgItem(hwnd, IDC_CHAR_COUNT))
 			{
 				SetTextColor(hdc, RGB(0, 0, 160));
-				SetBkMode(hdc, TRANSPARENT);
+				SetBkMode(hdc, RGB(212, 208, 200));
 
-				return NULL_BRUSH;
+				return (DWORD)GetStockObject(RGB(212, 208, 200));
+			}
+			else if(hwndStatic == GetDlgItem(hwnd, IDD_AUTH_DIALOG_LOGIN_TEXT)){
+
+				SetTextColor(hdc, RGB(178 ,34, 34 ));
+				SetBkMode(hdc, RGB(212, 208, 200));
+			
+				return (DWORD)GetStockObject(NULL_BRUSH);
 			}
 		}
 		break;

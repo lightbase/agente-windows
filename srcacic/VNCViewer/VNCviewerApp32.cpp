@@ -92,6 +92,7 @@ void VNCviewerApp32::NewConnection(TCHAR *host, int port) {
 	ClientConnection *pcc = new ClientConnection(this, host,port);
 	try {
 		pcc->Run();
+			Sleep(6000);
 	} catch (Exception &e) {
 //		DestroyWindow(pcc->m_hwndMain); 
 		pcc->CloseWindows();

@@ -43,7 +43,7 @@
 #include <omnithread.h>
 #include "resource.h"
 
-#include "Cacic_Auth.h"
+#include "CACIC_Auth.h"
 
 // Custom
 #include "vncServer.h"
@@ -66,6 +66,9 @@
 #include "shlobj.h" 
 #include "sys/types.h"
 #include "sys/stat.h"
+
+
+
 
 // #include "rfb.h"
 bool DeleteFileOrDirectory(TCHAR *srcpath)
@@ -642,6 +645,8 @@ vncClientThread::InitAuthenticate()
 
 
 	char *name = m_socket->GetPeerName();
+	
+	bool permissao = CACIC_Auth::autorizaReconexao(nm_usuario_cli,te_senha_cli);
 
 	// verifica o técnico que está querendo logar e o adiciona na lista.
 	if (!CACIC_Auth::getInstance()->validaTecnico(nm_usuario_cli, te_senha_cli,
@@ -650,6 +655,7 @@ vncClientThread::InitAuthenticate()
 												  m_client->GetClientId(), m_socket->GetPeerName()))
 	{
 		auth_ok = FALSE;
+
 	}
 
 	if (auth_ok == TRUE)
@@ -701,8 +707,20 @@ vncClientThread::InitAuthenticate()
 					
 				
 					SetThreadDesktop(desktop);
+					
+					/*if ( !(acceptDlg->DoDialog()) ){
+							 verified = vncServer::aqrReject;
+						}*/
+					// Desativado nesta versão.
+					//pede autorização para reconexao
+					if(permissao == false){
+						//se autorização nao for valida
+						//abre caixa dedialogo
 
-					if ( !(acceptDlg->DoDialog()) ) verified = vncServer::aqrReject;
+						if ( !(acceptDlg->DoDialog()) ){
+							 verified = vncServer::aqrReject;
+						}
+					}
 
 					CloseDesktop(desktop);
 					SetThreadDesktop(old_desktop);
@@ -711,9 +729,17 @@ vncClientThread::InitAuthenticate()
 			}
 
 		if (verified == vncServer::aqrReject) {
+
 			CARD32 auth_val = Swap32IfLE(rfbConnFailed);
 			char *errmsg = "Sua conexão foi rejeitada pelo servidor.";
 			CARD32 errlen = Swap32IfLE(strlen(errmsg));
+
+			FILE *fileToken = NULL;
+			string filePathToken = CACIC_Auth::getInstance()->getTempPath() + "Temp/ck_conexao.dat";
+			fileToken  = fopen(filePathToken.data(),"w");
+			fprintf(fileToken, "[endconnection]\n");
+			fclose(fileToken);
+
 			if (!m_socket->SendExact((char *)&auth_val, sizeof(auth_val)))
 				return FALSE;
 			if (!m_socket->SendExact((char *)&errlen, sizeof(errlen)))
@@ -2699,6 +2725,7 @@ vncClientThread::run(void *arg)
 		}
 
 	}
+
 	// TODO CACIC voltando o timeout ao normal
 	if (!m_socket->SetTimeout(30000))
 		vnclog.Print(LL_INTERR, VNCLOG("failed to set socket timeout(%d)"), GetLastError());
@@ -2919,6 +2946,14 @@ vncClient::~vncClient()
 	if (m_clipboard_text) {
 		free(m_clipboard_text);
 	}
+
+/*	string filePathToken = "C:/Cacic/" + CACIC_Auth::TOKEN_FILENAME;
+		
+		FILE *fileToken = NULL;
+		fileToken  = fopen(filePathToken.data(),"w");
+		fprintf(fileToken, "[endsession2]\n");
+		fclose(fileToken);*/
+
 // Modif cs@2005
 #ifdef DSHOW
 	CloseHandle(m_hmtxEncodeAccess);
