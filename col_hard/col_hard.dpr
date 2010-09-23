@@ -48,8 +48,6 @@ var
   intAux                : integer;
   g_oCacic              : TCACIC;
 
-const
-  CACIC_APP_NAME = 'col_hard';
 
 // Dica baixada de http://www.marcosdellantonio.net/2007/06/14/operador-if-ternario-em-delphi-e-c/
 // Fiz isso para não ter que acrescentar o componente Math ao USES!
@@ -538,6 +536,16 @@ var v_te_cpu_fabricante,
 
 begin
 
+   v_Debugs      := false;
+   if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
+     Begin
+       if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+         Begin
+           v_Debugs := true;
+           //log_diario('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+         End;
+     End;
+
   Try
      SetValorDatMemoria('Col_Hard.Inicio', FormatDateTime('hh:nn:ss', Now), v_tstrCipherOpened1);
      v_Report := TStringList.Create;
@@ -973,51 +981,48 @@ begin
   g_oCacic.Free();
 end;
 
-var strAux : String;
+// ATENÇÃO: Caso haja falha na execução deste agente pela estação de trabalho,
+//          a provável causa será a falta da Runtime Library RTL70.BPL, que
+//          costuma ser "confundida" com vírus e apagada por alguns anti-vírus
+//          como o Avasti.
+//          SOLUÇÃO: Baixar a partir do endereço http://nwvault.ign.com/View.php?view=Other.Detail&id=119 o pacote
+//                   D70_Installer.zip, descompactar e executar na estação de trabalho.
+var   strAux : String;
+const CACIC_APP_NAME = 'col_hard';
 begin
    g_oCacic := TCACIC.Create();
-
    g_oCacic.setBoolCipher(true);
    
    if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) )  then
-    if (ParamCount>0) then
-        Begin
-          strAux := '';
-          For intAux := 1 to ParamCount do
-            Begin
-              if LowerCase(Copy(ParamStr(intAux),1,11)) = '/cacicpath=' then
-                begin
-                  strAux := Trim(Copy(ParamStr(intAux),12,Length((ParamStr(intAux)))));
-                  log_DEBUG('Parâmetro /CacicPath recebido com valor="'+strAux+'"');
-                end;
-            end;
+      if (ParamCount>0) then
+          Begin
+            strAux := '';
+            For intAux := 1 to ParamCount do
+              Begin
+                if LowerCase(Copy(ParamStr(intAux),1,11)) = '/cacicpath=' then
+                  begin
+                    strAux := Trim(Copy(ParamStr(intAux),12,Length((ParamStr(intAux)))));
+                    //log_DEBUG('Parâmetro /CacicPath recebido com valor="'+strAux+'"');
+                  end;
+              end;
 
-          if (strAux <> '') then
-            Begin
-               g_oCacic.setCacicPath(strAux);
+            if (strAux <> '') then
+              Begin
+                 g_oCacic.setCacicPath(strAux);
 
-               v_tstrCipherOpened  := TStrings.Create;
-               v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
+                 v_tstrCipherOpened  := TStrings.Create;
+                 v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
 
-               v_tstrCipherOpened1 := TStrings.Create;
-               v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_hard.dat');
+                 v_tstrCipherOpened1 := TStrings.Create;
+                 v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_hard.dat');
 
-               Try
-                  v_Debugs      := false;
-                  if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
-                    Begin
-                      if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
-                        Begin
-                          v_Debugs := true;
-                          log_diario('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
-                        End;
-                    End;
-                  Executa_Col_Hard;
-               Except
-                  SetValorDatMemoria('Col_Hard.nada', 'nada', v_tstrCipherOpened1);
-                  CipherClose(g_oCacic.getCacicPath + 'temp\col_hard.dat', v_tstrCipherOpened1);
-               End;
-            End;
-        End;
-
+                 Try
+                    Executa_Col_Hard;
+                 Except
+                    SetValorDatMemoria('Col_Hard.nada', 'nada', v_tstrCipherOpened1);
+                    CipherClose(g_oCacic.getCacicPath + 'temp\col_hard.dat', v_tstrCipherOpened1);
+                 End;
+                 Halt(0);
+              End;
+          End;
 end.

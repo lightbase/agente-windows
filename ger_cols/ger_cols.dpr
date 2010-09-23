@@ -56,6 +56,7 @@ var
   v_Endereco_Servidor,
   v_Aux,
   strAux,
+  strUSBinfo,
   endereco_servidor_cacic,
   v_ModulosOpcoes,
   v_ResultCompress,
@@ -328,6 +329,7 @@ var v_strCipherOpenImploded,
     v_DatFileDebug          : TextFile;
     v_cs_cipher             : boolean;
 begin
+   log_DEBUG('CipherClose: datFileName="' + g_oCacic.getDatFileName + '"');
    try
        FileSetAttr (p_DatFileName,0); // Retira os atributos do arquivo para evitar o erro FILE ACCESS DENIED em máquinas 2000
        AssignFile(v_DatFile,p_DatFileName); {Associa o arquivo a uma variável do tipo TextFile}
@@ -347,6 +349,7 @@ begin
            {$IOChecks on}
            Append(v_DatFileDebug);
          End;
+       log_DEBUG('CipherClose: separatorKey="' + g_oCacic.getSeparatorKey + '"');
 
        v_strCipherOpenImploded := g_oCacic.implode(p_tstrCipherOpened,g_oCacic.getSeparatorKey);
 
@@ -2277,10 +2280,10 @@ Begin
              SetValorDatMemoria('Configs.te_palavra_chave',strAux, v_tstrCipherOpened);
 
              // Verifico se srCACIC está em execução e em caso positivo entrego a chave atualizada
-             Matar(g_oCacic.getCacicPath+'Temp\','aguarde_SRCACIC.txt');
-             sleep(2000);
-             if (FileExists(g_oCacic.getCacicPath + 'Temp\aguarde_SRCACIC.txt')) then
-                Begin
+             //Matar(g_oCacic.getCacicPath+'Temp\','aguarde_SRCACIC.txt');
+             //sleep(2000);
+             //if (FileExists(g_oCacic.getCacicPath + 'Temp\aguarde_SRCACIC.txt')) then
+             //   Begin
                   // Alguns cuidados necessários ao tráfego e recepção de valores pelo Gerente WEB
                   // Some cares about send and receive at Gerente WEB
                   v_Aux := StringReplace(strAux                       ,' ' ,'<ESPACE>'  ,[rfReplaceAll]);
@@ -2296,7 +2299,7 @@ Begin
                   Append(v_txtCookie);
                   Writeln(v_txtCookie,v_Aux);
                   CloseFile(v_txtCookie);
-                End;
+             //   End;
 
 
              Request_SVG.Values['te_palavra_chave']       := g_oCacic.enCrypt(strAux);
@@ -2495,7 +2498,8 @@ Begin
 end;
 
 procedure Executa_Ger_Cols;
-var strDtHrColetaForcada,
+var strRetorno,
+    strDtHrColetaForcada,
     strDtHrUltimaColeta : String;
 Begin
   Try
@@ -2505,6 +2509,7 @@ Begin
           //   /coletas       =>  Chamada para ativação das coletas
           //   /recuperaSR    =>  Chamada para tentativa de recuperação do módulo srCACIC
           //   /patrimonio    =>  Chamada para ativação do Formulário de Patrimônio
+          // USBinfo          =>  Informação sobre dispositivo USB inserido/removido
           // UpdatePrincipal  =>  Atualização do Agente Principal
           // Chamada com parâmetros pelo chkcacic.exe ou linha de comando
           // Chamada efetuada pelo Cacic2.exe quando da existência de temp\cacic2.exe para AutoUpdate
@@ -2551,6 +2556,34 @@ Begin
               CriaTXT(g_oCacic.getCacicPath+'temp','recuperaSR');
               Sair;
             End;
+
+          strUSBinfo := '';
+
+          // Chamada com informação de dispositivo USB inserido/removido
+          For intAux := 1 to ParamCount do
+            If LowerCase(Copy(ParamStr(intAux),1,9)) = '/usbinfo=' then
+              strUSBinfo := Trim(Copy(ParamStr(intAux),10,Length((ParamStr(intAux)))));
+
+          // Envio da informação sobre o dispositivo USB ao Gerente WEB
+          if (strUSBinfo <> '') then
+            begin
+              log_DEBUG('Parâmetro USBinfo recebido: "'+strUSBinfo+'"');
+              v_acao_gercols := 'Informando ao Gerente WEB sobre dispositivo USB inserido/removido.';
+
+              ChecaCipher;
+              ChecaCompress;
+
+              Request_Ger_Cols := TStringList.Create;
+              log_DEBUG('Preparando para criptografar "'+strUSBinfo+'"');
+              Request_Ger_Cols.Values['te_usb_info'] := StringReplace(g_oCacic.enCrypt(strUSBinfo),'+','<MAIS>',[rfReplaceAll]);
+              log_DEBUG('Preparando para empacotar "'+Request_Ger_Cols.Values['te_usb_info']+'"');
+              strRetorno := ComunicaServidor('set_usbinfo.php', Request_Ger_Cols, '>> Enviando informações sobre ' + IfThen(Copy(strUSBinfo,1,1)='I','Inserção','Remoção')+ ' de dispositivo USB ao Gerente WEB!');
+              if (g_oCacic.deCrypt(XML_RetornaValor('nm_device', strRetorno)) <> '') then
+                log_diario('Dispositivo USB ' + IfThen(Copy(strUSBinfo,1,1)='I','Inserido','Removido')+': "' + g_oCacic.deCrypt(XML_RetornaValor('nm_device', strRetorno)+'"')+'"');
+              Request_Ger_Cols.Free;
+
+              Finalizar(true);
+            end;
 
           For intAux := 1 to ParamCount do
             Begin
@@ -2656,7 +2689,9 @@ Begin
                                   Finalizar(false);
                                   Sair;
                                 End;
-                          End;
+                          End
+                      else
+                          log_Diario('Indicador CS_AUTO_UPDATE="N". O recomendado é que esteja em "S" no Gerente WEB!');                                                
 
                       if ((GetValorDatMemoria('Configs.CS_COLETA_HARDWARE'         , v_tstrCipherOpened) = 'S') or
                           (GetValorDatMemoria('Configs.CS_COLETA_SOFTWARE'         , v_tstrCipherOpened) = 'S') or
@@ -3272,15 +3307,28 @@ Begin
 //  g_oCacic.Free;
 End;
 
+procedure CriaCookie;
+Begin
+  // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento
+  AssignFile(v_Aguarde,g_oCacic.getCacicPath + 'temp\aguarde_GER.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+  {$IOChecks off}
+  Reset(v_Aguarde); {Abre o arquivo texto}
+  {$IOChecks on}
+  if (IOResult <> 0) then // Arquivo não existe, será recriado.
+   Rewrite (v_Aguarde);
+
+  Append(v_Aguarde);
+  Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ger_Cols');
+  Append(v_Aguarde);
+End;
+
 begin
    g_oCacic := TCACIC.Create();
-
    if( not g_oCacic.isAppRunning( CACIC_APP_NAME ) ) then
     begin
       if ParamCount > 0 then
         Begin
           strAux := '';
-
           For intAux := 1 to ParamCount do
             Begin
               if (LowerCase(Copy(ParamStr(intAux),1,11)) = '/cacicpath=') then
@@ -3322,18 +3370,8 @@ begin
                  log_DEBUG('Te_So obtido: "' + g_oCacic.getWindowsStrId() +'"');
 
                  v_scripter := 'wscript.exe';
-                 // A existência e bloqueio do arquivo abaixo evitará que Cacic2.exe chame o Ger_Cols quando este estiver em funcionamento
-                 AssignFile(v_Aguarde,g_oCacic.getCacicPath + 'temp\aguarde_GER.txt'); {Associa o arquivo a uma variável do tipo TextFile}
-                 {$IOChecks off}
-                 Reset(v_Aguarde); {Abre o arquivo texto}
-                 {$IOChecks on}
-                 if (IOResult <> 0) then // Arquivo não existe, será recriado.
-                   Rewrite (v_Aguarde);
 
-                 Append(v_Aguarde);
-                 Writeln(v_Aguarde,'Apenas um pseudo-cookie para o Cacic2 esperar o término de Ger_Cols');
-                 Append(v_Aguarde);
-
+                 CriaCookie;
                  ChecaCipher;
                  ChecaCompress;
 

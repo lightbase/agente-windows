@@ -39,7 +39,8 @@ uses
   Buttons,
   CACIC_Library,
   ImgList,
-  Graphics;
+  Graphics,
+  USBdetectClass;
 
   //IdTCPServer;
   //IdFTPServer;
@@ -211,9 +212,12 @@ type
     procedure Popup_Menu_ContextoPopup(Sender: TObject);
     procedure Timer_InicializaTrayTimer(Sender: TObject);
   private
+    FUsb : TUsbClass;
     ShutdownEmExecucao : Boolean;
     IsMenuOpen : Boolean;
     NotifyStruc : TNotifyIconData; {Estrutura do tray icon}
+    procedure UsbIN(ASender : TObject; const ADevType,AVendorID,ADeviceID : string);
+    procedure UsbOUT(ASender : TObject; const ADevType,AVendorID,ADeviceID : string);
     procedure InicializaTray;
     procedure Finaliza;
     procedure VerificaDebugs;
@@ -221,7 +225,7 @@ type
     Function  RetornaValorVetorUON1(id1 : string) : String;
     Function  RetornaValorVetorUON1a(id1a : string) : String;
     Function  RetornaValorVetorUON2(id2, idLocal: string) : String;
-    procedure Invoca_GerCols(p_acao:string);
+    procedure Invoca_GerCols(p_acao:string; boolShowInfo : Boolean = true);
     function  GetVersionInfo(p_File: string):string;
     function  VerFmt(const MS, LS: DWORD): string;
     procedure WMSysCommand(var Msg: TWMSysCommand); message WM_SYSCOMMAND;
@@ -327,6 +331,29 @@ begin
   end;
   inherited;
 end;
+
+// Início de Procedimentos para monitoramento de dispositivos USB - Anderson Peterle - 02/2010
+procedure TFormularioGeral.UsbIN(ASender : TObject; const ADevType,AVendorID,ADeviceID : string);
+begin
+  // Envio de valores ao Gerente WEB
+  // Formato: USBinfo=I_ddmmyyyyhhnnss_ADeviceID
+  // Os valores serão armazenados localmente (cacic2.dat) se for impossível o envio.
+  Log_Debug('<< USB INSERIDO .:. Vendor ID => ' + AVendorID + ' .:. Device ID = ' + ADeviceID);
+  Invoca_GerCols('USBinfo=I_'+FormatDateTime('yyyymmddhhnnss', now) + '_' + AVendorID + '_' + ADeviceID,false);
+end;
+
+
+procedure TFormularioGeral.UsbOUT(ASender : TObject; const ADevType,AVendorID,ADeviceID : string);
+begin
+  // Envio de valores ao Gerente WEB
+  // Formato: USBinfo=O_ddmmyyyyhhnnss_ADeviceID
+  // Os valores serão armazenados localmente (cacic2.dat) se for impossível o envio.
+  Log_Debug('>> USB REMOVIDO .:. Vendor ID => ' + AVendorID + ' .:. Device ID = ' + ADeviceID);
+  Invoca_GerCols('USBinfo=O_'+FormatDateTime('yyyymmddhhnnss', now) + '_' + AVendorID + '_' + ADeviceID,false);
+end;
+
+// Fim de Procedimentos para monitoramento de dispositivos USB - Anderson Peterle - 02/2010
+
 procedure TFormularioGeral.MontaVetoresPatrimonio(p_strConfigs : String);
 var Parser   : TXmlParser;
     i        : integer;
@@ -1231,6 +1258,11 @@ var strAux,
     v_SystemDrive : TStrings;
 begin
 
+      // Criação do objeto para monitoramento de dispositivos USB
+      FUsb := TUsbClass.Create;
+      FUsb.OnUsbInsertion := UsbIN;
+      FUsb.OnUsbRemoval := UsbOUT;
+
       // Essas variáveis ajudarão a controlar o redesenho do ícone no systray,
       // evitando o "roubo" do foco.
       g_intTaskBarAtual    := 0;
@@ -1516,6 +1548,7 @@ Begin
     log_diario('PROBLEMAS NA FINALIZAÇÃO');
   End;
   g_oCacic.Free;
+  FreeAndNil(FUsb);
   FreeMemory(0);
   Application.Terminate;
 End;
@@ -1527,7 +1560,7 @@ begin
   If (getValorDatMemoria('Configs.SJI',v_tstrCipherOpened) =  'S') Then Finaliza;
 end;
 
-procedure TFormularioGeral.Invoca_GerCols(p_acao:string);
+procedure TFormularioGeral.Invoca_GerCols(p_acao:string; boolShowInfo : Boolean = true);
 begin
   Matar(g_oCacic.getCacicPath + 'temp\','*.txt');
   Matar(g_oCacic.getCacicPath + 'temp\','*.ini');
@@ -1535,12 +1568,17 @@ begin
   // Caso exista o Gerente de Coletas será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
   if ChecaGERCOLS then
     Begin
+      Timer_InicializaTray.Enabled := False;
       ChecaCONFIGS;
       CipherClose;
-      log_diario('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
+      if boolShowInfo then
+        log_diario('Invocando Gerente de Coletas com ação: "'+p_acao+'"')
+      else
+        log_DEBUG('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
       Timer_Nu_Exec_Apos.Enabled  := False;
-      Log_DEBUG('Criando Processo Ger_Cols...');
+      Log_DEBUG('Criando Processo Ger_Cols => "'+g_oCacic.getCacicPath + 'modulos\GER_COLS.EXE /'+p_acao+' /CacicPath='+g_oCacic.getCacicPath+'"');
       g_oCacic.createSampleProcess(g_oCacic.getCacicPath + 'modulos\GER_COLS.EXE /'+p_acao+' /CacicPath='+g_oCacic.getCacicPath,false,SW_HIDE);
+      Timer_InicializaTray.Enabled := True;
     End
   else
     log_diario('Não foi possível invocar o Gerente de Coletas!');
@@ -2001,6 +2039,7 @@ procedure TFormularioGeral.WMQueryEndSession(var Msg: TWMQueryEndSession);
 begin
    // Quando há um shutdown do windows em execução, libera o close.
    OnCloseQuery := Nil;
+   FreeAndNil(FUsb);
    Application.Terminate;
    inherited // Continue ShutDown request
 end;
@@ -2451,6 +2490,8 @@ begin
 
       // Alguns cuidados necessários ao tráfego e recepção de valores pelo Gerente WEB
       // Some cares about send and receive at Gerente WEB
+      // A partir da versão 2.6.0.2 deixo de enviar a palavra chave para que o srCACICsrv busque-a diretamente de cacic2.dat
+      {
       v_strPalavraChave  := FormularioGeral.getValorDatMemoria('Configs.te_palavra_chave', v_tstrCipherOpened);
       v_strPalavraChave  := StringReplace(v_strPalavraChave,' '     ,'<ESPACE>'  ,[rfReplaceAll]);
       v_strPalavraChave  := StringReplace(v_strPalavraChave,'"'     ,'<AD>'      ,[rfReplaceAll]);
@@ -2458,6 +2499,7 @@ begin
       v_strPalavraChave  := StringReplace(v_strPalavraChave,'\'     ,'<BarrInv>' ,[rfReplaceAll]);
       v_strPalavraChave  := g_oCacic.enCrypt(v_strPalavraChave);
       v_strPalavraChave  := StringReplace(v_strPalavraChave,'+','<MAIS>',[rfReplaceAll]);
+      }
 
       v_strTeSO          := trim(StringReplace(FormularioGeral.getValorDatMemoria('Configs.TE_SO', v_tstrCipherOpened),' ','<ESPACE>',[rfReplaceAll]));
       v_strTeSO          := g_oCacic.enCrypt(v_strTeSO);
@@ -2500,8 +2542,8 @@ begin
                                                                                         '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'              , v_tstrCipherOpened)) + ']' +
                                                                                         '[' + v_strTeSO                                                                                                     + ']' +
                                                                                         '[' + v_strTeNodeAddress                                                                                            + ']' +
-                                                                                        '[' + v_strPalavraChave                                                                                             + ']' +
-                                                                                        '[' + g_oCacic.getCacicPath + 'Temp\'                                                                               + ']' +
+//                                                                                        '[' + v_strPalavraChave                                                                                             + ']' +
+                                                                                        '[' + g_oCacic.getCacicPath                                                                                         + ']' +
                                                                                         '[' + v_strNuPortaSR                                                                                                + ']' +
                                                                                         '[' + v_strNuTimeOutSR                                                                                              + ']');
 
@@ -2515,8 +2557,8 @@ begin
                                                                                              '[' + g_oCacic.enCrypt(FormularioGeral.getValorDatMemoria('Configs.Endereco_WS'     , v_tstrCipherOpened)) + ']' +
                                                                                              '[' + v_strTeSO                                                                                            + ']' +
                                                                                              '[' + v_strTeNodeAddress                                                                                   + ']' +
-                                                                                             '[' + v_strPalavraChave                                                                                    + ']' +
-                                                                                             '[' + g_oCacic.getCacicPath + 'Temp\'                                                                      + ']' +
+//                                                                                             '[' + v_strPalavraChave                                                                                    + ']' +
+                                                                                             '[' + g_oCacic.getCacicPath                                                                                + ']' +
                                                                                              '[' + v_strNuPortaSR                                                                                       + ']' +
                                                                                              '[' + v_strNuTimeOutSR                                                                                     + ']',false,SW_NORMAL);
           BoolServerON := true;

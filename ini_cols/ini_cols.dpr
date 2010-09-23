@@ -324,6 +324,7 @@ begin
                       log_DEBUG('Chamando "' + v_tstrModuloOpcao[0]+'.exe " /p_Option='+v_tstrModuloOpcao[2]);
 
                       g_oCacic.createSampleProcess( g_oCacic.getCacicPath + '\modulos\' + strAux, CACIC_PROCESS_WAIT );
+                      Sleep(500);
                     End;
              except
              end;

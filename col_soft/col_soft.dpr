@@ -480,12 +480,15 @@ end;
 
 procedure Executa_Col_Soft;
 var te_versao_mozilla, te_versao_ie, te_versao_jre, te_versao_acrobat_reader,
-    UVC,ValorChaveRegistro, te_inventario_softwares, te_variaveis_ambiente : String;
+    UVC,ValorChaveRegistro, te_inventario_softwares, te_variaveis_ambiente,
+    strDisplayName,
+    strKeyName : String;
     InfoSoft, v_Report : TStringList;
     i : integer;
     v_SOFTWARE      : TMiTeC_Software;
     v_ENGINES       : TMiTeC_Engines;
     v_OS            : TMiTeC_OperatingSystem;
+    registrySoftwares : TRegistry;
 begin
  Try
    log_diario('Coletando informações de Softwares Básicos.');
@@ -495,44 +498,112 @@ begin
    te_versao_jre            := GetVersaoJRE;
    te_versao_acrobat_reader := GetVersaoAcrobatReader;
    te_inventario_softwares  := '';
+   InfoSoft                 := TStringList.Create;
 
-   Try
-      InfoSoft := TStringList.Create;
-      v_SOFTWARE := TMiTeC_Software.Create(nil);
-      v_SOFTWARE.RefreshData;
-      MSI_XML_Reports.Software_XML_Report(v_SOFTWARE,true,InfoSoft);
+   if not g_oCacic.isWindowsGEVista then
+    Begin
+       Try
+          v_SOFTWARE := TMiTeC_Software.Create(nil);
+          v_SOFTWARE.RefreshData;
+          MSI_XML_Reports.Software_XML_Report(v_SOFTWARE,true,InfoSoft);
 
-      // Caso exista a pasta ..temp/debugs, será criado o arquivo diário debug_<coletor>.txt
-      // Usar esse recurso apenas para debug de coletas mal-sucedidas através do componente MSI-Mitec.
-      if v_Debugs then
-        Begin
-          v_Report := TStringList.Create;
+          // Caso exista a pasta ..temp/debugs, será criado o arquivo diário debug_<coletor>.txt
+          // Usar esse recurso apenas para debug de coletas mal-sucedidas através do componente MSI-Mitec.
+          if v_Debugs then
+            Begin
+              v_Report := TStringList.Create;
 
-          MSI_XML_Reports.Software_XML_Report(v_SOFTWARE,true,v_Report);
-          v_SOFTWARE.Free;
+              MSI_XML_Reports.Software_XML_Report(v_SOFTWARE,true,v_Report);
+              v_SOFTWARE.Free;
 
-          v_OS := TMiTeC_OperatingSystem.Create(nil);
-          v_OS.RefreshData;
+              v_OS := TMiTeC_OperatingSystem.Create(nil);
+              v_OS.RefreshData;
 
-          MSI_XML_Reports.OperatingSystem_XML_Report(v_OS,true,v_Report);
-          v_OS.Free;
-        End
+              MSI_XML_Reports.OperatingSystem_XML_Report(v_OS,true,v_Report);
+              v_OS.Free;
+            End
 
-   except
-      log_diario('Problema em Software Report!');
-   end;
+       except
+          log_diario('Problema em Software Report!');
+       end;
 
-   for i := 0 to v_SOFTWARE.Count - 1 do
-      begin
-          if (trim(Copy(InfoSoft[i],1,14))='<section name=') then
+       for i := 0 to v_SOFTWARE.Count - 1 do
+          begin
+              if (trim(Copy(InfoSoft[i],1,14))='<section name=') then
+                  Begin
+                    if (te_inventario_softwares <> '') then
+                        te_inventario_softwares := te_inventario_softwares + '#';
+                    te_inventario_softwares := te_inventario_softwares + Copy(InfoSoft[i],16,Pos('">',InfoSoft[i])-16);
+                  End;
+          end;
+
+       v_SOFTWARE.Free;
+    end
+   else
+    Begin
+        // Chave para 64Bits
+        strKeyName := 'Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall';
+
+        registrySoftwares := TRegistry.Create;
+        with registrySoftwares do
+        begin
+          RootKey:=HKEY_LOCAL_MACHINE;
+          if OpenKey(strKeyName,False)=True then GetKeyNames(InfoSoft);
+          CloseKey;
+
+          for i:=0 to InfoSoft.Count-1 do
+          begin
+            RootKey:=HKEY_LOCAL_MACHINE;
+            OpenKey(strKeyName + '\'+InfoSoft[i],False);
+            strDisplayName := ReadString('DisplayName');
+            if (strDisplayName <> '') then
               Begin
-                if (te_inventario_softwares <> '') then
-                    te_inventario_softwares := te_inventario_softwares + '#';
-                te_inventario_softwares := te_inventario_softwares + Copy(InfoSoft[i],16,Pos('">',InfoSoft[i])-16);
-              End;
-      end;
+                if (Copy(strDisplayName,1,1)='{') then
+                  begin
+                    OpenKey(strKeyName + '\'+InfoSoft[i]+'\'+strDisplayName,False);
+                    strDisplayName := ReadString('DisplayName');
+                  end;
 
-   v_SOFTWARE.Free;
+                if (te_inventario_softwares <> '') then
+                  te_inventario_softwares := te_inventario_softwares + '#';
+                te_inventario_softwares := te_inventario_softwares + strDisplayName;
+              end;
+            CloseKey;
+          end;
+        end;
+
+        // Caso a consulta acima tenha retornado vazio, tentarei a chave para 32Bits
+        strKeyName := 'Software\Microsoft\Windows\CurrentVersion\Uninstall';
+
+        with registrySoftwares do
+        begin
+          RootKey:=HKEY_LOCAL_MACHINE;
+          if OpenKey(strKeyName,False)=True then GetKeyNames(InfoSoft);
+          CloseKey;
+
+          for i:=0 to InfoSoft.Count-1 do
+          begin
+            RootKey:=HKEY_LOCAL_MACHINE;
+            OpenKey(strKeyName + '\'+InfoSoft[i],False);
+            strDisplayName := ReadString('DisplayName');
+            if (strDisplayName <> '') then
+              Begin
+                if (Copy(strDisplayName,1,1)='{') then
+                  begin
+                    OpenKey(strKeyName + '\'+InfoSoft[i]+'\'+strDisplayName,False);
+                    strDisplayName := ReadString('DisplayName');
+                  end;
+
+                if (te_inventario_softwares <> '') then
+                  te_inventario_softwares := te_inventario_softwares + '#';
+                te_inventario_softwares := te_inventario_softwares + strDisplayName;
+              end;
+            CloseKey;
+          end;
+        end;
+
+        //
+    end;
 
    try
       te_inventario_softwares := AnsiToAscii(te_inventario_softwares);

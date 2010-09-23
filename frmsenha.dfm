@@ -1,6 +1,6 @@
 object formSenha: TformSenha
-  Left = 152
-  Top = 110
+  Left = 361
+  Top = 279
   BorderIcons = [biSystemMenu]
   BorderStyle = bsDialog
   Caption = 'Senha'

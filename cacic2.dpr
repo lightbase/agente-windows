@@ -26,7 +26,8 @@ uses
   frmLog in 'frmLog.pas' {FormLog},
   LibXmlParser,
   WinVNC in 'winvnc.pas',
-  CACIC_Library in 'CACIC_Library.pas';
+  CACIC_Library in 'CACIC_Library.pas',
+  USBdetectClass in 'USBdetectClass.pas';
 
 {$R *.res}
 
@@ -62,5 +63,5 @@ begin
    Application.Initialize;
    Application.Title := 'cacic2';
    Application.CreateForm(TFormularioGeral, FormularioGeral);
-   Application.Run;
+  Application.Run;
 end.

@@ -1,6 +1,6 @@
 object FormularioGeral: TFormularioGeral
-  Left = 301
-  Top = 108
+  Left = 300
+  Top = 107
   HorzScrollBar.Visible = False
   VertScrollBar.Visible = False
   BiDiMode = bdLeftToRight
@@ -155,7 +155,7 @@ object FormularioGeral: TFormularioGeral
       Height = 16
       BevelInner = bvLowered
       BevelOuter = bvLowered
-      Caption = 'v. 2.4.0.xxx'
+      Caption = 'v. 2.6.0.xxx'
       Color = clBackground
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWhite

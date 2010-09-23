@@ -420,31 +420,31 @@ begin
             Begin
                g_oCacic.setCacicPath(strAux);
 
-           v_Debugs := false;
-           if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
-             Begin
-              if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
-                Begin
-                  v_Debugs := true;
-                  log_diario('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+               v_Debugs := false;
+               if DirectoryExists(g_oCacic.getCacicPath + 'Temp\Debugs') then
+                 Begin
+                  if (FormatDateTime('ddmmyyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs')) = FormatDateTime('ddmmyyyy', date)) then
+                    Begin
+                      v_Debugs := true;
+                      log_diario('Pasta "' + g_oCacic.getCacicPath + 'Temp\Debugs" com data '+FormatDateTime('dd-mm-yyyy', GetFolderDate(g_oCacic.getCacicPath + 'Temp\Debugs'))+' encontrada. DEBUG ativado.');
+                    End;
                 End;
+
+               v_tstrCipherOpened  := TStrings.Create;
+               v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
+
+               v_tstrCipherOpened1 := TStrings.Create;
+               v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_anvi.dat');
+
+               Try
+                  Executa_Col_Anvi;
+               Except
+                  Begin
+                    SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
+                    CipherClose(g_oCacic.getCacicPath + 'temp\col_anvi.dat', v_tstrCipherOpened1);
+                  End;
+               End;
             End;
-
-           v_tstrCipherOpened  := TStrings.Create;
-           v_tstrCipherOpened  := CipherOpen(g_oCacic.getCacicPath + g_oCacic.getDatFileName);
-
-           v_tstrCipherOpened1 := TStrings.Create;
-           v_tstrCipherOpened1 := CipherOpen(g_oCacic.getCacicPath + 'temp\col_anvi.dat');
-
-           Try
-              Executa_Col_Anvi;
-           Except
-              Begin
-                SetValorDatMemoria('Col_Anvi.nada', 'nada', v_tstrCipherOpened1);
-                CipherClose(g_oCacic.getCacicPath + 'temp\col_anvi.dat', v_tstrCipherOpened1);
-              End;
-           End;
         End;
-    End;
     g_oCacic.Free();
 end.
