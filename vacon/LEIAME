@@ -1,4 +1,0 @@
-
-Esse utilitário tem o objetivo de permitir a leitura do arquivo cacic2.dat, base local do sistema, onde localizam-se as últimas coletas e configurações obtidas a partir do gerente WEB.
-
-Para sua utilização será necessário conhecer o valor "Chave para Leitura do Arquivo", que corresponde à chave de criptografia (o valor padrão para a Comunidade é "CacicBrasil"), e o valor "Chave Separadora", que normalmente é "=CacicIsFree=".
