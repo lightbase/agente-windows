@@ -1,0 +1,5 @@
+Iniciar 
+nm_usuario_cli_enc > (null)
+te_senha_cli_enc > (null)
+te_node_address_cli_enc > (null)
+ te_so_cli_enc > (null)

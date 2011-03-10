@@ -1,0 +1,228 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
+  <Class Name="Except" Collapsed="true">
+    <Position X="2.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAQAAAAAAAAAA=</HashCode>
+      <FileName>c:\Documents and Settings\ViNi\Meus documentos\Visual Studio 2008\Projects\SRCACIC\rfb\dh.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="_RectRegion" Collapsed="true">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>rfbRegion_X11.cxx</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="vncClientUpdateThread" Collapsed="true">
+    <Position X="7.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAAAQCEAAABAAAAAAAAAAAAABABAAAAAiQAAYAAA=</HashCode>
+      <FileName>vncclient.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="vncClientThread" Collapsed="true">
+    <Position X="0.5" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAIAAgAACAARAAAAgAAAAAgAAAAAAAAAAAACACAAQAg=</HashCode>
+      <FileName>vncclient.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="KeyStateModifier" Collapsed="true">
+    <Position X="5.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>FAQAAAAAAAAAAAAAEAAAAAAAAQBAQAAAAAAAAAAAAAQ=</HashCode>
+      <FileName>vnckeymap.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Keymapper" Collapsed="true">
+    <Position X="4" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gIAAAAAAAAAAAAAAAAAAABABAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vnckeymap.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="vncSockConnectThread" Collapsed="true">
+    <Position X="7.5" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAACAAAIQAA=</HashCode>
+      <FileName>vncsockconnect.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="vncTimedMsgBoxThread" Collapsed="true">
+    <Position X="5.75" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIgAAAAAAAAAAAAQAQAAAAAAAAABAAAAAAAAAAAI=</HashCode>
+      <FileName>vnctimedmsgbox.cpp</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CACIC_Utils">
+    <Position X="15.75" Y="4.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAiAAAoAAACAAAAIgAAAAAAAAAAAgAAIAAAAAAhAA=</HashCode>
+      <FileName>CACIC_Utils.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CACIC_Auth">
+    <Position X="9.5" Y="0.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>I0IAAAEROIGDwAICoEYCQRCAAIIIAB4pCAABCAAQAgI=</HashCode>
+      <FileName>CACIC_Auth.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CACIC_Con">
+    <Position X="15.5" Y="0.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIQAAACAAAAAAAAIACAEACggAgAFIAAAAAAQAA=</HashCode>
+      <FileName>CACIC_Con.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CACIC_Crypt">
+    <Position X="12.5" Y="0.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>ACAAAIAAIAAAIASAAAAAAAAAAAAABAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CACIC_Crypt.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SRCException">
+    <Position X="13" Y="6.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAgA=</HashCode>
+      <FileName>CACIC_Exception.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="keymap_t" Collapsed="true">
+    <Position X="2.25" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAA=</HashCode>
+      <FileName>vnckeymap.cpp</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="latin1ToDeadChars_t" Collapsed="true">
+    <Position X="4" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQAAAAAAAAAAAAAIAAAAAAAACgAQAAACAAAAA=</HashCode>
+      <FileName>vnckeymap.cpp</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="ClienteSRC">
+    <Position X="12.5" Y="3" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAKCAAAAAASAAAAAAEIAAAAAAAAAAAARAEAoAAA=</HashCode>
+      <FileName>CACIC_Auth.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Typedef Name="P_SHGetSettings" Collapsed="true">
+    <Position X="4" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>HideDesktop.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="lzo_full_align_t" Collapsed="true">
+    <Position X="5.75" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>c:\Documents and Settings\ViNi\Meus documentos\Visual Studio 2008\Projects\SRCACIC\lzo\minilzo.c</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="pWTSQueryUserToken_proto" Collapsed="true">
+    <Position X="5.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>security.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="WTSGETACTIVECONSOLESESSIONID" Collapsed="true">
+    <Position X="0.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>service.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="WTSQUERYUSERTOKEN" Collapsed="true">
+    <Position X="2.25" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>service.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="pEnumDisplayDevices" Collapsed="true">
+    <Position X="5.75" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>videodriver.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="PGETDISKFREESPACEEX" Collapsed="true">
+    <Position X="0.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncclient.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="WTSREGISTERSESSIONNOTIFICATION" Collapsed="true">
+    <Position X="4" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncserver.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="WTSUNREGISTERSESSIONNOTIFICATION" Collapsed="true">
+    <Position X="5.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncserver.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="P_DwmIsCompositionEnabled" Collapsed="true">
+    <Position X="2.25" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncmenu.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="P_DwmEnableComposition" Collapsed="true">
+    <Position X="0.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncmenu.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="CHANGEWINDOWMESSAGEFILTER" Collapsed="true">
+    <Position X="0.5" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncdesktopthread.h</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="CheckUserGroupPasswordFn" Collapsed="true">
+    <Position X="2.25" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncntlm.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="CheckUserPasswordSDUniFn" Collapsed="true">
+    <Position X="4" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncntlm.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="pWTSGetActiveConsoleSessionId" Collapsed="true">
+    <Position X="4" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncservice.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Typedef Name="pProcessIdToSessionId" Collapsed="true">
+    <Position X="2.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>vncservice.cpp</FileName>
+    </TypeIdentifier>
+  </Typedef>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>
