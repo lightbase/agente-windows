@@ -1,0 +1,55 @@
+#------------------------------------------------------------------------------
+VERSION = BWS.01
+#------------------------------------------------------------------------------
+!ifndef ROOT
+ROOT = $(MAKEDIR)\..
+!endif
+#------------------------------------------------------------------------------
+MAKE = $(ROOT)\bin\make.exe -$(MAKEFLAGS) -f$**
+DCC = $(ROOT)\bin\dcc32.exe $**
+BRCC = $(ROOT)\bin\brcc32.exe $**
+#------------------------------------------------------------------------------
+PROJECTS = chkcacic.exe chksis.exe col_anvi.exe ger_cols.exe col_comp.exe \
+  col_hard.exe col_moni.exe col_soft.exe col_undi.exe mapacacic.exe \
+  cacicservice.exe cacic26Beta2.exe
+#------------------------------------------------------------------------------
+default: $(PROJECTS)
+#------------------------------------------------------------------------------
+
+chkcacic.exe: chkcacic\chkcacic.dpr
+  $(DCC)
+
+chksis.exe: chksis\chksis.dpr
+  $(DCC)
+
+col_anvi.exe: col_anvi\col_anvi.dpr
+  $(DCC)
+
+ger_cols.exe: ger_cols\ger_cols.dpr
+  $(DCC)
+
+col_comp.exe: col_comp\col_comp.dpr
+  $(DCC)
+
+col_hard.exe: col_hard\col_hard.dpr
+  $(DCC)
+
+col_moni.exe: col_moni\col_moni.dpr
+  $(DCC)
+
+col_soft.exe: col_soft\col_soft.dpr
+  $(DCC)
+
+col_undi.exe: col_undi\col_undi.dpr
+  $(DCC)
+
+mapacacic.exe: mapa\mapacacic.dpr
+  $(DCC)
+
+cacicservice.exe: cacicservice\cacicservice.dpr
+  $(DCC)
+
+cacic26Beta2.exe: cacic26Beta2.dpr
+  $(DCC)
+
+

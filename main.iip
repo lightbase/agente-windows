@@ -1,0 +1,7 @@
+[Main]
+OutputDir=E:\Arquivos de programas\RemObjects Software\Pascal Script for Delphi\Bin\Import\
+SingleUnit=1
+UseUnitAtDT=0
+FilePrefix=uPSImport
+[Files]
+File0=K:\chkcacic\main.pas
