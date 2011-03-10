@@ -1,0 +1,92 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{f5ef289b-8ae5-459f-a58d-b460febcbefd}</ProjectGuid>
+    <MainSource>mapacacic.dpr</MainSource>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+    <DCC_DependencyCheckOutputName>..\mapacacic.exe</DCC_DependencyCheckOutputName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Version>7.0</Version>
+    <DCC_DebugInformation>False</DCC_DebugInformation>
+    <DCC_LocalDebugSymbols>False</DCC_LocalDebugSymbols>
+    <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+    <DCC_ExeOutput>..\</DCC_ExeOutput>
+    <DCC_UnitSearchPath>C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion</DCC_UnitSearchPath>
+    <DCC_ResourcePath>C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion</DCC_ResourcePath>
+    <DCC_ObjPath>C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion</DCC_ObjPath>
+    <DCC_IncludePath>C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion</DCC_IncludePath>
+    <DCC_Define>RELEASE</DCC_Define>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <Version>7.0</Version>
+    <DCC_ExeOutput>..\</DCC_ExeOutput>
+    <DCC_UnitSearchPath>C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion</DCC_UnitSearchPath>
+    <DCC_ResourcePath>C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion</DCC_ResourcePath>
+    <DCC_ObjPath>C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion</DCC_ObjPath>
+    <DCC_IncludePath>C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\Mitec\v1010_Delphi7;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\NTFileSecurity;C:\Arquivos de programas\Borland\Delphi7\Comps_CACIC\PJVersion</DCC_IncludePath>
+    <DCC_Define>DEBUG</DCC_Define>
+  </PropertyGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Delphi.Personality</Borland.Personality>
+    <Borland.ProjectType>VCLApplication</Borland.ProjectType>
+    <BorlandProject>
+<BorlandProject xmlns=""> <Delphi.Personality>   <Parameters>
+      <Parameters Name="DebugSourceDirs">C:\Arquivos de programas\Borland\Delphi7\Mitec\D7;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP;C:\Arquivos de programas\Borland\Delphi7\CriptografiaDCP\Hashes</Parameters>
+      <Parameters Name="UseLauncher">False</Parameters>
+      <Parameters Name="LoadAllSymbols">True</Parameters>
+      <Parameters Name="LoadUnspecifiedSymbols">False</Parameters>
+    </Parameters>
+    <Language>
+      <Language Name="RootDir">C:\Arquivos de programas\Borland\Delphi7\Bin\</Language>
+    </Language>
+    <VersionInfo>
+      <VersionInfo Name="IncludeVerInfo">True</VersionInfo>
+      <VersionInfo Name="AutoIncBuild">False</VersionInfo>
+      <VersionInfo Name="MajorVer">2</VersionInfo>
+      <VersionInfo Name="MinorVer">6</VersionInfo>
+      <VersionInfo Name="Release">0</VersionInfo>
+      <VersionInfo Name="Build">0</VersionInfo>
+      <VersionInfo Name="Debug">False</VersionInfo>
+      <VersionInfo Name="PreRelease">False</VersionInfo>
+      <VersionInfo Name="Special">False</VersionInfo>
+      <VersionInfo Name="Private">False</VersionInfo>
+      <VersionInfo Name="DLL">False</VersionInfo>
+      <VersionInfo Name="Locale">1046</VersionInfo>
+      <VersionInfo Name="CodePage">1252</VersionInfo>
+    </VersionInfo>
+    <VersionInfoKeys>
+      <VersionInfoKeys Name="CompanyName">Dataprev - Emp. de TI da Prev.Social - UDSL/SSLC</VersionInfoKeys>
+      <VersionInfoKeys Name="FileDescription">Sistema CACIC - Módulo Avulso para Coleta de Informações Patrimoniais</VersionInfoKeys>
+      <VersionInfoKeys Name="FileVersion">2.5.9.0</VersionInfoKeys>
+      <VersionInfoKeys Name="InternalName"></VersionInfoKeys>
+      <VersionInfoKeys Name="LegalCopyright"></VersionInfoKeys>
+      <VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys>
+      <VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys>
+      <VersionInfoKeys Name="ProductName">MapaCACIC</VersionInfoKeys>
+      <VersionInfoKeys Name="ProductVersion">2.6.0.0</VersionInfoKeys>
+      <VersionInfoKeys Name="Comments">Licença: GNU/LGPL</VersionInfoKeys>
+    </VersionInfoKeys>
+    <Source>
+      <Source Name="MainSource">mapacacic.dpr</Source>
+    </Source>
+  </Delphi.Personality> </BorlandProject></BorlandProject>
+  </ProjectExtensions>
+  <ItemGroup />
+  <ItemGroup>
+    <DelphiCompile Include="mapacacic.dpr">
+      <MainSource>MainSource</MainSource>
+    </DelphiCompile>
+    <DCCReference Include="..\CACIC_Library.pas" />
+    <DCCReference Include="acesso.pas">
+      <Form>frmAcesso</Form>
+    </DCCReference>
+    <DCCReference Include="LibXmlParser.pas" />
+    <DCCReference Include="main_mapa.pas">
+      <Form>frmMapaCacic</Form>
+    </DCCReference>
+    <DCCReference Include="xml.pas" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Borland.Delphi.Targets" />
+</Project>
