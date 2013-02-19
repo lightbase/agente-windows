@@ -1,0 +1,14 @@
+Pasta de C:\vendors_lib
+
+18/02/2013  15:38    <DIR>          CriptografiaDCP
+18/02/2013  15:46    <DIR>          JVCL345CompleteJCL231-Build4197
+18/02/2013  15:42    <DIR>          jwapi2.2a
+18/02/2013  15:41    <DIR>          MagWMI
+18/02/2013  15:37    <DIR>          MD5
+10/03/2010  18:04            27.904 NTFileSecurity.dcu
+18/02/2013  15:38    <DIR>          PJVersion
+18/02/2013  15:45            10.892 SHChangeNotify.dcu
+08/01/2003  07:55            22.341 SHChangeNotify.pas
+18/02/2013  15:44    <DIR>          TrayIcon
+21/02/2011  11:36             4.793 USBdetectClass.dcu
+10/02/2010  12:06             4.980 USBdetectClass.pas
