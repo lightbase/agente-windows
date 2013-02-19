@@ -26,17 +26,16 @@ uses
 type
   TFormConfiguracoes = class(TForm)
     Label_WebManagerAddress: TLabel;
-    Edit_WebManagerAddress: TEdit;
-    BtN_Confirmar: TButton;
+    edWebManagerAddress: TEdit;
+    btConfirmar: TButton;
     Bv1_Configuracoes: TBevel;
-    Btn_Cancelar: TButton;
-    Btn_OK: TButton;
+    btCancelar: TButton;
+    btOK: TButton;
     procedure pro_Btn_OK(Sender: TObject);
     procedure pro_Btn_Cancelar(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure pro_Btn_Confirmar(Sender: TObject);
-    procedure AtualizaConfiguracoes(p_strSectionName, p_strKeyName, p_strValue : String);
   private
     { Private declarations }
   public
@@ -53,15 +52,10 @@ uses CACIC_Library;
 
 {$R *.dfm}
 
-procedure TFormConfiguracoes.AtualizaConfiguracoes(p_strSectionName, p_strKeyName, p_strValue : String);
-begin
-    g_oCacic.setValueToFile(p_strSectionName, p_strKeyName, g_oCacic.enCrypt( p_strValue), g_oCacic.getLocalFolder + g_oCacic.getInfFileName);
-end;
-
 procedure TFormConfiguracoes.pro_Btn_OK(Sender: TObject);
 begin
-    AtualizaConfiguracoes('Configs','TeWebManagerAddress',Edit_WebManagerAddress.Text);
-    Btn_Cancelar.Click;
+    objCACIC.setValueToFile('Configs','WebManagerAddress', edWebManagerAddress.Text, FormularioGeral.strChkSisInfFileName);
+    btCancelar.Click;
 end;
 
 procedure TFormConfiguracoes.pro_Btn_Cancelar(Sender: TObject);
@@ -73,28 +67,28 @@ end;
 
 procedure TFormConfiguracoes.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-   Btn_Cancelar.Click;
+   btCancelar.Click;
 end;
 
 
 procedure TFormConfiguracoes.FormCreate(Sender: TObject);
 begin
-  Edit_WebManagerAddress.Text      := g_oCacic.deCrypt( g_oCacic.GetValueFromFile('Configs','TeWebManagerAddress',g_oCacic.getLocalFolder + g_oCacic.getInfFileName));
+  edWebManagerAddress.Text := objCACIC.fixWebAddress( objCACIC.GetValueFromFile('Configs','WebManagerAddress',FormularioGeral.strChkSisInfFileName));
 end;
 
 procedure TFormConfiguracoes.pro_Btn_Confirmar(Sender: TObject);
 Begin
-   If Trim(Edit_WebManagerAddress.Text) = '' Then
+   If Trim(edWebManagerAddress.Text) = '' Then
    Begin
       MessageDlg('Erro na configuração: ' + #13#10 + 'Não foi especificado o endereço do servidor do CACIC.', mtInformation, [mbOk], 0);
       Exit;
    end;
 
    try
-     FormConfiguracoes.AtualizaConfiguracoes('Configs','TeWebManagerAddress',Trim(Edit_WebManagerAddress.Text));
+     pro_Btn_OK(nil);
    finally
    end;
-   Btn_Cancelar.Click;
+   btCancelar.Click;
 end;
 
 end.

@@ -78,8 +78,8 @@ begin
 
       try
         MemoLog.Clear;
-        sl.LoadFromFile(g_oCacic.getLocalFolder + strLogsFolderName + '\' + listLogsDisponiveis.Items[listLogsDisponiveis.ItemIndex].Caption);
-        staticVisualizacao.Caption := 'Visualização (' + g_oCacic.getLocalFolder + strLogsFolderName + '\' + listLogsDisponiveis.Items[listLogsDisponiveis.ItemIndex].Caption + ')';
+        sl.LoadFromFile(objCACIC.getLocalFolderName + strLogsFolderName + '\' + listLogsDisponiveis.Items[listLogsDisponiveis.ItemIndex].Caption);
+        staticVisualizacao.Caption := 'Visualização (' + objCACIC.getLocalFolderName + strLogsFolderName + '\' + listLogsDisponiveis.Items[listLogsDisponiveis.ItemIndex].Caption + ')';
         itemIndexAtual := listLogsDisponiveis.ItemIndex;
         MemoLog.SetSelTextBuf(PChar(sl.Text));
       finally
@@ -92,24 +92,22 @@ end;
 
 procedure TFormLog.findLogFiles;
 var SearchRec : TSearchRec;
-    intSearch,
-    intAux    : Integer;
+    intSearch : Integer;
     listItem  : TListItem;
 begin
-  g_oCacic.writeDebugLog('findLogFiles - BEGIN');
-
+  objCACIC.writeDebugLog('findLogFiles: BEGIN');
   listLogsDisponiveis.Clear;
 
   Try
-    intSearch := FindFirst(g_oCacic.getLocalFolder + strLogsFolderName + '\*.log', faAnyFile, SearchRec);
+    intSearch := FindFirst(objCACIC.getLocalFolderName + strLogsFolderName + '\*.log', faAnyFile, SearchRec);
 
     while intSearch = 0 do
       begin
         listItem := listLogsDisponiveis.Items.Add;
         listItem.Caption := SearchRec.Name;
 
-        listItem.SubItems.Add(DateToStr(FileDateToDateTime(FileAge(g_oCacic.getLocalFolder + strLogsFolderName + '\' + SearchRec.Name))));
-        listItem.SubItems.Add(FormularioGeral.getSizeInBytes(FormularioGeral.GetFileSize(g_oCacic.getLocalFolder + strLogsFolderName +  '\' + SearchRec.Name),''));
+        listItem.SubItems.Add(DateToStr(FileDateToDateTime(FileAge(objCACIC.getLocalFolderName + strLogsFolderName + '\' + SearchRec.Name))));
+        listItem.SubItems.Add(objCACIC.getFileSize(objCACIC.getLocalFolderName + strLogsFolderName +  '\' + SearchRec.Name,true));
 
         intSearch := FindNext(SearchRec);
       end;
@@ -117,8 +115,7 @@ begin
   Finally
     SysUtils.FindClose(SearchRec);
   End;
-
-  g_oCacic.writeDebugLog('findLogFiles - END');
+  objCACIC.writeDebugLog('findLogFiles: END');
 end;
 
 procedure TFormLog.FormActivate(Sender: TObject);

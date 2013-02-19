@@ -152,14 +152,14 @@ object FormConfiguracoes: TFormConfiguracoes
     Height = 18
     Shape = bsBottomLine
   end
-  object Edit_WebManagerAddress: TEdit
+  object edWebManagerAddress: TEdit
     Left = 7
     Top = 32
     Width = 170
     Height = 21
     TabOrder = 0
   end
-  object BtN_Confirmar: TButton
+  object btConfirmar: TButton
     Left = 216
     Top = 27
     Width = 75
@@ -168,7 +168,7 @@ object FormConfiguracoes: TFormConfiguracoes
     TabOrder = 1
     OnClick = pro_Btn_Confirmar
   end
-  object Btn_Cancelar: TButton
+  object btCancelar: TButton
     Left = 133
     Top = 85
     Width = 75
@@ -177,7 +177,7 @@ object FormConfiguracoes: TFormConfiguracoes
     TabOrder = 2
     OnClick = pro_Btn_Cancelar
   end
-  object Btn_OK: TButton
+  object btOK: TButton
     Left = 216
     Top = 85
     Width = 75

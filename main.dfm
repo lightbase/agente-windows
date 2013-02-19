@@ -1,6 +1,6 @@
 object FormularioGeral: TFormularioGeral
-  Left = 289
-  Top = 122
+  Left = 331
+  Top = 136
   HorzScrollBar.Visible = False
   VertScrollBar.Visible = False
   BiDiMode = bdLeftToRight
@@ -8,7 +8,7 @@ object FormularioGeral: TFormularioGeral
   BorderStyle = bsSingle
   Caption = 'CACIC - Informa'#231#245'es Gerais'
   ClientHeight = 562
-  ClientWidth = 716
+  ClientWidth = 752
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -139,23 +139,24 @@ object FormularioGeral: TFormularioGeral
   Position = poDesktopCenter
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
   object Panel3: TPanel
     Left = 648
     Top = -1
-    Width = 68
+    Width = 105
     Height = 567
     Color = clGray
     TabOrder = 3
     object pnVersao: TPanel
       Left = 5
       Top = 546
-      Width = 61
+      Width = 96
       Height = 16
       BevelInner = bvLowered
       BevelOuter = bvLowered
-      Caption = 'v. 2.6.0.xxx'
+      Caption = 'v. 2.8.0.xxx'
       Color = clBackground
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWhite
@@ -168,12 +169,12 @@ object FormularioGeral: TFormularioGeral
     object bt_Fechar_Infos_Gerais: TBitBtn
       Left = 6
       Top = 252
-      Width = 61
-      Height = 33
+      Width = 96
+      Height = 48
       Caption = 'Fechar'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -9
+      Font.Height = -13
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
@@ -251,7 +252,7 @@ object FormularioGeral: TFormularioGeral
         Caption = 'Sistemas Monitorados Instalados Nesta Esta'#231#227'o'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clHotLight
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'MS Sans Serif'
         Font.Style = [fsBold, fsUnderline]
         ParentFont = False
@@ -304,13 +305,13 @@ object FormularioGeral: TFormularioGeral
       object Lb_TCPIP: TLabel
         Left = 5
         Top = 4
-        Width = 136
-        Height = 14
+        Width = 140
+        Height = 15
         Alignment = taCenter
         Caption = 'Configura'#231#245'es de TCP/IP'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clHotLight
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'Arial'
         Font.Style = [fsBold, fsUnderline]
         ParentFont = False
@@ -323,7 +324,7 @@ object FormularioGeral: TFormularioGeral
         Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clSilver
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'Arial'
         Font.Style = []
         ParentColor = False
@@ -332,31 +333,61 @@ object FormularioGeral: TFormularioGeral
         DesignSize = (
           631
           126)
+        object ST_VL_DominioWindows: TStaticText
+          Left = 436
+          Top = 57
+          Width = 18
+          Height = 19
+          Alignment = taRightJustify
+          Anchors = [akRight]
+          Caption = '13'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'Arial'
+          Font.Style = []
+          ParentFont = False
+          TabOrder = 31
+        end
+        object ST_LB_DominioWindows: TStaticText
+          Left = 267
+          Top = 57
+          Width = 177
+          Height = 19
+          Caption = 'Servidor de Dom'#237'nio Windows:'
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'Arial'
+          Font.Style = [fsBold]
+          ParentFont = False
+          TabOrder = 30
+        end
         object ST_VL_MacAddress: TStaticText
           Left = 436
           Top = 23
-          Width = 16
-          Height = 18
+          Width = 18
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '12'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
           TabOrder = 29
         end
         object ST_LB_MacAddress: TStaticText
-          Left = 350
+          Left = 352
           Top = 23
-          Width = 88
-          Height = 18
+          Width = 90
+          Height = 19
           Caption = 'Endere'#231'o MAC:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -365,12 +396,12 @@ object FormularioGeral: TFormularioGeral
         object ST_LB_NomeHost: TStaticText
           Left = 60
           Top = 8
-          Width = 88
-          Height = 18
+          Width = 92
+          Height = 19
           Caption = 'Nome do HOST:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -379,14 +410,14 @@ object FormularioGeral: TFormularioGeral
         object ST_VL_NomeHost: TStaticText
           Left = 145
           Top = 8
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '1'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -395,12 +426,12 @@ object FormularioGeral: TFormularioGeral
         object ST_LB_IpEstacao: TStaticText
           Left = 15
           Top = 23
-          Width = 133
-          Height = 18
+          Width = 141
+          Height = 19
           Caption = 'Endere'#231'o IP da Esta'#231#227'o:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -409,12 +440,12 @@ object FormularioGeral: TFormularioGeral
         object ST_LB_IpRede: TStaticText
           Left = 29
           Top = 40
-          Width = 119
-          Height = 18
+          Width = 124
+          Height = 19
           Caption = 'Endere'#231'o IP da Rede:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -423,12 +454,12 @@ object FormularioGeral: TFormularioGeral
         object ST_LB_DominioDNS: TStaticText
           Left = 5
           Top = 57
-          Width = 143
-          Height = 18
+          Width = 148
+          Height = 19
           Caption = 'Servidor de Dom'#237'nio DNS:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -437,26 +468,26 @@ object FormularioGeral: TFormularioGeral
         object ST_LB_DnsPrimario: TStaticText
           Left = 20
           Top = 73
-          Width = 128
-          Height = 18
+          Width = 134
+          Height = 19
           Caption = 'Servidor DNS Prim'#225'rio:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 5
         end
         object ST_LB_DnsSecundario: TStaticText
-          Left = 295
-          Top = 73
-          Width = 143
-          Height = 18
+          Left = 5
+          Top = 89
+          Width = 150
+          Height = 19
           Caption = 'Servidor DNS Secund'#225'rio:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -464,69 +495,69 @@ object FormularioGeral: TFormularioGeral
         end
         object ST_LB_Gateway: TStaticText
           Left = 53
-          Top = 89
-          Width = 95
-          Height = 18
+          Top = 107
+          Width = 100
+          Height = 19
           Caption = 'Gateway Padr'#227'o:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 7
         end
         object ST_LB_Mascara: TStaticText
-          Left = 316
+          Left = 318
           Top = 40
-          Width = 122
-          Height = 18
+          Width = 128
+          Height = 19
           Caption = 'M'#225'scara de SubRede:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 8
         end
         object ST_LB_ServidorDHCP: TStaticText
-          Left = 352
-          Top = 89
-          Width = 86
-          Height = 18
+          Left = 354
+          Top = 106
+          Width = 90
+          Height = 19
           Caption = 'Servidor DHCP:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 9
         end
         object ST_LB_WinsPrimario: TStaticText
-          Left = 14
-          Top = 106
-          Width = 134
-          Height = 18
+          Left = 306
+          Top = 73
+          Width = 139
+          Height = 19
           Caption = 'Servidor Wins Prim'#225'rio:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
           TabOrder = 10
         end
         object ST_LB_WinsSecundario: TStaticText
-          Left = 289
-          Top = 106
-          Width = 149
-          Height = 18
+          Left = 291
+          Top = 89
+          Width = 155
+          Height = 19
           Caption = 'Servidor Wins Secund'#225'rio:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -535,14 +566,14 @@ object FormularioGeral: TFormularioGeral
         object ST_VL_IpEstacao: TStaticText
           Left = 145
           Top = 23
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '2'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -551,30 +582,30 @@ object FormularioGeral: TFormularioGeral
         object ST_VL_DNSPrimario: TStaticText
           Left = 145
           Top = 73
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '5'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
           TabOrder = 13
         end
         object ST_VL_DNSSecundario: TStaticText
-          Left = 436
-          Top = 73
-          Width = 10
-          Height = 18
+          Left = 145
+          Top = 89
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '6'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -582,15 +613,15 @@ object FormularioGeral: TFormularioGeral
         end
         object ST_VL_Gateway: TStaticText
           Left = 145
-          Top = 89
-          Width = 10
-          Height = 18
+          Top = 107
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '7'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -599,14 +630,14 @@ object FormularioGeral: TFormularioGeral
         object ST_VL_Mascara: TStaticText
           Left = 436
           Top = 40
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '8'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -614,31 +645,31 @@ object FormularioGeral: TFormularioGeral
         end
         object ST_VL_ServidorDHCP: TStaticText
           Left = 436
-          Top = 89
-          Width = 10
-          Height = 18
+          Top = 106
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '9'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
           TabOrder = 17
         end
         object ST_VL_WinsPrimario: TStaticText
-          Left = 145
-          Top = 106
-          Width = 16
-          Height = 18
+          Left = 436
+          Top = 73
+          Width = 18
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '10'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -646,15 +677,15 @@ object FormularioGeral: TFormularioGeral
         end
         object ST_VL_WinsSecundario: TStaticText
           Left = 436
-          Top = 106
-          Width = 16
-          Height = 18
+          Top = 89
+          Width = 18
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '11'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -663,14 +694,14 @@ object FormularioGeral: TFormularioGeral
         object ST_VL_DominioDNS: TStaticText
           Left = 145
           Top = 57
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '4'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -679,14 +710,14 @@ object FormularioGeral: TFormularioGeral
         object ST_VL_IpRede: TStaticText
           Left = 145
           Top = 40
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Alignment = taRightJustify
           Anchors = [akRight]
           Caption = '3'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -761,7 +792,7 @@ object FormularioGeral: TFormularioGeral
         Caption = 'Coletas Realizadas Nesta Data'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clHotLight
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'MS Sans Serif'
         Font.Style = [fsBold, fsUnderline]
         ParentFont = False
@@ -770,12 +801,12 @@ object FormularioGeral: TFormularioGeral
         Left = 187
         Top = 4
         Width = 3
-        Height = 14
+        Height = 15
         Alignment = taCenter
         Caption = '.'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clBlack
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'Arial'
         Font.Style = []
         ParentFont = False
@@ -832,13 +863,13 @@ object FormularioGeral: TFormularioGeral
       object lbInformacoesPatrimoniais: TLabel
         Left = 5
         Top = 4
-        Width = 142
-        Height = 14
+        Width = 147
+        Height = 15
         Alignment = taCenter
         Caption = 'Informa'#231#245'es Patrimoniais'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clHotLight
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'Arial'
         Font.Style = [fsBold, fsUnderline]
         ParentFont = False
@@ -846,13 +877,13 @@ object FormularioGeral: TFormularioGeral
       object lbSemInformacoesPatrimoniais: TLabel
         Left = 157
         Top = 4
-        Width = 228
-        Height = 14
+        Width = 265
+        Height = 15
         Alignment = taCenter
         Caption = '(Informa'#231#245'es Patrimoniais ainda n'#227'o coletadas)'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clRed
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'Arial'
         Font.Style = []
         ParentFont = False
@@ -866,7 +897,7 @@ object FormularioGeral: TFormularioGeral
         Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clSilver
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'Arial'
         Font.Style = []
         ParentColor = False
@@ -878,13 +909,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_etiqueta9: TStaticText
           Left = 510
           Top = 90
-          Width = 16
-          Height = 18
+          Width = 18
+          Height = 19
           Anchors = [akRight]
           Caption = '10'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -900,7 +931,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'S'#233'rie da Impressora:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -909,13 +940,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_Etiqueta3: TStaticText
           Left = 146
           Top = 58
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '4'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -931,7 +962,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'Se'#231#227'o:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -940,13 +971,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_etiqueta4: TStaticText
           Left = 510
           Top = 9
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '5'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -955,13 +986,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_etiqueta5: TStaticText
           Left = 510
           Top = 26
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '6'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -970,13 +1001,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_etiqueta6: TStaticText
           Left = 510
           Top = 42
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '7'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -985,13 +1016,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_etiqueta7: TStaticText
           Left = 510
           Top = 59
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '8'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -1000,13 +1031,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_etiqueta8: TStaticText
           Left = 510
           Top = 74
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '9'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -1022,7 +1053,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'PIB do Monitor:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1038,7 +1069,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'S'#233'rie da CPU:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1054,7 +1085,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'PIB da CPU:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1070,7 +1101,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'Entidade:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1079,13 +1110,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_Etiqueta1: TStaticText
           Left = 146
           Top = 8
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '1'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -1101,7 +1132,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'Linha de Neg'#243'cio:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1117,7 +1148,7 @@ object FormularioGeral: TFormularioGeral
           Caption = #211'rg'#227'o:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1133,7 +1164,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'S'#233'rie do Monitor:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1149,7 +1180,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'PIB da Impressora:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1158,13 +1189,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_Etiqueta1a: TStaticText
           Left = 146
           Top = 24
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '2'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -1173,13 +1204,13 @@ object FormularioGeral: TFormularioGeral
         object st_vl_Etiqueta2: TStaticText
           Left = 146
           Top = 42
-          Width = 10
-          Height = 18
+          Width = 11
+          Height = 19
           Anchors = [akRight]
           Caption = '3'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -1242,7 +1273,7 @@ object FormularioGeral: TFormularioGeral
         Caption = 'Servidores'
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clHotLight
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'MS Sans Serif'
         Font.Style = [fsBold, fsUnderline]
         ParentFont = False
@@ -1255,7 +1286,7 @@ object FormularioGeral: TFormularioGeral
         Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clSilver
-        Font.Height = -11
+        Font.Height = -12
         Font.Name = 'Arial'
         Font.Style = []
         ParentColor = False
@@ -1273,7 +1304,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'Atualiza'#231#227'o de Vers'#245'es:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1289,7 +1320,7 @@ object FormularioGeral: TFormularioGeral
           Caption = '2'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -1304,7 +1335,7 @@ object FormularioGeral: TFormularioGeral
           Caption = 'Aplica'#231#227'o WEB:'
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = [fsBold]
           ParentFont = False
@@ -1319,7 +1350,7 @@ object FormularioGeral: TFormularioGeral
           AutoSize = False
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
-          Font.Height = -11
+          Font.Height = -12
           Font.Name = 'Arial'
           Font.Style = []
           ParentFont = False
@@ -1352,31 +1383,33 @@ object FormularioGeral: TFormularioGeral
     Color = clYellow
     TabOrder = 2
   end
-  object Timer_Nu_Intervalo: TTimer
+  object timerNuIntervalo: TTimer
     Enabled = False
     Interval = 5000
-    OnTimer = ExecutaCacic
-    Left = 674
-    Top = 30
+    OnTimer = timerNuIntervaloTimer
+    Left = 682
+    Top = 2
   end
-  object Timer_Nu_Exec_Apos: TTimer
+  object timerNuExecApos: TTimer
     Enabled = False
     Interval = 1
-    OnTimer = ExecutaCacic
-    Left = 674
+    OnTimer = timerNuExecAposTimer
+    Left = 652
     Top = 2
   end
   object Popup_Menu_Contexto: TPopupMenu
     MenuAnimation = [maLeftToRight, maRightToLeft, maTopToBottom, maBottomToTop]
+    OwnerDraw = True
     OnPopup = Popup_Menu_ContextoPopup
-    Left = 674
-    Top = 86
+    Left = 652
+    Top = 89
     object Mnu_LogAtividades: TMenuItem
       Caption = 'Logs de Atividades'
       Hint = 
         'Exibe as atividades desempenhadas pelos agentes do CACIC nesta d' +
         'ata.'
       OnClick = ExibirLogAtividades
+      OnDrawItem = Mnu_LogAtividadesDrawItem
     end
     object Mnu_Configuracoes: TMenuItem
       Caption = 'Configura'#231#245'es'
@@ -1384,6 +1417,7 @@ object FormularioGeral: TFormularioGeral
         'Permite a reconfigura'#231#227'o de endere'#231'o do Servidor de Aplica'#231#227'o e ' +
         'Servidor de Atualiza'#231#245'es'
       OnClick = ExibirConfiguracoes
+      OnDrawItem = Mnu_ConfiguracoesDrawItem
     end
     object Mnu_ExecutarAgora: TMenuItem
       Caption = 'Executar Agora'
@@ -1391,13 +1425,15 @@ object FormularioGeral: TFormularioGeral
         'Ordena ao Agente Principal que inicie as a'#231#245'es fora do intervalo' +
         ' previamente configurado no m'#243'dulo Gerente WEB'
       OnClick = ExecutaCacic
+      OnDrawItem = Mnu_ExecutarAgoraDrawItem
     end
-    object Mnu_InfosTCP: TMenuItem
+    object Mnu_InformacoesGerais: TMenuItem
       Caption = 'Informa'#231#245'es Gerais'
       Hint = 
         'Exibe um resumo de informa'#231#245'es relevantes coletadas neste comput' +
         'ador'
-      OnClick = Mnu_InfosTCPClick
+      OnClick = Mnu_InformacoesGeraisClick
+      OnDrawItem = Mnu_InformacoesGeraisDrawItem
     end
     object Mnu_SuporteRemoto: TMenuItem
       Caption = 'Ativar Suporte Remoto Seguro'
@@ -1406,6 +1442,7 @@ object FormularioGeral: TFormularioGeral
         'ente WEB para esta subrede, esta op'#231#227'o executar'#225' o M'#243'dulo Servid' +
         'or de Suporte Remoto Seguro'
       OnClick = Mnu_SuporteRemotoClick
+      OnDrawItem = Mnu_SuporteRemotoDrawItem
     end
     object Mnu_FinalizarCacic: TMenuItem
       Caption = 'Finalizar o CACIC'
@@ -1413,18 +1450,39 @@ object FormularioGeral: TFormularioGeral
         'Ordenar'#225' ao Agente Principal que auto-finalize-se. '#201' necess'#225'rio ' +
         'conhecer a senha configurada previamente no m'#243'dulo Gerente WEB.'
       OnClick = Sair
+      OnDrawItem = Mnu_FinalizarCacicDrawItem
     end
   end
-  object Timer_InicializaTray: TTimer
-    Interval = 60000
-    OnTimer = Timer_InicializaTrayTimer
-    Left = 674
-    Top = 58
+  object cn: TSHChangeNotify
+    HardDriveOnly = False
+    OnAssocChanged = cnAssocChanged
+    OnAttributes = cnAttributes
+    OnCreate = cnCreate
+    OnDelete = cnDelete
+    OnDriveAdd = cnDriveAdd
+    OnDriveAddGUI = cnDriveAddGUI
+    OnDriveRemoved = cnDriveRemoved
+    OnMediaInserted = cnMediaInserted
+    OnMediaRemoved = cnMediaRemoved
+    OnMkDir = cnMkDir
+    OnNetShare = cnNetShare
+    OnNetUnshare = cnNetUnshare
+    OnRenameFolder = cnRenameFolder
+    OnRenameItem = cnRenameItem
+    OnRmDir = cnRmDir
+    OnServerDisconnect = cnServerDisconnect
+    OnUpdateDir = cnUpdateDir
+    OnUpdateImage = cnUpdateImage
+    OnUpdateItem = cnUpdateItem
+    OnEndSessionQuery = cnEndSessionQuery
+    Left = 682
+    Top = 89
   end
-  object imgList_Icones: TImageList
+  object imgIconList: TImageList
+    DrawingStyle = dsTransparent
     ShareImages = True
-    Left = 674
-    Top = 114
+    Left = 652
+    Top = 31
     Bitmap = {
       494C010104000900040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000003000000001002000000000000030
@@ -1684,135 +1742,135 @@ object FormularioGeral: TFormularioGeral
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
-      00000000000000000000000000000000000000000000021C7800000000000000
+      000000000000000000000000000000000000000000000021A600000000000000
       0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000000000000125B000000000000000000C0C4D7FF000000000000
-      00001E1E1EFF0000000000000000000000000000000000000000000000000000
-      00000000000000000000F0F1F5FF0000000000000000C0C4D7FF000000000000
+      000000000000000000000021A30000000000000000000021A600000000000000
       0000000000000000000000000000000000000000000000000000000000000000
-      00000000000000000000F0F1F5FF0000000000000000404040FF000000000000
+      000000000000000000000021A30000000000000000000021A600000000000000
       0000000000000000000000000000000000000000000000000000000000000000
-      000000000000000000000000000000000000000000000032FD00000000000000
+      000000000000000000000021A30000000000000000004B599C00000000000000
+      00003BBC3C0050BE520080C48100000000000000000000000000000000000000
+      000000000000000000004E5C9C0000000000001983000031FA000029CC000000
       0000000000000000000000000000000000000000000000000000000000000000
-      000000000000000000000032FD0000000000404B7BFF0032FDFF000000000000
-      00001E1E1EFFB9B9B9FF00000000000000000000000000000000000000000000
-      000000000000405EDCFF002BDCFF00000000404B7BFF0032FDFF000000000000
-      00000000000000000000000000001E1E1EFF1E1E1EFF1E1E1EFF000000000000
-      000000000000405EDCFF002BDCFF0000000000000000003AFFFF000000000000
+      000000000000002AD5000030F60000000000001983000031FA000029CC000000
+      00000000000000000000000000001E1E1E000000000000000000000000000000
+      000000000000002AD5000030F60000000000001983000031FA000029CC000000
+      00000000000000000000000000000F0F8E000F0F8E001E1E1E00000000000000
+      000000000000002AD5000030F60000000000000000000132F9002D9D5B0004AE
+      0B0075CF790049E02F003FE21D003AB83D0065DF6A0054DE570063D6630056DD
+      5B00000000007581B7000130F500000000003D75AC000833C9002858B2000000
       0000000000000000000000000000000000000000000000000000000000000000
-      0000000000000025B6FF223172FF00000000305159000032FD00163886000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      000000000000163886000032FD001E333A000C32A8FF0131F6FFC0C7E3FF0000
-      00001E1E1EFF1E1E1EFFC0C0C0FF000000000000000000000000000000000000
-      000000000000032FDBFF002EF0FFC0C3CCFF0C32A8FF0131F6FFC0C7E3FF0000
-      000000000000000000001E1E1EFF0000FFFF0000FFFF1E1E1EFF000000000000
-      000000000000032FDBFF002EF0FFC0C3CCFF1A2179FF0037FFFF313476FF0000
-      0000000000000000000000000000000000000000000000000000000000000000
-      000000000000002CFFFF0028FCFF0000000083DADC009DFFFE0083DADC000000
-      00000000000025375E005078C900679AFE00679AFE004B71BB00000000000000
-      00000000000092F3F3009DFFFE005F9DA00098F8F7FF6AB1B3FFB8D3D3FF0000
-      00001E1E1EFF62F6FFFF1E1E1EFF2E4065FFAFBFDEFFD0D7E8FF000000000000
-      000000000000A6FCFCFF88E3E3FFD7E9EAFF98F8F7FF6AB1B3FFB8D3D3FF0000
-      000000000000CCD2DDFF1E1E1EFF0000FFFF0000FFFF1E1E1EFF000000000000
-      000000000000A6FCFCFF88E3E3FFD7E9EAFF7DD0CEFF365860FF72BCB8FF438D
-      C6FF64C9FCFF95DFF9FFA7E2EDFFA7E0EAFFA7DFE8FFA5E0E8FF88D2F4FF61C7
-      F4FF0000000096F6EAFFA5FFF8FF000000001126080098FDFC0030554500354F
-      85006DA2FF00679AFE00679AFE0039558E004262A400679AFE00679AFE006DA2
-      FF0000000000345951008FEEEB0011211100487E6AFF9BFEFDFFA8B9B8FFD2DB
-      EEFF1E1E1EFF4AE9F4FF5EEDFFFF1E1E1EFF5074B9FF679AFEFF6BA0FFFF3B59
-      95FF000000008FE6E7FF8AE5E4FFC4C9C6FF487E6AFF9BFEFDFFA8B9B8FFD2DB
-      EEFF689CFAFF679AFEFF6394F3FF2F4673FF334C7DFF679AFEFF6BA0FFFF3B59
-      95FF000000008FE6E7FF8AE5E4FFC4C9C6FF3D5D53FFA5FFFFFF5B9699FF617B
-      9AFFF1B982FFF8CBA2FFF9E2C6FFBEC1B1FFC2C7BDFFD6CFC0FFFFDDC0FF8381
-      88FF00000000A8FFFFFF82D4D8FF000000000000000070E136001D2C49002EB8
-      E700679AFE00679AFE002A3F6900679AFE00679AFE002F477700679AFE00679A
-      FE002EB8E7001E333A0070E1360000000000587251FF51A42AFF41639EFF5097
-      E8FF1E1E1EFF45E8F2FF5EEAFFFF5FEEFFFF1E1E1EFF4F72B0FF679AFEFF6498
-      FAFF4B93DFFF468F25FF61C330FF00000000587251FF51A42AFF41639EFF5097
-      E8FF679AFEFF679AFEFF1E1E1EFF0000FFFF0000FFFF1E1E1EFF679AFEFF6498
-      FAFF4B93DFFF468F25FF61C330FF00000000000000004A9526FF355159FF4E9B
-      E7FFECC195FFD0ECFDFFE0EDF2FF7EB1C8FF8EBDD2FF86BCD5FFAED1E2FF9A98
-      B8FF4775CCFF4DA11BFF4C9820FF00000000000000004262A400679AFE0030C0
-      F00030C0F0006494F800679AFE00679AFE00679AFE00679AFE005F91F0002EB8
-      E70030C8F9006DA2FF004B71BB0000000000D2D2D4FF2F5B1EFF3FA2E2FF3F99
-      D9FF42A0E3FF1E1E1EFF5EEAFFFF5EEAFFFF61F2FFFF1E1E1EFF4E72B8FF33B5
-      E9FF33B9EDFF36577FFFA3AEB5FF00000000D2D2D4FF2F5B1EFF3FA2E2FF3F99
-      D9FF42A0E3FF679AFEFF1E1E1EFF0000FFFF0000FFFF1E1E1EFF5F95F3FF33B5
-      E9FF33B9EDFF36577FFFA3AEB5FF0000000000000000315F23FF449BEAFF4389
-      CEFF93A8B1FFFFE8BFFFE0EAE9FF8CC6DAFF95CADDFFDDDDCFFFEED7BDFF30AF
-      E0FF2DBDE9FF375848FF0000000000000000679AFE00679AFE00679AFE00679A
-      FE005F91F000679AFE00679AFE00679AFE00679AFE00679AFE00679AFE005690
-      E600679AFE00679AFE00679AFE005A88E2006090EEFF679AFEFF679AFEFF40A1
-      E1FF5C93EFFF1E1E1EFF5FEDFFFF5EEAFFFF5EEAFFFF60F1FFFF1E1E1EFF2C8D
-      B1FF6498FAFF679AFEFF679AFEFFCBD0DAFF6090EEFF679AFEFF679AFEFF40A1
-      E1FF5C93EFFF679AFEFF1E1E1EFF0000FFFF0000FFFF1E1E1EFF679AFEFF38B0
-      EAFF6498FAFF679AFEFF679AFEFFCBD0DAFF4568ACFF699EFFFF669AFFFF4998
-      E4FF5785DDFFC5B4B0FFFEE4C3FFFFE0B7FFFFE3BCFFF3D5BAFF7F9BE3FF2CB1
-      DEFF6C96FFFF699EFFFF6FA6FFFF000000004262A400679AFE00679AFE00679A
-      FE005A88E2005078C9004262A400679AFE00679AFE005781D9004B71BB005781
-      D900679AFE00679AFE00679AFE004669B0006597F9FF679AFEFF679AFEFF1E1E
-      1EFF55EBFFFF55EAFFFF5EEAFFFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E
-      1EFF5F8DE7FF679AFEFF679AFEFF526385FF6597F9FF679AFEFF679AFEFF679A
-      FEFF6394F6FF6090EFFF1E1E1EFF0000FFFF0000FFFF0000FFFF1E1E1EFF6395
-      F7FF679AFEFF679AFEFF679AFEFF526385FF5680D6FF6698FFFF6699FFFF6699
-      FFFF6A9FFFFF699DFFFF8C95B7FFFFEAC1FFFBDAB3FF689DFFFF6A9FFFFF6A9F
-      FFFF6699FFFF6699FFFF6DA4FFFF181F2AFF000000003D5C99005E8DE900679A
-      FE00679AFE00679AFE00679AFE00679AFE00679AFE00679AFE00679AFE00679A
-      FE00679AFE005A88E20025375E000000000004070BFF6190F0FF6698FCFF1E1E
-      1EFF4FE9F5FF5EEAFFFF5EEAFFFF5FEEFFFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E
-      1EFF1E1E1EFF6496F7FF263A5EFFD0D0D0FF04070BFF6190F0FF6698FCFF679A
-      FEFF6BA0FFFF679AFEFF679AFEFF2F4F90FF0000FFFF0000FFFF0000FFFF1E1E
-      1EFF6699FDFF6496F7FF263A5EFFD0D0D0FF262626FF679AF0FF6FA6FFFF6BA1
-      FFFF5F8FEFFF9997A5FFF7DCBFFF8EBCD9FF9EBFCFFFE2C4ACFF5E84D3FF6495
-      F9FF6EA5FFFF699EFFFF141B29FF000000000000000000000000000000000000
-      0000000000000000000000000000000000000000000000000000000000000000
-      000000000000000000000000000000000000404040FF000000FF000000FF0203
-      03FF034F5EFF5EEBFFFF5EEAFFFF5EEAFFFF23E2F8FF1F2228FF0F1626FF0206
-      0CFF000000FF000000FF000000FF00000000404040FF000000FF000000FF0203
-      03FF0000FFFF0000FFFF1E1E1EFF476BB2FF2A3F6AFF0000FFFF0000FFFF1E1E
-      1EFF000000FF000000FF000000FF000000005A5A5AFF000000FF000000FF0000
-      00FF675B54FFFFDEB4FFE1F1F6FF8EC1D0FF9BCADAFFF3E1CCFFE7CBB3FF0000
-      00FF000000FF000000FF000000FF000000000000000000092E00000724000007
-      2400000724000007240000072400000724000007240000072400000724000007
-      2400000724000007240000092E000000000000000000000109FF000109FF0001
-      09FF1E1E1EFF5AEFFDFF5EEAFFFF5EEAFFFF5EEAFFFF149DADFF0D0D0EFF0001
-      09FF000109FF000109FF000105FF0000000000000000000109FF000109FF0001
-      09FF0000FFFF0000FFFF1E1E1EFF1E1E1EFF000109FF1E1E1EFF0000FFFF1E1E
-      1EFF000109FF000109FF000105FF0000000000000000000207FF000104FF0001
-      04FFFBC78DFFFAECC8FFFAE8C0FFFEDEA9FFFCE3B8FFFAE6C3FFFFF8DAFF644A
-      35FF000104FF000104FF525256FF0000000000000000000000004DBCB1004DBC
-      B1004DBCB1004DBCB1004DBCB1004DBCB1004DBCB1004DBCB1004DBCB1004DBC
-      B1004DBCB1004DBCB1000000000000000000000000001B3C7DFF144486FF1444
-      86FF1E1E1EFF0AA2B7FF5EEAFFFF5EEAFFFF5EEAFFFF5EEAFFFF10353AFF1E1E
-      1EFF144486FF134081FFD0D2E0FF00000000000000001B3C7DFF144486FF1444
-      86FF0000FFFF0000FFFF0000FFFF1E1E1EFF1E1E1EFF0000FFFF0000FFFF1E1E
-      1EFF1E1E1EFF134081FFD0D2E0FF0000000000000000424857FF317D92FF2C72
-      A8FF3599D9FF4DB1EAFF5CBBF0FF5CBAEDFF5BB9ECFF5BB9EBFF429FDAFF2A87
-      C5FF2D7288FF20566AFF00000000000000000000000000000000296355002757
-      BC006DC1830027636C00325B7F0034662900113562003C6C960060B150001247
-      A1005693AB0000000000000000000000000000000000000000005E8A57FF061C
-      62FF355B54FF1D311FFF5DEEFFFF5EEAFFFF5EEAFFFF5EEAFFFF2AC4D5FF1D1F
-      1CFF0B165DFFE9FAF5FF000000000000000000000000000000005E8A57FF061C
-      62FF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF1E1E
-      1EFF1E1E1EFFE9FAF5FF00000000000000000000000000000000346A29FF326A
-      B6FF61A7D4FF53A5D9FF51A5D9FF4FA5D9FF50A5D9FF50A4D9FF5BA5D7FF65A7
-      D3FF01168FFF83BEBEFF000000000000000000000000000000001854B8006ABD
-      FE006ECE4F000B3AB70073C1D4005AB32B000333EE0089E9FF006BD335000026
-      C10077C7CB004E9F2A00000000000000000000000000D0D7F5FF54AE4DFF1946
-      E0FF88ECB6FF418E54FF54F0FFFF5EEAFFFF5EEAFFFF5EEAFFFF5EEAFFFF1768
-      74FF1E1E1EFF78D39AFF000000000000000000000000D0D7F5FF54AE4DFF1946
-      E0FF5FA87CFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E
-      1EFF1E1E1EFF78D39AFF00000000000000000000000000000000266A74FF3A79
-      FFFF89EA7FFF1F5E6EFF3370FFFF89ED84FF2E7452FF1F54FFFF8EF0A4FF357F
-      52FF1B4EFDFF83E1B0FF00000000000000000000000000000000000000000000
-      000075CD91003B855B000000000000000000000000000000000063B55900205C
-      8E000000000000000000000000000000000000000000000000006BC061FF1E4A
-      CFFF77CBC0FF639D64FF1E1E1EFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E
-      1EFF555555FF1E1E1EFF000000000000000000000000000000006BC061FF1E4A
-      CFFF77CBC0FF639D64FF1E1E1EFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E1EFF1E1E
-      1EFF557FEFFF88E1B9FF000000000000000000000000000000004F8F44FF1B3D
-      C0FF7ABCB0FF519442FF1B3CBAFF71B6BAFF60A549FF1538ABFF6BA9C5FF63A7
-      47FF1338A6FF89C4C9FF0000000000000000424D3E000000000000003E000000
+      0000000000002452B2000833C9003B6EA4003D75AC000933C7002858B2000000
+      00000000000000000000000000001E1E1E00224B4E0000000000000000000000
+      0000000000002452B2000833C9003B6EA4003D75AC000833C9002858B2000000
+      000000000000000000008E8E8E000000FF000000FF001E1E1E008E8E8E000000
+      0000000000002452B2000833C9003B6EA400517696001D79830004AE10001EA8
+      28009CE3880055DB420037DA2E0054BC4D000000000000000000000000000000
+      000000000000385588000834CA006D88A00078C6C70087E1E0007CCACB000000
+      0000000000005078C6006092ED00527CCD005681D5005D8DE9004C72BE000000
+      0000000000007CCACB0086DEDD0086D8DA0078C6C70087E1E0007CCACB000000
+      0000000000005078C6006092ED00374B73003D848E003BA7B600314365000000
+      0000000000007CCACB0086DEDD0086D8DA0078C6C70087E1E0007CCACB000000
+      0000000000005078C6006092ED000F0F8E000F0F8E001E1E1E008E8E8E000000
+      0000000000007CCACB0086DEDD0086D8DA0074B8B00023C13700019D020049BA
+      4D0095E394007ADE6B006EDE5400499F84006188D8006482BE008796B3000000
+      0000000000008BD3D50082DBDE0080AEAF003B703C0076C4BA00447464005580
+      D1006295F4006699FC006293F1005078C6005078C6006496F8006699FC005B89
+      E30000000000497D6E0075C4B600396C38003B703C0076C4BA00447464005580
+      D1006293F1006699FD006293F100374C71003D848E005DECFE003CA9B700496B
+      AB0000000000497D6E0075C4B600396C38003B703C0076C4BA00447464005580
+      D1006295F4006699FC006293F1008E8E8E008E8E8E006496F8006699FC005B89
+      E30000000000497D6E0075C4B600396C380059A566000EBB1E00009F0A001FA8
+      200098DBA20074D87D0055B36A004C7ABA005481D1006295F8006598FE006692
+      E9008B99B70049786B0077CBBB00889E88000000000056AE2C003A727200409E
+      E0005E98F5006699FC00527CCD006699FC006699FC005179C9006699FC005E98
+      F500409EE000366B590053A72B00000000000000000056AE2C003A727200409F
+      E1005E98F5006699FD00527BCC00425B8D0040898E005CEAFE005DECFE0036AF
+      B8003B78AD00366B590053A72B00000000000000000056AE2C003A727200409E
+      E0005E98F5006699FC008E8E8E000000FF000000FF001E1E1E006699FC005E98
+      F500409EE000366B590053A72B000000000057D2670004C0200000B31F0003A4
+      100035B168005C99E1005481D1006598FE006598FE005481D1006598FE005C99
+      F6003F99DA00386C5C0056A7300000000000000000003E658500528BDD0038A7
+      E10039A2DC006598FA006699FC006699FC006699FC006699FC006295F40038A7
+      E10038A7E1005189D6003E65850000000000000000003D638300528BDD0039A7
+      E20039A2DC006295F5006699FD00425B8D0024838D005DECFE005CEAFE005DEC
+      FE0036ADB700406BA0003E65850000000000000000003E658500528BDD0038A7
+      E10039A2DC006598FA008E8E8E000000FF000000FF001E1E1E008E8E8E0038A7
+      E10038A7E1005189D6003E658500000000004DD449000ABB1D001AB02A004FBC
+      470037BE41005C99E1006598FE006598FE006598FE006598FE006295F8003BA5
+      E2003BA5E2004E85D10046667B00000000004B71BC006699FC006699FC005E98
+      F5005799F0006699FC006699FC006699FC006699FC006699FC006699FC005599
+      EE005E98F5006699FC006699FC00527BCC004B71BC006699FD006699FD005C98
+      F3005799F000303C550025494E0039848E003BB5C6005DECFE003D848E003D84
+      8E003D848E0025494E00547BC500517ACA004B71BC006699FC006699FC005E98
+      F5005799F0006699FC008E8E8E000000FF000000FF0016165600565656005599
+      EE005E98F5006699FC006699FC00527BCC004DD446002DCA1B0085E1850026C4
+      16003DDA1F003DB55B006598FE006598FE006598FE006598FE006598FE00539C
+      EF005D96F5006598FE006598FE00647FB6004B71BC006699FC006699FC006699
+      FC005682D800527CCD005682D8006699FC006699FC005D8DE900527CCD00527C
+      CD006496F8006699FC006699FC00466BB1004B71BC006699FD006699FD006699
+      FD005682D800537CCE001E1E1E005DECFE005DECFE005CEAFE003EACB8001E1E
+      1E001E1E1E001E1E1E001E1E1E00466BB1004B71BC006699FC006699FC006699
+      FC005682D800527CCD005682D8004E4E8E000000FF000000FF00161656005656
+      56006496F8006699FC006699FC00466BB1005EC35E0055E2530087DF780042C7
+      370045CE380037B650005783DB006598FE006598FE005B8AE700517ACD004F77
+      C8006295F8006598FE006497FC0063779F0001020600334C80004B71BC005D8D
+      E9006295F4006495F4006598FA006699FC006699FC006598FA006295F4006293
+      F1005B89E300466CB200263A5F000000000000010500334C80004B71BC005E8E
+      EB006295F5006495F500405A8B003AB3BD005CEAFE005CEAFE005DECFE001F53
+      5B004D71B700466CB200263A5F000000000001020600334C80004B71BC005D8D
+      E9006295F4008E8E8E006598FA006699FC004E4E8E000000FF000000FF001616
+      560056565600466CB200263A5F0000000000546F540062DB5D0088DE8D005CCD
+      55003AC537004BB293006598FE006598FE006598FE006598FE006598FE006598
+      FE005D8DEB004365A90023355700000000000000000000000000000000000000
+      000004070B00090E19000F1727001F2F4E00203051000D142200070B15000102
+      0600000000000000000000000000000000000000000000000000000000000000
+      000004070B00090E19000F1727001C4449005DECFE005CEAFE005DECFE0051E1
+      F000123A3F000000000000000000000000000000000000000000000000000000
+      00000F0F8E000000FF000F0F8E001F2F4E00203051004E4E8E000000FF000F0F
+      8E001E1E1E00000000000000000000000000000000001748160065BB6B0063C6
+      6C002C7E2A000D141B000E162500202F5100203153000E162500090E18000508
+      0E000000000000000000191919000000000000000000000B3A00000D4700000D
+      4700000D4800000D4800000D4800000D480003114E00000D4800000D4700000D
+      4800000D4800000D4700000A37000000000000000000000B3A00000D4700000D
+      4700000D4800000D4800000D4800161C370048B9C3005CEAFE005DECFE005DEC
+      FE003EBDCA00091C3A00000A37000000000000000000000B3A00000D4700000D
+      47000F0F8E000000FF000F0F8E001E1E1E0003114E008E8E8E000000FF000F0F
+      8E001E1E1E00000D4700000A3700000000000000000009113A0004174400081E
+      490001104100000C4000000C4000000C400003114900000C4000000C4000000C
+      4000000C4000000C4000282F50000000000000000000000000002D7791002E7A
+      94002E7A94002E7A94002E7A94002E7A94002E7A94002E7A94002E7A94002E7A
+      94002E7A94002A728C00000000000000000000000000000000002D7791002E7A
+      94002E7A94002E7A94002E7A94002F6D7900204F55005DECFE005CEAFE005CEA
+      FE005CEAFE001C5F6700000000000000000000000000000000002D7791002E7A
+      94000F0F8E000000FF000000FF000F0F8E000F0F8E000707C6000000FF000F0F
+      8E001E1E1E002A728C00000000000000000000000000000000002D768A002D76
+      8A002D768A002D768A002D768A002D768A002D768A002D768A002D768A002D76
+      8A002D768A003176880000000000000000000000000000000000347672002C59
+      9B004A885E001D4C6800366AA000478760002655640032609700447F5B001D4B
+      6B003B6E9200478D730000000000000000000000000000000000347672002C59
+      9B004A885E001D4C6800366AA000478760001E2A450059ECFD005CEAFE005CEA
+      FE005CEAFE0050D9EC001B363A00000000000000000000000000347672002C59
+      9B004E4E8E000000FF000000FF000000FF000000FF000000FF000000FF001616
+      56001E1E1E00478D73000000000000000000000000000000000043777E002D5E
+      9800478660001B4B77003F79AE004D906700295F63002B5B9D00448068002252
+      6F004075940065A17D00000000000000000000000000000000002B719C004D95
+      DA0067C184002E719F00519BD6005AAD8D003A80A000539ACA005AAE83003374
+      AE0059A7C5004C998800000000000000000000000000000000002B719C004D95
+      DA0067C184002E719F00519BD6005AAD8D0031648D001E1E1E001E1E1E001E1E
+      1E001E1E1E001E1E1E001E1E1E001E1E1E0000000000000000002B719C004D95
+      DA0067C18400565656001E1E1E001E1E1E001E1E1E001E1E1E001E1E1E001E1E
+      1E00565656004C998800000000000000000000000000000000002F7792004A92
+      D20064BE81002769A500529DE1005BAE9300418C9200468CC30054A687003072
+      AD0059A6C4004D9C870000000000000000000000000000000000347A92003C7A
+      CF0068BC8D002A6B89004D95DA0067BD7F00307487004787D60062B485002967
+      9800539CCD005AAE830000000000000000000000000000000000347A92003C7A
+      CF0068BC8D002A6B89004D95DA0067BD7F0030748700497074001E1E1E001E1E
+      1E001E1E1E001E1E1E001E1E1E001E1E1E000000000000000000347A92003C7A
+      CF0068BC8D002A6B89008E8E8E008E8E8E008E8E8E008E8E8E008E8E8E008E8E
+      8E00539CCD005AAE83000000000000000000000000000000000064949100658F
+      C10081B6A0005E8999006D9CD2007EB995005F8F92006692C80081B6A000608C
+      9900739FCB007EB890000000000000000000424D3E000000000000003E000000
       2800000040000000300000000100010000000000800100000000000000000000
       000000000000000000000000FFFFFF0000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
@@ -1822,11 +1880,28 @@ object FormularioGeral: TFormularioGeral
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
-      00000000000000000000000000000000BFFDB7FDBFFDBFFFBFFD33F93E39BFF9
-      1FF811F81C381FF9183810381838000900080008000800098001000100018001
-      8001000100018003000000000000000100000000000000000001000000000001
-      80010001000100018001800180018001C003800180018003C007C003C003C003
-      C00380038003C003F3CFC003C003C00300000000000000000000000000000000
+      00000000000000000000000000000000BFFDBFFDBFFDB1FD1FF91EF91E398009
+      1FF81E781C1800F8181818181818001800080008000800008001800180010001
+      8001800180010001000000000000000000000000000000000001000100010001
+      00010001000180018001800180018001C003C003C003C003C003C001C003C003
+      C003C000C003C003C003C000C003C00300000000000000000000000000000000
       000000000000}
+  end
+  object timerCheckNoMinuto: TTimer
+    Interval = 60000
+    OnTimer = timerCheckNoMinutoTimer
+    Left = 652
+    Top = 118
+  end
+  object TrayIcon1: TTrayIcon
+    Visible = False
+    PopupMenu = Popup_Menu_Contexto
+    Left = 652
+    Top = 61
+  end
+  object ApplicationEvents1: TApplicationEvents
+    OnMessage = ApplicationEvents1Message
+    Left = 664
+    Top = 312
   end
 end

@@ -58,11 +58,11 @@ end;
 
 procedure TformSenha.Bt_OK_SenhaClick(Sender: TObject);
 begin
-g_oCacic.writeDebugLog('Informação de Senha: "'+Trim(editSenha.Text)+'" contra "'+Trim(g_oCacic.deCrypt( g_oCacic.GetValueFromFile('Configs','TE_SENHA_ADM_AGENTE',g_oCacic.getLocalFolder + g_oCacic.getInfFileName)))+'"');
+objCACIC.writeDebugLog('Bt_OK_SenhaClick: Comparando "'+Trim(editSenha.Text)+'" contra "'+Trim(objCACIC.deCrypt(objCACIC.GetValueFromFile('Configs','TeSenhaAdmAgente',FormularioGeral.strMainProgramInfFileName),false,true))+'"');
 
-if (Trim(editSenha.Text) = Trim(g_oCacic.deCrypt( g_oCacic.GetValueFromFile('Configs','TE_SENHA_ADM_AGENTE',g_oCacic.getLocalFolder +g_oCacic.getInfFileName)))) Then
+if (Trim(editSenha.Text) = Trim(objCACIC.deCrypt(objCACIC.GetValueFromFile('Configs','TeSenhaAdmAgente',FormularioGeral.strMainProgramInfFileName),false,true))) Then
   Begin
-    g_oCacic.setValueToFile('Configs','SJI',g_oCacic.enCrypt( 'S'),g_oCacic.getLocalFolder + g_oCacic.getInfFileName);
+    objCACIC.setValueToFile('Configs','SJI',objCACIC.enCrypt('S'),FormularioGeral.strMainProgramInfFileName);
     formSenha.Close;
     formSenha.Release;
   End
