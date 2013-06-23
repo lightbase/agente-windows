@@ -1,0 +1,85 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{62af6f7b-a3d4-4b49-9513-50c9f3900ea0}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup />
+  <ItemGroup />
+  <ProjectExtensions>
+    <Borland.Personality>Default.Personality</Borland.Personality>
+    <Borland.ProjectType />
+    <BorlandProject>
+<BorlandProject xmlns=""><Default.Personality></Default.Personality></BorlandProject></BorlandProject>
+  </ProjectExtensions>
+  <Target Name="chksis">
+    <MSBuild Projects="chksis\chksis.dproj" Targets="" />
+  </Target>
+  <Target Name="chksis:Clean">
+    <MSBuild Projects="chksis\chksis.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="chksis:Make">
+    <MSBuild Projects="chksis\chksis.dproj" Targets="Make" />
+  </Target>
+  <Target Name="cacicservice">
+    <MSBuild Projects="cacicservice\cacicservice.dproj" Targets="" />
+  </Target>
+  <Target Name="cacicservice:Clean">
+    <MSBuild Projects="cacicservice\cacicservice.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="cacicservice:Make">
+    <MSBuild Projects="cacicservice\cacicservice.dproj" Targets="Make" />
+  </Target>
+  <Target Name="cacic280">
+    <MSBuild Projects="cacic280.dproj" Targets="" />
+  </Target>
+  <Target Name="cacic280:Clean">
+    <MSBuild Projects="cacic280.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="cacic280:Make">
+    <MSBuild Projects="cacic280.dproj" Targets="Make" />
+  </Target>
+  <Target Name="gercols">
+    <MSBuild Projects="gercols\gercols.dproj" Targets="" />
+  </Target>
+  <Target Name="gercols:Clean">
+    <MSBuild Projects="gercols\gercols.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="gercols:Make">
+    <MSBuild Projects="gercols\gercols.dproj" Targets="Make" />
+  </Target>
+  <Target Name="installcacic">
+    <MSBuild Projects="installcacic\installcacic.dproj" Targets="" />
+  </Target>
+  <Target Name="installcacic:Clean">
+    <MSBuild Projects="installcacic\installcacic.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="installcacic:Make">
+    <MSBuild Projects="installcacic\installcacic.dproj" Targets="Make" />
+  </Target>
+  <Target Name="MapaCACIC">
+    <MSBuild Projects="mapacacic\MapaCACIC.dproj" Targets="" />
+  </Target>
+  <Target Name="MapaCACIC:Clean">
+    <MSBuild Projects="mapacacic\MapaCACIC.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="MapaCACIC:Make">
+    <MSBuild Projects="mapacacic\MapaCACIC.dproj" Targets="Make" />
+  </Target>
+  <Target Name="CacicVersionsAndHashes">
+    <MSBuild Projects="CacicVersionsAndHashes\CacicVersionsAndHashes.dproj" Targets="" />
+  </Target>
+  <Target Name="CacicVersionsAndHashes:Clean">
+    <MSBuild Projects="CacicVersionsAndHashes\CacicVersionsAndHashes.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="CacicVersionsAndHashes:Make">
+    <MSBuild Projects="CacicVersionsAndHashes\CacicVersionsAndHashes.dproj" Targets="Make" />
+  </Target>
+  <Target Name="Build">
+    <CallTarget Targets="chksis;cacicservice;cacic280;gercols;installcacic;MapaCACIC;CacicVersionsAndHashes" />
+  </Target>
+  <Target Name="Clean">
+    <CallTarget Targets="chksis:Clean;cacicservice:Clean;cacic280:Clean;gercols:Clean;installcacic:Clean;MapaCACIC:Clean;CacicVersionsAndHashes:Clean" />
+  </Target>
+  <Target Name="Make">
+    <CallTarget Targets="chksis:Make;cacicservice:Make;cacic280:Make;gercols:Make;installcacic:Make;MapaCACIC:Make;CacicVersionsAndHashes:Make" />
+  </Target>
+</Project>

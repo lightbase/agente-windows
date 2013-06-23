@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{0af06c7d-56dc-47c1-905b-2c36d1d354da}</ProjectGuid>
+    <MainSource>cacicservice.dpr</MainSource>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+    <DCC_DependencyCheckOutputName>..\..\Agentes_Windows_BINARIOS\cacicservice.exe</DCC_DependencyCheckOutputName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Version>7.0</Version>
+    <DCC_DebugInformation>False</DCC_DebugInformation>
+    <DCC_WriteableConstants>True</DCC_WriteableConstants>
+    <DCC_LocalDebugSymbols>False</DCC_LocalDebugSymbols>
+    <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+    <DCC_ExeOutput>C:\devel\cacic\Agentes_Windows_BINARIOS</DCC_ExeOutput>
+    <DCC_Define>DEBUG</DCC_Define>
+    <DCC_UNSAFE_TYPE>True</DCC_UNSAFE_TYPE>
+    <DCC_UNSAFE_CODE>True</DCC_UNSAFE_CODE>
+    <DCC_UNSAFE_CAST>True</DCC_UNSAFE_CAST>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <Version>7.0</Version>
+    <DCC_WriteableConstants>True</DCC_WriteableConstants>
+    <DCC_ExeOutput>C:\devel\cacic\Agentes_Windows_BINARIOS</DCC_ExeOutput>
+    <DCC_UnitSearchPath>C:\vendors_lib\MD5;C:\vendors_lib;C:\vendors_lib\jwapi2.2a\Win32API;C:\vendors_lib\jwapi2.2a\Common;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion</DCC_UnitSearchPath>
+    <DCC_ResourcePath>C:\vendors_lib\MD5;C:\vendors_lib;C:\vendors_lib\jwapi2.2a\Win32API;C:\vendors_lib\jwapi2.2a\Common;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion</DCC_ResourcePath>
+    <DCC_ObjPath>C:\vendors_lib\MD5;C:\vendors_lib;C:\vendors_lib\jwapi2.2a\Win32API;C:\vendors_lib\jwapi2.2a\Common;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion</DCC_ObjPath>
+    <DCC_IncludePath>C:\vendors_lib\MD5;C:\vendors_lib;C:\vendors_lib\jwapi2.2a\Win32API;C:\vendors_lib\jwapi2.2a\Common;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion</DCC_IncludePath>
+    <DCC_Define>DEBUG</DCC_Define>
+    <DCC_UNSAFE_TYPE>True</DCC_UNSAFE_TYPE>
+    <DCC_UNSAFE_CODE>True</DCC_UNSAFE_CODE>
+    <DCC_UNSAFE_CAST>True</DCC_UNSAFE_CAST>
+  </PropertyGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Delphi.Personality</Borland.Personality>
+    <Borland.ProjectType>VCLApplication</Borland.ProjectType>
+    <BorlandProject>
+<BorlandProject><Delphi.Personality><Parameters><Parameters Name="UseLauncher">False</Parameters><Parameters Name="LoadAllSymbols">True</Parameters><Parameters Name="LoadUnspecifiedSymbols">False</Parameters></Parameters><Language><Language Name="RootDir">E:\NTService\</Language></Language><VersionInfo><VersionInfo Name="IncludeVerInfo">True</VersionInfo><VersionInfo Name="AutoIncBuild">False</VersionInfo><VersionInfo Name="MajorVer">2</VersionInfo><VersionInfo Name="MinorVer">8</VersionInfo><VersionInfo Name="Release">0</VersionInfo><VersionInfo Name="Build">1212</VersionInfo><VersionInfo Name="Debug">False</VersionInfo><VersionInfo Name="PreRelease">False</VersionInfo><VersionInfo Name="Special">False</VersionInfo><VersionInfo Name="Private">False</VersionInfo><VersionInfo Name="DLL">False</VersionInfo><VersionInfo Name="Locale">1046</VersionInfo><VersionInfo Name="CodePage">1252</VersionInfo></VersionInfo><VersionInfoKeys><VersionInfoKeys Name="CompanyName">Dataprev - Emp. de TI da Prev Social - URES/SESS</VersionInfoKeys><VersionInfoKeys Name="FileDescription">Sistema CACIC - Módulo para Sustentação do Agente Principal</VersionInfoKeys><VersionInfoKeys Name="FileVersion">2.8.0.1212</VersionInfoKeys><VersionInfoKeys Name="InternalName"></VersionInfoKeys><VersionInfoKeys Name="LegalCopyright"></VersionInfoKeys><VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys><VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys><VersionInfoKeys Name="ProductName"></VersionInfoKeys><VersionInfoKeys Name="ProductVersion">3.0</VersionInfoKeys><VersionInfoKeys Name="Comments">Licença: GNU/LGPL</VersionInfoKeys></VersionInfoKeys><Source><Source Name="MainSource">cacicservice.dpr</Source></Source></Delphi.Personality></BorlandProject></BorlandProject>
+  </ProjectExtensions>
+  <Import Project="$(MSBuildBinPath)\Borland.Delphi.Targets" />
+  <ItemGroup>
+    <DelphiCompile Include="cacicservice.dpr">
+      <MainSource>MainSource</MainSource>
+    </DelphiCompile>
+    <DCCReference Include="..\CACIC_Library.pas" />
+    <DCCReference Include="CACICserviceMain.pas">
+      <Form>CacicSustainService</Form>
+    </DCCReference>
+  </ItemGroup>
+</Project>

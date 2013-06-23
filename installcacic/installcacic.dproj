@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{48629bb3-14c1-4811-a084-3cc35997f394}</ProjectGuid>
+    <MainSource>installcacic.dpr</MainSource>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+    <DCC_DependencyCheckOutputName>..\..\Agentes_Windows_BINARIOS\installcacic.exe</DCC_DependencyCheckOutputName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Version>7.0</Version>
+    <DCC_DebugInformation>False</DCC_DebugInformation>
+    <DCC_LocalDebugSymbols>False</DCC_LocalDebugSymbols>
+    <DCC_IntegerOverflowCheck>True</DCC_IntegerOverflowCheck>
+    <DCC_RangeChecking>True</DCC_RangeChecking>
+    <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+    <DCC_ExeOutput>C:\devel\cacic\Agentes_Windows_BINARIOS</DCC_ExeOutput>
+    <DCC_Define>DEBUG</DCC_Define>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <Version>7.0</Version>
+    <DCC_IntegerOverflowCheck>True</DCC_IntegerOverflowCheck>
+    <DCC_RangeChecking>True</DCC_RangeChecking>
+    <DCC_ExeOutput>C:\devel\cacic\Agentes_Windows_BINARIOS</DCC_ExeOutput>
+    <DCC_UnitSearchPath>C:\agentes_Windows;c:\vendors_lib\MD5;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion;c:\vendors_lib\;C:\vendors_lib\MagWMI</DCC_UnitSearchPath>
+    <DCC_ResourcePath>C:\agentes_Windows;c:\vendors_lib\MD5;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion;c:\vendors_lib\;C:\vendors_lib\MagWMI</DCC_ResourcePath>
+    <DCC_ObjPath>C:\agentes_Windows;c:\vendors_lib\MD5;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion;c:\vendors_lib\;C:\vendors_lib\MagWMI</DCC_ObjPath>
+    <DCC_IncludePath>C:\agentes_Windows;c:\vendors_lib\MD5;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion;c:\vendors_lib\;C:\vendors_lib\MagWMI</DCC_IncludePath>
+    <DCC_Define>DEBUG</DCC_Define>
+  </PropertyGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Delphi.Personality</Borland.Personality>
+    <Borland.ProjectType>VCLApplication</Borland.ProjectType>
+    <BorlandProject>
+<BorlandProject><Delphi.Personality><Parameters><Parameters Name="UseLauncher">False</Parameters><Parameters Name="LoadAllSymbols">True</Parameters><Parameters Name="LoadUnspecifiedSymbols">False</Parameters></Parameters><VersionInfo><VersionInfo Name="IncludeVerInfo">True</VersionInfo><VersionInfo Name="AutoIncBuild">False</VersionInfo><VersionInfo Name="MajorVer">2</VersionInfo><VersionInfo Name="MinorVer">8</VersionInfo><VersionInfo Name="Release">0</VersionInfo><VersionInfo Name="Build">1212</VersionInfo><VersionInfo Name="Debug">False</VersionInfo><VersionInfo Name="PreRelease">False</VersionInfo><VersionInfo Name="Special">False</VersionInfo><VersionInfo Name="Private">False</VersionInfo><VersionInfo Name="DLL">False</VersionInfo><VersionInfo Name="Locale">1046</VersionInfo><VersionInfo Name="CodePage">1252</VersionInfo></VersionInfo><VersionInfoKeys><VersionInfoKeys Name="CompanyName">Dataprev - Emp. de TI da Prev Social - URES/SESS</VersionInfoKeys><VersionInfoKeys Name="FileDescription">Sistema CACIC - Módulo para Verificação e Instalação de Estrutura Básica do Sistema CACIC</VersionInfoKeys><VersionInfoKeys Name="FileVersion">2.8.0.1212</VersionInfoKeys><VersionInfoKeys Name="InternalName"></VersionInfoKeys><VersionInfoKeys Name="LegalCopyright"></VersionInfoKeys><VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys><VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys><VersionInfoKeys Name="ProductName"></VersionInfoKeys><VersionInfoKeys Name="ProductVersion">3.0</VersionInfoKeys><VersionInfoKeys Name="Comments">Licença: GNU/LGPL</VersionInfoKeys></VersionInfoKeys><Source><Source Name="MainSource">installcacic.dpr</Source></Source></Delphi.Personality></BorlandProject></BorlandProject>
+  </ProjectExtensions>
+  <Import Project="$(MSBuildBinPath)\Borland.Delphi.Targets" />
+  <ItemGroup>
+    <DelphiCompile Include="installcacic.dpr">
+      <MainSource>MainSource</MainSource>
+    </DelphiCompile>
+    <DCCReference Include="..\CACIC_Comm.pas" />
+    <DCCReference Include="..\CACIC_Library.pas" />
+    <DCCReference Include="..\CACIC_VerifyAndGetModules.pas" />
+    <DCCReference Include="..\CACIC_WMI.pas" />
+    <DCCReference Include="uInstallCACIC.pas">
+      <Form>frmInstallCACIC</Form>
+    </DCCReference>
+  </ItemGroup>
+</Project>

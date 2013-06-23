@@ -52,7 +52,7 @@ begin
         begin
           Application.Initialize;
           Application.CreateForm(TfrmMapaCacic, frmMapaCacic);
-          Application.Run;
+  Application.Run;
         end;
      oCacic.Free();
 end.

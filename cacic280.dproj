@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectGuid>{704de977-a25c-4ab7-bd4f-8d122af0a3eb}</ProjectGuid>
+    <MainSource>cacic280.dpr</MainSource>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
+    <DCC_DependencyCheckOutputName>..\Agentes_Windows_BINARIOS\cacic280.exe</DCC_DependencyCheckOutputName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <Version>7.0</Version>
+    <DCC_AssertionsAtRuntime>False</DCC_AssertionsAtRuntime>
+    <DCC_DebugInformation>False</DCC_DebugInformation>
+    <DCC_LocalDebugSymbols>False</DCC_LocalDebugSymbols>
+    <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+    <DCC_ExeOutput>C:\devel\cacic\Agentes_Windows_BINARIOS</DCC_ExeOutput>
+    <DCC_Define>DEBUG</DCC_Define>
+    <DCC_UNSAFE_TYPE>True</DCC_UNSAFE_TYPE>
+    <DCC_UNSAFE_CODE>True</DCC_UNSAFE_CODE>
+    <DCC_UNSAFE_CAST>True</DCC_UNSAFE_CAST>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <Version>7.0</Version>
+    <DCC_AssertionsAtRuntime>False</DCC_AssertionsAtRuntime>
+    <DCC_DebugInformation>False</DCC_DebugInformation>
+    <DCC_LocalDebugSymbols>False</DCC_LocalDebugSymbols>
+    <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
+    <DCC_ExeOutput>C:\devel\cacic\Agentes_Windows_BINARIOS</DCC_ExeOutput>
+    <DCC_UnitSearchPath>C:\vendors_lib\MD5;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion;C:\vendors_lib;C:\vendors_lib\trayIcon;C:\vendors_lib\MagWMI;C:\devel\cacic\vendors</DCC_UnitSearchPath>
+    <DCC_ResourcePath>C:\vendors_lib\MD5;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion;C:\vendors_lib;C:\vendors_lib\trayIcon;C:\vendors_lib\MagWMI;C:\devel\cacic\vendors</DCC_ResourcePath>
+    <DCC_ObjPath>C:\vendors_lib\MD5;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion;C:\vendors_lib;C:\vendors_lib\trayIcon;C:\vendors_lib\MagWMI;C:\devel\cacic\vendors</DCC_ObjPath>
+    <DCC_IncludePath>C:\vendors_lib\MD5;C:\vendors_lib\CriptografiaDCP;C:\vendors_lib\PJVersion;C:\vendors_lib;C:\vendors_lib\trayIcon;C:\vendors_lib\MagWMI;C:\devel\cacic\vendors</DCC_IncludePath>
+    <DCC_Define>DEBUG</DCC_Define>
+    <DCC_UNSAFE_TYPE>True</DCC_UNSAFE_TYPE>
+    <DCC_UNSAFE_CODE>True</DCC_UNSAFE_CODE>
+    <DCC_UNSAFE_CAST>True</DCC_UNSAFE_CAST>
+  </PropertyGroup>
+  <ProjectExtensions>
+    <Borland.Personality>Delphi.Personality</Borland.Personality>
+    <Borland.ProjectType>VCLApplication</Borland.ProjectType>
+    <BorlandProject>
+<BorlandProject><Delphi.Personality><Parameters><Parameters Name="UseLauncher">False</Parameters><Parameters Name="LoadAllSymbols">True</Parameters><Parameters Name="LoadUnspecifiedSymbols">False</Parameters></Parameters><VersionInfo><VersionInfo Name="IncludeVerInfo">True</VersionInfo><VersionInfo Name="AutoIncBuild">False</VersionInfo><VersionInfo Name="MajorVer">2</VersionInfo><VersionInfo Name="MinorVer">8</VersionInfo><VersionInfo Name="Release">0</VersionInfo><VersionInfo Name="Build">1212</VersionInfo><VersionInfo Name="Debug">False</VersionInfo><VersionInfo Name="PreRelease">False</VersionInfo><VersionInfo Name="Special">False</VersionInfo><VersionInfo Name="Private">False</VersionInfo><VersionInfo Name="DLL">False</VersionInfo><VersionInfo Name="Locale">1046</VersionInfo><VersionInfo Name="CodePage">1252</VersionInfo></VersionInfo><VersionInfoKeys><VersionInfoKeys Name="CompanyName">Dataprev - Emp. de TI da Prev.Social - URES/SESS</VersionInfoKeys><VersionInfoKeys Name="FileDescription">Sistema CACIC - Módulo Agente Principal</VersionInfoKeys><VersionInfoKeys Name="FileVersion">2.8.0.1212</VersionInfoKeys><VersionInfoKeys Name="InternalName"></VersionInfoKeys><VersionInfoKeys Name="LegalCopyright">Baseado na licença GNU/LGPL</VersionInfoKeys><VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys><VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys><VersionInfoKeys Name="ProductName">Cacic - Configurador Automático e Coletor de Informações Computacionais</VersionInfoKeys><VersionInfoKeys Name="ProductVersion">3.0</VersionInfoKeys></VersionInfoKeys><Source><Source Name="MainSource">cacic280.dpr</Source></Source></Delphi.Personality></BorlandProject></BorlandProject>
+  </ProjectExtensions>
+  <Import Project="$(MSBuildBinPath)\Borland.Delphi.Targets" />
+  <ItemGroup>
+    <DelphiCompile Include="cacic280.dpr">
+      <MainSource>MainSource</MainSource>
+    </DelphiCompile>
+    <DCCReference Include="CACIC_Library.pas" />
+    <DCCReference Include="CACIC_WMI.pas" />
+    <DCCReference Include="frmConfiguracoes.pas">
+      <Form>FormConfiguracoes</Form>
+    </DCCReference>
+    <DCCReference Include="frmLog.pas">
+      <Form>FormLog</Form>
+    </DCCReference>
+    <DCCReference Include="frmsenha.pas">
+      <Form>formSenha</Form>
+    </DCCReference>
+    <DCCReference Include="main.pas">
+      <Form>FormularioGeral</Form>
+    </DCCReference>
+  </ItemGroup>
+</Project>

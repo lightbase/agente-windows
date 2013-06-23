@@ -20,15 +20,13 @@ program cacic280;
 uses
   Forms,
   Windows,
+  UsbDetectClass,
   main in 'main.pas' {FormularioGeral},
-  frmSenha in 'frmsenha.pas' {formSenha},
+  frmsenha in 'frmsenha.pas' {formSenha},
   frmConfiguracoes in 'frmConfiguracoes.pas' {FormConfiguracoes},
   frmLog in 'frmLog.pas' {FormLog},
   CACIC_Library in 'CACIC_Library.pas',
-  USBdetectClass in 'USBdetectClass.pas',
   CACIC_WMI in 'CACIC_WMI.pas';
-
-//  WinVNC in 'winvnc.pas',
 
 {$R *.res}
 

@@ -96,9 +96,7 @@ Begin
       objCacicCOMM.writeDebugLog('Comm: Requisitando Endereço: ' + pStrFullURL);
       Try
          idHTTP1.AllowCookies                     := true;
-         idHTTP1.ASCIIFilter                      := false; // ATENÇÃO: Esta propriedade deixa de existir na próxima versão do Indy (10.x)
-         idHTTP1.AuthRetries                      := 1;     // ATENÇÃO: Esta propriedade deixa de existir na próxima versão do Indy (10.x)
-         idHTTP1.BoundPort                        := 0;
+         idHTTP1.AuthRetries                      := 1;
          idHTTP1.HandleRedirects                  := false;
          idHTTP1.ProxyParams.BasicAuthentication  := false;
          idHTTP1.ProxyParams.ProxyPort            := 0;
@@ -110,8 +108,6 @@ Begin
          idHTTP1.Request.ContentRangeStart        := 0;
          idHTTP1.Request.ContentRangeEnd          := 0;
          idHTTP1.Request.ContentType              := 'text/html';
-         idHTTP1.RecvBufferSize                   := 32768; // ATENÇÃO: Esta propriedade deixa de existir na próxima versão do Indy (10.x)
-         idHTTP1.SendBufferSize                   := 32768; // ATENÇÃO: Esta propriedade deixa de existir na próxima versão do Indy (10.x)
          idHTTP1.Tag                              := 0;
 
          // ATENÇÃO: Substituo os sinais de "+" acima por [[MAIS]] devido a problemas encontrados no envio POST (vide HTMLentities)
