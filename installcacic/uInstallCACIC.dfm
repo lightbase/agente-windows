@@ -1,10 +1,10 @@
 object frmInstallCACIC: TfrmInstallCACIC
   Left = 409
   Top = 3
-  Width = 600
-  Height = 620
   BorderIcons = [biSystemMenu]
   Caption = 'InstallCACIC'
+  ClientHeight = 586
+  ClientWidth = 592
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText

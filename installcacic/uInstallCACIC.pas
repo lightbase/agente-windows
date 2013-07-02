@@ -912,7 +912,7 @@ begin
 
         informaProgresso('Efetuando comunicação com o endereço informado...');
 
-        strCommResponseTest := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_test.php', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName,'>> Testando conexão');
+        strCommResponseTest := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/test', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName,'>> Testando conexão');
 
         if (strCommResponseTest <> '0') then
           Begin
@@ -951,7 +951,7 @@ begin
           End
         else
           Begin
-            richProgress.Lines.Add('>> Teste de Conexão Negativo!');
+            richProgress.Lines.Add('>> Teste de Conexão Negativo!);
             staticStatus.Caption    := 'Insucesso no Teste de Comunicação com o Endereço Informado!';
             staticStatus.Font.Color := clRed;
             edWebManagerAddress.SetFocus;
