@@ -230,7 +230,7 @@ Begin
 
     Try
         Try
-          strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_test.php', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Testando comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
+          strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/test', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Testando comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
 
           if (strRetorno <> '0') Then
             Begin
@@ -1482,7 +1482,7 @@ begin
           CriaCookie('aguarde_GER.txt');
 
           // Esse teste também colocará a estação de trabalho em DEBUG, caso seja determinado no Gerente WEB
-          Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_test.php', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, strAcaoGerCols);
+          Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/test', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, strAcaoGerCols);
 
           objCacic.setBoolCipher(not objCacic.isInDebugMode);
 

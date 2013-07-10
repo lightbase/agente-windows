@@ -529,7 +529,7 @@ begin
         strCommResponse := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_config.php', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName);
         if (strCommResponse <> '0') then
           Begin
-            { Já realizados na chamada ao get_test.php
+            { Já realizados na chamada ao get/test
               objCacic.setBoolCipher
               objCacic.setMainProgramName
               objCacic.setMainProgramHash
