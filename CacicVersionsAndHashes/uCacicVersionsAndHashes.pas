@@ -89,9 +89,9 @@ begin
       g_oCacic.setValueToFile('ItemsDefinitions','Item_2'       ,'cacicservice.exe,N,N'                                                                        , strVersionsIniFileName);
       g_oCacic.setValueToFile('ItemsDefinitions','Item_3'       ,'chksis.exe      ,N,N'                                                                        , strVersionsIniFileName);
       g_oCacic.setValueToFile('ItemsDefinitions','Item_4'       ,'gercols.exe     ,N,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_5'       ,'srcacicsrv.exe  ,N,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_6'       ,'installcacic.exe,S,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_7'       ,'mapacacic.exe   ,S,N'                                                                        , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_5'       ,'installcacic.exe,S,N'                                                                        , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_6'       ,'mapacacic.exe   ,S,N'                                                                        , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_7'       ,'srcacicsrv.exe  ,N,N'                                                                        , strVersionsIniFileName);
       g_oCacic.setValueToFile('ItemsDefinitions','Item_8'       ,'srcaciccli.exe  ,S,N'                                                                        , strVersionsIniFileName);
       g_oCacic.setValueToFile('ItemsDefinitions','Item_9'       ,'pyCACIC         ,S,S'                                                                        , strVersionsIniFileName);
     End;
