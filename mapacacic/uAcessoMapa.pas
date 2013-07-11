@@ -82,7 +82,7 @@ begin
   strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + 'te_senha='            + objCacicCOMM.replaceInvalidHTTPChars( objCacic.enCrypt(edSenhaAcesso.Text,false))          + ',';
   strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + 'te_operacao='         + 'Autentication';
 
-  strCommResponseAcesso := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'mapacacic_acesso.php', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
+  strCommResponseAcesso := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'mapacacic/acesso', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
   if (strCommResponseAcesso <> '0') then
@@ -147,7 +147,7 @@ begin
   strFieldsAndValuesToRequest :=                               'te_operacao='         + 'CheckVersion' + ',';
   strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + 'MAPACACIC.EXE_HASH='  + objCacic.getFileHash(ParamStr(0));
 
-  strCommResponseVerVersao := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'mapacacic_acesso.php', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
+  strCommResponseVerVersao := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'mapacacic/acesso', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
   objCacic.writeDebugLog('VerificaVersao: Analisando retorno...');

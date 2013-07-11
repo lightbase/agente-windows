@@ -131,7 +131,7 @@ Begin
              objCacicCOMM.writeDailyLog('Comm: ERRO! Comunicação impossível com o endereço ' + pStrFullURL);
           End;
       end;
-
+          objCacicCOMM.writeDebugLog(tStringStrResponseCS.DataString);  //Adicionada 10/07
       Try
         if (objCacicCOMM.getValueFromTags('Comm_Status', tStringStrResponseCS.DataString, '<>') <> 'OK') Then
           Begin

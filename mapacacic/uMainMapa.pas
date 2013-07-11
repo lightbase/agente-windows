@@ -545,7 +545,7 @@ begin
 
   strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',col_patr='  + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
 
-  strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName +'gercols_set_collects.php', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
+  strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName +'gercols/set/collects', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
   if (strRetorno = '0') then
@@ -688,7 +688,7 @@ function TfrmMapaCacic.getConfigs : String;
 Begin
   btCombosUpdate.Enabled := false;
 
-  Result := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_config.php', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
+  Result := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
   objCacic.writeDebugLog('FormActivate: Retorno de getConfigs: "'+Result+'"');

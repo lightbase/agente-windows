@@ -329,7 +329,7 @@ begin
     strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + 'id_usuario='    + objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
 
       Try
-        Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'installcacic.php', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName, 'Enviando informação de insucesso ao Gerente WEB');
+        Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'instala/cacic', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName, 'Enviando informação de insucesso ao Gerente WEB');
       Except
         on E : Exception do
           objCacic.writeExceptionLog(E.Message,E.ClassName,'ComunicaInsucesso');
@@ -523,13 +523,13 @@ begin
         // Busco as configurações para acesso ao ambiente FTP - Updates
         strFieldsAndValuesToRequest := 'in_instalacao=OK';
 
-        objCacic.writeDebugLog('installCACIC: Preparando Chamada ao Gerente WEB: "' + objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName +'get_config.php"');
+        objCacic.writeDebugLog('installCACIC: Preparando Chamada ao Gerente WEB: "' + objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName +'get/config');
         informaProgresso('Fazendo contato com Gerente WEB.');
 
-        strCommResponse := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_config.php', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName);
+        strCommResponse := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName);
         if (strCommResponse <> '0') then
           Begin
-            { Já realizados na chamada ao get/test
+            { Já realizados na chamada ao get_test.php substituido por get/test
               objCacic.setBoolCipher
               objCacic.setMainProgramName
               objCacic.setMainProgramHash
