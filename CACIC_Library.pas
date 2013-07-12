@@ -1017,14 +1017,15 @@ end;
 function TCACIC.isInDebugMode(pStrDetailName : String = '') : boolean;
 var strTeDebugging : String;
 begin
-  Result := checkIfFileDateIsToday(getLocalFolderName + 'Temp\Debugging');
+  {Result := checkIfFileDateIsToday(getLocalFolderName + 'Temp\Debugging');
   if Result and FileExists(getLocalFolderName + 'Temp\Debugging\Debugging.conf') and (pStrDetailName <> '') then
     Begin
       strTeDebugging := getValueFromFile('Configs','TeDebugging',getLocalFolderName + 'Temp\Debugging\Debugging.conf',false);
       if (pos(ExtractFileName(ParamStr(0)) + '.' + pStrDetailName, strTeDebugging) = 0) and
          (pos(ExtractFileName(ParamStr(0)) + '.*'                , strTeDebugging) = 0) then
-          Result := true; //Workshop retornar result para false apos testes.
-    End;
+          Result := false; //Workshop retornar result para false apos testes.
+    End;}
+    Result := True; // Workshop Alterar apos testes.
 end;
 
 // Rotina obtida em http://www.swissdelphicenter.ch/torry/showcode.php?id=266
