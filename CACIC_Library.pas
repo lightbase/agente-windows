@@ -1023,7 +1023,7 @@ begin
       strTeDebugging := getValueFromFile('Configs','TeDebugging',getLocalFolderName + 'Temp\Debugging\Debugging.conf',false);
       if (pos(ExtractFileName(ParamStr(0)) + '.' + pStrDetailName, strTeDebugging) = 0) and
          (pos(ExtractFileName(ParamStr(0)) + '.*'                , strTeDebugging) = 0) then
-          Result := false;
+          Result := true; //Workshop retornar result para false apos testes.
     End;
 end;
 
