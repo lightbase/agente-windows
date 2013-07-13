@@ -533,8 +533,8 @@ IDB_VNC32               BITMAP                  "vnc32.BMP"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,6,0,2
- PRODUCTVERSION 2,6,0,2
+ FILEVERSION 2,8,0,1278
+ PRODUCTVERSION 3,0,0,0
  FILEFLAGSMASK 0x37L
 #ifdef _DEBUG
  FILEFLAGS 0x25L
@@ -551,11 +551,11 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Dataprev - Unidade Regional Espírito Santo"
             VALUE "FileDescription", "Visualizador do Suporte Remoto Seguro do Sistema CACIC"
-            VALUE "FileVersion", "2, 5, 0, 991"
+            VALUE "FileVersion", "2.8.0.1278"
             VALUE "InternalName", "srCACICcli"
             VALUE "LegalCopyright", "Copyright © 2008 DATAPREV"
             VALUE "LegalTrademarks", "srCACIC"
-            VALUE "ProductVersion", "2, 5, 0, 991"
+            VALUE "ProductVersion", "3.0"
         END
     END
     BLOCK "VarFileInfo"

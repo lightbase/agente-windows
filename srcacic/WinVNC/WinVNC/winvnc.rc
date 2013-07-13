@@ -223,8 +223,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,6,0,2
- PRODUCTVERSION 2,6,0,2
+ FILEVERSION 2,8,0,1278
+ PRODUCTVERSION 3,0,0,0
  FILEFLAGSMASK 0x37L
 #ifdef _DEBUG
  FILEFLAGS 0x25L
@@ -242,11 +242,11 @@ BEGIN
             VALUE "Comments", "Licença: GNU/LGPL"
             VALUE "CompanyName", "Dataprev-Emp. de TI da Prev Social - UDSL/SSLC"
             VALUE "FileDescription", "Sistema CACIC - Módulo Suporte Remoto Seguro"
-            VALUE "FileVersion", "2.6.0.2"
+            VALUE "FileVersion", "2.8.0.1278"
             VALUE "InternalName", "srCACICsrv"
             VALUE "LegalCopyright", "Copyright © 2008 DATAPREV"
             VALUE "ProductName", "srCACIC"
-            VALUE "ProductVersion", "2.6.0.2"
+            VALUE "ProductVersion", "3.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -268,12 +268,6 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Sobre o srCACIC",            ID_ABOUT
         MENUITEM SEPARATOR
-        //MENUITEM "&Adicionar Novo Cliente",     ID_OUTGOING_CONN, GRAYED
-        //MENUITEM "&Excluir Todos Clientes",     ID_KILLCLIENTS, GRAYED
-        //MENUITEM SEPARATOR
-        //MENUITEM "&Listar Todos Clientes",      ID_LISTCLIENTS
-//        MENUITEM SEPARATOR
-        //MENUITEM "&Fechar o srCACIC",           ID_CLOSE, GRAYED
     END
 END
 

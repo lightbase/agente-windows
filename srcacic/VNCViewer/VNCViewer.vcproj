@@ -180,7 +180,7 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/LTCG"
 				AdditionalDependencies="comctl32.lib winmm.lib omnithread.lib wsock32.lib"
-				OutputFile=".\Release/srcaciccli.exe"
+				OutputFile="../../../Agentes_Windows_BINARIOS/srcaciccli.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="omnithread/Release"
