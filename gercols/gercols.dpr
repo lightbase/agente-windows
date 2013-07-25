@@ -305,7 +305,7 @@ Begin
              CloseFile(textfileKeyWord);
              //
              strFieldsAndValuesToRequest := 'te_palavra_chave=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strAux));
-             strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_config.php', strFieldsAndValuesToRequest, objCacic.getLocalFolderName,v_mensagem_log);
+             strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCacic.getLocalFolderName,v_mensagem_log);
              objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
              if (strRetorno <> '0') and
@@ -315,7 +315,7 @@ Begin
                   objCacic.setWebManagerAddress((objCacic.getValueFromTags('WebManagerAddress',strRetorno,'<>')));
                   objCacic.setValueToFile('Configs','WebManagerAddress',objCacic.getValueFromTags('WebManagerAddress',strRetorno,'<>'), strChkSisInfFileName);
                   objCacic.writeDebugLog('getConfigs: Refazendo comunicação');
-                  strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_config.php', strFieldsAndValuesToRequest, objCacic.getLocalFolderName,v_mensagem_log);
+                  strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCacic.getLocalFolderName,v_mensagem_log);
                 End;
 
              if (strRetorno <> '0') Then
@@ -660,7 +660,7 @@ Begin
 
         strFieldsAndValuesToRequest := 'te_rcactions=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.getParam('RCActions')));
         objCacic.writeDebugLog('executeGerCols: Preparando para empacotar "'+strFieldsAndValuesToRequest+'"');
-        strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'gercols_set_srcacic_actions.php', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Enviando informações sobre ações durante suporte remoto ao Gerente WEB ('+objCacic.getWebManagerAddress+')!');
+        strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'gercols/set/srcacic/action', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Enviando informações sobre ações durante suporte remoto ao Gerente WEB ('+objCacic.getWebManagerAddress+')!');
 
         Finalizar(true);
       end;
@@ -729,7 +729,7 @@ Begin
 
         strFieldsAndValuesToRequest := 'te_usb_info=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.getParam('USBInfo')));
         objCacic.writeDebugLog('executeGerCols: Preparando para empacotar "'+strFieldsAndValuesToRequest+'"');
-        strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'gercols_set_usbdetect.php', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Enviando informações sobre ' + IfThen(Copy(objCacic.getParam('USBInfo'),1,1)='I','Inserção','Remoção')+ ' de dispositivo USB ao Gerente WEB ('+objCacic.getWebManagerAddress+')!');
+        strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'gercols/set/usbdetect', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Enviando informações sobre ' + IfThen(Copy(objCacic.getParam('USBInfo'),1,1)='I','Inserção','Remoção')+ ' de dispositivo USB ao Gerente WEB ('+objCacic.getWebManagerAddress+')!');
         objCacic.setBoolCipher(not objCacic.isInDebugMode);
         if (objCacic.getValueFromTags('nm_device', strRetorno, '<>') <> '') then
           objCacic.writeDailyLog('Dispositivo USB ' + IfThen(Copy(objCacic.getParam('USBInfo'),1,1)='I','Inserido','Removido')+': "' + objCacic.getValueFromTags('nm_device', strRetorno, '<>')+'"');
@@ -1386,7 +1386,7 @@ Begin
                                           objCacic.writeDailyLog(strAcaoGercols);
 
                                           // Preparação para envio...
-                                          if (Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'gercols_set_collects.php', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, strAcaoGerCols) <> '0') Then
+                                          if (Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'gercols/set/collects', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, strAcaoGerCols) <> '0') Then
                                             Begin
                                               objCacic.writeDailyLog('Ok! Coleta de informações sobre ' + objCacic.getValueFromTags('te_descricao_breve',strActionDefinition) + ' enviada com sucesso!');
                                               objCacic.setBoolCipher(not objCacic.isInDebugMode);

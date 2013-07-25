@@ -94,8 +94,8 @@ begin
      strFieldsAndValuesToRequest :=                               'in_instalacao=OK,';
      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + 'te_fila_ftp=1'; // Indicativo para entrada no grupo FTP
 
-     objCacic.writeDebugLog('executeChkSIS: Efetuando chamada ao Gerente WEB com valores: "' + objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_config.php' + '", "' + objCacic.getLocalFolderName + '" e lista interna');
-		 strCommResponse := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_config.php', strFieldsAndValuesToRequest, objCacic.getLocalFolderName);
+     objCacic.writeDebugLog('executeChkSIS: Efetuando chamada ao Gerente WEB com valores: "' + objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config' + '", "' + objCacic.getLocalFolderName + '" e lista interna');
+		 strCommResponse := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCacic.getLocalFolderName);
 
      if (strCommResponse <> '0') then
       Begin
@@ -180,8 +180,8 @@ begin
   Except
     on E : Exception do
       Begin
-        objCacic.writeExceptionLog(E.Message,E.ClassName,'Falha no contato com ' + objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get_config.php');
-        objCacic.writeDebugLog('executeChkSIS: Falha no contato com ' + objCacic.getWebManagerAddress  + objCacic.getWebServicesFolderName + 'get_config.php');
+        objCacic.writeExceptionLog(E.Message,E.ClassName,'Falha no contato com ' + objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config');
+        objCacic.writeDebugLog('executeChkSIS: Falha no contato com ' + objCacic.getWebManagerAddress  + objCacic.getWebServicesFolderName + 'get/config');
       End;
   End;
 
