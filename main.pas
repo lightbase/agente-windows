@@ -1366,7 +1366,7 @@ begin
               if (intTentativas <> 121) then
                 Begin
                   objCACIC.writeDebugLog('ExecutaCACIC: Iniciando Chamada para Coletas...');
-                  Invoca_GerCols('collects');
+                  Invoca_GerCols('collect');
                 End;
             End;
           timerCheckNoMinuto.Enabled := true;            
