@@ -34,6 +34,7 @@ var tStringStrResponseCS                 : TStringStream;
     strWin32_ComputerSystem,
     strWin32_NetworkAdapterConfiguration,
     strWin32_OperatingSystem,
+    strWin32_SoftwareFeature,
     strTeDebugging                       : String;
 Begin
     Try
@@ -52,6 +53,7 @@ Begin
       strWin32_ComputerSystem              := fetchWmiValues('Win32_ComputerSystem'             ,objCacicCOMM.getLocalFolderName);
       strWin32_NetworkAdapterConfiguration := fetchWmiValues('Win32_NetworkAdapterConfiguration',objCacicCOMM.getLocalFolderName);
       strWin32_OperatingSystem             := fetchWmiValues('Win32_OperatingSystem'            ,objCacicCOMM.getLocalFolderName);
+      strWin32_SoftwareFeature             := fetchWmiValues('Win32_SoftwareFeature'            ,objCacicCOMM.getLocalFolderName);
 
       objCacicCOMM.writeDebugLog('Comm: Povoando lista com valores padrão para cabeçalho de comunicação');
       objCacicCOMM.writeDebugLog('Comm: pStrActionMessage: "' + pStrActionMessage + '"');
@@ -67,6 +69,7 @@ Begin
           Values['ModuleProgramName'          ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(ExtractFileName(ParamStr(0))                                            ));
           Values['NetworkAdapterConfiguration'] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_NetworkAdapterConfiguration                                    ));
           Values['OperatingSystem'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_OperatingSystem                                                ));
+          Values['SoftwareFeature'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_SoftwareFeature                                                ));
           Values['PHP_AUTH_PW'                ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt('PW_CACIC',true,true                                                    ));
           Values['PHP_AUTH_USER'              ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt('USER_CACIC',true,true                                                  ));
           Values['te_so'                      ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getWindowsStrId()                                                                );
