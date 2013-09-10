@@ -617,7 +617,8 @@ begin
       Try
         Registry.GetKeyNames(SubKeys);
         // Abre a tag com o nome da chave
-        saida := '[SoftwareList]';
+        //saida := '[SoftwareList]';
+        saida := '';
 
         // Adiciona o pai
         SubRegistry.RootKey := HKEY_LOCAL_MACHINE;
@@ -650,7 +651,7 @@ begin
         end;
 
         // Fecha a tag do software
-        saida := saida + '[/SoftwareList]';
+        //saida := saida + '[/SoftwareList]';
       Finally
         SubKeys.Free;
       End;
@@ -933,6 +934,13 @@ Begin
                                                                        '[ActivityStatus]'   + Trim(strInAtivo)         + '[/ActivityStatus]',',','[[COMMA]]',[rfReplaceAll]);
 
                                        strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',AntiVirus='  + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
+
+                                       objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
+                                       tstrColetaSoftware := SoftwareList;
+
+                                       // Adiciona variáveis da coleta de software na requisição
+                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',SoftwareList=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaSoftware)));
+
                                     Except
                                      on E : Exception do
                                        Begin
@@ -1393,6 +1401,14 @@ Begin
                                       strColetaAtual := StringReplace(strColetaAtual,',','[[COMMA]]',[rfReplaceAll]);
 
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',MonitoredProfiles=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
+
+                                      // Adiciona coleta de software
+                                      objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
+                                      tstrColetaSoftware := SoftwareList;
+
+                                      // Adiciona variáveis da coleta de software na requisição
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',SoftwareList=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaSoftware)));
+
                                     Except
                                       Begin
                                         objCacic.setValueToFile('Collects',tstringsActions[intLoopActions] + '_End'   ,'99999999', strGerColsInfFileName);
@@ -1424,9 +1440,6 @@ Begin
                                       Inc(intTotalExecutedCollects);
                                       strClassesAndProperties := objCacic.getValueFromTags('ClassesAndProperties',strActionDefinition);
 
-                                      objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
-                                      tstrColetaSoftware := SoftwareList;
-
                                       objCacic.writeDebugLog('executeGerCols: strClassesAndProperties -> "' + strClassesAndProperties + '"');
                                       tstringsClasses    := objCacic.explode(objCacic.getValueFromTags('Classes',strClassesAndProperties),',');
 
@@ -1435,6 +1448,13 @@ Begin
                                           objCacic.writeDebugLog('executeGerCols: Coletando dados de Win32_' + tstringsClasses[intLoopClasses]);
                                           strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',' + tstringsClasses[intLoopClasses] + '=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(fetchWmiValues('Win32_' + tstringsClasses[intLoopClasses],objCacic.getLocalFolderName, objCacic.getValueFromTags(tstringsClasses[intLoopClasses] + '.Properties',strClassesAndProperties),objCacic.getValueFromTags(tstringsClasses[intLoopClasses] + '.WhereClause',strClassesAndProperties)))));
                                         End;
+
+                                      // Adiciona coleta de software
+                                      objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
+                                      tstrColetaSoftware := SoftwareList;
+
+                                      // Adiciona variáveis da coleta de software na requisição
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',SoftwareList=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaSoftware)));
 
                                       strColetaAtual := strFieldsAndValuesToRequest;
                                     Except
