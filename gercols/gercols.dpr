@@ -599,6 +599,86 @@ begin
   Result := FormatFloat('##0.00', (iResult / 100.0));
 end;
 
+// Funcao que le os valores de software instalados no Registro do Windows
+Function DisplayKeys(const Key: string; const Depth: Integer): String;
+var
+  i: Integer;
+  SubKeys: TStringList;
+  Registry: TRegistry;
+  SubRegistry: TRegistry;
+  saida: String;
+begin
+  Registry := TRegistry.Create;
+  SubRegistry := TRegistry.Create;
+  Registry.RootKey := HKEY_LOCAL_MACHINE;
+  if Registry.OpenKeyReadOnly(Key) then begin
+    Try
+      SubKeys := TStringList.Create;
+      Try
+        Registry.GetKeyNames(SubKeys);
+        // Abre a tag com o nome da chave
+        saida := '[SoftwareList]';
+
+        // Adiciona o pai
+        SubRegistry.RootKey := HKEY_LOCAL_MACHINE;
+
+        for i := 0 to SubKeys.Count-1 do begin
+          //Writeln(StringOfChar(' ', Depth*2) + SubKeys[i]);
+          //DisplayKeys(Key + '\' + SubKeys[i], Depth+1);
+          // Essa linha coloca o valor da tag do registro
+          saida := saida + '[Software][IDSoftware]' + SubKeys[i] + '[/IDSoftware]';
+
+          // Abre a tag do registro
+          //Names := TStringList.Create;
+          SubRegistry.OpenKeyReadOnly(Key + '\' + SubKeys[i]);
+
+          // Agora coloca o valor do registro dentro da tag
+          saida := saida + '[DisplayName]' + SubRegistry.ReadString('DisplayName') + '[/DisplayName]';
+          saida := saida + '[DisplayVersion]' + SubRegistry.ReadString('DisplayVersion') + '[/DisplayVersion]';
+          saida := saida + '[URLInfoAbout]' + SubRegistry.ReadString('URLInfoAbout') + '[/URLInfoAbout]';
+          saida := saida + '[Publisher]' + SubRegistry.ReadString('Publisher') + '[/Publisher]';
+
+          // Fecho o registro e a tag
+          SubRegistry.CloseKey;
+          //SubRegistry.Free;
+
+          // Fecha a tag do registro
+          saida := saida + '[/Software]';
+
+          // Chamada recursiva para tags que possuem valores internos
+          DisplayKeys(Key + '\' + SubKeys[i], Depth+1);
+        end;
+
+        // Fecha a tag do software
+        saida := saida + '[/SoftwareList]';
+      Finally
+        SubKeys.Free;
+      End;
+    Finally
+      Registry.CloseKey;
+      Registry.Free;
+    End;
+    Result := saida;
+  end;
+end;
+
+// Procedimento que chama a lista de softwares do Sistema Operacional
+Function SoftwareList: String;
+var
+  strChave: String;
+  outString: String;
+begin
+    // Esse registro é onde vamos buscar a chave do SO
+    strChave := '\Software\Microsoft\Windows\CurrentVersion\Uninstall';
+
+    // Passo aqui o registro e a profundidade dos campos que quero ver
+    outString := DisplayKeys(strChave, 3);
+
+    // Retorno uma string com todas as tags coletadas do registro
+    Result := outString;
+end;
+
+
 procedure executeGerCols;
 var boolFound : boolean;
 var strActionDefinition,
@@ -624,6 +704,7 @@ var strActionDefinition,
     strRetorno,
     strTeServidor,
     strTripa,
+    tstrColetaSoftware,
     strValorChavePerfis   : String;
 
     intAux4,
@@ -1342,6 +1423,9 @@ Begin
                                     Try
                                       Inc(intTotalExecutedCollects);
                                       strClassesAndProperties := objCacic.getValueFromTags('ClassesAndProperties',strActionDefinition);
+
+                                      objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
+                                      tstrColetaSoftware := SoftwareList;
 
                                       objCacic.writeDebugLog('executeGerCols: strClassesAndProperties -> "' + strClassesAndProperties + '"');
                                       tstringsClasses    := objCacic.explode(objCacic.getValueFromTags('Classes',strClassesAndProperties),',');
