@@ -679,6 +679,28 @@ begin
     Result := outString;
 end;
 
+// Procedimento que executa a coleta de hardware
+Function ColetaHardware: String;
+var
+  outString: String;
+begin
+  // Coletas de todos os atributos de hardware
+  outString := fetchWmiValues('Win32_Keyboard', 'Availability,Caption,Description,InstallDate,Manufacturer,Name', objCacic.getLocalFolderName);
+  outString := outString + fetchWmiValues('Win32_PointingDevice', 'Availability,Caption,Description,InstallDate,Manufacturer,Name', objCacic.getLocalFolderName);
+  outString := outString + fetchWmiValues('Win32_PhysicalMedia ', 'Caption,Description,InstallDate,Name,Manufacturer,Model,SKU,SerialNumber,Tag,Version,PartNumber,OtherIdentifyingInfo,Capacity,MediaType,MediaDescription', objCacic.getLocalFolderName);
+  outString := outString + fetchWmiValues('Win32_BaseBoard', 'Caption,ConfigOptions,Depth,Description,Height,HostingBoard,InstallDate,Manufacturer,Model,Name,OtherIdentifyingInfo,PartNumber,Product,RequirementsDescription,SerialNumber,SKU,SlotLayout,SpecialRequirements,Tag,Version,Weight,Width', objCacic.getLocalFolderName);
+  // Tenho que dividir a string em dois pedaços porque o Delphi não aceita strings individuais com mais de 255 caracteres
+  outString := outString + fetchWmiValues('Win32_BIOS', 'BiosCharacteristics,BIOSVersion,BuildNumber,Caption,CodeSet,Description,IdentificationCode,InstallDate,Manufacturer,Name,OtherTargetOS,PrimaryBIOS,ReleaseDate,SerialNumber,SMBIOSBIOSVersion,SMBIOSMajorVersion,SMBIOSMinorVersion,' + 'BIOSPresent,SoftwareElementID,TargetOperatingSystem,Version', objCacic.getLocalFolderName);
+  outString := outString + fetchWmiValues('Win32_MemoryDevice', 'Access,Availability,BlockSize,Caption,Description,DeviceID,EndingAddress,InstallDate,Name,NumberOfBlocks,PNPDeviceID,Purpose,SystemLevelAddress,SystemName', objCacic.getLocalFolderName);
+  outString := outString + fetchWmiValues('Win32_PhysicalMemory', 'BankLabel,Capacity,Caption,DataWidth,Description,DeviceLocator,FormFactor,InstallDate,InterleaveDataDepth,InterleavePosition,Manufacturer,MemoryType,Model,Name,OtherIdentifyingInfo,PartNumber,PositionInRow,' + 'SerialNumber,SKU,Speed,Tag,TotalWidth,TypeDetail,Version', objCacic.getLocalFolderName);
+  outString := outString + fetchWmiValues('Win32_Processor', 'AddressWidth,Architecture,Availability,Caption,CreationClassName,DataWidth,Description,DeviceID,ExtClock,Family,InstallDate,L2CacheSize,L2CacheSpeed,L3CacheSize,L3CacheSpeed,Level,LoadPercentage,Manufacturer,'+ 'MaxClockSpeed,Name,NumberOfCores,NumberOfLogicalProcessors,OtherFamilyDescription,PNPDeviceID,ProcessorId,ProcessorType,Revision,Role,SocketDesignation,SystemName,UniqueId,UpgradeMethod,Version,VoltageCaps', objCacic.getLocalFolderName);
+  outString := outString + fetchWmiValues('Win32_Printer', 'Attributes,Availability,Caption,CharSetsSupported,Comment,CurrentCharSet,Default,Description,DeviceID,Direct,DriverName,HorizontalResolution,InstallDate,JobCountSinceLastReset,KeepPrintedJobs,LanguagesSupported,' + 'Local,Location,MarkingTechnology,MaxCopies,MaxNumberUp,MaxSizeSupported,MimeTypesSupported,Name,Network,PaperSizesSupported,PaperTypesAvailable,Parameters,PNPDeviceID,PortName,PrintProcessor,' + 'ServerName,Shared,ShareName,SpoolEnabled,SystemName,VerticalResolution,WorkOffline', objCacic.getLocalFolderName);
+
+  // Retorna uma string com todas as coletas
+  Result := outString;
+
+end;
+
 
 procedure executeGerCols;
 var boolFound : boolean;
@@ -706,6 +728,8 @@ var strActionDefinition,
     strTeServidor,
     strTripa,
     tstrColetaSoftware,
+    tstrColetaHardware,
+    tstrColetaComputador,
     strValorChavePerfis   : String;
 
     intAux4,
@@ -728,7 +752,7 @@ Begin
   Try
 
     // Parâmetros possíveis (aceitos)
-    //   /coletas        =>  Chamada para ativação das coletas
+    //   /collect        =>  Chamada para ativação das coletas
     //   /recuperaSR     =>  Chamada para tentativa de recuperação do módulo srCACIC
     // USBinfo           =>  Informação sobre dispositivo USB inserido/removido
     // RCActions         =>  Informação sobre ações durante conexão de suporte remoto
@@ -935,12 +959,6 @@ Begin
 
                                        strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',AntiVirus='  + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
 
-                                       objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
-                                       tstrColetaSoftware := SoftwareList;
-
-                                       // Adiciona variáveis da coleta de software na requisição
-                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',SoftwareList=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaSoftware)));
-
                                     Except
                                      on E : Exception do
                                        Begin
@@ -949,6 +967,79 @@ Begin
                                          objCacic.setValueToFile('Collects',tstringsActions[intLoopActions] + '_End'   , '99999999', strGerColsInfFileName);
                                       End;
                                     End;
+                                  End
+                                else If (tstringsActions[intLoopActions] = 'col_hard') then
+                                  Begin
+                                    Try
+                                      Inc(intTotalExecutedCollects);
+
+                                      // Insere aqui a ação da coleta
+                                      objCacic.writeDebugLog('executeGerCols: Executando coleta de Hardware -> ');
+                                      //tstrColetaHardware := ColetaHardware;
+
+                                      // Coletas de todos os atributos de hardware
+                                      tstrColetaHardware := fetchWmiValues('Win32_Keyboard', objCacic.getLocalFolderName, 'Availability,Caption,Description,InstallDate,Name');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Keyboard=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      tstrColetaHardware := fetchWmiValues('Win32_PointingDevice', objCacic.getLocalFolderName, 'Availability,Caption,Description,InstallDate,Manufacturer,Name');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PointingDevice=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      tstrColetaHardware := fetchWmiValues('Win32_PhysicalMedia ', objCacic.getLocalFolderName, 'Caption,Description,InstallDate,Name,Manufacturer,Model,SKU,SerialNumber,Tag,Version,PartNumber,OtherIdentifyingInfo,Capacity,MediaType,MediaDescription');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PhysicalMedia=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      tstrColetaHardware := fetchWmiValues('Win32_BaseBoard', objCacic.getLocalFolderName, 'Caption,ConfigOptions,Depth,Description,Height,HostingBoard,InstallDate,Manufacturer,Model,Name,OtherIdentifyingInfo,PartNumber,Product,RequirementsDescription,SerialNumber,SKU,SlotLayout,SpecialRequirements,Tag,Version,Weight,Width');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_BaseBoard=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      // Tenho que dividir a string em dois pedaços porque o Delphi não aceita strings individuais com mais de 255 caracteres
+                                      tstrColetaHardware := fetchWmiValues('Win32_BIOS', objCacic.getLocalFolderName, 'BiosCharacteristics,BIOSVersion,BuildNumber,Caption,CodeSet,Description,IdentificationCode,InstallDate,Manufacturer,Name,OtherTargetOS,PrimaryBIOS,ReleaseDate,SerialNumber,SMBIOSBIOSVersion,SMBIOSMajorVersion,SMBIOSMinorVersion,' + 'SoftwareElementID,TargetOperatingSystem,Version');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_BIOS=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      tstrColetaHardware := fetchWmiValues('Win32_MemoryDevice', objCacic.getLocalFolderName, 'Access,Availability,BlockSize,Caption,Description,DeviceID,EndingAddress,InstallDate,Name,NumberOfBlocks,PNPDeviceID,Purpose,SystemLevelAddress,SystemName');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_MemoryDevice=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      tstrColetaHardware := fetchWmiValues('Win32_PhysicalMemory', objCacic.getLocalFolderName, 'BankLabel,Capacity,Caption,DataWidth,Description,DeviceLocator,FormFactor,InstallDate,InterleaveDataDepth,InterleavePosition,Manufacturer,MemoryType,Model,Name,OtherIdentifyingInfo,PartNumber,PositionInRow,' + 'SerialNumber,SKU,Speed,Tag,TotalWidth,TypeDetail,Version');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PhysicalMemory=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      tstrColetaHardware := fetchWmiValues('Win32_Processor', objCacic.getLocalFolderName, 'AddressWidth,Architecture,Availability,Caption,DataWidth,Description,DeviceID,ExtClock,Family,InstallDate,L2CacheSize,L2CacheSpeed,Level,Manufacturer,MaxClockSpeed,Name,NumberOfCores,NumberOfLogicalProcessors,OtherFamilyDescription,PNPDeviceID,' + 'ProcessorId,ProcessorType,Revision,Role,SocketDesignation,SystemName,UniqueId,UpgradeMethod,Version');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Processor=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      tstrColetaHardware := fetchWmiValues('Win32_Printer', objCacic.getLocalFolderName, 'Attributes,Availability,Caption,CharSetsSupported,Comment,CurrentCharSet,Default,Description,DeviceID,Direct,DriverName,HorizontalResolution,InstallDate,JobCountSinceLastReset,KeepPrintedJobs,LanguagesSupported,' + 'Local,Location,MarkingTechnology,MaxCopies,MaxNumberUp,MaxSizeSupported,MimeTypesSupported,Name,Network,PaperSizesSupported,PaperTypesAvailable,Parameters,PNPDeviceID,PortName,PrintProcessor,' + 'ServerName,Shared,ShareName,SpoolEnabled,SystemName,VerticalResolution,WorkOffline');
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Printer=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+                                      // Adiciona variáveis da coleta de hardware na requisição
+                                      //strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Hardware=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      strColetaAtual := strFieldsAndValuesToRequest;
+                                  Except
+                                     on E : Exception do
+                                       Begin
+                                         objCacic.writeDebugLog('executeGerCols: Lançando Exceção #12');
+                                         objCacic.writeExceptionLog(E.Message,E.ClassName,'Exceção #12 - ' + objCacic.getValueFromTags('te_descricao_breve',strActionDefinition));
+                                         objCacic.setValueToFile('Collects',tstringsActions[intLoopActions] + '_End'   , '99999999', strGerColsInfFileName);
+                                      End;
+                                    End;
+                                  End
+                                else If (tstringsActions[intLoopActions] = 'col_soft') then
+                                  Begin
+                                    Try
+                                      Inc(intTotalExecutedCollects);
+
+                                      // Insere aqui a ação da coleta
+                                      objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
+                                      tstrColetaSoftware := SoftwareList;
+
+                                      // Adiciona variáveis da coleta de software na requisição
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',SoftwareList=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaSoftware)));
+
+                                      strColetaAtual := strFieldsAndValuesToRequest;
+                                    Except
+                                     on E : Exception do
+                                       Begin
+                                         objCacic.writeDebugLog('executeGerCols: Lançando Exceção #13');
+                                         objCacic.writeExceptionLog(E.Message,E.ClassName,'Exceção #13 - ' + objCacic.getValueFromTags('te_descricao_breve',strActionDefinition));
+                                         objCacic.setValueToFile('Collects',tstringsActions[intLoopActions] + '_End'   , '99999999', strGerColsInfFileName);
+                                      End;
+                                    End;
+
                                   End
                                 else If (tstringsActions[intLoopActions] = 'col_moni') then
                                   Begin
@@ -1402,13 +1493,6 @@ Begin
 
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',MonitoredProfiles=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
 
-                                      // Adiciona coleta de software
-                                      objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
-                                      tstrColetaSoftware := SoftwareList;
-
-                                      // Adiciona variáveis da coleta de software na requisição
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',SoftwareList=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaSoftware)));
-
                                     Except
                                       Begin
                                         objCacic.setValueToFile('Collects',tstringsActions[intLoopActions] + '_End'   ,'99999999', strGerColsInfFileName);
@@ -1448,13 +1532,6 @@ Begin
                                           objCacic.writeDebugLog('executeGerCols: Coletando dados de Win32_' + tstringsClasses[intLoopClasses]);
                                           strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',' + tstringsClasses[intLoopClasses] + '=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(fetchWmiValues('Win32_' + tstringsClasses[intLoopClasses],objCacic.getLocalFolderName, objCacic.getValueFromTags(tstringsClasses[intLoopClasses] + '.Properties',strClassesAndProperties),objCacic.getValueFromTags(tstringsClasses[intLoopClasses] + '.WhereClause',strClassesAndProperties)))));
                                         End;
-
-                                      // Adiciona coleta de software
-                                      objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
-                                      tstrColetaSoftware := SoftwareList;
-
-                                      // Adiciona variáveis da coleta de software na requisição
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',SoftwareList=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaSoftware)));
 
                                       strColetaAtual := strFieldsAndValuesToRequest;
                                     Except
