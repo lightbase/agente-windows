@@ -1,12 +1,12 @@
 object frmMapaCacic: TfrmMapaCacic
   Left = 494
   Top = 200
-  Width = 1109
-  Height = 579
   BorderIcons = [biSystemMenu]
   Caption = 
     'MapaCacic - M'#243'dulo Avulso para Coleta de Informa'#231#245'es Patrimoniai' +
     's'
+  ClientHeight = 545
+  ClientWidth = 1101
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -262,7 +262,7 @@ object frmMapaCacic: TfrmMapaCacic
       Left = 3
       Top = 170
       Width = 48
-      Height = 14
+      Height = 13
       Caption = 'Etiqueta 3'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
@@ -586,6 +586,21 @@ object frmMapaCacic: TfrmMapaCacic
     Visible = False
     OnClick = AtualizaPatrimonio
   end
+  object pnVersao: TPanel
+    Left = 674
+    Top = 514
+    Width = 105
+    Height = 20
+    BevelInner = bvLowered
+    Caption = 'Vers'#227'o'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+    TabOrder = 3
+  end
   object pnMessageBox: TPanel
     Left = 0
     Top = 133
@@ -599,7 +614,7 @@ object frmMapaCacic: TfrmMapaCacic
     Font.Name = 'Arial'
     Font.Style = []
     ParentFont = False
-    TabOrder = 3
+    TabOrder = 4
     Visible = False
     object lbMensagens: TLabel
       Left = 2
@@ -616,22 +631,8 @@ object frmMapaCacic: TfrmMapaCacic
       Font.Style = []
       ParentFont = False
       Layout = tlCenter
+      ExplicitTop = -2
     end
-  end
-  object pnVersao: TPanel
-    Left = 674
-    Top = 514
-    Width = 105
-    Height = 20
-    BevelInner = bvLowered
-    Caption = 'Vers'#227'o'
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clWindowText
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
-    Font.Style = [fsBold]
-    ParentFont = False
-    TabOrder = 4
   end
   object timerMessageShowTime: TTimer
     Enabled = False

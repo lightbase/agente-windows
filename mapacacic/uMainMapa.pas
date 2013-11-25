@@ -72,8 +72,6 @@ type
     edTeInfoPatrimonio4: TEdit;
     edTeInfoPatrimonio5: TEdit;
     edTeInfoPatrimonio6: TEdit;
-    pnMessageBox: TPanel;
-    lbMensagens: TLabel;
     lbEtiqueta1a: TLabel;
     cbIdUnidOrganizacionalNivel1a: TComboBox;
     pnDivisoria01: TPanel;
@@ -83,6 +81,8 @@ type
     btCombosUpdate: TButton;
     timerMessageShowTime: TTimer;
     timerMessageBoxShowOrHide: TTimer;
+    pnMessageBox: TPanel;
+    lbMensagens: TLabel;
 
     procedure AtualizaPatrimonio(Sender: TObject);
     procedure mapa;
