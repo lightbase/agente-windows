@@ -39,7 +39,11 @@ uses
   Types,
   IdIPWatch,
   Registry,
-  Math, IdBaseComponent, IdComponent;
+  Math,
+  IdBaseComponent,
+  IdComponent,
+  Mask,
+  ComObj;
 
 function IsUserAnAdmin() : boolean; external shell32;
 
@@ -58,48 +62,36 @@ var strCollectsPatrimonioLast,
 
 type
   TfrmMapaCacic = class(TForm)
-    btGravarInformacoes: TButton;
     edWebManagerAddress: TLabel;
-    gbInformacoesSobreComputador: TGroupBox;
-    lbEtiqueta1: TLabel;
-    lbEtiqueta2: TLabel;
-    lbEtiqueta3: TLabel;
-    lbEtiqueta4: TLabel;
-    lbEtiqueta5: TLabel;
-    lbEtiqueta6: TLabel;
-    edTeInfoPatrimonio1: TEdit;
-    edTeInfoPatrimonio4: TEdit;
-    edTeInfoPatrimonio2: TEdit;
-    edTeInfoPatrimonio3: TEdit;
-    edTeInfoPatrimonio5: TEdit;
-    edTeInfoPatrimonio6: TEdit;
-    pnDivisoria01: TPanel;
-    btCombosUpdate: TButton;
-    gbLeiaComAtencao: TGroupBox;
-    lbLeiaComAtencao: TLabel;
     lbWebManagerAddress: TLabel;
     pnVersao: TPanel;
     timerMessageBoxShowOrHide: TTimer;
     timerMessageShowTime: TTimer;
     timerProcessos: TTimer;
-    edTeInfoUserLogado: TEdit;
-    edTeInfoNomeComputador: TEdit;
-    edTeInfoCpfUser: TEdit;
-    edTeInfoIpComputador: TEdit;
-    lbEtiquetaUserLogado: TLabel;
-    lbEtiquetaNomeComputador: TLabel;
-    lbEtiquetaCpfUser: TLabel;
-    lbEtiquetaIpComputador: TLabel;
     IdIPWatch1: TIdIPWatch;
-    lbEtiquetaPatrimonioPc: TLabel;
-    edTePatrimonioPc: TEdit;
-    edTeInfoNome: TEdit;
-    lbEtiquetaNome: TLabel;
-    bgTermoResponsabilidade: TGroupBox;
-    mmTermoResponsabilidade: TMemo;
-    rdConcordaTermos: TRadioButton;
     pnMessageBox: TPanel;
     lbMensagens: TLabel;
+    gbLeiaComAtencao: TGroupBox;
+    lbLeiaComAtencao: TLabel;
+    gbInformacoesSobreComputador: TGroupBox;
+    lbEtiqueta5: TLabel;
+    lbEtiqueta6: TLabel;
+    lbEtiquetaUserLogado: TLabel;
+    lbEtiquetaNomeComputador: TLabel;
+    lbEtiquetaIpComputador: TLabel;
+    lbEtiquetaPatrimonioPc: TLabel;
+    lbEtiquetaNome: TLabel;
+    edTeInfoPatrimonio5: TEdit;
+    edTeInfoPatrimonio6: TEdit;
+    btCombosUpdate: TButton;
+    edTeInfoUserLogado: TEdit;
+    edTeInfoNomeComputador: TEdit;
+    edTeInfoIpComputador: TEdit;
+    edTePatrimonioPc: TEdit;
+    edTeInfoNome: TEdit;
+    bgTermoResponsabilidade: TGroupBox;
+    rdConcordaTermos: TRadioButton;
+    btGravarInformacoes: TButton;
     
     procedure FormCreate(Sender: TObject);
     procedure AtualizaPatrimonio(Sender: TObject);
@@ -109,13 +101,15 @@ type
     procedure btCombosUpdateClick(Sender: TObject);
     procedure timerMessageShowTimeTimer(Sender: TObject);
     procedure timerProcessosTimer(Sender: TObject);
+    procedure rdConcordaTermosClick(Sender: TObject);
+    procedure EstadoBarraTarefa(EstadoBarra: Boolean);
+
     function NomeComputador : String;
     function UserName : String;
     function getConfigs : String;
     function SetCpfUser : String;
     function SetPatrimonioPC : String;
     function FormatarCpf(strCpfUser : String) : String;
-    procedure rdConcordaTermosClick(Sender: TObject);
 
 
   private
@@ -124,9 +118,10 @@ type
     strTeInfoPatrimonio3,
     strTeInfoPatrimonio4,
     strTeInfoPatrimonio5,
-    strTeInfoPatrimonio6    : String;
+    strTeInfoPatrimonio6,
+    strTeInfoPatrimonio7    : String;
 
-    procedure SetFocus;
+    procedure FormSetFocus;
     procedure MontaInterface;
     procedure RecuperaValoresAnteriores;
     procedure Sair;
@@ -287,10 +282,12 @@ begin
 end;
 
 function TfrmMapaCacic.getConfigs : String;
+
 Begin
   btCombosUpdate.Enabled := false;
 
   Result := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
+
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
   objCacic.writeDebugLog('FormActivate: Retorno de getConfigs: "'+Result+'"');
@@ -300,14 +297,18 @@ Begin
       Mensagem('Comunicação Efetuada com Sucesso! Salvando as Configurações Obtidas...',false,1);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Interface' , objCacic.getValueFromTags('Configs_Patrimonio_Interface', Result), strGerColsInfFileName);
-      objCacic.setValueToFile('Collects','Patrimonio_Last'      , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
-    End;
+//Linha comentada, pois gerente não está mandando as configurações adequadas.
+      //objCacic.setValueToFile('Collects','Patrimonio_Last'      , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
+    End
+  else
+    begin
+      MessageDlg(#13#13+'Não foi possível realizar a conexão!',mtError, [mbOK], 0);
+    end;
   btCombosUpdate.Enabled := true;
 End;
 
 procedure TfrmMapaCacic.RecuperaValoresAnteriores;
-var strCollectsPatrimonioLast,
-    strConfigsPatrimonioInterface : String;
+var strCollectsPatrimonioLast : String;
 begin
   btCombosUpdate.Enabled := false;
 
@@ -319,12 +320,6 @@ begin
 
   if (strCollectsPatrimonioLast <> '') then
     Begin
-      strConfigsPatrimonioInterface := objCacic.deCrypt( objCacic.GetValueFromFile
-                                                        ('Configs','Patrimonio_Interface',
-                                                         strGerColsInfFileName));
-
-      lbEtiqueta1.Caption := objCacic.getValueFromTags('te_etiqueta1',
-                                                        strConfigsPatrimonioInterface);
 
       if (strTeInfoPatrimonio1='') then
         strTeInfoPatrimonio1 := objCacic.getValueFromTags('TeInfoPatrimonio1',
@@ -344,6 +339,9 @@ begin
       if (strTeInfoPatrimonio6='') then
         strTeInfoPatrimonio6 := objCacic.getValueFromTags('TeInfoPatrimonio6',
                                                           strCollectsPatrimonioLast);
+      if (strTeInfoPatrimonio7='') then
+        strTeInfoPatrimonio7 := objCacic.getValueFromTags('TeInfoPatrimonio7',
+                                                          strCollectsPatrimonioLast);
     End;
   btCombosUpdate.Enabled := true;
   Application.ProcessMessages;
@@ -358,16 +356,13 @@ begin
 
   strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
 
-  strColetaAtual := StringReplace('[TeInfoPatrimonio]'  + edTePatrimonioPc.Text    + '[/TeInfoPatrimonio]'           +
-                                  '[TeInfoUser]'        + edTeInfoUserLogado.Text  + '[/TeInfoUser]'                 +
-                                  '[TeInfoNome]'        + edTeInfoNome.Text        + '[/TeInfoNome]'                 +
-                                  '[TeInfoCpfUser]'     + edTeInfoCpfUser.Text     + '[/TeInfoCpfUser]'              +
-                                  '[TeInfoPatrimonio1]' + edTeInfoPatrimonio1.Text + '[/TeInfoPatrimonio1]'          +
-                                  '[TeInfoPatrimonio2]' + edTeInfoPatrimonio2.Text + '[/TeInfoPatrimonio2]'          +
-                                  '[TeInfoPatrimonio3]' + edTeInfoPatrimonio3.Text + '[/TeInfoPatrimonio3]'          +
-                                  '[TeInfoPatrimonio4]' + edTeInfoPatrimonio4.Text + '[/TeInfoPatrimonio4]'          +
-                                  '[TeInfoPatrimonio5]' + edTeInfoPatrimonio5.Text + '[/TeInfoPatrimonio5]'          +
-                                  '[TeInfoPatrimonio6]' + edTeInfoPatrimonio6.Text + '[/TeInfoPatrimonio6]',',','[[COMMA]]',[rfReplaceAll]);
+  strColetaAtual := StringReplace('[TeInfoPatrimonio1]'   + edTePatrimonioPc.Text      + '[/TeInfoPatrimonio1]'           +
+                                  '[TeInfoPatrimonio2]'   + edTeInfoUserLogado.Text    + '[/TeInfoPatrimonio2]'                 +
+                                  '[TeInfoPatrimonio3]'   + edTeInfoNome.Text          + '[/TeInfoPatrimonio3]'                 +
+                                  '[TeInfoPatrimonio4]'   + edTeInfoIpComputador.Text  + '[/TeInfoPatrimonio4]'                   +
+                                  '[TeInfoPatrimonio5]'   + edTeInfoNomeComputador.Text+ '[/TeInfoPatrimonio5]'         +
+                                  '[TeInfoPatrimonio6]'   + edTeInfoPatrimonio5.Text   + '[/TeInfoPatrimonio6]'          +
+                                  '[TeInfoPatrimonio7]'   + edTeInfoPatrimonio6.Text   + '[/TeInfoPatrimonio7]',',','[[COMMA]]',[rfReplaceAll]);
 
   strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',col_patr='  +
                                  objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
@@ -389,6 +384,7 @@ begin
   objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');
   Application.ProcessMessages;
 
+  EstadoBarraTarefa(TRUE);
   Finalizar(true);
 
 end;
@@ -401,13 +397,6 @@ Begin
 
    Mensagem('Montando Interface para Coleta de Informações...',false,1);
 
-//-------------------------PATRIMONIO DA MAQUINA--------------------------------
-   edTePatrimonioPc.Text                     := SetPatrimonioPc;
-   if edTePatrimonioPc.Text <> '' then
-   Begin
-      lbEtiquetaPatrimonioPc.Visible         := true;
-      edTePatrimonioPc.Visible               := true;
-   end;
 
  //-------------------------------NOME USUARIO-----------------------------------
    edTeInfoNome.Text                         := 'Nome';
@@ -424,6 +413,8 @@ Begin
       lbEtiquetaNomeComputador.Visible       := true;
       edTeInfoNomeComputador.Visible         := true;
    end;
+   lbEtiquetaNomeComputador.Visible          := true;
+   edTeInfonomeComputador.Visible            := true;
 
 //-----------------------------USUARIO LOGADO-----------------------------------
 
@@ -436,12 +427,12 @@ Begin
 
 //-------------------------------CPF USUARIO------------------------------------
 
-   edTeInfoCpfUser.Text                      := FormatarCpf(SetCpfUser);
+{   edTeInfoCpfUser.Text                      := FormatarCpf(SetCpfUser);
    if edTeInfoCpfUser.Text <> '' then
    begin
       lbEtiquetaCpfUser.Visible              := true;
       edTeInfoCpfUser.Visible                := true;
-   end;
+   end;}
 
 //-----------------------PUXA O IP DA MÁQUINA PARA O EDTEXT-------------------------------------
    edTeInfoIpComputador.Text                 := idipwatch1.LocalIP;
@@ -451,11 +442,22 @@ Begin
       edTeInfoIpComputador.Visible           := true;
    end;
 
+//-------------------------PATRIMONIO DA MAQUINA--------------------------------
+{   edTePatrimonioPc.Text                     := SetPatrimonioPc;
+   if edTePatrimonioPc.Text <> '' then
+   Begin
+      lbEtiquetaPatrimonioPc.Visible         := true;
+      edTePatrimonioPc.Visible               := true;
+   end;}
+   edTePatrimonioPc.Text                     := strTeInfoPatrimonio1;
+   edTePatrimonioPc.Visible                  := true;
+   lbEtiquetaPatrimonioPc.Visible            := true;
+
 
    //----------VALOR DE strGerColsInfFileName ALTERADO PARA ARQUIVO TESTE-----------------------------
-   strConfigsPatrimonioInterface := objCacic.deCrypt( objCacic.getValueFromFile('Configs','Patrimonio_Interface',strGerColsInfFileName));
+   strConfigsPatrimonioInterface := objCacic.deCrypt(objCacic.getValueFromFile('Configs','Patrimonio_Interface',strGerColsInfFileName));
 
-   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta1 -> "'     +
+  { objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueobjCacic.enCta1 -> "'     +
                           objCacic.getValueFromTags('in_exibir_etiqueta1',
                                                     strConfigsPatrimonioInterface)+'"');
 
@@ -470,7 +472,7 @@ Begin
 
    objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta2 -> "'     +
                           objCacic.getValueFromTags('in_exibir_etiqueta2',
-                                                    strConfigsPatrimonioInterface)+'"');
+                                                   strConfigsPatrimonioInterface)+'"');
 
    if (trim(objCacic.getValueFromTags('in_exibir_etiqueta2', strConfigsPatrimonioInterface)) = 'S') then
    begin
@@ -505,33 +507,33 @@ Begin
       edTeInfoPatrimonio4.Hint    := objCacic.getValueFromTags('te_help_etiqueta4', strConfigsPatrimonioInterface);
       edTeInfoPatrimonio4.Text    := strTeInfoPatrimonio4;
       edTeInfoPatrimonio4.visible := True;
-   end;
+   end;  }
 
-   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta5 -> "'     +
-                          objCacic.getValueFromTags('in_exibir_etiqueta5',
-                                                    strConfigsPatrimonioInterface)+'"');
+//   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta5 -> "'     +
+//                          objCacic.getValueFromTags('in_exibir_etiqueta5',
+//                                                   strConfigsPatrimonioInterface)+'"');
 
-   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta5', strConfigsPatrimonioInterface)) = 'S') then
-   begin
-      lbEtiqueta5.Caption         := objCacic.getValueFromTags('te_etiqueta5', strConfigsPatrimonioInterface);
+//   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta5', strConfigsPatrimonioInterface)) = 'S') then
+//   begin
+      //lbEtiqueta5.Caption         := objCacic.getValueFromTags('te_etiqueta5', strConfigsPatrimonioInterface);
       lbEtiqueta5.Visible         := true;
       edTeInfoPatrimonio5.Hint    := objCacic.getValueFromTags('te_help_etiqueta5', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio5.Text    := strTeInfoPatrimonio5;
+      edTeInfoPatrimonio5.Text    := strTeInfoPatrimonio6;
       edTeInfoPatrimonio5.visible := True;
-   end;
+//   end;
 
-   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta6 -> "'     +
-                          objCacic.getValueFromTags('in_exibir_etiqueta6',
-                                                    strConfigsPatrimonioInterface)+'"');
+//   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta6 -> "'     +
+//                          objCacic.getValueFromTags('in_exibir_etiqueta6',
+//                                                    strConfigsPatrimonioInterface)+'"');
 
-   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta6', strConfigsPatrimonioInterface)) = 'S') then
-   begin
-      lbEtiqueta6.Caption         := objCacic.getValueFromTags('te_etiqueta6', strConfigsPatrimonioInterface);
+//   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta6', strConfigsPatrimonioInterface)) = 'S') then
+//   begin
+      //lbEtiqueta6.Caption         := objCacic.getValueFromTags('te_etiqueta6', strConfigsPatrimonioInterface);
       lbEtiqueta6.Visible         := true;
       edTeInfoPatrimonio6.Hint    := objCacic.getValueFromTags('te_help_etiqueta6', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio6.Text    := strTeInfoPatrimonio6;
+      edTeInfoPatrimonio6.Text    := strTeInfoPatrimonio7;
       edTeInfoPatrimonio6.visible := True;
-   end;
+//   end;
 
    Mensagem('',false,1);
    btGravarInformacoes.Visible := true;
@@ -584,8 +586,11 @@ begin
 
     //Se foco for verdadeiro, executar procedimento SetFocus, o qual modifica
     //propriedades do form e starta o timer para esconder o processo no gerenciador.
-    if foco then    
-        SetFocus;
+    if foco then
+    begin
+        //TfrmMapaCacic.OnChange := FormSetFocus;
+        FormSetFocus;
+    end;
 
     if IsUserAnAdmin then
       Begin
@@ -620,8 +625,8 @@ begin
 //agente instalado estava excluíndo sempre que o mesmo era criado, dando conflito
 //com o Mapa.
 
-            //AssignFile(textFileAguarde,objCacic.getLocalFolderName +
-             //         '\temp\aguarde_MAPACACIC.txt'); //Associa o arquivo a uma variável do tipo TextFile
+            AssignFile(textFileAguarde,objCacic.getLocalFolderName +
+                      '\temp\aguarde_MAPACACIC.txt'); //Associa o arquivo a uma variável do tipo TextFile
 
             AssignFile(textFileAguarde, 'C:\Documents and Settings\adriano\Desktop\TesteLerArquivo\aguarde_MAPACACIC.txt');
 
@@ -669,7 +674,7 @@ begin
         MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
         objCacic.writeDailyLog('SEM PRIVILÉGIOS: Necessário ser administrador "local" ou de Domínio!');
         Sair;
-      End
+      End      
   Finally
   End;
 end;
@@ -701,17 +706,45 @@ end;
 //------------------------------------------------------------------------------
 //PROCEDURE CRIADO PARA DEIXAR O FORM FULLSCREEN E FOCADO, SEM QUE SEJA POSSÍVEL
 //FECHAR OU ALTERNAR ENTRE OUTRAS JANELAS ATÉ QUE ATUALIZE O PATRIMONIO.
-procedure TfrmMapaCacic.SetFocus;
+procedure TfrmMapaCacic.FormSetFocus;
 var
   r : TRect;
 begin
-  Fechar                  := False;
-  BorderIcons             := BorderIcons - [biSystemMenu] - [biMinimize] - [biMaximize];
-  BorderStyle             := bsNone;
-  FormStyle               := fsStayOnTop;
+  Fechar                    := False;
+  BorderIcons               := BorderIcons - [biSystemMenu] - [biMinimize] - [biMaximize];
+  BorderStyle               := bsNone;
+  FormStyle                 := fsStayOnTop;
+  timerProcessos.Enabled    := True;
   SystemParametersInfo(SPI_GETWORKAREA, 0, @r,0);
   SetBounds(r.Left, r.Top, r.Right-r.Left, r.Bottom-r.Top);
-  timerProcessos.Enabled  := True;
+  Top := 0;
+  Left := 0;
+  Width := Screen.Width;
+  Height := Screen.Height;
+  EstadoBarraTarefa(FALSE);
+
+end;
+
+//------------------------------------------------------------------------------
+//----------------ESCONDE BARRA DE TAREFAS--------------------------------------
+//------------------------------------------------------------------------------
+
+procedure TfrmMapaCacic.EstadoBarraTarefa(EstadoBarra: Boolean);
+
+var wndHandle : THandle;
+    wndClass  : array[0..50] of Char;
+
+begin
+
+  StrPCopy(@wndClass[0],'Shell_TrayWnd');
+  wndHandle := FindWindow(@wndClass[0], nil);
+
+  If EstadoBarra=True Then
+    ShowWindow(wndHandle, SW_RESTORE) {Mostra a barra de tarefas}
+
+  Else
+    ShowWindow(wndHandle, SW_HIDE); {Esconde a barra de tarefas}
+
 end;
 
 //------------------------------------------------------------------------------
@@ -782,4 +815,55 @@ begin
   end;
 end;
 
+{raiz ldap
+ou=bsa,ou=regbsa,ou=pgfn,dc=mf,dc=gov,dc=br
+
+usuário: ldap
+senha: nova4275
+
+host: 10.72.160.21
+host: 10.72.160.20
+
+--
+ }
+{
+function connectLDAP(sADForestName, sADUserName, sADGroupName: string);
+var ADOConnection, ADOCmd, Res: Variant;
+    sBase,
+    sFilter,
+    sAttributes,
+    user: string;
+
+Begin
+  ADOConnection := CreateOleObject('ADODB.Connection');
+  ADOCmd := CreateOleObject('ADODB.Command');
+  try
+    ADOConnection.Provider := 'ADsDSOObject';
+    ADOConnection.Open('Active Directory Provider');
+    ADOCmd.ActiveConnection := ADOConnection;
+    ADOCmd.Properties('Page Size')     := 100;
+    ADOCmd.Properties('Timeout')       := 30;
+    ADOCmd.Properties('Cache Results') := False;
+//'SELECT Name, whenCreated FROM \'''LDAP://' + raiz + '''' WHERE objectClass='''user''''
+    sBase       := '<GC://' + sADForestName+ '>';
+    sFilter     := '(&(objectCategory=person)(objectClass=user)' +
+                     '(distinguishedName=' + sADUserName + ')' +
+                     '(memberOf:1.2.840.113556.1.4.1941:=' + sADGroupName + '))';
+    sAttributes := 'sAMAccountName';
+
+    //ADOCmd.CommandText := sBase + ';' + sFilter + ';' + sAttributes + ';subtree';
+    ADOCmd.CommandText := 'SELECT Name, whenCreated FROM \''''LDAP://' + raiz + '''' WHERE objectClass='''user''';
+    Res := AdoCmd.Execute;
+
+    if Res.EOF then
+        User := ''
+    else
+        User := Res.Fields[0].Value;
+  finally
+    ADOCmd := Nil;
+    ADOConnection.Close;
+    ADOConnection := Nil;
+  end;
+end;
+     }
 end.
