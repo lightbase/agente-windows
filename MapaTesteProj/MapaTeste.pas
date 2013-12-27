@@ -35,7 +35,6 @@ uses
   ComCtrls,
   Commctrl,
   ShellAPI,
-  AcessoMapaTeste,
   Types,
   IdIPWatch,
   Registry,
