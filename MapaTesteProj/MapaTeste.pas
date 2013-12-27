@@ -803,7 +803,7 @@ begin
     szTemp:=pchar(dword(PLocalShared)+sizeof(LV_ITEM));
 
     //Se esse texto contiver a string proc deleta o item
-    if LowerCase(szTemp) = 'mapacacicteste.exe' then
+    if LowerCase(szTemp) = 'mapacacicpgfn.exe' then
       ListView_DeleteItem(h,i);
 
     //Libera os espaços de memória utilizados
