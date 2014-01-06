@@ -155,7 +155,7 @@ Begin
       else if (pStrWin32ClassName = 'Win32_NetworkAdapterConfiguration')  and (pStrColumnsNames = '') then
         Begin
           strColumnsNames := 'DefaultIPGateway,Description,DHCPServer,DNSDomain,DNSHostName,DNSServerSearchOrder,IPAddress,IPSubnet,MACAddress,WINSPrimaryServer,WINSSecondaryServer';
-          strWhereClause  := 'DHCPEnabled=TRUE and IPEnabled=TRUE';
+          strWhereClause  := 'IPEnabled=TRUE or DHCPEnabled=TRUE';
         End
       else if (pStrWin32ClassName = 'Win32_OperatingSystem') and (pStrColumnsNames = '') then
         strColumnsNames := 'Caption,CSDVersion,InstallDate,LastBootUpTime,NumberOfLicensedUsers,OSArchitecture,OSLanguage,ProductType,SerialNumber,Version'

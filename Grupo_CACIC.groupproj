@@ -82,22 +82,22 @@
   <Target Name="TesteSoftware:Make">
     <MSBuild Projects="C:\Documents and Settings\adriano\Meus documentos\RAD Studio\Projects\TesteSoftware.dproj" Targets="Make" />
   </Target>
-  <Target Name="MapaCACICteste">
-    <MSBuild Projects="MapaTesteProj\MapaCACICteste.dproj" Targets="" />
+  <Target Name="MapaCACICpgfn">
+    <MSBuild Projects="MapaTesteProj\MapaCACICpgfn.dproj" Targets="" />
   </Target>
-  <Target Name="MapaCACICteste:Clean">
-    <MSBuild Projects="MapaTesteProj\MapaCACICteste.dproj" Targets="Clean" />
+  <Target Name="MapaCACICpgfn:Clean">
+    <MSBuild Projects="MapaTesteProj\MapaCACICpgfn.dproj" Targets="Clean" />
   </Target>
-  <Target Name="MapaCACICteste:Make">
-    <MSBuild Projects="MapaTesteProj\MapaCACICteste.dproj" Targets="Make" />
+  <Target Name="MapaCACICpgfn:Make">
+    <MSBuild Projects="MapaTesteProj\MapaCACICpgfn.dproj" Targets="Make" />
   </Target>
   <Target Name="Build">
-    <CallTarget Targets="chksis;cacicservice;cacic280;gercols;installcacic;MapaCACICl;CacicVersionsAndHashes;TesteSoftware;MapaCACICteste" />
+    <CallTarget Targets="chksis;cacicservice;cacic280;gercols;installcacic;MapaCACICl;CacicVersionsAndHashes;TesteSoftware;MapaCACICpgfn" />
   </Target>
   <Target Name="Clean">
-    <CallTarget Targets="chksis:Clean;cacicservice:Clean;cacic280:Clean;gercols:Clean;installcacic:Clean;MapaCACICl:Clean;CacicVersionsAndHashes:Clean;TesteSoftware:Clean;MapaCACICteste:Clean" />
+    <CallTarget Targets="chksis:Clean;cacicservice:Clean;cacic280:Clean;gercols:Clean;installcacic:Clean;MapaCACICl:Clean;CacicVersionsAndHashes:Clean;TesteSoftware:Clean;MapaCACICpgfn:Clean" />
   </Target>
   <Target Name="Make">
-    <CallTarget Targets="chksis:Make;cacicservice:Make;cacic280:Make;gercols:Make;installcacic:Make;MapaCACICl:Make;CacicVersionsAndHashes:Make;TesteSoftware:Make;MapaCACICteste:Make" />
+    <CallTarget Targets="chksis:Make;cacicservice:Make;cacic280:Make;gercols:Make;installcacic:Make;MapaCACICl:Make;CacicVersionsAndHashes:Make;TesteSoftware:Make;MapaCACICpgfn:Make" />
   </Target>
 </Project>

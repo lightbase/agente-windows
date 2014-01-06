@@ -257,6 +257,7 @@ end;
 destructor TCACIC.Destroy();
 begin
    Try
+     P_OSVersionInfo:=nil;
      FreeMemory(P_OSVersionInfo);
    Except
    End;
@@ -683,6 +684,7 @@ begin
   pStrSource := StringReplace(pStrSource, copy(pStrTags,1,1) + pStrTagLabel + copy(pStrTags,2,1) + strAuxSVTT + copy(pStrTags,1,1) + '/' + pStrTagLabel + copy(pStrTags,2,1), '' , [rfReplaceAll]);
   pStrSource := pStrSource + copy(pStrTags,1,1) + pStrTagLabel + copy(pStrTags,2,1) + pStrTagValue + copy(pStrTags,1,1) + '/' + pStrTagLabel + copy(pStrTags,2,1);
 End;
+
 
 function TCACIC.getValueFromFile(pStrSectionName, pStrKeyName, pStrFileName : String; pBoolShowInDebug : boolean = true): String;
 //Para buscar do Arquivo INF...
