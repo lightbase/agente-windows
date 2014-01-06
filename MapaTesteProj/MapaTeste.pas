@@ -355,13 +355,15 @@ begin
 
   strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
 
-  strColetaAtual := StringReplace('[TeInfoPatrimonio1]'   + edTePatrimonioPc.Text      + '[/TeInfoPatrimonio1]'           +
-                                  '[TeInfoPatrimonio2]'   + edTeInfoUserLogado.Text    + '[/TeInfoPatrimonio2]'                 +
-                                  '[TeInfoPatrimonio3]'   + edTeInfoNome.Text          + '[/TeInfoPatrimonio3]'                 +
-                                  '[TeInfoPatrimonio4]'   + edTeInfoIpComputador.Text  + '[/TeInfoPatrimonio4]'                   +
-                                  '[TeInfoPatrimonio5]'   + edTeInfoNomeComputador.Text+ '[/TeInfoPatrimonio5]'         +
-                                  '[TeInfoPatrimonio6]'   + edTeInfoPatrimonio5.Text   + '[/TeInfoPatrimonio6]'          +
-                                  '[TeInfoPatrimonio7]'   + edTeInfoPatrimonio6.Text   + '[/TeInfoPatrimonio7]',',','[[COMMA]]',[rfReplaceAll]);
+  strColetaAtual := StringReplace('[Patrimonio]'                                                                 +
+                                  '[TeInfoPatrimonio1]'   + edTePatrimonioPc.Text      + '[/TeInfoPatrimonio1]'  +
+                                  '[TeInfoPatrimonio2]'   + edTeInfoUserLogado.Text    + '[/TeInfoPatrimonio2]'  +
+                                  '[TeInfoPatrimonio3]'   + edTeInfoNome.Text          + '[/TeInfoPatrimonio3]'  +
+                                  '[TeInfoPatrimonio4]'   + edTeInfoIpComputador.Text  + '[/TeInfoPatrimonio4]'  +
+                                  '[TeInfoPatrimonio5]'   + edTeInfoNomeComputador.Text+ '[/TeInfoPatrimonio5]'  +
+                                  '[TeInfoPatrimonio6]'   + edTeInfoPatrimonio5.Text   + '[/TeInfoPatrimonio6]'  +
+                                  '[TeInfoPatrimonio7]'   + edTeInfoPatrimonio6.Text   + '[/TeInfoPatrimonio7]'  +
+                                  '[/Patrimonio]', ',','[[COMMA]]',[rfReplaceAll]);
 
   strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',col_patr='  +
                                  objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));

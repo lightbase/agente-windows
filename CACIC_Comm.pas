@@ -52,8 +52,8 @@ Begin
 
       strWin32_ComputerSystem              := fetchWmiValues('Win32_ComputerSystem'             ,objCacicCOMM.getLocalFolderName);
       strWin32_NetworkAdapterConfiguration := fetchWmiValues('Win32_NetworkAdapterConfiguration',objCacicCOMM.getLocalFolderName);
-      //strWin32_OperatingSystem             := fetchWmiValues('Win32_OperatingSystem'            ,objCacicCOMM.getLocalFolderName);
-      //strWin32_SoftwareFeature             := fetchWmiValues('Win32_SoftwareFeature'            ,objCacicCOMM.getLocalFolderName);
+      //strWin32_OperatingSystem           ,objCacicCOMM.getLocalFolderName);
+      //strWin32_SoftwareFeature             := fetchWmiValues('Win32_OperatingSystem'              := fetchWmiValues('Win32_SoftwareFeature'            ,objCacicCOMM.getLocalFolderName);
 
       objCacicCOMM.writeDebugLog('Comm: Povoando lista com valores padrão para cabeçalho de comunicação');
       objCacicCOMM.writeDebugLog('Comm: pStrActionMessage: "' + pStrActionMessage + '"');
