@@ -1,14 +1,14 @@
 object FormularioGeral: TFormularioGeral
-  Left = 331
-  Top = 136
+  Left = 411
+  Top = 225
   HorzScrollBar.Visible = False
   VertScrollBar.Visible = False
   BiDiMode = bdLeftToRight
   BorderIcons = []
   BorderStyle = bsSingle
   Caption = 'CACIC - Informa'#231#245'es Gerais'
-  ClientHeight = 562
-  ClientWidth = 752
+  ClientHeight = 598
+  ClientWidth = 641
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -136,102 +136,19 @@ object FormularioGeral: TFormularioGeral
     0000003F0000FC000000003F0000FD685A4A56BF0000FFFFFFFFFFFF0000}
   OldCreateOrder = False
   ParentBiDiMode = False
-  Position = poDesktopCenter
+  Position = poDesigned
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
-  object Panel3: TPanel
-    Left = 648
-    Top = -1
-    Width = 105
-    Height = 567
-    Color = clGray
-    TabOrder = 3
-    object pnVersao: TPanel
-      Left = 5
-      Top = 546
-      Width = 96
-      Height = 16
-      BevelInner = bvLowered
-      BevelOuter = bvLowered
-      Caption = 'v. 2.8.0.xxx'
-      Color = clBackground
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWhite
-      Font.Height = -9
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      TabOrder = 0
-    end
-    object bt_Fechar_Infos_Gerais: TBitBtn
-      Left = 6
-      Top = 252
-      Width = 96
-      Height = 48
-      Caption = 'Fechar'
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Arial'
-      Font.Style = [fsBold]
-      ParentFont = False
-      TabOrder = 1
-      TabStop = False
-      OnClick = Bt_Fechar_InfosGeraisClick
-      Glyph.Data = {
-        E6040000424DE604000000000000360000002800000014000000140000000100
-        180000000000B0040000120B0000120B00000000000000000000FFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFA39C989C969D96909D918B98928B908C827AFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFC0BCBCB4B4D19B9AD85657CD6364D96364D95657CD9998D2ADA9BE9D958EFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB7B4C18B8BD5
-        5A5AD88081E48B8BE58D8DE48D8DE48B8BE57777E24646C98E8DC8A7A0A1FFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB6B4C27D7DCB9B9BE26E6ED254
-        54D35A5AD55959D55959D55959D55454D39B9BE26868CC6262B5A8A2A3FFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4848A78888D8F0F0FBBCBCE64242BA2525
-        C42E2EC62E2EC62525C48888D8E2E2F5DBDBF13939B07574ADA59E98FFFFFFFF
-        FFFFFFFFFFFFFFFF9291B52020943332A6BCBCE6DEDEF4B2B2DF2625B10000AE
-        0000AE6E6ED2D8D8F1DBDBF38080CC10109505068DA8A5B3FFFFFFFFFFFFFFFF
-        FFFFFFFF37378A00007D0000852828A2BCBCE6DEDEF4B2B2DF1F1FAA5A5AC8D4
-        D4F0DBDBF38080CC01019100008800007D7C7AA8FFFFFFFFFFFFFFFFFFD0CFD6
-        20207300007200007F0000852828A2BBBBE3D8D8F1BBBBE3CBCBECD9D9F28080
-        CC01018F00008600007F000070515193BCB8B7FFFFFFFFFFFFBBBAC60E0E611D
-        1D7B0E0E7C03037D00007B272799C3C3E5D3D3EBD6D6ED8484C300008300007F
-        0000790000700000640A0A61C1BEC0FFFFFFFFFFFFBBBAC63838786564A06564
-        A056569E4242977A7ABBD3D3EBD9D9EED9D9EEAFAFD12E2E8A14148116167B0C
-        0C6D000058060751CAC8C9FFFFFFFFFFFFCECDD38383A48A8AAE8383AD8181B2
-        B8B8D4F1F1F7EDEDF2CBCBE1DADAEAF1F1F7D3D3E48181B27E7EAD7E7EAD5454
-        871B1B53CFCCCBFFFFFFFFFFFFFFFFFF7D7D929F9FB79D9DBAC3C3D5F3F3F4F1
-        F1F7D3D3E49999C0ABABCCE6E6EEF6F6F8DDDDE79D9DBAA2A2BB8A8BA2848295
-        DBD8D8FFFFFFFFFFFFFFFFFF8B8B96D8D8DDD5D5DEF6F6F8F5F5F6DDDDE7B4B4
-        CBB4B4CBB1B1C9C3C3D5EDEDF2F9F8F8E3E3EABEBECCB5B5BFADABB1FFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFF898896FEFEFEFBFBFBE6E6EEC9C9D5CAC9D5CBCBD6
-        CBCBD6C8C7D3D5D5DEF3F2F3F9F9FAF0F0F2848290FFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFAEAEB8FFFFFFE5E3E8DBDBE0DBDADFDBDADFDBDADFDC
-        DBDFDCDBE0EBEAECF9F9FA858594FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFA4A4AFF4F4F5ECECEEF3F3F4F4F3F4F3F3F4F3F2F3E4E3
-        E7E6E6E99493A0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFB1B1BAB1B1BAD8D8DDE3E3E7E3E3E7D2D2D7A9A9B3C0C0C6
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFC8C8CDCAC9CEFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-        FFFFFFFFFFFFFFFFFFFF}
-      Spacing = 1
-    end
-  end
   object Pn_InfosGerais: TPanel
-    Left = 0
+    Left = 2
     Top = 0
-    Width = 647
-    Height = 564
+    Width = 645
+    Height = 566
     BevelOuter = bvNone
-    Color = clHighlight
+    ParentBackground = False
     TabOrder = 0
     object Pn_SisMoni: TPanel
       Left = 2
@@ -301,6 +218,7 @@ object FormularioGeral: TFormularioGeral
       Width = 640
       Height = 149
       Caption = 'Pn_TCPIP'
+      ParentBackground = False
       TabOrder = 1
       object Lb_TCPIP: TLabel
         Left = 5
@@ -317,7 +235,7 @@ object FormularioGeral: TFormularioGeral
         ParentFont = False
       end
       object GB_InfosTCPIP: TGroupBox
-        Left = 5
+        Left = 4
         Top = 19
         Width = 631
         Height = 126
@@ -350,7 +268,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 31
         end
         object ST_LB_DominioWindows: TStaticText
-          Left = 267
+          Left = 265
           Top = 57
           Width = 177
           Height = 19
@@ -380,7 +298,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 29
         end
         object ST_LB_MacAddress: TStaticText
-          Left = 352
+          Left = 350
           Top = 23
           Width = 90
           Height = 19
@@ -408,7 +326,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 0
         end
         object ST_VL_NomeHost: TStaticText
-          Left = 145
+          Left = 150
           Top = 8
           Width = 11
           Height = 19
@@ -508,8 +426,8 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 7
         end
         object ST_LB_Mascara: TStaticText
-          Left = 318
-          Top = 40
+          Left = 313
+          Top = 41
           Width = 128
           Height = 19
           Caption = 'M'#225'scara de SubRede:'
@@ -522,7 +440,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 8
         end
         object ST_LB_ServidorDHCP: TStaticText
-          Left = 354
+          Left = 350
           Top = 106
           Width = 90
           Height = 19
@@ -536,7 +454,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 9
         end
         object ST_LB_WinsPrimario: TStaticText
-          Left = 306
+          Left = 302
           Top = 73
           Width = 139
           Height = 19
@@ -550,7 +468,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 10
         end
         object ST_LB_WinsSecundario: TStaticText
-          Left = 291
+          Left = 285
           Top = 89
           Width = 155
           Height = 19
@@ -564,7 +482,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 11
         end
         object ST_VL_IpEstacao: TStaticText
-          Left = 145
+          Left = 150
           Top = 23
           Width = 11
           Height = 19
@@ -580,7 +498,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 12
         end
         object ST_VL_DNSPrimario: TStaticText
-          Left = 145
+          Left = 150
           Top = 73
           Width = 11
           Height = 19
@@ -596,7 +514,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 13
         end
         object ST_VL_DNSSecundario: TStaticText
-          Left = 145
+          Left = 150
           Top = 89
           Width = 11
           Height = 19
@@ -612,7 +530,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 14
         end
         object ST_VL_Gateway: TStaticText
-          Left = 145
+          Left = 150
           Top = 107
           Width = 11
           Height = 19
@@ -661,7 +579,7 @@ object FormularioGeral: TFormularioGeral
         end
         object ST_VL_WinsPrimario: TStaticText
           Left = 436
-          Top = 73
+          Top = 74
           Width = 18
           Height = 19
           Alignment = taRightJustify
@@ -692,7 +610,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 19
         end
         object ST_VL_DominioDNS: TStaticText
-          Left = 145
+          Left = 150
           Top = 57
           Width = 11
           Height = 19
@@ -708,7 +626,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 20
         end
         object ST_VL_IpRede: TStaticText
-          Left = 145
+          Left = 150
           Top = 40
           Width = 11
           Height = 19
@@ -812,8 +730,8 @@ object FormularioGeral: TFormularioGeral
         ParentFont = False
       end
       object listaColetas: TListView
-        Left = 5
-        Top = 19
+        Left = 2
+        Top = 23
         Width = 631
         Height = 105
         Anchors = [akLeft, akTop, akRight, akBottom]
@@ -890,10 +808,10 @@ object FormularioGeral: TFormularioGeral
         Visible = False
       end
       object gpInfosPatrimoniais: TGroupBox
-        Left = 5
-        Top = 19
+        Left = 4
+        Top = 16
         Width = 631
-        Height = 106
+        Height = 109
         Color = clSilver
         Font.Charset = DEFAULT_CHARSET
         Font.Color = clSilver
@@ -905,10 +823,10 @@ object FormularioGeral: TFormularioGeral
         TabOrder = 0
         DesignSize = (
           631
-          106)
+          109)
         object st_vl_etiqueta9: TStaticText
-          Left = 510
-          Top = 90
+          Left = 511
+          Top = 91
           Width = 18
           Height = 19
           Anchors = [akRight]
@@ -939,7 +857,7 @@ object FormularioGeral: TFormularioGeral
         end
         object st_vl_Etiqueta3: TStaticText
           Left = 146
-          Top = 58
+          Top = 60
           Width = 11
           Height = 19
           Anchors = [akRight]
@@ -969,8 +887,8 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 16
         end
         object st_vl_etiqueta4: TStaticText
-          Left = 510
-          Top = 9
+          Left = 511
+          Top = 8
           Width = 11
           Height = 19
           Anchors = [akRight]
@@ -984,7 +902,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 19
         end
         object st_vl_etiqueta5: TStaticText
-          Left = 510
+          Left = 511
           Top = 26
           Width = 11
           Height = 19
@@ -999,8 +917,8 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 20
         end
         object st_vl_etiqueta6: TStaticText
-          Left = 510
-          Top = 42
+          Left = 511
+          Top = 43
           Width = 11
           Height = 19
           Anchors = [akRight]
@@ -1014,7 +932,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 21
         end
         object st_vl_etiqueta7: TStaticText
-          Left = 510
+          Left = 511
           Top = 59
           Width = 11
           Height = 19
@@ -1029,7 +947,7 @@ object FormularioGeral: TFormularioGeral
           TabOrder = 22
         end
         object st_vl_etiqueta8: TStaticText
-          Left = 510
+          Left = 511
           Top = 74
           Width = 11
           Height = 19
@@ -1188,7 +1106,7 @@ object FormularioGeral: TFormularioGeral
         end
         object st_vl_Etiqueta1a: TStaticText
           Left = 146
-          Top = 24
+          Top = 25
           Width = 11
           Height = 19
           Anchors = [akRight]
@@ -1203,7 +1121,7 @@ object FormularioGeral: TFormularioGeral
         end
         object st_vl_Etiqueta2: TStaticText
           Left = 146
-          Top = 42
+          Top = 43
           Width = 11
           Height = 19
           Anchors = [akRight]
@@ -1373,36 +1291,111 @@ object FormularioGeral: TFormularioGeral
     Width = 5
     Height = 566
     Color = clGreen
-    TabOrder = 1
-  end
-  object Panel2: TPanel
-    Left = 648
-    Top = 0
-    Width = 3
-    Height = 566
-    Color = clYellow
     TabOrder = 2
+  end
+  object Panel3: TPanel
+    Left = 2
+    Top = 561
+    Width = 645
+    Height = 37
+    ParentBackground = False
+    TabOrder = 1
+    object pnVersao: TPanel
+      Left = 543
+      Top = 20
+      Width = 96
+      Height = 16
+      BevelInner = bvLowered
+      BevelOuter = bvLowered
+      Caption = 'v. 2.8.0.xxx'
+      Color = clBackground
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWhite
+      Font.Height = -9
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 0
+    end
+    object bt_Fechar_Infos_Gerais: TBitBtn
+      Left = 274
+      Top = 3
+      Width = 96
+      Height = 30
+      Caption = 'Fechar'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'Arial'
+      Font.Style = [fsBold]
+      ParentFont = False
+      TabOrder = 1
+      TabStop = False
+      OnClick = Bt_Fechar_InfosGeraisClick
+      Glyph.Data = {
+        E6040000424DE604000000000000360000002800000014000000140000000100
+        180000000000B0040000120B0000120B00000000000000000000FFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFA39C989C969D96909D918B98928B908C827AFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFC0BCBCB4B4D19B9AD85657CD6364D96364D95657CD9998D2ADA9BE9D958EFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB7B4C18B8BD5
+        5A5AD88081E48B8BE58D8DE48D8DE48B8BE57777E24646C98E8DC8A7A0A1FFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB6B4C27D7DCB9B9BE26E6ED254
+        54D35A5AD55959D55959D55959D55454D39B9BE26868CC6262B5A8A2A3FFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF4848A78888D8F0F0FBBCBCE64242BA2525
+        C42E2EC62E2EC62525C48888D8E2E2F5DBDBF13939B07574ADA59E98FFFFFFFF
+        FFFFFFFFFFFFFFFF9291B52020943332A6BCBCE6DEDEF4B2B2DF2625B10000AE
+        0000AE6E6ED2D8D8F1DBDBF38080CC10109505068DA8A5B3FFFFFFFFFFFFFFFF
+        FFFFFFFF37378A00007D0000852828A2BCBCE6DEDEF4B2B2DF1F1FAA5A5AC8D4
+        D4F0DBDBF38080CC01019100008800007D7C7AA8FFFFFFFFFFFFFFFFFFD0CFD6
+        20207300007200007F0000852828A2BBBBE3D8D8F1BBBBE3CBCBECD9D9F28080
+        CC01018F00008600007F000070515193BCB8B7FFFFFFFFFFFFBBBAC60E0E611D
+        1D7B0E0E7C03037D00007B272799C3C3E5D3D3EBD6D6ED8484C300008300007F
+        0000790000700000640A0A61C1BEC0FFFFFFFFFFFFBBBAC63838786564A06564
+        A056569E4242977A7ABBD3D3EBD9D9EED9D9EEAFAFD12E2E8A14148116167B0C
+        0C6D000058060751CAC8C9FFFFFFFFFFFFCECDD38383A48A8AAE8383AD8181B2
+        B8B8D4F1F1F7EDEDF2CBCBE1DADAEAF1F1F7D3D3E48181B27E7EAD7E7EAD5454
+        871B1B53CFCCCBFFFFFFFFFFFFFFFFFF7D7D929F9FB79D9DBAC3C3D5F3F3F4F1
+        F1F7D3D3E49999C0ABABCCE6E6EEF6F6F8DDDDE79D9DBAA2A2BB8A8BA2848295
+        DBD8D8FFFFFFFFFFFFFFFFFF8B8B96D8D8DDD5D5DEF6F6F8F5F5F6DDDDE7B4B4
+        CBB4B4CBB1B1C9C3C3D5EDEDF2F9F8F8E3E3EABEBECCB5B5BFADABB1FFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFF898896FEFEFEFBFBFBE6E6EEC9C9D5CAC9D5CBCBD6
+        CBCBD6C8C7D3D5D5DEF3F2F3F9F9FAF0F0F2848290FFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFAEAEB8FFFFFFE5E3E8DBDBE0DBDADFDBDADFDBDADFDC
+        DBDFDCDBE0EBEAECF9F9FA858594FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFA4A4AFF4F4F5ECECEEF3F3F4F4F3F4F3F3F4F3F2F3E4E3
+        E7E6E6E99493A0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFB1B1BAB1B1BAD8D8DDE3E3E7E3E3E7D2D2D7A9A9B3C0C0C6
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFC8C8CDCAC9CEFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+        FFFFFFFFFFFFFFFFFFFF}
+      Spacing = 1
+    end
   end
   object timerNuIntervalo: TTimer
     Enabled = False
     Interval = 5000
     OnTimer = timerNuIntervaloTimer
-    Left = 682
-    Top = 2
+    Left = 226
+    Top = 570
   end
   object timerNuExecApos: TTimer
     Enabled = False
     Interval = 1
     OnTimer = timerNuExecAposTimer
-    Left = 652
-    Top = 2
+    Left = 196
+    Top = 570
   end
   object Popup_Menu_Contexto: TPopupMenu
     MenuAnimation = [maLeftToRight, maRightToLeft, maTopToBottom, maBottomToTop]
     OwnerDraw = True
     OnPopup = Popup_Menu_ContextoPopup
-    Left = 652
-    Top = 89
+    Left = 68
+    Top = 569
     object Mnu_LogAtividades: TMenuItem
       Caption = 'Logs de Atividades'
       Hint = 
@@ -1475,14 +1468,14 @@ object FormularioGeral: TFormularioGeral
     OnUpdateImage = cnUpdateImage
     OnUpdateItem = cnUpdateItem
     OnEndSessionQuery = cnEndSessionQuery
-    Left = 682
-    Top = 89
+    Left = 98
+    Top = 569
   end
   object imgIconList: TImageList
     DrawingStyle = dsTransparent
     ShareImages = True
-    Left = 652
-    Top = 31
+    Left = 164
+    Top = 567
     Bitmap = {
       494C010104000900040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000002000000001002000000000000020
@@ -1758,17 +1751,17 @@ object FormularioGeral: TFormularioGeral
   object timerCheckNoMinuto: TTimer
     Interval = 60000
     OnTimer = timerCheckNoMinutoTimer
-    Left = 652
-    Top = 118
+    Left = 36
+    Top = 566
   end
   object TrayIcon1: TTrayIcon
     PopupMenu = Popup_Menu_Contexto
-    Left = 652
-    Top = 61
+    Left = 132
+    Top = 573
   end
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message
-    Left = 664
-    Top = 312
+    Left = 8
+    Top = 568
   end
 end

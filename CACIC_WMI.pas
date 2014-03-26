@@ -158,9 +158,9 @@ Begin
           strWhereClause  := 'IPEnabled=TRUE or DHCPEnabled=TRUE';
         End
       else if (pStrWin32ClassName = 'Win32_OperatingSystem') and (pStrColumnsNames = '') then
-        strColumnsNames := 'Caption,CSDVersion,InstallDate,LastBootUpTime,NumberOfLicensedUsers,OSArchitecture,OSLanguage,ProductType,SerialNumber,Version'
-      else if (pStrWin32ClassName = 'Win32_SoftwareFeature') and (pStrColumnsNames = '') then
-        strColumnsNames := 'Accesses,Attributes,Caption,Description,IdentifyingNumber,InstallDate,InstallState,LastUse,Name,ProductName,Vendor,Version';
+        strColumnsNames := 'Caption,CSDVersion,InstallDate,LastBootUpTime,NumberOfLicensedUsers,OSLanguage,ProductType,SerialNumber,Version';
+//      else if (pStrWin32ClassName = 'Win32_SoftwareFeature') and (pStrColumnsNames = '') then
+//        strColumnsNames := 'Accesses,Attributes,Caption,Description,IdentifyingNumber,InstallDate,InstallState,LastUse,Name,ProductName,Vendor,Version';
 
       if (strWhereClause <> '') then
         strWhereClause := ' WHERE ' + strWhereClause;

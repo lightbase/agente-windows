@@ -674,7 +674,7 @@ begin
 
     // Passo aqui o registro e a profundidade dos campos que quero ver
     outString := DisplayKeys(strChave, 3);
-
+//    objCacic.setValueToFile('collects', 'colsoft_puro', outString, 'c:\Cacic\colsoft.inf');
     // Retorno uma string com todas as tags coletadas do registro
     Result := outString;
 end;
@@ -1026,7 +1026,7 @@ Begin
                                       // Insere aqui a ação da coleta
                                       objCacic.writeDebugLog('executeGerCols: Executando coleta de Software -> ');
                                       tstrColetaSoftware := SoftwareList;
-
+                                      
                                       // Adiciona variáveis da coleta de software na requisição
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',SoftwareList=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaSoftware)));
 
@@ -1571,7 +1571,7 @@ Begin
                                             Begin
                                               objCacic.writeDailyLog('Ok! Coleta de informações sobre ' + objCacic.getValueFromTags('te_descricao_breve',strActionDefinition) + ' enviada com sucesso!');
                                               objCacic.setBoolCipher(not objCacic.isInDebugMode);
-                                              objCacic.setValueToFile('Collects',tstringsActions[intLoopActions],objCacic.enCrypt(strColetaAtual), strGerColsInfFileName) ;
+                                              objCacic.setValueToFile('Collects',tstringsActions[intLoopActions],objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
                                               objCacic.setValueToFile('Collects',tstringsActions[intLoopActions] + '_Send_Status','1', strGerColsInfFileName);
                                               inc(intTotalSendedCollects);
                                             End

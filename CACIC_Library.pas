@@ -1267,7 +1267,7 @@ end;
 -------------------------------------------------------------------------------}
 function TCACIC.getFileHash(pStrFileName : String) : String;
 Begin
-  Result := 'Arquivo "'+pStrFileName+'" Inexistente!';
+  Result := 'Arquivo "' + pStrFileName + '" Inexistente!';
   if (FileExists(pStrFileName)) then
     Result := MD5Print(MD5File(pStrFileName));
 End;

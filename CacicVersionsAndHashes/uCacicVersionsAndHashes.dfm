@@ -1,7 +1,6 @@
 object frmCacicVersionsAndHashes: TfrmCacicVersionsAndHashes
   Left = 194
   Top = 52
-  AutoScroll = False
   Caption = 
     'CacicVersionsAndHashes - Identificador de Vers'#245'es e Hash-Codes d' +
     'e '#205'tens do CACIC'

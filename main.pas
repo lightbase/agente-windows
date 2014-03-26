@@ -164,8 +164,6 @@ type
     staticNmServidorAplicacao: TStaticText;
     staticVlServidorAplicacao: TStaticText;
     Panel4: TPanel;
-    Panel1: TPanel;
-    Panel2: TPanel;
     Panel3: TPanel;
     pnVersao: TPanel;
     bt_Fechar_Infos_Gerais: TBitBtn;
@@ -176,6 +174,7 @@ type
     timerCheckNoMinuto: TTimer;
     TrayIcon1: TTrayIcon;
     ApplicationEvents1: TApplicationEvents;
+    Panel1: TPanel;
     procedure RemoveIconesMortos;
     procedure ChecaCONFIGS;
     procedure CriaFormSenha(Sender: TObject);
@@ -270,6 +269,11 @@ type
     procedure Finaliza(boolNormal : boolean = true);
 //    procedure MontaVetoresPatrimonio(p_strConfigs : String);
     procedure Invoca_GerCols(p_acao:string; boolShowInfo : Boolean = true; boolCheckExecution : Boolean = false);
+
+////////////////////////////////////////////////////////////////////////////////
+//       PRÓXIMO PROCEDURE CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC         //
+////////////////////////////////////////////////////////////////////////////////
+    procedure Invoca_MapaCacic;
     procedure CheckIfDownloadedVersion;
     procedure WMSysCommand(var Msg: TWMSysCommand); message WM_SYSCOMMAND;
     // A procedure WMQueryEndSession é usada para detectar o
@@ -829,6 +833,7 @@ Begin
   objCACIC.writeDebugLog('ChecaGERCOLS: ' + DupeString('=',100));
 End;
 
+
 procedure ExibirConfiguracoes(Sender: TObject);
 begin
   // SJI = Senha Já Informada...
@@ -1189,8 +1194,8 @@ end;
 procedure TFormularioGeral.Invoca_GerCols(p_acao:string; boolShowInfo : Boolean = true; boolCheckExecution : Boolean = false);
 begin
   if not boolCheckExecution or
-     (boolCheckExecution and
-      (ActualActivity = 0)) then
+     (boolCheckExecution    and
+     (ActualActivity = 0) ) then
      Begin
         // Caso exista o Gerente de Coletas será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
         if ChecaGERCOLS then
@@ -1210,6 +1215,30 @@ begin
           End
         else
           objCACIC.writeDailyLog('Não foi possível invocar o Gerente de Coletas!');
+     End;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+//               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
+////////////////////////////////////////////////////////////////////////////////
+
+procedure TFormularioGeral.Invoca_MapaCacic;
+begin
+  if ActualActivity = 0 then
+     Begin
+        // Caso exista o Mapa Cacic será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
+        if FileExists(objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe') then
+          Begin
+            ChecaCONFIGS;
+
+            timerNuExecApos.Enabled  := False;
+            objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
+            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe',true,SW_SHOW);
+            g_intStatus := 1;
+            objCacic.setBoolCipher(not objCacic.isInDebugMode);
+          End
+        else
+          objCACIC.writeDailyLog('Não foi possível invocar o Mapa Cacic!');
      End;
 end;
 
@@ -1244,9 +1273,18 @@ var v_mensagem,
     intTentativas   : integer;
 begin
    try
-     if FindCmdLineSwitch('execute', True) or
+////////////////////////////////////////////////////////////////////////////////
+//               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
+////////////////////////////////////////////////////////////////////////////////
+//    if trim(objCACIC.getValueFromFile('Configs','Patrimonio_exe',
+//                                      strGerColsInfFileName))<>'s' then
+//      Invoca_MapaCacic;
+//          AGUARDANDO CONFIGURAÇÃO DO GERENTE, SENDO INVOCADO NA INSTALAÇÃO, ATÉ O MOMENTO.
+////////////////////////////// FIM /////////////////////////////////////////////
+
+     if FindCmdLineSwitch('execute', True)     or
         FindCmdLineSwitch('atualizacao', True) or
-        Pode_Coletar or
+        Pode_Coletar                           or
         (trim(objCACIC.getValueFromFile('Configs','DtHrUltimaColeta', strGerColsInfFileName))='') Then
         Begin
           timerCheckNoMinuto.Enabled := false;
@@ -1371,6 +1409,7 @@ begin
             End;
           timerCheckNoMinuto.Enabled := true;            
         End;
+
       InicializaTray;
     except
       on E : Exception do

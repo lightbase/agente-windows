@@ -42,7 +42,8 @@ uses
   IdBaseComponent,
   IdComponent,
   Mask,
-  ComObj;
+  ComObj,
+  ldapsend;
 
 function IsUserAnAdmin() : boolean; external shell32;
 
@@ -98,13 +99,14 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormActivate(Sender: TObject);
     procedure btCombosUpdateClick(Sender: TObject);
-    procedure timerMessageShowTimeTimer(Sender: TObject);
     procedure timerProcessosTimer(Sender: TObject);
     procedure rdConcordaTermosClick(Sender: TObject);
     procedure EstadoBarraTarefa(EstadoBarra: Boolean);
 
+    function getLastValue(S : String; separador : string): string; 
+    function LDAPName: string;
     function NomeComputador : String;
-    function UserName : String;
+    function getUserLogon : String;
     function getConfigs : String;
     function SetCpfUser : String;
     function SetPatrimonioPC : String;
@@ -120,20 +122,18 @@ type
     strTeInfoPatrimonio6,
     strTeInfoPatrimonio7    : String;
 
-    procedure FormSetFocus;
+    procedure FormSetFocus(VerificaFoco: Boolean);
     procedure MontaInterface;
     procedure RecuperaValoresAnteriores;
     procedure Sair;
 
   public
-    foco,
     boolAcessoOK                : boolean;
     strId_usuario,
     strChkSisInfFileName,
     strGerColsInfFileName       : String;
 
     procedure Finalizar(p_pausa:boolean);
-    procedure Mensagem(p_strMsg : String; p_boolAlerta : boolean = false; p_intPausaSegundos : integer = 0);
 
   end;
 
@@ -143,29 +143,6 @@ implementation
 
 {$R *.dfm}
 
-procedure TfrmMapaCacic.Mensagem(p_strMsg : String; p_boolAlerta : boolean; p_intPausaSegundos : integer);
-Begin
-  strShowOrHide := 'Show';
-
-  objCacic.writeDebugLog('Mensagem: ' + p_strMsg);
-
-  if p_boolAlerta then
-    lbMensagens.Font.Color := clRed
-  else
-    lbMensagens.Font.Color := clBlack;
-
-  lbMensagens.Caption := p_strMsg;
-
-  objCacic.writeDailyLog(lbMensagens.Caption);
-  Application.ProcessMessages;
-
-  if (p_intPausaSegundos > 0) then
-    timerMessageShowTime.Interval := p_intPausaSegundos * 1000;
-
-  timerMessageBoxShowOrHide.Enabled := true;
-
-  Application.ProcessMessages;
-End;
 
 procedure TfrmMapaCacic.Sair;
 Begin
@@ -174,15 +151,9 @@ End;
 
 procedure TfrmMapaCacic.Finalizar(p_pausa:boolean);
 Begin
-  gbLeiaComAtencao.Visible              := false;
-  gbInformacoesSobreComputador.Visible  := false;
-  btGravarInformacoes.Visible           := false;
-
-  Mensagem('Finalizando o MapaCacic...');
+  Visible                               := false;
 
   Application.ProcessMessages;
-
-  Sleep(1000);
 
   Sair;
 End;
@@ -213,7 +184,7 @@ end;
 //------------------FUNÇÃO PARA RETORNAR O NOME DO USUARIO.---------------------
 //------------------------------------------------------------------------------
 
-Function TfrmMapaCacic.UserName : String;
+Function TfrmMapaCacic.getUserLogon : String;
 var
   lpBuffer : PChar;
   nSize : DWord;
@@ -272,7 +243,7 @@ var
   strUser        : String;
 begin
   Result:='';
-  strUser:=UserName;
+  strUser:=getUserLogon;
 
   if (pos('-',strUser) > 0) then
     strCpfUser:=copy(strUser, 0, (pos('-', strUser)-1));
@@ -280,12 +251,48 @@ begin
   Result:=strCpfUser;
 end;
 
+//------------------------------------------------------------------------------
+//--------------------FUNÇÃO PARA RETORNAR O ULTIMO VALOR-----------------------
+//-----------------------APÓS O SEPARADOR SELECIONADO---------------------------
+//------------------------------------------------------------------------------
+
+function TfrmMapaCacic.getLastValue(S : String; separador : string): string; 
+  var
+  conta : integer;         // variáveis auxiliares
+  resultado : TStringList; // variáveis auxiliares
+  Saux : string;           // variáveis auxiliares
+begin
+    resultado := TStringList.Create;   // inicializa variavel
+    conta := pos(separador,S);         // pega posição do separador
+    if conta <> 0 then begin           // verifica se existe o separador caso contrario trata apenas //como uma única linha
+        while trim(S) <> '' do begin   // enquanto S não for nulo executa
+            Saux := copy(S,1,conta-1); // Variável Saux recebe primeiro valor
+            delete(S,1,conta);         // deleta primeiro valor
+            if conta = 0 then begin    // se não ouver mais separador Saux equivale ao resto da //linha
+                Saux := S;
+                S := '';
+            end;
+        resultado.Add(Saux);           // adiciona linhas na string lista
+        conta := pos(separador,S);     //pega posição do separador
+        end;
+        end
+    else begin
+        Saux := S;
+        resultado.Add(Saux);
+    end;
+    Result := trim(resultado[resultado.count-1]); // retorna resultado como uma lista indexada
+end;
+
+//------------------------------------------------------------------------------
+//--------------------FUNÇÃO PARA PEGAR CONFIGURAÇÕES NO GERENTE----------------
+//------------------------------------------------------------------------------
+
 function TfrmMapaCacic.getConfigs : String;
 
 Begin
   btCombosUpdate.Enabled := false;
 
-  Result := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest,objCacic.getLocalFolderName);
+  Result := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCacic.getLocalFolderName);
 
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
@@ -293,11 +300,9 @@ Begin
 
   if (Result <> '0') then
     Begin
-      Mensagem('Comunicação Efetuada com Sucesso! Salvando as Configurações Obtidas...',false,1);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Interface' , objCacic.getValueFromTags('Configs_Patrimonio_Interface', Result), strGerColsInfFileName);
-//Linha comentada, pois gerente não está mandando as configurações adequadas.
-      //objCacic.setValueToFile('Collects','Patrimonio_Last'      , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
+      objCacic.setValueToFile('Collects','Patrimonio_Last'      , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
     End
   else
     begin
@@ -306,12 +311,14 @@ Begin
   btCombosUpdate.Enabled := true;
 End;
 
+//------------------------------------------------------------------------------
+//--------------------PROCEDIMENTO UTILIZADO PARA PEGAR AS ULTIMAS--------------
+//----------------------INFORMAÇÕES ENVIADAS PELO MAPACACIC---------------------
+
 procedure TfrmMapaCacic.RecuperaValoresAnteriores;
 var strCollectsPatrimonioLast : String;
 begin
   btCombosUpdate.Enabled := false;
-
-  Mensagem('Recuperando Valores Anteriores...',false,1);
 
   strCollectsPatrimonioLast := objCacic.deCrypt( objCacic.GetValueFromFile
                                                 ('Collects','Patrimonio_Last',
@@ -321,25 +328,25 @@ begin
     Begin
 
       if (strTeInfoPatrimonio1='') then
-        strTeInfoPatrimonio1 := objCacic.getValueFromTags('TeInfoPatrimonio1',
-                                                          strCollectsPatrimonioLast);
+        strTeInfoPatrimonio1 := objCacic.getValueFromTags('IDPatrimonio', objCacic.getValueFromTags('Patrimonio',
+                                                          strCollectsPatrimonioLast));
       if (strTeInfoPatrimonio2='') then
-        strTeInfoPatrimonio2 := objCacic.getValueFromTags('TeInfoPatrimonio2',
+        strTeInfoPatrimonio2 := objCacic.getValueFromTags('UserLogado',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio3='') then
-        strTeInfoPatrimonio3 := objCacic.getValueFromTags('TeInfoPatrimonio3',
+        strTeInfoPatrimonio3 := objCacic.getValueFromTags('UserNameLDAP',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio4='') then
-        strTeInfoPatrimonio4 := objCacic.getValueFromTags('TeInfoPatrimonio4',
+        strTeInfoPatrimonio4 := objCacic.getValueFromTags('IPComputer',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio5='') then
-        strTeInfoPatrimonio5 := objCacic.getValueFromTags('TeInfoPatrimonio5',
+        strTeInfoPatrimonio5 := objCacic.getValueFromTags('ComputerName',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio6='') then
-        strTeInfoPatrimonio6 := objCacic.getValueFromTags('TeInfoPatrimonio6',
+        strTeInfoPatrimonio6 := objCacic.getValueFromTags('PatrimonioMonitor1',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio7='') then
-        strTeInfoPatrimonio7 := objCacic.getValueFromTags('TeInfoPatrimonio7',
+        strTeInfoPatrimonio7 := objCacic.getValueFromTags('PatrimonioMonitor2',
                                                           strCollectsPatrimonioLast);
     End;
   btCombosUpdate.Enabled := true;
@@ -350,60 +357,74 @@ procedure TfrmMapaCacic.AtualizaPatrimonio(Sender: TObject);
 var strColetaAtual,
     strRetorno: String;
 begin
+if edTeInfoNome.text <> '' then
+  begin
+    btGravarInformacoes.Enabled := false;
+    btGravarInformacoes.Caption := 'Enviando informações...';
+    strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
 
-  Mensagem('Enviando Informações Coletadas ao Banco de Dados...',false,1);
+    strColetaAtual := StringReplace('[Patrimonio]'                                                                  +
+                                    '[IDPatrimonio]'         + edTePatrimonioPc.Text      + '[/IDPatrimonio]'       +
+                                    '[UserLogado]'           + edTeInfoUserLogado.Text    + '[/UserLogado]'         +
+                                    '[UserNameLDAP]'         + edTeInfoNome.Text          + '[/UserNameLDAP]'       +
+                                    '[IPComputer]'           + edTeInfoIpComputador.Text  + '[/IPComputer]'         +
+                                    '[ComputerName]'         + edTeInfoNomeComputador.Text+ '[/ComputerName]'       +
+                                    '[PatrimonioMonitor1]'   + edTeInfoPatrimonio5.Text   + '[/PatrimonioMonitor1]' +
+                                    '[PatrimonioMonitor2]'   + edTeInfoPatrimonio6.Text   + '[/PatrimonioMonitor2]' +
+                                    '[/Patrimonio]', ',','[[COMMA]]',[rfReplaceAll]);
 
-  strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
+    strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',col_patr='  +
+                                   objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
 
-  strColetaAtual := StringReplace('[Patrimonio]'                                                                 +
-                                  '[TeInfoPatrimonio1]'   + edTePatrimonioPc.Text      + '[/TeInfoPatrimonio1]'  +
-                                  '[TeInfoPatrimonio2]'   + edTeInfoUserLogado.Text    + '[/TeInfoPatrimonio2]'  +
-                                  '[TeInfoPatrimonio3]'   + edTeInfoNome.Text          + '[/TeInfoPatrimonio3]'  +
-                                  '[TeInfoPatrimonio4]'   + edTeInfoIpComputador.Text  + '[/TeInfoPatrimonio4]'  +
-                                  '[TeInfoPatrimonio5]'   + edTeInfoNomeComputador.Text+ '[/TeInfoPatrimonio5]'  +
-                                  '[TeInfoPatrimonio6]'   + edTeInfoPatrimonio5.Text   + '[/TeInfoPatrimonio6]'  +
-                                  '[TeInfoPatrimonio7]'   + edTeInfoPatrimonio6.Text   + '[/TeInfoPatrimonio7]'  +
-                                  '[/Patrimonio]', ',','[[COMMA]]',[rfReplaceAll]);
+    strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName +
+                        'gercols/set/collects', strFieldsAndValuesToRequest, objCacic.getLocalFolderName);
 
-  strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',col_patr='  +
-                                 objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
+    objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
-  strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'gercols/set/collects', strFieldsAndValuesToRequest,
-                     objCacic.getLocalFolderName);
-
-  objCacic.setBoolCipher(not objCacic.isInDebugMode);
-
-  if (strRetorno = '0') then
-      Mensagem('ATENÇÃO: PROBLEMAS NO ENVIO DAS INFORMAÇÕES COLETADAS AO BANCO DE DADOS...',true,1)
-  else
+    if (strRetorno = '0') then
+    begin
+       btGravarInformacoes.caption := 'Problema ao enviar informações...';
+       MessageDLG(#13#10+'Atenção!'+ #13#10 + 'Problema ao enviar as informações!'
+               + #13#10 + 'Se o problema persistir contate o adminsitrador.',mtError,[mbOK],0);
+    end
+    else
     Begin
-      Mensagem('Salvando Informações Coletadas em Base Local...',false,1);
-      objCacic.setValueToFile('Collects','Patrimonio_Last' ,
-                              objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
+        btGravarInformacoes.Caption := 'Informações enviadas com sucesso...';
+        objCacic.setValueToFile('Collects','Patrimonio_Last' ,
+                                objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
+        objCacic.setValueToFile('Collects','Patrimonio_exe', 's', strGerColsInfFileName);
 
     End;
-  objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');
-  Application.ProcessMessages;
+    objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');
+    Application.ProcessMessages;
 
-  EstadoBarraTarefa(TRUE);
-  Finalizar(true);
-
+    EstadoBarraTarefa(TRUE);
+    Finalizar(true);
+  end
+  else
+    MessageDLG(#13#10+'Atenção!'+ #13#10 + 'É necessário digitar seu nome.'
+               + #13#10,mtError,[mbOK],0);
 end;
 
 
 procedure TfrmMapaCacic.MontaInterface;
-var strConfigsPatrimonioInterface : String;
+var strConfigsPatrimonioInterface, strNomeLDAP : String;
 Begin
    btCombosUpdate.Enabled := false;
 
-   Mensagem('Montando Interface para Coleta de Informações...',false,1);
+//-------------------------------NOME USUARIO-----------------------------------
+   strNomeLDAP                         := LDAPName;
 
-
- //-------------------------------NOME USUARIO-----------------------------------
-   edTeInfoNome.Text                         := 'Nome';
-   if edTeInfoNome.Text <> '' then
+   if (strNomeLDAP <> '') and (strNomeLDAP <> 'Results: 0') then
+   begin
+      edTeInfoNome.Text                      := strNomeLDAP;
+      edTeInfoNome.Visible                   := true;
+      lbEtiquetaNome.Visible                 := true;
+   end
+   else
    begin
       edTeInfoNome.Visible                   := true;
+      edTeInfoNome.Enabled                   := true;
       lbEtiquetaNome.Visible                 := true;
    end;
 
@@ -419,7 +440,7 @@ Begin
 
 //-----------------------------USUARIO LOGADO-----------------------------------
 
-   edTeInfoUserLogado.Text                   := UserName;
+   edTeInfoUserLogado.Text                   := getUserLogon;
    if edTeInfoUserLogado.Text <> '' then
    begin
       lbEtiquetaUserLogado.Visible           := true;
@@ -536,7 +557,7 @@ Begin
       edTeInfoPatrimonio6.visible := True;
 //   end;
 
-   Mensagem('',false,1);
+
    btGravarInformacoes.Visible := true;
    btCombosUpdate.Enabled      := true;
 
@@ -570,13 +591,16 @@ begin
 End;
 
 procedure TfrmMapaCacic.FormCreate(Sender: TObject);
+var
+  foco: boolean;
 
 begin
 
 
   frmMapaCacic.boolAcessoOK := true;
-  Fechar:=TRUE; //Definido TRUE para que a aplicação possa ser fechada normalmente
-  foco:=True; //DEFINIDO COMO TRUE PARA QUE A JANELA NÃO SEJA FECHADA
+//Definido TRUE, se não, mesmo que o foco seja falso, a aplicação não é fechada quando quiser.
+  Fechar:=TRUE;
+  foco:=true; //DEFINIDO COMO TRUE PARA QUE A JANELA NÃO SEJA FECHADA
   Try
     strFrmAtual  := 'Principal';
     objCacic     := TCACIC.Create();
@@ -585,97 +609,86 @@ begin
     objCacic.setLocalFolderName('Cacic');
     objCacic.setWebServicesFolderName('/ws');
 
-    //Se foco for verdadeiro, executar procedimento SetFocus, o qual modifica
-    //propriedades do form e starta o timer para esconder o processo no gerenciador.
-    if foco then
-    begin
-        //TfrmMapaCacic.OnChange := FormSetFocus;
-        FormSetFocus;
-    end;
-
     if IsUserAnAdmin then
+    begin
+      strChkSisInfFileName := objCacic.getWinDir + 'chksis.inf';
+
+      if not (objCacic.GetValueFromFile('Configs','LocalFolderName',
+                                         strChkSisInfFileName) = '') then
+
       Begin
-        strChkSisInfFileName := objCacic.getWinDir + 'chksis.inf';
 
-        Mensagem('Caminho local para a aplicação CACIC: "' +
-                  objCacic.GetValueFromFile('Configs','LocalFolderName',
-                                            strChkSisInfFileName)+'"');
-        if not (objCacic.GetValueFromFile('Configs','LocalFolderName',
-                                          strChkSisInfFileName) = '') then
+        objCacic.setLocalFolderName(objCacic.GetValueFromFile
+                                    ('Configs', 'LocalFolderName',
+                                     strChkSisInfFileName));
 
-          Begin
+        objCacic.setWebServicesFolderName(objCacic.GetValueFromFile
+                                          ('Configs','WebServicesFolderName',
+                                            strChkSisInfFileName));
 
-            objCacic.setLocalFolderName(objCacic.GetValueFromFile
-                                        ('Configs', 'LocalFolderName',
+        objCacic.setWebManagerAddress(objCacic.GetValueFromFile
+                                      ('Configs','WebManagerAddress',
                                         strChkSisInfFileName));
 
-            objCacic.setWebServicesFolderName(objCacic.GetValueFromFile
-                                              ('Configs','WebServicesFolderName',
-                                               strChkSisInfFileName));
 
-            objCacic.setWebManagerAddress(objCacic.GetValueFromFile
-                                          ('Configs','WebManagerAddress',
-                                          strChkSisInfFileName));
+        strGerColsInfFileName := objCacic.getLocalFolderName + 'GerCols.inf';
+
+        // A existência e bloqueio do arquivo abaixo evitará que o Agente Principal entre em ação
+
+        AssignFile(textFileAguarde,objCacic.getLocalFolderName +
+                   '\temp\aguarde_MAPACACIC.txt'); //Associa o arquivo a uma variável do tipo TextFile
+
+        {$IOChecks off}
+
+        reset(textFileAguarde);
+
+        {$IOChecks on}
+        if (IOResult <> 0) then // Arquivo não existe, será recriado.
+            rewrite (textFileAguarde); //Abre o arquivo texto
+
+        Append(textFileAguarde);
+        Writeln(textFileAguarde,'Apenas um pseudo-cookie para o Agente Principal esperar o término de MapaCACIC');
+        Append(textFileAguarde);
+
+        frmMapaCacic.edWebManagerAddress.Caption := objCacic.GetValueFromFile('Configs','WebManagerAddress', strChkSisInfFileName);
+
+        frmMapaCacic.lbMensagens.Caption  := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';
+        objCacic.writeDebugLog('FormActivate: Versão do MapaCacic...: '    +
+                                pnVersao.Caption);
+        ObjCacic.writeDebugLog('FormActivate: Hash-Code do MapaCacic: '    +
+                                objCacic.getFileHash(ParamStr(0)));
 
 
-            strGerColsInfFileName := objCacic.getLocalFolderName + 'GerCols.inf';
+        pnMessageBox.Visible := true;
+  
+        // Povoamento com dados de configurações da interface patrimonial
+        // Solicita ao servidor as configurações para a Coleta de Informações de Patrimônio
+        pnMessageBox.Visible := false;
+        objCacic.writeDebugLog('FormActivate: Requisitando informações de patrimônio da estação...');
 
-            // A existência e bloqueio do arquivo abaixo evitará que o Agente Principal entre em ação
-
-//ATENÇÃO-> O caminho do arquivo "aguarde_MAPACACIC.txt" foi modificado, pois o
-//agente instalado estava excluíndo sempre que o mesmo era criado, dando conflito
-//com o Mapa.
-
-            AssignFile(textFileAguarde,objCacic.getLocalFolderName +
-                      '\temp\aguarde_MAPACACIC.txt'); //Associa o arquivo a uma variável do tipo TextFile
-
-            AssignFile(textFileAguarde, 'C:\Documents and Settings\adriano\Desktop\TesteLerArquivo\aguarde_MAPACACIC.txt');
-
-            //$IOChecks off
-            Reset(textFileAguarde); //Abre o arquivo texto
-            //$IOChecks on
-            if (IOResult <> 0) then // Arquivo não existe, será recriado.
-              Rewrite (textFileAguarde);
-
-            Append(textFileAguarde);
-            Writeln(textFileAguarde,'Apenas um pseudo-cookie para o Agente Principal esperar o término de MapaCACIC');
-            Append(textFileAguarde);
-
-            frmMapaCacic.edWebManagerAddress.Caption := objCacic.GetValueFromFile('Configs','WebManagerAddress', strChkSisInfFileName);
-
-            frmMapaCacic.lbMensagens.Caption  := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';
-            objCacic.writeDebugLog('FormActivate: Versão do MapaCacic...: '    +
-                                    pnVersao.Caption);
-            objCacic.writeDebugLog('FormActivate: Hash-Code do MapaCacic: '    +
-                                    objCacic.getFileHash(ParamStr(0)));
-
-            pnMessageBox.Visible := true;
-            Mensagem('Efetuando Comunicação com o Módulo Gerente WEB em "'+objCacic.GetValueFromFile('Configs','WebManagerAddress', strChkSisInfFileName)+'"...',false,1);
-            // Povoamento com dados de configurações da interface patrimonial
-            // Solicita ao servidor as configurações para a Coleta de Informações de Patrimônio
-            pnMessageBox.Visible := false;
-            objCacic.writeDebugLog('FormActivate: Requisitando informações de patrimônio da estação...');
-
-            if (getConfigs <> '0') then
-              mapa
-            else
-              Sair;
+        if (getConfigs <> '0') then
+        begin
+           FormSetFocus(foco);
+           mapa
         end
         else
-          Begin
-            frmMapaCacic.boolAcessoOK := false;
-            MessageDLG(#13#10+'Atenção! É necessário reinstalar o CACIC nesta estação.' + #13#10     + #13#10 +
-                              'A estrutura encontra-se corrompida.'   + #13#10,mtError,[mbOK],0);
-            Application.ProcessMessages;
-            frmMapaCacic.Finalizar(false);
-          End;
-      End
-      else
-      Begin // Se NT/2000/XP/...
-        MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
-        objCacic.writeDailyLog('SEM PRIVILÉGIOS: Necessário ser administrador "local" ou de Domínio!');
-        Sair;
-      End      
+           Sair;
+        end
+        else
+        Begin
+           frmMapaCacic.boolAcessoOK := false;
+           MessageDLG(#13#10+'Atenção! É necessário reinstalar o CACIC nesta estação.' + #13#10     + #13#10 +
+                            'A escctrutura encontra-se corrompida.'   + #13#10,mtError,[mbOK],0);
+           Application.ProcessMessages;
+           frmMapaCacic.Finalizar(false);
+        End;
+    end
+    else
+    Begin // Se NT/2000/XP/...
+      MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
+      objCacic.writeDailyLog('SEM PRIVILÉGIOS: Necessário ser administrador "local" ou de Domínio!');
+      Sair
+    End;
   Finally
   End;
 end;
@@ -690,39 +703,33 @@ procedure TfrmMapaCacic.btCombosUpdateClick(Sender: TObject);
 begin
 
   getConfigs;
-  MontaInterface;
   RecuperaValoresAnteriores;
+  MontaInterface;
 
 end;
-
-procedure TfrmMapaCacic.timerMessageShowTimeTimer(Sender: TObject);
-begin
-  timerMessageShowTime.Enabled      := false;
-  timerMessageShowTime.Interval     := 0;
-  strShowOrHide                     := 'Hide';
-  timerMessageBoxShowOrHide.Enabled := true;
-end;
-
 
 //------------------------------------------------------------------------------
 //PROCEDURE CRIADO PARA DEIXAR O FORM FULLSCREEN E FOCADO, SEM QUE SEJA POSSÍVEL
 //FECHAR OU ALTERNAR ENTRE OUTRAS JANELAS ATÉ QUE ATUALIZE O PATRIMONIO.
-procedure TfrmMapaCacic.FormSetFocus;
+procedure TfrmMapaCacic.FormSetFocus(VerificaFoco: Boolean);
 var
   r : TRect;
 begin
-  Fechar                    := False;
-  BorderIcons               := BorderIcons - [biSystemMenu] - [biMinimize] - [biMaximize];
-  BorderStyle               := bsNone;
-  FormStyle                 := fsStayOnTop;
-  timerProcessos.Enabled    := True;
-  SystemParametersInfo(SPI_GETWORKAREA, 0, @r,0);
-  SetBounds(r.Left, r.Top, r.Right-r.Left, r.Bottom-r.Top);
-  Top := 0;
-  Left := 0;
-  Width := Screen.Width;
-  Height := Screen.Height;
-  EstadoBarraTarefa(FALSE);
+  if VerificaFoco then
+  begin
+    Fechar                    := False;
+    BorderIcons               := BorderIcons - [biSystemMenu] - [biMinimize] - [biMaximize];
+    BorderStyle               := bsNone;
+    FormStyle                 := fsStayOnTop;
+    timerProcessos.Enabled    := True;
+    SystemParametersInfo(SPI_GETWORKAREA, 0, @r,0);
+    SetBounds(r.Left, r.Top, r.Right-r.Left, r.Bottom-r.Top);
+    Top := 0;
+    Left := 0;
+    Width := Screen.Width;
+    Height := Screen.Height;
+    EstadoBarraTarefa(FALSE);
+  end;
 
 end;
 
@@ -804,7 +811,7 @@ begin
     szTemp:=pchar(dword(PLocalShared)+sizeof(LV_ITEM));
 
     //Se esse texto contiver a string proc deleta o item
-    if LowerCase(szTemp) = 'mapacacicpgfn.exe' then
+    if LowerCase(szTemp) = 'mapacacic.exe' then
       ListView_DeleteItem(h,i);
 
     //Libera os espaços de memória utilizados
@@ -816,55 +823,45 @@ begin
   end;
 end;
 
-{raiz ldap
-ou=bsa,ou=regbsa,ou=pgfn,dc=mf,dc=gov,dc=br
 
-usuário: ldap
-senha: nova4275
 
-host: 10.72.160.21
-host: 10.72.160.20
+function TfrmMapaCacic.LDAPName: string;
+var
+  ldap: TLDAPsend;
+  l: TStringList;
+  host, username, psswd, base, strDadosLDAP : string;
+begin
+  result       := '';
+  ldap         := TLDAPsend.Create;
+  l            := TStringList.Create;
+//  PEGANDO OS DADOS DO POR MEIO DO GET/CONFIGS, ONDE SERÁ GRAVADO NO GERCOLS.INF
+//  strDadosLDAP := objCacic.deCrypt(objCacic.getValueFromFile('Configs','dados_ldap',strGerColsInfFileName));
+  host         := '10.72.160.21';
+//  host         := objCacic.getValueFromTags('ip', strDadosLDAP);
+  username     := 'uid=ssopgfn,ou=aplic,ou=corp,ou=pgfn,dc=mf,dc=gov,dc=br';
+//  username     := objCacic.getValueFromTags('usuario', strDadosLDAP);
+  psswd        := 'pgfn_2013';
+//  psswd        := objCacic.getValueFromTags('psswd', strDadosLDAP);
+  base         := 'ou=pgfn,dc=mf,dc=gov,dc=br';
+//  base         := objCacic.getValueFromTags('base', strDadosLDAP);
 
---
- }
-{
-function connectLDAP(sADForestName, sADUserName, sADGroupName: string);
-var ADOConnection, ADOCmd, Res: Variant;
-    sBase,
-    sFilter,
-    sAttributes,
-    user: string;
-
-Begin
-  ADOConnection := CreateOleObject('ADODB.Connection');
-  ADOCmd := CreateOleObject('ADODB.Command');
   try
-    ADOConnection.Provider := 'ADsDSOObject';
-    ADOConnection.Open('Active Directory Provider');
-    ADOCmd.ActiveConnection := ADOConnection;
-    ADOCmd.Properties('Page Size')     := 100;
-    ADOCmd.Properties('Timeout')       := 30;
-    ADOCmd.Properties('Cache Results') := False;
-//'SELECT Name, whenCreated FROM \'''LDAP://' + raiz + '''' WHERE objectClass='''user''''
-    sBase       := '<GC://' + sADForestName+ '>';
-    sFilter     := '(&(objectCategory=person)(objectClass=user)' +
-                     '(distinguishedName=' + sADUserName + ')' +
-                     '(memberOf:1.2.840.113556.1.4.1941:=' + sADGroupName + '))';
-    sAttributes := 'sAMAccountName';
-
-    //ADOCmd.CommandText := sBase + ';' + sFilter + ';' + sAttributes + ';subtree';
-    ADOCmd.CommandText := 'SELECT Name, whenCreated FROM \''''LDAP://' + raiz + '''' WHERE objectClass='''user''';
-    Res := AdoCmd.Execute;
-
-    if Res.EOF then
-        User := ''
-    else
-        User := Res.Fields[0].Value;
+    ldap.TargetHost := host;
+    ldap.UserName   := username;
+    ldap.Password   := psswd;
+    ldap.Login;    //Loga no LDAP.
+    ldap.BindSasl; //Autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
+    l.Add('cn');   //Estamos pesquisando apenas o nome, então apenas 'cn' será enviado.
+    ldap.Search(base, False, 'uid=' + getUserLogon, l); //Faz a pesquisa, com o CPF repassado.
+    result := getLastValue(LDAPResultdump(ldap.SearchResult), #$D#$A);
+    ldap.Logout;
   finally
-    ADOCmd := Nil;
-    ADOConnection.Close;
-    ADOConnection := Nil;
+    ldap.Free;
+    l.Free;
   end;
 end;
-     }
+
+
+
+
 end.

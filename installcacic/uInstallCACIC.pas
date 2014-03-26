@@ -144,10 +144,11 @@ begin
     objCacic.setLocalFolderName('Cacic');
     objCacic.setWebServicesFolderName('ws/');
 
+    objCacic.setWebManagerAddress(objCacic.fixWebAddress(objCacic.getParam('Serv')));
+    boolShowForm := not FindCmdLineSwitch('silent',true);
+
     if IsUserAnAdmin then
       Begin
-        objCacic.setWebManagerAddress(objCacic.getParam('Serv'));
-        boolShowForm := not FindCmdLineSwitch('silent',true);
 
         // Verifico se foi uma execução duvidosa e mostro o diálogo
         if (ParamCount > 0) and (objCacic.getWebManagerAddress = '') then
@@ -192,6 +193,8 @@ begin
 
         objCacic.writeDailyLog('SEM PRIVILÉGIOS: Necessário ser administrador "local" ou de Domínio!');
         ComunicaInsucesso('0'); // O indicador "0" (zero) sinalizará falta de privilégio na estação
+        if not boolShowForm then
+          btExitClick(nil);
       End;
   Finally
   End;
@@ -525,7 +528,7 @@ begin
 
         objCacic.writeDebugLog('installCACIC: Preparando Chamada ao Gerente WEB: "' + objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName +'get/config');
         informaProgresso('Fazendo contato com Gerente WEB.');
-
+        informaProgresso('Endereço do gerente: ' + objCacic.getWebManagerAddress);
         strCommResponse := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName);
         if (strCommResponse <> '0') then
           Begin
@@ -556,6 +559,7 @@ begin
             objCacic.setValueToFile('Hash-Codes','CACICSERVICE.EXE'          , objCacic.getValueFromTags('CACICSERVICE.EXE_HASH'              , strCommResponse,'<>') , strChkSisInfFileName);
             objCacic.setValueToFile('Hash-Codes','GERCOLS.EXE'               , objCacic.getValueFromTags('GERCOLS.EXE_HASH'                   , strCommResponse,'<>') , strChkSisInfFileName);
             objCacic.setValueToFile('Hash-Codes','SRCACICSRV.EXE'            , objCacic.getValueFromTags('SRCACICSRV.EXE_HASH'                , strCommResponse,'<>') , strChkSisInfFileName);
+            objCacic.setValueToFile('Hash-Codes','MAPACACIC.EXE'             , objCacic.getValueFromTags('SRCACICSRV.EXE_HASH'                , strCommResponse,'<>') , strChkSisInfFileName);
             objCacic.setValueToFile('Hash-Codes',objCacic.getMainProgramName , objCacic.getValueFromTags(objCacic.getMainProgramName + '_HASH', strCommResponse,'<>') , strChkSisInfFileName);
 
             informaProgresso('Informações obtidas:');
@@ -638,6 +642,14 @@ begin
             strAuxInstallCACIC := verifyAndGetModules('chksis.exe',
                                                       objCacic.deCrypt(objCacic.getValueFromTags('CHKSIS.EXE_HASH', strCommResponse,'<>'),true,true),
                                                       objCacic.getWinDir,
+                                                      objCacic.getLocalFolderName,
+                                                      objCacic,
+                                                      strChkSisInfFileName);
+            informaProgresso(strAuxInstallCACIC);
+
+            strAuxInstallCACIC := verifyAndGetModules('mapacacic.exe',
+                                                      objCacic.deCrypt(objCacic.getValueFromTags('GERCOLS.EXE_HASH', strCommResponse,'<>'),true,true),
+                                                      objCacic.getLocalFolderName + 'Modules',
                                                       objCacic.getLocalFolderName,
                                                       objCacic,
                                                       strChkSisInfFileName);
@@ -776,6 +788,7 @@ begin
                     MessageDLG(#13#10+'ATENÇÃO!'+#13#10+#13#10+'Se o ícone do CACIC não for exibido na bandeja do sistema, é recomendável a reinicialização da máquina.',mtInformation,[mbOK],0);
                     informaProgresso('Executando o Agente Principal do CACIC.');
                   End;
+
                 objCacic.createOneProcess(objCacic.getLocalFolderName + objCACIC.getMainProgramName, false);
               End
             else
@@ -784,6 +797,8 @@ begin
               else
                 objCacic.writeDebugLog('installCACIC: Problema no Download do Verificador de Integridade do Sistema (ChkSIS)');
           End;
+          // EXECUTA MAPACACIC SEMPRE.
+          objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe',true,SW_SHOW);
       Except
         on E : Exception do
           Begin
@@ -908,7 +923,7 @@ begin
     Begin
       Try
         edWebManagerAddress.Text := objCacic.fixWebAddress(edWebManagerAddress.Text);
-        objCacic.setWebManagerAddress(edWebManagerAddress.text);
+        objCacic.setWebManagerAddress(edWebManagerAddress.Text);
 
         informaProgresso('Efetuando comunicação com o endereço informado...');
 

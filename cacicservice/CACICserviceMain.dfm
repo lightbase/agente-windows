@@ -6,8 +6,6 @@ object CacicSustainService: TCacicSustainService
   OnShutdown = ServiceShutdown
   OnStart = ServiceStart
   OnStop = ServiceStop
-  Left = 192
-  Top = 107
   Height = 375
   Width = 544
   object timerToCHKSIS: TTimer

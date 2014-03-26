@@ -85,15 +85,15 @@ begin
       g_oCacic.setValueToFile('Importante'      ,'Informação 1:','Nome do ítem a ser identificado e listado;'                                                  , strVersionsIniFileName);
       g_oCacic.setValueToFile('Importante'      ,'Informação 2:','S/N -> Indica se o ítem deve ser mostrado na opção "Downloads" do Gerente WEB;'              , strVersionsIniFileName);
       g_oCacic.setValueToFile('Importante'      ,'Informação 3:','S/N -> Indica se o ítem refere-se ao S.O. GNU/Linux.'                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_1'       ,'cacic280.exe    ,N,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_2'       ,'cacicservice.exe,N,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_3'       ,'chksis.exe      ,N,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_4'       ,'gercols.exe     ,N,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_5'       ,'installcacic.exe,S,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_6'       ,'mapacacic.exe   ,S,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_7'       ,'srcacicsrv.exe  ,N,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_8'       ,'srcaciccli.exe  ,S,N'                                                                        , strVersionsIniFileName);
-      g_oCacic.setValueToFile('ItemsDefinitions','Item_9'       ,'pyCACIC         ,S,S'                                                                        , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_1'       ,'cacic280.exe      ,N,N'                                                                      , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_2'       ,'cacicservice.exe  ,N,N'                                                                      , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_3'       ,'chksis.exe        ,N,N'                                                                      , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_4'       ,'gercols.exe       ,N,N'                                                                      , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_5'       ,'installcacic.exe  ,S,N'                                                                      , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_6'       ,'mapacacic.exe     ,S,N'                                                                      , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_7'       ,'srcacicsrv.exe    ,N,N'                                                                      , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_8'       ,'srcaciccli.exe    ,S,N'                                                                      , strVersionsIniFileName);
+      g_oCacic.setValueToFile('ItemsDefinitions','Item_9'      ,'pyCACIC           ,S,S'                                                                      , strVersionsIniFileName);
     End;
 
   arrItemDefinitions := g_oCacic.explode(g_oCacic.getValueFromFile('ItemsDefinitions' , 'Item_1', strVersionsIniFileName),',');

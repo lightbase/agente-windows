@@ -1,7 +1,7 @@
 object frmMapaCacic: TfrmMapaCacic
   Left = 0
   Top = -55
-  Caption = 'frmMapaCacic'
+  Caption = 'Mapa Cacic PGFN'
   ClientHeight = 448
   ClientWidth = 789
   Color = clBtnFace
@@ -135,43 +135,6 @@ object frmMapaCacic: TfrmMapaCacic
     ParentFont = False
     TabOrder = 0
   end
-  object pnMessageBox: TPanel
-    Left = 1
-    Top = 243
-    Width = 780
-    Height = 45
-    BevelInner = bvLowered
-    Color = clInactiveBorder
-    Font.Charset = DEFAULT_CHARSET
-    Font.Color = clMenuHighlight
-    Font.Height = -13
-    Font.Name = 'Arial'
-    Font.Style = []
-    ParentBackground = False
-    ParentFont = False
-    TabOrder = 1
-    Visible = False
-    object lbMensagens: TLabel
-      Left = 2
-      Top = 2
-      Width = 776
-      Height = 41
-      Align = alClient
-      Alignment = taCenter
-      AutoSize = False
-      Color = clGrayText
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentColor = False
-      ParentFont = False
-      Layout = tlCenter
-      ExplicitLeft = 6
-      ExplicitTop = 0
-    end
-  end
   object gbInformacoesSobreComputador: TGroupBox
     Left = 1
     Top = 58
@@ -298,7 +261,7 @@ object frmMapaCacic: TfrmMapaCacic
     end
     object edTeInfoPatrimonio5: TEdit
       Left = 107
-      Top = 99
+      Top = 101
       Width = 250
       Height = 24
       Font.Charset = DEFAULT_CHARSET
@@ -310,7 +273,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 0
+      TabOrder = 1
       Visible = False
     end
     object edTeInfoPatrimonio6: TEdit
@@ -327,7 +290,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 1
+      TabOrder = 2
       Visible = False
     end
     object btCombosUpdate: TButton
@@ -337,7 +300,7 @@ object frmMapaCacic: TfrmMapaCacic
       Height = 20
       Caption = 'Recarregar'
       Enabled = False
-      TabOrder = 2
+      TabOrder = 6
       OnClick = btCombosUpdateClick
     end
     object edTeInfoUserLogado: TEdit
@@ -355,7 +318,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 3
+      TabOrder = 7
       Visible = False
     end
     object edTeInfoNomeComputador: TEdit
@@ -373,7 +336,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 4
+      TabOrder = 8
       Visible = False
     end
     object edTeInfoIpComputador: TEdit
@@ -391,7 +354,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 5
+      TabOrder = 9
       Visible = False
     end
     object edTePatrimonioPc: TEdit
@@ -408,7 +371,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 6
+      TabOrder = 0
       Visible = False
     end
     object edTeInfoNome: TEdit
@@ -426,7 +389,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 7
+      TabOrder = 3
       Visible = False
     end
     object bgTermoResponsabilidade: TGroupBox
@@ -435,7 +398,7 @@ object frmMapaCacic: TfrmMapaCacic
       Width = 767
       Height = 58
       Caption = 'Termo de Responsabilidade'
-      TabOrder = 8
+      TabOrder = 4
       object rdConcordaTermos: TRadioButton
         Left = 24
         Top = 24
@@ -462,7 +425,7 @@ object frmMapaCacic: TfrmMapaCacic
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
-      TabOrder = 9
+      TabOrder = 5
       Visible = False
       OnClick = AtualizaPatrimonio
     end
@@ -505,6 +468,44 @@ object frmMapaCacic: TfrmMapaCacic
       WordWrap = True
     end
   end
+  object pnMessageBox: TPanel
+    Left = 1
+    Top = 243
+    Width = 780
+    Height = 45
+    BevelInner = bvLowered
+    Color = clInactiveBorder
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clMenuHighlight
+    Font.Height = -13
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentBackground = False
+    ParentFont = False
+    TabOrder = 1
+    Visible = False
+    object lbMensagens: TLabel
+      Left = 2
+      Top = 2
+      Width = 776
+      Height = 41
+      Align = alClient
+      Alignment = taCenter
+      AutoSize = False
+      Color = clInactiveBorder
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      ParentColor = False
+      ParentFont = False
+      Transparent = True
+      Layout = tlCenter
+      ExplicitLeft = -22
+      ExplicitTop = 10
+    end
+  end
   object timerMessageBoxShowOrHide: TTimer
     Enabled = False
     Interval = 500
@@ -514,7 +515,6 @@ object frmMapaCacic: TfrmMapaCacic
   object timerMessageShowTime: TTimer
     Enabled = False
     Interval = 0
-    OnTimer = timerMessageShowTimeTimer
     Left = 18
     Top = 377
   end
@@ -527,6 +527,7 @@ object frmMapaCacic: TfrmMapaCacic
   end
   object IdIPWatch1: TIdIPWatch
     Active = False
+    HistoryEnabled = False
     HistoryFilename = 'iphist.dat'
     Left = 112
     Top = 376

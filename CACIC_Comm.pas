@@ -50,32 +50,36 @@ Begin
 
       tstrRequest :=  objCacicCOMM.explode(pStrFieldsAndValuesToRequest,',');
 
+      strWin32_OperatingSystem             := fetchWmiValues('Win32_OperatingSystem'            ,objCacicCOMM.getLocalFolderName);
       strWin32_ComputerSystem              := fetchWmiValues('Win32_ComputerSystem'             ,objCacicCOMM.getLocalFolderName);
       strWin32_NetworkAdapterConfiguration := fetchWmiValues('Win32_NetworkAdapterConfiguration',objCacicCOMM.getLocalFolderName);
-      //strWin32_OperatingSystem           ,objCacicCOMM.getLocalFolderName);
-      //strWin32_SoftwareFeature             := fetchWmiValues('Win32_OperatingSystem'              := fetchWmiValues('Win32_SoftwareFeature'            ,objCacicCOMM.getLocalFolderName);
+
+//      if (not (pos('get/test', pStrFullURL) > 0)) and (not (pos('get/config', pStrFullURL) > 0)) then
+//      begin
+//        strWin32_SoftwareFeature             := fetchWmiValues('Win32_SoftwareFeature'            ,objCacicCOMM.getLocalFolderName);
+//        tstrRequest.Values['SoftwareFeature']:= objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_SoftwareFeature));
+//      end;
 
       objCacicCOMM.writeDebugLog('Comm: Povoando lista com valores padrão para cabeçalho de comunicação');
       objCacicCOMM.writeDebugLog('Comm: pStrActionMessage: "' + pStrActionMessage + '"');
 
       With tstrRequest do
-        Begin
-          Values['ComputerSystem'             ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_ComputerSystem));
-          Values['cs_cipher'                  ] := '1';
-          Values['cs_debug'                   ] := '0';
-          Values['cs_compress'                ] := '0';
-          Values['HTTP_USER_AGENT'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt('AGENTE_CACIC',true,true                                                ));
-          Values['ModuleFolderName'           ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(ExtractFilePath(ParamStr(0))                                            ));
-          Values['ModuleProgramName'          ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(ExtractFileName(ParamStr(0))                                            ));
-          Values['NetworkAdapterConfiguration'] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_NetworkAdapterConfiguration                                    ));
-          //Values['OperatingSystem'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_OperatingSystem                                                ));
-          //Values['SoftwareFeature'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_SoftwareFeature                                                ));
-          Values['PHP_AUTH_PW'                ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt('PW_CACIC',true,true                                                    ));
-          Values['PHP_AUTH_USER'              ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt('USER_CACIC',true,true                                                  ));
-          Values['te_so'                      ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getWindowsStrId()                                                                );
-          Values['te_versao_cacic'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getVersionInfo(objCacicCOMM.getLocalFolderName + objCacicCOMM.getMainProgramName));
-          Values['te_versao_gercols'          ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getVersionInfo(objCacicCOMM.getLocalFolderName + 'Modules\gercols.exe'          ));
-        End;
+      Begin
+        Values['OperatingSystem'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_OperatingSystem                                                ));
+        Values['ComputerSystem'             ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_ComputerSystem                                                 ));
+        Values['cs_cipher'                  ] := '1';
+        Values['cs_debug'                   ] := '0';
+        Values['cs_compress'                ] := '0';
+        Values['HTTP_USER_AGENT'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt('AGENTE_CACIC',true,true                                                ));
+        Values['ModuleFolderName'           ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(ExtractFilePath(ParamStr(0))                                            ));
+        Values['ModuleProgramName'          ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(ExtractFileName(ParamStr(0))                                            ));
+        Values['NetworkAdapterConfiguration'] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strWin32_NetworkAdapterConfiguration                                    ));
+        Values['PHP_AUTH_PW'                ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt('PW_CACIC',true,true                                                    ));
+        Values['PHP_AUTH_USER'              ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt('USER_CACIC',true,true                                                  ));
+        Values['te_so'                      ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getWindowsStrId()                                                                );
+        Values['te_versao_cacic'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getVersionInfo(objCacicCOMM.getLocalFolderName + objCacicCOMM.getMainProgramName));
+        Values['te_versao_gercols'          ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getVersionInfo(objCacicCOMM.getLocalFolderName + 'Modules\gercols.exe'          ));
+      End;
 
       if objCacicCOMM.isInDebugMode then
         Begin
@@ -94,6 +98,7 @@ Begin
 
           objCacicCOMM.writeDebugLog('Comm: ' + DupeString('*',100));
         End;
+
 
       objCacicCOMM.writeDebugLog('Comm: ***** Iniciando Comunicação *****');
       objCacicCOMM.writeDebugLog('Comm: Requisitando Endereço: ' + pStrFullURL);
@@ -116,7 +121,6 @@ Begin
          // ATENÇÃO: Substituo os sinais de "+" acima por [[MAIS]] devido a problemas encontrados no envio POST (vide HTMLentities)
 
          Result := '0';
-
          Try
            IdHTTP1.Post(pStrFullURL, tstrRequest, tStringStrResponseCS);
          Except
