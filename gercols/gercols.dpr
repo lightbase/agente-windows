@@ -979,32 +979,42 @@ Begin
 
                                       // Coletas de todos os atributos de hardware
                                       tstrColetaHardware := fetchWmiValues('Win32_Keyboard', objCacic.getLocalFolderName, 'Availability,Caption,Description,InstallDate,Name');
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Keyboard=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Keyboard=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Teclado=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_PointingDevice', objCacic.getLocalFolderName, 'Availability,Caption,Description,InstallDate,Manufacturer,Name');
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PointingDevice=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PointingDevice=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Mouse=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_PhysicalMedia ', objCacic.getLocalFolderName, 'Caption,Description,InstallDate,Name,Manufacturer,Model,SKU,SerialNumber,Tag,Version,PartNumber,OtherIdentifyingInfo,Capacity,MediaType,MediaDescription');
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PhysicalMedia=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PhysicalMedia=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Mídia Física=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_BaseBoard', objCacic.getLocalFolderName, 'Caption,ConfigOptions,Depth,Description,Height,HostingBoard,InstallDate,Manufacturer,Model,Name,OtherIdentifyingInfo,PartNumber,Product,RequirementsDescription,SerialNumber,SKU,SlotLayout,SpecialRequirements,Tag,Version,Weight,Width');
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_BaseBoard=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Placa Mãe=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       // Tenho que dividir a string em dois pedaços porque o Delphi não aceita strings individuais com mais de 255 caracteres
                                       tstrColetaHardware := fetchWmiValues('Win32_BIOS', objCacic.getLocalFolderName, 'BiosCharacteristics,BIOSVersion,BuildNumber,Caption,CodeSet,Description,IdentificationCode,InstallDate,Manufacturer,Name,OtherTargetOS,PrimaryBIOS,ReleaseDate,SerialNumber,SMBIOSBIOSVersion,SMBIOSMajorVersion,SMBIOSMinorVersion,' + 'SoftwareElementID,TargetOperatingSystem,Version');
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_BIOS=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',BIOS=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_MemoryDevice', objCacic.getLocalFolderName, 'Access,Availability,BlockSize,Caption,Description,DeviceID,EndingAddress,InstallDate,Name,NumberOfBlocks,PNPDeviceID,Purpose,SystemLevelAddress,SystemName');
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_MemoryDevice=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Dispositivos de Memória=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_PhysicalMemory', objCacic.getLocalFolderName, 'BankLabel,Capacity,Caption,DataWidth,Description,DeviceLocator,FormFactor,InstallDate,InterleaveDataDepth,InterleavePosition,Manufacturer,MemoryType,Model,Name,OtherIdentifyingInfo,PartNumber,PositionInRow,' + 'SerialNumber,SKU,Speed,Tag,TotalWidth,TypeDetail,Version');
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PhysicalMemory=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Memória Física=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_Processor', objCacic.getLocalFolderName, 'AddressWidth,Architecture,Availability,Caption,DataWidth,Description,DeviceID,ExtClock,Family,InstallDate,L2CacheSize,L2CacheSpeed,Level,Manufacturer,MaxClockSpeed,Name,NumberOfCores,NumberOfLogicalProcessors,OtherFamilyDescription,PNPDeviceID,' + 'ProcessorId,ProcessorType,Revision,Role,SocketDesignation,SystemName,UniqueId,UpgradeMethod,Version');
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Processor=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Processador=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_Printer', objCacic.getLocalFolderName, 'Attributes,Availability,Caption,CharSetsSupported,Comment,CurrentCharSet,Default,Description,DeviceID,Direct,DriverName,HorizontalResolution,InstallDate,JobCountSinceLastReset,KeepPrintedJobs,LanguagesSupported,' + 'Local,Location,MarkingTechnology,MaxCopies,MaxNumberUp,MaxSizeSupported,MimeTypesSupported,Name,Network,PaperSizesSupported,PaperTypesAvailable,Parameters,PNPDeviceID,PortName,PrintProcessor,' + 'ServerName,Shared,ShareName,SpoolEnabled,SystemName,VerticalResolution,WorkOffline');
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Printer=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Impressora=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
                                       // Adiciona variáveis da coleta de hardware na requisição
                                       //strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Hardware=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
