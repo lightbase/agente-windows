@@ -146,6 +146,7 @@ implementation
 
 procedure TfrmMapaCacic.Sair;
 Begin
+    EstadoBarraTarefa(TRUE);
     Application.Terminate;
 End;
 
@@ -300,9 +301,10 @@ Begin
 
   if (Result <> '0') then
     Begin
+      objCacic.setValueToFile('Configs' ,'Patrimonio_dados_ldap', objCacic.getValueFromTags('dados_ldap'                  , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Interface' , objCacic.getValueFromTags('Configs_Patrimonio_Interface', Result), strGerColsInfFileName);
-      objCacic.setValueToFile('Collects','Patrimonio_Last'      , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
+//      objCacic.setValueToFile('Collects','col_patr_last'        , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
     End
   else
     begin
@@ -321,7 +323,7 @@ begin
   btCombosUpdate.Enabled := false;
 
   strCollectsPatrimonioLast := objCacic.deCrypt( objCacic.GetValueFromFile
-                                                ('Collects','Patrimonio_Last',
+                                                ('Collects','col_patr_last',
                                                  strGerColsInfFileName));
 
   if (strCollectsPatrimonioLast <> '') then
@@ -390,15 +392,14 @@ if edTeInfoNome.text <> '' then
     else
     Begin
         btGravarInformacoes.Caption := 'Informações enviadas com sucesso...';
-        objCacic.setValueToFile('Collects','Patrimonio_Last' ,
+        objCacic.setValueToFile('Collects','col_patr_last' ,
                                 objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
-        objCacic.setValueToFile('Collects','Patrimonio_exe', 's', strGerColsInfFileName);
+        objCacic.setValueToFile('Collects','col_patr_exe', 's', strGerColsInfFileName);
 
     End;
     objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');
     Application.ProcessMessages;
 
-    EstadoBarraTarefa(TRUE);
     Finalizar(true);
   end
   else
@@ -829,29 +830,25 @@ function TfrmMapaCacic.LDAPName: string;
 var
   ldap: TLDAPsend;
   l: TStringList;
-  host, username, psswd, base, strDadosLDAP : string;
+  host, username, psswd, base, strDadosLDAP, identificador : string;
 begin
   result       := '';
   ldap         := TLDAPsend.Create;
   l            := TStringList.Create;
 //  PEGANDO OS DADOS DO POR MEIO DO GET/CONFIGS, ONDE SERÁ GRAVADO NO GERCOLS.INF
-//  strDadosLDAP := objCacic.deCrypt(objCacic.getValueFromFile('Configs','dados_ldap',strGerColsInfFileName));
-  host         := '10.72.160.21';
-//  host         := objCacic.getValueFromTags('ip', strDadosLDAP);
-  username     := 'uid=ssopgfn,ou=aplic,ou=corp,ou=pgfn,dc=mf,dc=gov,dc=br';
-//  username     := objCacic.getValueFromTags('usuario', strDadosLDAP);
-  psswd        := 'pgfn_2013';
-//  psswd        := objCacic.getValueFromTags('psswd', strDadosLDAP);
-  base         := 'ou=pgfn,dc=mf,dc=gov,dc=br';
-//  base         := objCacic.getValueFromTags('base', strDadosLDAP);
-
+  strDadosLDAP := objCacic.deCrypt(objCacic.getValueFromFile('Configs','Patrimonio_dados_ldap',strGerColsInfFileName));
+  host         := objCacic.getValueFromTags('ip', strDadosLDAP);
+  username     := objCacic.getValueFromTags('usuario', strDadosLDAP);
+  psswd        := objCacic.getValueFromTags('senha', strDadosLDAP);
+  base         := objCacic.getValueFromTags('base', strDadosLDAP);
+  identificador:= objCacic.getValueFromTags('identificador', strDadosLDAP);
   try
     ldap.TargetHost := host;
     ldap.UserName   := username;
     ldap.Password   := psswd;
     ldap.Login;    //Loga no LDAP.
     ldap.BindSasl; //Autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
-    l.Add('cn');   //Estamos pesquisando apenas o nome, então apenas 'cn' será enviado.
+    l.Add(identificador);   //Estamos pesquisando apenas o nome, então apenas 'cn' será enviado.
     ldap.Search(base, False, 'uid=' + getUserLogon, l); //Faz a pesquisa, com o CPF repassado.
     result := getLastValue(LDAPResultdump(ldap.SearchResult), #$D#$A);
     ldap.Logout;

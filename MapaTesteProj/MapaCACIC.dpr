@@ -1,4 +1,4 @@
-program MapaCACIC;
+program mapacacic;
 
 uses
   Forms,
