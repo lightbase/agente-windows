@@ -411,42 +411,42 @@ end;
 procedure TfrmMapaCacic.MontaInterface;
 var strConfigsPatrimonioInterface, strNomeLDAP : String;
 Begin
-   btCombosUpdate.Enabled := false;
+    btCombosUpdate.Enabled := false;
 
 //-------------------------------NOME USUARIO-----------------------------------
-   strNomeLDAP                         := LDAPName;
+    strNomeLDAP                         := LDAPName;
 
-   if (strNomeLDAP <> '') and (strNomeLDAP <> 'Results: 0') then
-   begin
-      edTeInfoNome.Text                      := strNomeLDAP;
-      edTeInfoNome.Visible                   := true;
-      lbEtiquetaNome.Visible                 := true;
-   end
-   else
-   begin
-      edTeInfoNome.Visible                   := true;
-      edTeInfoNome.Enabled                   := true;
-      lbEtiquetaNome.Visible                 := true;
-   end;
+    if (strNomeLDAP <> '') and (strNomeLDAP <> 'Results: 0') then
+    begin
+       edTeInfoNome.Text                      := getLastValue(strNomeLDAP, #$D#$A);
+       edTeInfoNome.Visible                   := true;
+       lbEtiquetaNome.Visible                 := true;
+    end
+    else
+    begin
+       edTeInfoNome.Visible                   := true;
+       edTeInfoNome.Enabled                   := true;
+       lbEtiquetaNome.Visible                 := true;
+    end;
 
-//-----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
-   edTeInfoNomeComputador.Text               := NomeComputador;
-   if edTeInfoNomeComputador.Text <> '' then
-   begin
-      lbEtiquetaNomeComputador.Visible       := true;
-      edTeInfoNomeComputador.Visible         := true;
-   end;
-   lbEtiquetaNomeComputador.Visible          := true;
-   edTeInfonomeComputador.Visible            := true;
+//- ----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
+    edTeInfoNomeComputador.Text               := NomeComputador;
+    if edTeInfoNomeComputador.Text <> '' then
+    begin
+       lbEtiquetaNomeComputador.Visible       := true;
+       edTeInfoNomeComputador.Visible         := true;
+    end;
+    lbEtiquetaNomeComputador.Visible          := true;
+    edTeInfonomeComputador.Visible            := true;
 
 //-----------------------------USUARIO LOGADO-----------------------------------
 
-   edTeInfoUserLogado.Text                   := getUserLogon;
-   if edTeInfoUserLogado.Text <> '' then
-   begin
-      lbEtiquetaUserLogado.Visible           := true;
-      edTeInfoUserLogado.Visible             := true;
-   end;
+    edTeInfoUserLogado.Text                   := getUserLogon;
+    if edTeInfoUserLogado.Text <> '' then
+    begin
+       lbEtiquetaUserLogado.Visible           := true;
+       edTeInfoUserLogado.Visible             := true;
+    end;
 
 //-------------------------------CPF USUARIO------------------------------------
 
@@ -458,12 +458,12 @@ Begin
    end;}
 
 //-----------------------PUXA O IP DA MÁQUINA PARA O EDTEXT-------------------------------------
-   edTeInfoIpComputador.Text                 := idipwatch1.LocalIP;
-   if edTeInfoIpComputador.Text <> '' then
-   begin
-      lbEtiquetaIpComputador.Visible         := true;
-      edTeInfoIpComputador.Visible           := true;
-   end;
+    edTeInfoIpComputador.Text                 := idipwatch1.LocalIP;
+    if edTeInfoIpComputador.Text <> '' then
+    begin
+       lbEtiquetaIpComputador.Visible         := true;
+       edTeInfoIpComputador.Visible           := true;
+    end;
 
 //-------------------------PATRIMONIO DA MAQUINA--------------------------------
 {   edTePatrimonioPc.Text                     := SetPatrimonioPc;
@@ -472,13 +472,13 @@ Begin
       lbEtiquetaPatrimonioPc.Visible         := true;
       edTePatrimonioPc.Visible               := true;
    end;}
-   edTePatrimonioPc.Text                     := strTeInfoPatrimonio1;
-   edTePatrimonioPc.Visible                  := true;
-   lbEtiquetaPatrimonioPc.Visible            := true;
+    edTePatrimonioPc.Text                     := strTeInfoPatrimonio1;
+    edTePatrimonioPc.Visible                  := true;
+    lbEtiquetaPatrimonioPc.Visible            := true;
 
 
    //----------VALOR DE strGerColsInfFileName ALTERADO PARA ARQUIVO TESTE-----------------------------
-   strConfigsPatrimonioInterface := objCacic.deCrypt(objCacic.getValueFromFile('Configs','Patrimonio_Interface',strGerColsInfFileName));
+    strConfigsPatrimonioInterface := objCacic.deCrypt(objCacic.getValueFromFile('Configs','Patrimonio_Interface',strGerColsInfFileName));
 
   { objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueobjCacic.enCta1 -> "'     +
                           objCacic.getValueFromTags('in_exibir_etiqueta1',
@@ -539,10 +539,10 @@ Begin
 //   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta5', strConfigsPatrimonioInterface)) = 'S') then
 //   begin
       //lbEtiqueta5.Caption         := objCacic.getValueFromTags('te_etiqueta5', strConfigsPatrimonioInterface);
-      lbEtiqueta5.Visible         := true;
-      edTeInfoPatrimonio5.Hint    := objCacic.getValueFromTags('te_help_etiqueta5', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio5.Text    := strTeInfoPatrimonio6;
-      edTeInfoPatrimonio5.visible := True;
+       lbEtiqueta5.Visible         := true;
+       edTeInfoPatrimonio5.Hint    := objCacic.getValueFromTags('te_help_etiqueta5', strConfigsPatrimonioInterface);
+       edTeInfoPatrimonio5.Text    := strTeInfoPatrimonio6;
+       edTeInfoPatrimonio5.visible := True;
 //   end;
 
 //   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta6 -> "'     +
@@ -558,11 +558,10 @@ Begin
       edTeInfoPatrimonio6.visible := True;
 //   end;
 
+     btGravarInformacoes.Visible := true;
+     btCombosUpdate.Enabled      := true;
 
-   btGravarInformacoes.Visible := true;
-   btCombosUpdate.Enabled      := true;
-
-   Application.ProcessMessages;
+     Application.ProcessMessages;
 end;
 
 procedure TfrmMapaCacic.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -586,7 +585,10 @@ begin
   Except
     on E:Exception do
        Begin
+         MessageDlg(#13#13+'Problemas ao gerar formulário.',mtError, [mbOK], 0);
+         EstadoBarraTarefa(TRUE);
          objCacic.writeExceptionLog(E.Message,e.ClassName);
+         Sair;
        End;
   End;
 End;
@@ -829,32 +831,40 @@ end;
 function TfrmMapaCacic.LDAPName: string;
 var
   ldap: TLDAPsend;
-  l: TStringList;
-  host, username, psswd, base, strDadosLDAP, identificador : string;
+  identificador: TStringList;
+  i: integer;
+  host, username, psswd, base, strDadosLDAP, aux : string;
 begin
   result       := '';
   ldap         := TLDAPsend.Create;
-  l            := TStringList.Create;
+  identificador:= TStringList.Create;
 //  PEGANDO OS DADOS DO POR MEIO DO GET/CONFIGS, ONDE SERÁ GRAVADO NO GERCOLS.INF
   strDadosLDAP := objCacic.deCrypt(objCacic.getValueFromFile('Configs','Patrimonio_dados_ldap',strGerColsInfFileName));
   host         := objCacic.getValueFromTags('ip', strDadosLDAP);
   username     := objCacic.getValueFromTags('usuario', strDadosLDAP);
   psswd        := objCacic.getValueFromTags('senha', strDadosLDAP);
   base         := objCacic.getValueFromTags('base', strDadosLDAP);
-  identificador:= objCacic.getValueFromTags('identificador', strDadosLDAP);
-  try
-    ldap.TargetHost := host;
-    ldap.UserName   := username;
-    ldap.Password   := psswd;
-    ldap.Login;    //Loga no LDAP.
-    ldap.BindSasl; //Autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
-    l.Add(identificador);   //Estamos pesquisando apenas o nome, então apenas 'cn' será enviado.
-    ldap.Search(base, False, 'uid=' + getUserLogon, l); //Faz a pesquisa, com o CPF repassado.
-    result := getLastValue(LDAPResultdump(ldap.SearchResult), #$D#$A);
-    ldap.Logout;
-  finally
-    ldap.Free;
-    l.Free;
+  for i := 0 to 2 do //Até 2 porque são no máxio 3 identificadores que serão passados.
+  begin
+    aux:=objCacic.getValueFromTags('identificador'+IntToStr(i+1), strDadosLDAP);
+    if aux<>'' then
+      identificador.Add(aux);
+  end;
+  if (host<>'') and (base<>'') then
+  begin
+    try
+     ldap.TargetHost := host;
+     ldap.UserName   := username;
+     ldap.Password   := psswd;
+     ldap.Login;    //Loga no LDAP.
+     ldap.BindSasl; //Autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
+     ldap.Search(base, False, 'uid=' + getUserLogon, identificador); //Faz a pesquisa, com o CPF repassado.
+     result := LDAPResultdump(ldap.SearchResult);
+     ldap.Logout;
+    finally
+     ldap.Free;
+     identificador.Free;
+    end;
   end;
 end;
 
