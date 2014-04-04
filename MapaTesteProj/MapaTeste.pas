@@ -123,12 +123,7 @@ type
     strTeInfoPatrimonio6,
     strTeInfoPatrimonio7    : String;
     formMonitor: TForm;
-    ldap: TLDAPsend;
-    getTimer: TTimer;
 
-    procedure WorkBegin(ASender: TObject; AWorkMode: TWorkMode; AWorkCountMax: Int64);
-    procedure WorkEnd(ASender: TObject; AWorkMode: TWorkMode);
-    procedure GetTimerTimer(Sender: TObject);
     procedure FormSetFocus(VerificaFoco: Boolean);
     procedure MontaInterface;
     procedure RecuperaValoresAnteriores;
@@ -809,33 +804,18 @@ begin
   end;
 end;
 
-procedure TfrmMapaCacic.WorkBegin(ASender: TObject; AWorkMode: TWorkMode; AWorkCountMax: Int64);
-begin
-  getTimer.Enabled := True;
-end;
-procedure TfrmMapaCacic.WorkEnd(ASender: TObject; AWorkMode: TWorkMode);
-begin
-  getTimer.Enabled := False;
-end;
-
-procedure TfrmMapaCacic.GetTimerTimer(Sender: TObject);
-begin
-  ldap.Logout;
-end;
-
 function TfrmMapaCacic.LDAPName: string;
 var
   retorno: TStringList;
   i: integer;
   host, username, psswd, base, strDadosLDAP, aux, identificador : string;
+  ldap: TLDAPsend;
 
 begin
   result            := '';
   ldap              := TLDAPsend.Create;
   retorno           := TStringList.Create;
-  getTimer          := TTimer.create(nil);
-  getTimer.OnTimer  := GetTimerTimer;
-  getTimer.Interval := 5000;
+
 //  PEGANDO OS DADOS DO POR MEIO DO GET/CONFIGS, ONDE SERÁ GRAVADO NO GERCOLS.INF
   strDadosLDAP := objCacic.deCrypt(objCacic.getValueFromFile('Configs','servidor_autenticacao',strGerColsInfFileName));
   host         := objCacic.getValueFromTags('ip', strDadosLDAP);
@@ -852,20 +832,20 @@ begin
   if (host<>'') or (base<>'') or (retorno.count=0) then
   begin
   try
-    getTimer.Enabled := true;
     try
      ldap.TargetHost := host;
      ldap.UserName   := username;
      ldap.Password   := psswd;
-     ldap.Login;    //Loga no LDAP.
-     ldap.BindSasl; //Autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
-     ldap.Search(base, False, identificador+ '=' + getUserLogon, retorno); //Faz a pesquisa, com o CPF repassado.
-     result := LDAPResultdump(ldap.SearchResult);
-     ldap.Logout;
+     if ldap.Login then    //Loga no LDAP.
+     begin
+      ldap.BindSasl; //Autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
+      ldap.Search(base, False, identificador+ '=' + getUserLogon, retorno); //Faz a pesquisa, com o CPF repassado.
+      result := LDAPResultdump(ldap.SearchResult);
+      ldap.Logout;
+     end;
     finally
      ldap.Free;
      retorno.Free;
-     getTimer.Free;
     end;
   Except
     on E:Exception do
