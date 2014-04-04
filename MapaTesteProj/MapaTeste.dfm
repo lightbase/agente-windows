@@ -82,6 +82,8 @@ object frmMapaCacic: TfrmMapaCacic
     00008000000180000003800000018000000180000003C0000003C0000003E000
     0007F000000FF800001FF000000FF0000007F000000FF000000FFFFFFFFF}
   OldCreateOrder = False
+  PopupMode = pmAuto
+  ScreenSnap = True
   OnActivate = FormActivate
   OnClose = FormClose
   OnCreate = FormCreate

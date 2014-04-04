@@ -43,7 +43,8 @@ uses
   IdComponent,
   Mask,
   ComObj,
-  ldapsend;
+  ldapsend,
+  MultiMon;
 
 function IsUserAnAdmin() : boolean; external shell32;
 
@@ -121,7 +122,13 @@ type
     strTeInfoPatrimonio5,
     strTeInfoPatrimonio6,
     strTeInfoPatrimonio7    : String;
+    formMonitor: TForm;
+    ldap: TLDAPsend;
+    getTimer: TTimer;
 
+    procedure WorkBegin(ASender: TObject; AWorkMode: TWorkMode; AWorkCountMax: Int64);
+    procedure WorkEnd(ASender: TObject; AWorkMode: TWorkMode);
+    procedure GetTimerTimer(Sender: TObject);
     procedure FormSetFocus(VerificaFoco: Boolean);
     procedure MontaInterface;
     procedure RecuperaValoresAnteriores;
@@ -301,10 +308,10 @@ Begin
 
   if (Result <> '0') then
     Begin
-      objCacic.setValueToFile('Configs' ,'Patrimonio_dados_ldap', objCacic.getValueFromTags('dados_ldap'                  , Result), strGerColsInfFileName);
+      objCacic.setValueToFile('Configs' ,'servidor_autenticacao', objCacic.getValueFromTags('dados_ldap'                  , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Interface' , objCacic.getValueFromTags('Configs_Patrimonio_Interface', Result), strGerColsInfFileName);
-//      objCacic.setValueToFile('Collects','col_patr_last'        , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
+      //objCacic.setValueToFile('Collects','col_patr_last'        , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
     End
   else
     begin
@@ -330,8 +337,8 @@ begin
     Begin
 
       if (strTeInfoPatrimonio1='') then
-        strTeInfoPatrimonio1 := objCacic.getValueFromTags('IDPatrimonio', objCacic.getValueFromTags('Patrimonio',
-                                                          strCollectsPatrimonioLast));
+        strTeInfoPatrimonio1 := objCacic.getValueFromTags('IDPatrimonio',
+                                                          strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio2='') then
         strTeInfoPatrimonio2 := objCacic.getValueFromTags('UserLogado',
                                                           strCollectsPatrimonioLast);
@@ -365,17 +372,16 @@ if edTeInfoNome.text <> '' then
     btGravarInformacoes.Caption := 'Enviando informações...';
     strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
 
-    strColetaAtual := StringReplace('[Patrimonio]'                                                                  +
-                                    '[IDPatrimonio]'         + edTePatrimonioPc.Text      + '[/IDPatrimonio]'       +
+    strColetaAtual := StringReplace('[IDPatrimonio]'         + edTePatrimonioPc.Text      + '[/IDPatrimonio]'       +
                                     '[UserLogado]'           + edTeInfoUserLogado.Text    + '[/UserLogado]'         +
-                                    '[UserNameLDAP]'         + edTeInfoNome.Text          + '[/UserNameLDAP]'       +
+                                    '[UserName]'             + edTeInfoNome.Text          + '[/UserName]'           +
                                     '[IPComputer]'           + edTeInfoIpComputador.Text  + '[/IPComputer]'         +
                                     '[ComputerName]'         + edTeInfoNomeComputador.Text+ '[/ComputerName]'       +
                                     '[PatrimonioMonitor1]'   + edTeInfoPatrimonio5.Text   + '[/PatrimonioMonitor1]' +
-                                    '[PatrimonioMonitor2]'   + edTeInfoPatrimonio6.Text   + '[/PatrimonioMonitor2]' +
-                                    '[/Patrimonio]', ',','[[COMMA]]',[rfReplaceAll]);
+                                    '[PatrimonioMonitor2]'   + edTeInfoPatrimonio6.Text   + '[/PatrimonioMonitor2]'
+                                    , ',','[[COMMA]]',[rfReplaceAll]);
 
-    strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',col_patr='  +
+    strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Patrimonio='  +
                                    objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strColetaAtual));
 
     strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName +
@@ -409,16 +415,18 @@ end;
 
 
 procedure TfrmMapaCacic.MontaInterface;
-var strConfigsPatrimonioInterface, strNomeLDAP : String;
+var strConfigsPatrimonioInterface,
+    strNomeLDAP : String;
 Begin
     btCombosUpdate.Enabled := false;
 
-//-------------------------------NOME USUARIO-----------------------------------
-    strNomeLDAP                         := LDAPName;
+    //-------------------------------NOME USUARIO-----------------------------------
+    strNomeLDAP := getLastValue(LDAPName, #$D#$A);
+
 
     if (strNomeLDAP <> '') and (strNomeLDAP <> 'Results: 0') then
     begin
-       edTeInfoNome.Text                      := getLastValue(strNomeLDAP, #$D#$A);
+       edTeInfoNome.Text                      := strNomeLDAP;
        edTeInfoNome.Visible                   := true;
        lbEtiquetaNome.Visible                 := true;
     end
@@ -477,60 +485,8 @@ Begin
     lbEtiquetaPatrimonioPc.Visible            := true;
 
 
-   //----------VALOR DE strGerColsInfFileName ALTERADO PARA ARQUIVO TESTE-----------------------------
     strConfigsPatrimonioInterface := objCacic.deCrypt(objCacic.getValueFromFile('Configs','Patrimonio_Interface',strGerColsInfFileName));
 
-  { objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueobjCacic.enCta1 -> "'     +
-                          objCacic.getValueFromTags('in_exibir_etiqueta1',
-                                                    strConfigsPatrimonioInterface)+'"');
-
-   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta1', strConfigsPatrimonioInterface)) = 'S') then
-   begin
-      lbEtiqueta1.Caption         := objCacic.getValueFromTags('te_etiqueta1', strConfigsPatrimonioInterface);
-      lbEtiqueta1.Visible         := true;
-      edTeInfoPatrimonio1.Hint    := objCacic.getValueFromTags('te_help_etiqueta1', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio1.Text    := strTeInfoPatrimonio1;
-      edTeInfoPatrimonio1.visible := True;
-   end;
-
-   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta2 -> "'     +
-                          objCacic.getValueFromTags('in_exibir_etiqueta2',
-                                                   strConfigsPatrimonioInterface)+'"');
-
-   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta2', strConfigsPatrimonioInterface)) = 'S') then
-   begin
-      lbEtiqueta2.Caption         := objCacic.getValueFromTags('te_etiqueta2', strConfigsPatrimonioInterface);
-      lbEtiqueta2.Visible         := true;
-      edTeInfoPatrimonio2.Hint    := objCacic.getValueFromTags('te_help_etiqueta2', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio2.Text    := strTeInfoPatrimonio2;
-      edTeInfoPatrimonio2.visible := True;
-   end;
-
-   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta3 -> "'     +
-                          objCacic.getValueFromTags('in_exibir_etiqueta3',
-                                                     strConfigsPatrimonioInterface)+'"');
-
-   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta3', strConfigsPatrimonioInterface)) = 'S') then
-   begin
-      lbEtiqueta3.Caption         := objCacic.getValueFromTags('te_etiqueta3', strConfigsPatrimonioInterface);
-      lbEtiqueta3.Visible         := true;
-      edTeInfoPatrimonio3.Hint    := objCacic.getValueFromTags('te_help_etiqueta3', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio3.Text    := strTeInfoPatrimonio3;
-      edTeInfoPatrimonio3.visible := True;
-   end;
-
-   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta4 -> "'     +
-                          objCacic.getValueFromTags('in_exibir_etiqueta4',
-                                                    strConfigsPatrimonioInterface)+'"');
-
-   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta4', strConfigsPatrimonioInterface)) = 'S') then
-   begin
-      lbEtiqueta4.Caption         := objCacic.getValueFromTags('te_etiqueta4', strConfigsPatrimonioInterface);
-      lbEtiqueta4.Visible         := true;
-      edTeInfoPatrimonio4.Hint    := objCacic.getValueFromTags('te_help_etiqueta4', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio4.Text    := strTeInfoPatrimonio4;
-      edTeInfoPatrimonio4.visible := True;
-   end;  }
 
 //   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta5 -> "'     +
 //                          objCacic.getValueFromTags('in_exibir_etiqueta5',
@@ -558,10 +514,10 @@ Begin
       edTeInfoPatrimonio6.visible := True;
 //   end;
 
-     btGravarInformacoes.Visible := true;
-     btCombosUpdate.Enabled      := true;
 
-     Application.ProcessMessages;
+    btGravarInformacoes.Visible := true;
+    btCombosUpdate.Enabled      := true;
+    Application.ProcessMessages;
 end;
 
 procedure TfrmMapaCacic.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -571,6 +527,7 @@ begin
   Else
   begin
     Action := caFree;
+    formMonitor:=nil;
     objCacic.writeDebugLog('FormClose: ' + Sender.ClassName);
     Finalizar(true);
   end;
@@ -580,8 +537,8 @@ end;
 procedure TfrmMapaCacic.mapa;
 begin
   Try
-    MontaInterface;
     RecuperaValoresAnteriores;
+    MontaInterface;
   Except
     on E:Exception do
        Begin
@@ -671,8 +628,8 @@ begin
 
         if (getConfigs <> '0') then
         begin
-           FormSetFocus(foco);
-           mapa
+           mapa;
+           FormSetFocus(foco)
         end
         else
            Sair;
@@ -697,9 +654,12 @@ begin
 end;
 
 procedure TfrmMapaCacic.FormActivate(Sender: TObject);
+var strNomeLDAP: String;
+
 begin
   pnVersao.Caption := 'Versão: ' + objCacic.getVersionInfo(ParamStr(0));
   strFrmAtual := 'Principal';
+    
 end;
 
 procedure TfrmMapaCacic.btCombosUpdateClick(Sender: TObject);
@@ -717,6 +677,9 @@ end;
 procedure TfrmMapaCacic.FormSetFocus(VerificaFoco: Boolean);
 var
   r : TRect;
+  MonInfo: TMonitorInfoEx;
+  DispDev : TDisplayDevice;
+  i, monitorWidth, monitorHeight: Integer;
 begin
   if VerificaFoco then
   begin
@@ -724,12 +687,32 @@ begin
     BorderIcons               := BorderIcons - [biSystemMenu] - [biMinimize] - [biMaximize];
     BorderStyle               := bsNone;
     FormStyle                 := fsStayOnTop;
+    Position                  := poOwnerFormCenter;
     timerProcessos.Enabled    := True;
     SystemParametersInfo(SPI_GETWORKAREA, 0, @r,0);
     SetBounds(r.Left, r.Top, r.Right-r.Left, r.Bottom-r.Top);
-    Top := 0;
-    Left := 0;
-    Width := Screen.Width;
+    Screen.WorkAreaRect;
+    Top := Screen.WorkAreaTop;
+    Left := Screen.WorkAreaLeft;
+    {if Screen.MonitorCount>1 then
+    begin
+      formMonitor := TForm.Create(Application);
+      for i := 0 to Screen.MonitorCount - 1 do
+      begin
+        if not Screen.Monitors[i].Primary then
+          formMonitor.WindowState := wsNormal;
+          formMonitor.BorderStyle := bsNone;
+          formMonitor.MakeFullyVisible(Screen.Monitors[i]);
+          formMonitor.Visible:=true;
+      end;
+    end
+    else
+    begin
+       monitorWidth := screen.Width;
+       monitorHeight:= screen.Height;
+    end;}
+
+    Width := Screen.WorkAreaWidth;
     Height := Screen.Height;
     EstadoBarraTarefa(FALSE);
   end;
@@ -826,44 +809,71 @@ begin
   end;
 end;
 
+procedure TfrmMapaCacic.WorkBegin(ASender: TObject; AWorkMode: TWorkMode; AWorkCountMax: Int64);
+begin
+  getTimer.Enabled := True;
+end;
+procedure TfrmMapaCacic.WorkEnd(ASender: TObject; AWorkMode: TWorkMode);
+begin
+  getTimer.Enabled := False;
+end;
 
+procedure TfrmMapaCacic.GetTimerTimer(Sender: TObject);
+begin
+  ldap.Logout;
+end;
 
 function TfrmMapaCacic.LDAPName: string;
 var
-  ldap: TLDAPsend;
-  identificador: TStringList;
+  retorno: TStringList;
   i: integer;
-  host, username, psswd, base, strDadosLDAP, aux : string;
+  host, username, psswd, base, strDadosLDAP, aux, identificador : string;
+
 begin
-  result       := '';
-  ldap         := TLDAPsend.Create;
-  identificador:= TStringList.Create;
+  result            := '';
+  ldap              := TLDAPsend.Create;
+  retorno           := TStringList.Create;
+  getTimer          := TTimer.create(nil);
+  getTimer.OnTimer  := GetTimerTimer;
+  getTimer.Interval := 5000;
 //  PEGANDO OS DADOS DO POR MEIO DO GET/CONFIGS, ONDE SERÁ GRAVADO NO GERCOLS.INF
-  strDadosLDAP := objCacic.deCrypt(objCacic.getValueFromFile('Configs','Patrimonio_dados_ldap',strGerColsInfFileName));
+  strDadosLDAP := objCacic.deCrypt(objCacic.getValueFromFile('Configs','servidor_autenticacao',strGerColsInfFileName));
   host         := objCacic.getValueFromTags('ip', strDadosLDAP);
   username     := objCacic.getValueFromTags('usuario', strDadosLDAP);
   psswd        := objCacic.getValueFromTags('senha', strDadosLDAP);
   base         := objCacic.getValueFromTags('base', strDadosLDAP);
+  identificador:= objCacic.getValueFromTags('identificador', strDadosLDAP);
   for i := 0 to 2 do //Até 2 porque são no máxio 3 identificadores que serão passados.
   begin
-    aux:=objCacic.getValueFromTags('identificador'+IntToStr(i+1), strDadosLDAP);
+    aux:=objCacic.getValueFromTags('retorno'+IntToStr(i+1), strDadosLDAP);
     if aux<>'' then
-      identificador.Add(aux);
+      retorno.Add(aux);
   end;
-  if (host<>'') and (base<>'') then
+  if (host<>'') or (base<>'') or (retorno.count=0) then
   begin
+  try
+    getTimer.Enabled := true;
     try
      ldap.TargetHost := host;
      ldap.UserName   := username;
      ldap.Password   := psswd;
      ldap.Login;    //Loga no LDAP.
      ldap.BindSasl; //Autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
-     ldap.Search(base, False, 'uid=' + getUserLogon, identificador); //Faz a pesquisa, com o CPF repassado.
+     ldap.Search(base, False, identificador+ '=' + getUserLogon, retorno); //Faz a pesquisa, com o CPF repassado.
      result := LDAPResultdump(ldap.SearchResult);
      ldap.Logout;
     finally
      ldap.Free;
-     identificador.Free;
+     retorno.Free;
+     getTimer.Free;
+    end;
+  Except
+    on E:Exception do
+       Begin
+         MessageDlg(#13#13+'Problemas para pegar nome do usuário.'+#13#13+
+                    'Por favor, digite seu nome no campo solicitado',mtError, [mbOK], 0);
+         objCacic.writeExceptionLog(E.Message,e.ClassName);
+       End;
     end;
   end;
 end;
