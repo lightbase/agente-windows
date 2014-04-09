@@ -1420,6 +1420,12 @@ object FormularioGeral: TFormularioGeral
       OnClick = ExecutaCacic
       OnDrawItem = Mnu_ExecutarAgoraDrawItem
     end
+    object ExecutarMapa1: TMenuItem
+      Caption = 'Executar Mapa'
+      Hint = 'Executa Mapa Cacic'
+      OnClick = InvocaMapa1Click
+      OnDrawItem = ExecutarMapa1DrawItem
+    end
     object Mnu_InformacoesGerais: TMenuItem
       Caption = 'Informa'#231#245'es Gerais'
       Hint = 

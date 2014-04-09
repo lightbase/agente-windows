@@ -175,6 +175,7 @@ type
     TrayIcon1: TTrayIcon;
     ApplicationEvents1: TApplicationEvents;
     Panel1: TPanel;
+    ExecutarMapa1: TMenuItem;
     procedure RemoveIconesMortos;
     procedure ChecaCONFIGS;
     procedure CriaFormSenha(Sender: TObject);
@@ -257,6 +258,9 @@ type
     procedure timerNuIntervaloTimer(Sender: TObject);
     procedure ApplicationEvents1Message(var Msg: tagMSG;
       var Handled: Boolean);
+    procedure InvocaMapa1Click(Sender: TObject);
+    procedure ExecutarMapa1DrawItem(Sender: TObject; ACanvas: TCanvas;
+      ARect: TRect; Selected: Boolean);
   private
     FUsb : TUsbClass;
     ShutdownEmExecucao : Boolean;
@@ -1218,6 +1222,11 @@ begin
      End;
 end;
 
+procedure TFormularioGeral.InvocaMapa1Click(Sender: TObject);
+begin
+  Invoca_MapaCacic;
+end;
+
 ////////////////////////////////////////////////////////////////////////////////
 //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
 ////////////////////////////////////////////////////////////////////////////////
@@ -1227,13 +1236,13 @@ begin
   if ActualActivity = 0 then
      Begin
         // Caso exista o Mapa Cacic será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
-        if FileExists(objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe') then
+        if FileExists(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe') then
           Begin
             ChecaCONFIGS;
 
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
-            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe',true,SW_SHOW);
+            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',true,SW_SHOW);
             g_intStatus := 1;
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
           End
@@ -1276,9 +1285,10 @@ begin
 ////////////////////////////////////////////////////////////////////////////////
 //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
 ////////////////////////////////////////////////////////////////////////////////
-//    if trim(objCACIC.getValueFromFile('Configs','Patrimonio_exe',
-//                                      strGerColsInfFileName))<>'s' then
-//      Invoca_MapaCacic;
+   if trim(objCACIC.getValueFromFile('Configs','col_patr_exe',
+                                      strGerColsInfFileName))<>'s' then begin
+      Invoca_MapaCacic;
+   end;
 //          AGUARDANDO CONFIGURAÇÃO DO GERENTE, SENDO INVOCADO NA INSTALAÇÃO, ATÉ O MOMENTO.
 ////////////////////////////// FIM /////////////////////////////////////////////
 
@@ -1416,6 +1426,20 @@ begin
         objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS AO TENTAR ATIVAR COLETAS.');
     end;
    objCACIC.writeDebugLog('ExecutaCACIC: ' + DupeString('=',100));
+end;
+
+procedure TFormularioGeral.ExecutarMapa1DrawItem(Sender: TObject;
+  ACanvas: TCanvas; ARect: TRect; Selected: Boolean);
+begin
+ if Selected then
+   ACanvas.Brush.Color := clHighlight
+ else
+   ACanvas.Brush.Color := clMenu;
+
+ ARect.Left := LEFT_MENU_ITEM;
+ ACanvas.FillRect(ARect);
+
+ DrawText(ACanvas.Handle, PChar('Executar Mapa'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
 end;
 
 procedure TFormularioGeral.ExibirLogAtividades(Sender: TObject);
