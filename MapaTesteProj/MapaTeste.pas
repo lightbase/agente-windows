@@ -125,6 +125,7 @@ type
     strTeInfoPatrimonio6,
     strTeInfoPatrimonio7    : String;
     psswd : String;
+    foco : boolean;
 
     procedure FormSetFocus(VerificaFoco: Boolean);
     procedure MontaInterface;
@@ -545,8 +546,6 @@ begin
 End;
 
 procedure TfrmMapaCacic.FormCreate(Sender: TObject);
-var
-  foco: boolean;
 
 begin
   psswd := '';
@@ -555,6 +554,8 @@ begin
 //Definido TRUE, se não, mesmo que o foco seja falso, a aplicação não é fechada quando quiser.
   Fechar:=TRUE;
   foco:=true; //DEFINIDO COMO TRUE PARA QUE A JANELA NÃO SEJA FECHADA
+
+  
   Try
     strFrmAtual  := 'Principal';
     objCacic     := TCACIC.Create();
@@ -653,7 +654,8 @@ procedure TfrmMapaCacic.FormActivate(Sender: TObject);
 begin
   pnVersao.Caption := 'Versão: ' + objCacic.getVersionInfo(ParamStr(0));
   strFrmAtual := 'Principal';
-
+  Application.MainFormOnTaskBar:=FALSE;
+  ShowWindow(Application.Handle, SW_HIDE);
 end;
 
 procedure TfrmMapaCacic.btCombosUpdateClick(Sender: TObject);
@@ -705,11 +707,8 @@ begin
       end;
     end;
        }
+
 //  EstadoBarraTarefa(FALSE);
-
-  H := FindWindow(Nil,'mapacacic'); {troque project1 pelo nome do seu projeto)}
-  if H <> 0 then ShowWindow(H,SW_HIDE);
-
 
   end;
 
