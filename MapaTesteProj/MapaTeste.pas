@@ -654,6 +654,7 @@ procedure TfrmMapaCacic.FormActivate(Sender: TObject);
 begin
   pnVersao.Caption := 'Versão: ' + objCacic.getVersionInfo(ParamStr(0));
   strFrmAtual := 'Principal';
+  //ESCONDE APLICAÇÃO DA TASKBAR -- DEVE SER COLOCADA NO OnActivate
   Application.MainFormOnTaskBar:=FALSE;
   ShowWindow(Application.Handle, SW_HIDE);
 end;
