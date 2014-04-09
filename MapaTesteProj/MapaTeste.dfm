@@ -5,6 +5,7 @@ object frmMapaCacic: TfrmMapaCacic
   ClientHeight = 448
   ClientWidth = 789
   Color = clBtnFace
+  TransparentColorValue = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -87,6 +88,7 @@ object frmMapaCacic: TfrmMapaCacic
   OnActivate = FormActivate
   OnClose = FormClose
   OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
   DesignSize = (
     789
     448)

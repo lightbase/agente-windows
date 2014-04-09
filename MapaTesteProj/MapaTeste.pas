@@ -32,6 +32,7 @@ uses
   Dialogs,
   CACIC_Library,
   CACIC_Comm,
+  CACIC_WMI,
   ComCtrls,
   Commctrl,
   ShellAPI,
@@ -60,6 +61,7 @@ var strCollectsPatrimonioLast,
     Fechar                      : boolean;
     Dummy                       : integer;
     OldValue                    : LongBool;
+    formSecondMonitor           : TForm;
 
 type
   TfrmMapaCacic = class(TForm)
@@ -104,14 +106,14 @@ type
     procedure rdConcordaTermosClick(Sender: TObject);
     procedure EstadoBarraTarefa(EstadoBarra: Boolean);
 
-    function getLastValue(S : String; separador : string): string; 
+    function getLastValue(S : String; separador, separador2 : string): string; 
     function LDAPName: string;
     function NomeComputador : String;
-    function getUserLogon : String;
     function getConfigs : String;
     function SetCpfUser : String;
     function SetPatrimonioPC : String;
     function FormatarCpf(strCpfUser : String) : String;
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 
 
   private
@@ -122,7 +124,7 @@ type
     strTeInfoPatrimonio5,
     strTeInfoPatrimonio6,
     strTeInfoPatrimonio7    : String;
-    formMonitor: TForm;
+    psswd : String;
 
     procedure FormSetFocus(VerificaFoco: Boolean);
     procedure MontaInterface;
@@ -138,6 +140,8 @@ type
     procedure Finalizar(p_pausa:boolean);
 
   end;
+
+const SENHA = 'uuddlrlrab';
 
 var frmMapaCacic: TfrmMapaCacic;
 
@@ -179,23 +183,6 @@ begin
   nSize := Buff_Size;
   lpBuffer := StrAlloc(Buff_Size);
   GetComputerName(lpBuffer,nSize);
-  Result := String(lpBuffer);
-  StrDispose(lpBuffer);
-end;
-
-//------------------------------------------------------------------------------
-//------------------FUNÇÃO PARA RETORNAR O NOME DO USUARIO.---------------------
-//------------------------------------------------------------------------------
-
-Function TfrmMapaCacic.getUserLogon : String;
-var
-  lpBuffer : PChar;
-  nSize : DWord;
-const Buff_Size = MAX_COMPUTERNAME_LENGTH + 1;
-begin
-  nSize := Buff_Size;
-  lpBuffer := StrAlloc(Buff_Size);
-  GetUserName(lpBuffer,nSize);
   Result := String(lpBuffer);
   StrDispose(lpBuffer);
 end;
@@ -246,7 +233,7 @@ var
   strUser        : String;
 begin
   Result:='';
-  strUser:=getUserLogon;
+  strUser:=strTeInfoPatrimonio3;
 
   if (pos('-',strUser) > 0) then
     strCpfUser:=copy(strUser, 0, (pos('-', strUser)-1));
@@ -259,14 +246,17 @@ end;
 //-----------------------APÓS O SEPARADOR SELECIONADO---------------------------
 //------------------------------------------------------------------------------
 
-function TfrmMapaCacic.getLastValue(S : String; separador : string): string; 
+function TfrmMapaCacic.getLastValue(S : String; separador, separador2 : string): string;
   var
-  conta : integer;         // variáveis auxiliares
+  conta, tamanho_separador, tamanho_separador2 : integer;         // variáveis auxiliares
   resultado : TStringList; // variáveis auxiliares
-  Saux : string;           // variáveis auxiliares
+  Saux, index : string;           // variáveis auxiliares
 begin
     resultado := TStringList.Create;   // inicializa variavel
-    conta := pos(separador,S);         // pega posição do separador
+    tamanho_separador:= Length(separador);
+    tamanho_separador2:= Length(separador2);
+    index:=copy(separador2, 1, pos(#$D#$A, separador2)-1);
+    conta := pos(separador,S)+tamanho_separador;         // pega posição do separador
     if conta <> 0 then begin           // verifica se existe o separador caso contrario trata apenas //como uma única linha
         while trim(S) <> '' do begin   // enquanto S não for nulo executa
             Saux := copy(S,1,conta-1); // Variável Saux recebe primeiro valor
@@ -275,15 +265,21 @@ begin
                 Saux := S;
                 S := '';
             end;
-        resultado.Add(Saux);           // adiciona linhas na string lista
-        conta := pos(separador,S);     //pega posição do separador
+            if pos(separador2, Saux)>0 then begin
+              delete(Saux, 1, tamanho_separador2);
+              resultado.values[index]:=
+                copy(Saux,1,pos(#$D#$A, Saux));
+              break;
+            end;
+            resultado.add(Saux);           // adiciona linhas na string lista
+            conta := pos(separador,S);     //pega posição do separador
         end;
-        end
+    end
     else begin
         Saux := S;
         resultado.Add(Saux);
     end;
-    Result := trim(resultado[resultado.count-1]); // retorna resultado como uma lista indexada
+    Result := trim(resultado.values[index]); // retorna resultado como uma lista indexada
 end;
 
 //------------------------------------------------------------------------------
@@ -395,7 +391,7 @@ if edTeInfoNome.text <> '' then
         btGravarInformacoes.Caption := 'Informações enviadas com sucesso...';
         objCacic.setValueToFile('Collects','col_patr_last' ,
                                 objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
-        objCacic.setValueToFile('Collects','col_patr_exe', 's', strGerColsInfFileName);
+        objCacic.setValueToFile('Configs','col_patr_exe', 's', strGerColsInfFileName);
 
     End;
     objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');
@@ -415,8 +411,30 @@ var strConfigsPatrimonioInterface,
 Begin
     btCombosUpdate.Enabled := false;
 
+//- ----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
+    edTeInfoNomeComputador.Text               := NomeComputador;
+    if edTeInfoNomeComputador.Text <> '' then
+    begin
+       lbEtiquetaNomeComputador.Visible       := true;
+       edTeInfoNomeComputador.Visible         := true;
+    end;
+    lbEtiquetaNomeComputador.Visible          := true;
+    edTeInfonomeComputador.Visible            := true;
+
+//-----------------------------USUARIO LOGADO-----------------------------------
+
+//    edTeInfoUserLogado.Text                   := getUserLogon;
+    strTeInfoPatrimonio3:=objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
+    strTeInfoPatrimonio3:=copy(strTeInfoPatrimonio3, pos('\', strTeInfoPatrimonio3)+1, length(strTeInfoPatrimonio3));
+    edTeInfoUserLogado.Text:=strTeInfoPatrimonio3;
+    if edTeInfoUserLogado.Text <> '' then
+    begin
+       lbEtiquetaUserLogado.Visible           := true;
+       edTeInfoUserLogado.Visible             := true;
+    end;
+
     //-------------------------------NOME USUARIO-----------------------------------
-    strNomeLDAP := getLastValue(LDAPName, #$D#$A);
+    strNomeLDAP := getLastValue(LDAPName, 'Attribute:', 'cn'+#$D#$A);
 
 
     if (strNomeLDAP <> '') and (strNomeLDAP <> 'Results: 0') then
@@ -431,26 +449,7 @@ Begin
        edTeInfoNome.Enabled                   := true;
        lbEtiquetaNome.Visible                 := true;
     end;
-
-//- ----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
-    edTeInfoNomeComputador.Text               := NomeComputador;
-    if edTeInfoNomeComputador.Text <> '' then
-    begin
-       lbEtiquetaNomeComputador.Visible       := true;
-       edTeInfoNomeComputador.Visible         := true;
-    end;
-    lbEtiquetaNomeComputador.Visible          := true;
-    edTeInfonomeComputador.Visible            := true;
-
-//-----------------------------USUARIO LOGADO-----------------------------------
-
-    edTeInfoUserLogado.Text                   := getUserLogon;
-    if edTeInfoUserLogado.Text <> '' then
-    begin
-       lbEtiquetaUserLogado.Visible           := true;
-       edTeInfoUserLogado.Visible             := true;
-    end;
-
+    
 //-------------------------------CPF USUARIO------------------------------------
 
 {   edTeInfoCpfUser.Text                      := FormatarCpf(SetCpfUser);
@@ -522,7 +521,7 @@ begin
   Else
   begin
     Action := caFree;
-    formMonitor:=nil;
+    formSecondMonitor:=nil;
     objCacic.writeDebugLog('FormClose: ' + Sender.ClassName);
     Finalizar(true);
   end;
@@ -538,7 +537,7 @@ begin
     on E:Exception do
        Begin
          MessageDlg(#13#13+'Problemas ao gerar formulário.',mtError, [mbOK], 0);
-         EstadoBarraTarefa(TRUE);
+//         EstadoBarraTarefa(TRUE);
          objCacic.writeExceptionLog(E.Message,e.ClassName);
          Sair;
        End;
@@ -550,8 +549,8 @@ var
   foco: boolean;
 
 begin
-
-
+  psswd := '';
+  KeyPreview := true;
   frmMapaCacic.boolAcessoOK := true;
 //Definido TRUE, se não, mesmo que o foco seja falso, a aplicação não é fechada quando quiser.
   Fechar:=TRUE;
@@ -621,7 +620,7 @@ begin
         pnMessageBox.Visible := false;
         objCacic.writeDebugLog('FormActivate: Requisitando informações de patrimônio da estação...');
 
-        if (getConfigs <> '0') then
+        if getConfigs <> '0' then
         begin
            mapa;
            FormSetFocus(foco)
@@ -648,13 +647,13 @@ begin
   End;
 end;
 
+
 procedure TfrmMapaCacic.FormActivate(Sender: TObject);
-var strNomeLDAP: String;
 
 begin
   pnVersao.Caption := 'Versão: ' + objCacic.getVersionInfo(ParamStr(0));
   strFrmAtual := 'Principal';
-    
+
 end;
 
 procedure TfrmMapaCacic.btCombosUpdateClick(Sender: TObject);
@@ -672,9 +671,7 @@ end;
 procedure TfrmMapaCacic.FormSetFocus(VerificaFoco: Boolean);
 var
   r : TRect;
-  MonInfo: TMonitorInfoEx;
-  DispDev : TDisplayDevice;
-  i, monitorWidth, monitorHeight: Integer;
+  H : HWnd;
 begin
   if VerificaFoco then
   begin
@@ -689,30 +686,55 @@ begin
     Screen.WorkAreaRect;
     Top := Screen.WorkAreaTop;
     Left := Screen.WorkAreaLeft;
-    {if Screen.MonitorCount>1 then
+    Width := Screen.WorkAreaWidth;
+    Height := Screen.Height;
+    {    if Screen.MonitorCount>1 then
     begin
-      formMonitor := TForm.Create(Application);
+      formSecondMonitor := TForm.Create(nil);
       for i := 0 to Screen.MonitorCount - 1 do
       begin
         if not Screen.Monitors[i].Primary then
-          formMonitor.WindowState := wsNormal;
-          formMonitor.BorderStyle := bsNone;
-          formMonitor.MakeFullyVisible(Screen.Monitors[i]);
-          formMonitor.Visible:=true;
+          formSecondMonitor.WindowState := wsNormal;
+          formSecondMonitor.BorderStyle := bsNone;
+          formSecondMonitor.Width := Screen.Monitors[i].Width;
+          formSecondMonitor.Height := Screen.Monitors[i].Height;
+          formSecondMonitor.top := Screen.Monitors[i].top;
+          formSecondMonitor.left := Screen.Monitors[i].left;
+          formSecondMonitor.Enabled := true;
+          formSecondMonitor.Visible:=true;
       end;
-    end
-    else
-    begin
-       monitorWidth := screen.Width;
-       monitorHeight:= screen.Height;
-    end;}
+    end;
+       }
+//  EstadoBarraTarefa(FALSE);
 
-    Width := Screen.WorkAreaWidth;
-    Height := Screen.Height;
-    EstadoBarraTarefa(FALSE);
+  H := FindWindow(Nil,'mapacacic'); {troque project1 pelo nome do seu projeto)}
+  if H <> 0 then ShowWindow(H,SW_HIDE);
+
+
   end;
 
 end;
+
+//CODE PRA FECHAR O MAPA SEM PRESSIONAR NADA. (/\ + /\ + V + V + <- + -> + <- + -> + A + B)
+procedure TfrmMapaCacic.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+
+begin
+  case Key of
+    VK_Left : psswd:=psswd+'l';
+    VK_Right : psswd:=psswd+'r';
+    VK_Up : psswd:=psswd+'u';
+    VK_Down : psswd:=psswd+'d';
+    65 : psswd:=psswd+'a';
+    66 : psswd:=psswd+'b';
+    else
+      psswd:='';
+  end;
+  if psswd = SENHA then
+    sair;
+
+end;
+
 
 //------------------------------------------------------------------------------
 //----------------ESCONDE BARRA DE TAREFAS--------------------------------------
@@ -813,49 +835,53 @@ var
 
 begin
   result            := '';
-  ldap              := TLDAPsend.Create;
-  retorno           := TStringList.Create;
 
 //  PEGANDO OS DADOS DO POR MEIO DO GET/CONFIGS, ONDE SERÁ GRAVADO NO GERCOLS.INF
   strDadosLDAP := objCacic.deCrypt(objCacic.getValueFromFile('Configs','servidor_autenticacao',strGerColsInfFileName));
-  host         := objCacic.getValueFromTags('ip', strDadosLDAP);
-  username     := objCacic.getValueFromTags('usuario', strDadosLDAP);
-  psswd        := objCacic.getValueFromTags('senha', strDadosLDAP);
-  base         := objCacic.getValueFromTags('base', strDadosLDAP);
-  identificador:= objCacic.getValueFromTags('identificador', strDadosLDAP);
-  for i := 0 to 2 do //Até 2 porque são no máxio 3 identificadores que serão passados.
+  if strDadosLDAP<>'' then
   begin
-    aux:=objCacic.getValueFromTags('retorno'+IntToStr(i+1), strDadosLDAP);
-    if aux<>'' then
-      retorno.Add(aux);
-  end;
-  if (host<>'') or (base<>'') or (retorno.count=0) then
-  begin
-  try
-    try
-     ldap.TargetHost := host;
-     ldap.UserName   := username;
-     ldap.Password   := psswd;
-     if ldap.Login then    //Loga no LDAP.
-     begin
-      ldap.BindSasl; //Autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
-      ldap.Search(base, False, identificador+ '=' + getUserLogon, retorno); //Faz a pesquisa, com o CPF repassado.
-      result := LDAPResultdump(ldap.SearchResult);
-      ldap.Logout;
-     end;
-    finally
-     ldap.Free;
-     retorno.Free;
+    ldap              := TLDAPsend.Create;
+    retorno           := TStringList.Create;
+
+    host         := objCacic.getValueFromTags('ip', strDadosLDAP);
+    username     := objCacic.getValueFromTags('usuario', strDadosLDAP);
+    psswd        := objCacic.getValueFromTags('senha', strDadosLDAP);
+    base         := objCacic.getValueFromTags('base', strDadosLDAP);
+    identificador:= objCacic.getValueFromTags('identificador', strDadosLDAP);
+    for i := 0 to 2 do //Até 2 porque são no máxio 3 identificadores que serão passados.
+    begin
+      aux:=objCacic.getValueFromTags('retorno'+IntToStr(i+1), strDadosLDAP);
+      if aux<>'' then
+        retorno.Add(aux);
     end;
-  Except
-    on E:Exception do
-       Begin
-         MessageDlg(#13#13+'Problemas para pegar nome do usuário.'+#13#13+
-                    'Por favor, digite seu nome no campo solicitado',mtError, [mbOK], 0);
-         objCacic.writeExceptionLog(E.Message,e.ClassName);
-       End;
-    end;
-  end;
+    if (host<>'') and (base<>'') and (retorno.count<>0) and (username<>'') then
+    begin
+      try
+        try
+         ldap.TargetHost := host;
+         ldap.UserName   := username;
+         ldap.Password   := psswd;
+         ldap.Timeout    := 5000;
+         if ldap.Login and ldap.BindSasl then    //Loga no LDAP e autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
+         begin
+          ldap.Search(base, False, identificador+ '=' + strTeInfoPatrimonio3, retorno); //Faz a pesquisa, com o CPF repassado.
+          result := LDAPResultdump(ldap.SearchResult);
+          ldap.Logout;
+         end;
+        finally
+         ldap.Free;
+         retorno.Free;
+        end;
+      Except
+        on E:Exception do
+           Begin
+             MessageDlg(#13#13+'Problemas para pegar nome do usuário.'+#13#13+
+                        'Por favor, digite seu nome no campo solicitado',mtError, [mbOK], 0);
+             objCacic.writeExceptionLog(E.Message,e.ClassName);
+           End; //on E:Exception do
+      end; // Try
+    end; // if (host<>'') or (base<>'') or (retorno.count=0) then
+  end;  //if strDadosLDAP<>'' then
 end;
 
 
