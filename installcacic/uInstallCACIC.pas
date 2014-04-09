@@ -798,7 +798,7 @@ begin
                 objCacic.writeDebugLog('installCACIC: Problema no Download do Verificador de Integridade do Sistema (ChkSIS)');
           End;
           // EXECUTA MAPACACIC SEMPRE.
-          objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe',true,SW_SHOW);
+          objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',true,SW_SHOW);
       Except
         on E : Exception do
           Begin
