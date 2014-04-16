@@ -195,6 +195,13 @@ Begin
                       objCacic,
                       strChkSisInfFileName);
 
+  objCacic.writeDebugLog('checkModules: Verificando mapacacic.exe');
+  verifyAndGetModules('mapacacic.exe',
+                      objCacic.deCrypt( objCacic.getValueFromFile('Hash-Codes','MAPACACIC.EXE',strChkSisInfFileName),false,true),
+                      objCacic.getLocalFolderName + 'Modules',
+                      objCacic.getLocalFolderName,
+                      objCacic,
+                      strChkSisInfFileName);
 
   // O módulo de Suporte Remoto é opcional...
   if (objCacic.getValueFromTags('srcacic',objCacic.getValueFromFile('Configs','CollectsDefinitions',strGerColsInfFileName)) = 'OK') then
