@@ -71,30 +71,32 @@ type
     timerMessageBoxShowOrHide: TTimer;
     timerMessageShowTime: TTimer;
     timerProcessos: TTimer;
-    IdIPWatch1: TIdIPWatch;
-    pnMessageBox: TPanel;
-    lbMensagens: TLabel;
     gbLeiaComAtencao: TGroupBox;
     lbLeiaComAtencao: TLabel;
     gbInformacoesSobreComputador: TGroupBox;
+    lbEtiqueta3: TLabel;
+    lbEtiqueta4: TLabel;
+    lbEtiqueta2: TLabel;
+    lbEtiqueta8: TLabel;
+    lbEtiqueta9: TLabel;
+    lbEtiqueta1: TLabel;
     lbEtiqueta5: TLabel;
-    lbEtiqueta6: TLabel;
-    lbEtiquetaUserLogado: TLabel;
-    lbEtiquetaNomeComputador: TLabel;
-    lbEtiquetaIpComputador: TLabel;
-    lbEtiquetaPatrimonioPc: TLabel;
-    lbEtiquetaNome: TLabel;
-    edTeInfoPatrimonio5: TEdit;
-    edTeInfoPatrimonio6: TEdit;
+    edTeInfoPatrimonio3: TEdit;
+    edTeInfoPatrimonio4: TEdit;
     btCombosUpdate: TButton;
-    edTeInfoUserLogado: TEdit;
-    edTeInfoNomeComputador: TEdit;
-    edTeInfoIpComputador: TEdit;
-    edTePatrimonioPc: TEdit;
-    edTeInfoNome: TEdit;
+    edTeInfoPatrimonio2: TEdit;
+    edTeInfoPatrimonio8: TEdit;
+    edTeInfoPatrimonio9: TEdit;
+    edTeInfoPatrimonio1: TEdit;
+    edTeInfoPatrimonio5: TEdit;
     bgTermoResponsabilidade: TGroupBox;
     rdConcordaTermos: TRadioButton;
     btGravarInformacoes: TButton;
+    lbEtiqueta6: TLabel;
+    edTeInfoPatrimonio6: TEdit;
+    lbEtiqueta7: TLabel;
+    edTeInfoPatrimonio7: TEdit;
+    btKonamiCode: TPanel;
     
     procedure FormCreate(Sender: TObject);
     procedure AtualizaPatrimonio(Sender: TObject);
@@ -110,10 +112,11 @@ type
     function LDAPName: string;
     function NomeComputador : String;
     function getConfigs : String;
-    function SetCpfUser : String;
-    function SetPatrimonioPC : String;
-    function FormatarCpf(strCpfUser : String) : String;
+//    function SetCpfUser : String;
+//    function SetPatrimonioPC : String;
+//    function FormatarCpf(strCpfUser : String) : String;
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure btKonamiCodeClick(Sender: TObject);
 
 
   private
@@ -123,7 +126,9 @@ type
     strTeInfoPatrimonio4,
     strTeInfoPatrimonio5,
     strTeInfoPatrimonio6,
-    strTeInfoPatrimonio7    : String;
+    strTeInfoPatrimonio7,
+    strTeInfoPatrimonio8,
+    strTeInfoPatrimonio9    : String;
     psswd : String;
     foco : boolean;
 
@@ -142,7 +147,7 @@ type
 
   end;
 
-const SENHA = 'uuddlrlrab';
+const SENHA = 'uuddlrlrba';
 
 var frmMapaCacic: TfrmMapaCacic;
 
@@ -153,7 +158,6 @@ implementation
 
 procedure TfrmMapaCacic.Sair;
 Begin
-    EstadoBarraTarefa(TRUE);
     Application.Terminate;
 End;
 
@@ -192,55 +196,55 @@ end;
 //----------------------FUNÇÃO PARA RETORNAR O PATRIMONIO-----------------------
 //------------------------------------------------------------------------------
 
-function TfrmMapaCacic.SetPatrimonioPC : String;
-var
-  strPatrimonioPc,
-  strNomePC        : String;
-begin
-  Result:='';
-  strNomePC:=NomeComputador;
-
-  if (pos('-',strNomePC) > 0) then
-    strPatrimonioPc:=copy(strNomePC, 0, (pos('-', strNomePC)-1));
-  Result:=strPatrimonioPC;
-end;
+//function TfrmMapaCacic.SetPatrimonioPC : String;
+//var
+//  strPatrimonioPc,
+//  strNomePC        : String;
+//begin
+//  Result:='';
+//  strNomePC:=NomeComputador;
+//
+//  if (pos('-',strNomePC) > 0) then
+//    strPatrimonioPc:=copy(strNomePC, 0, (pos('-', strNomePC)-1));
+//  Result:=strPatrimonioPC;
+//end;
 
 //------------------------------------------------------------------------------
 //--------------------FUNÇÃO PARA FORMATAR O CPF--------------------------------
 //------------------------------------------------------------------------------
 
-function TfrmMapaCacic.FormatarCpf(strCpfUser : String) : String;
-var
-  strCpfFormatado : String;
-begin
-  Result:='';
-  strCpfFormatado:= Copy(strCpfUser, 1,3)
-
-            + '.' + Copy(strCpfUser, 4,3)
-
-            + '.' + Copy(strCpfUser, 7,3)
-
-            + '-' + Copy(strCpfUser, 10,2);
-  Result:=strCpfFormatado;
-
-end;
+//function TfrmMapaCacic.FormatarCpf(strCpfUser : String) : String;
+//var
+//  strCpfFormatado : String;
+//begin
+//  Result:='';
+//  strCpfFormatado:= Copy(strCpfUser, 1,3)
+//
+//            + '.' + Copy(strCpfUser, 4,3)
+//
+//            + '.' + Copy(strCpfUser, 7,3)
+//
+//            + '-' + Copy(strCpfUser, 10,2);
+//  Result:=strCpfFormatado;
+//
+//end;
 //------------------------------------------------------------------------------
 //--------------------FUNÇÃO PARA RETORNAR O CPF DO USUARIO---------------------
 //------------------------------------------------------------------------------
 
-function TfrmMapaCacic.SetCpfUser : String;
-var
-  strCpfUser,
-  strUser        : String;
-begin
-  Result:='';
-  strUser:=strTeInfoPatrimonio3;
-
-  if (pos('-',strUser) > 0) then
-    strCpfUser:=copy(strUser, 0, (pos('-', strUser)-1));
-
-  Result:=strCpfUser;
-end;
+//function TfrmMapaCacic.SetCpfUser : String;
+//var
+//  strCpfUser,
+//  strUser        : String;
+//begin
+//  Result:='';
+//  strUser:=strTeInfoPatrimonio3;
+//
+//  if (pos('-',strUser) > 0) then
+//    strCpfUser:=copy(strUser, 0, (pos('-', strUser)-1));
+//
+//  Result:=strCpfUser;
+//end;
 
 //------------------------------------------------------------------------------
 //--------------------FUNÇÃO PARA RETORNAR O ULTIMO VALOR-----------------------
@@ -303,7 +307,6 @@ Begin
       objCacic.setValueToFile('Configs' ,'servidor_autenticacao', objCacic.getValueFromTags('dados_ldap'                  , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Interface' , objCacic.getValueFromTags('Configs_Patrimonio_Interface', Result), strGerColsInfFileName);
-      //objCacic.setValueToFile('Collects','col_patr_last'        , objCacic.getValueFromTags('Collects_Patrimonio_Last'    , Result), strGerColsInfFileName);
     End
   else
     begin
@@ -335,19 +338,25 @@ begin
         strTeInfoPatrimonio2 := objCacic.getValueFromTags('UserLogado',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio3='') then
-        strTeInfoPatrimonio3 := objCacic.getValueFromTags('UserNameLDAP',
+        strTeInfoPatrimonio3 := objCacic.getValueFromTags('PatrimonioMonitor1',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio4='') then
-        strTeInfoPatrimonio4 := objCacic.getValueFromTags('IPComputer',
+        strTeInfoPatrimonio4 := objCacic.getValueFromTags('PatrimonioMonitor2',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio5='') then
-        strTeInfoPatrimonio5 := objCacic.getValueFromTags('ComputerName',
+        strTeInfoPatrimonio5 := objCacic.getValueFromTags('UserName',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio6='') then
-        strTeInfoPatrimonio6 := objCacic.getValueFromTags('PatrimonioMonitor1',
+        strTeInfoPatrimonio6 := objCacic.getValueFromTags('Sala',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio7='') then
-        strTeInfoPatrimonio7 := objCacic.getValueFromTags('PatrimonioMonitor2',
+        strTeInfoPatrimonio7 := objCacic.getValueFromTags('Coordenacao_Setor',
+                                                          strCollectsPatrimonioLast);
+      if (strTeInfoPatrimonio8='') then
+        strTeInfoPatrimonio8 := objCacic.getValueFromTags('ComputerName',
+                                                          strCollectsPatrimonioLast);
+      if (strTeInfoPatrimonio9='') then
+        strTeInfoPatrimonio9 := objCacic.getValueFromTags('IPComputer',
                                                           strCollectsPatrimonioLast);
     End;
   btCombosUpdate.Enabled := true;
@@ -358,19 +367,21 @@ procedure TfrmMapaCacic.AtualizaPatrimonio(Sender: TObject);
 var strColetaAtual,
     strRetorno: String;
 begin
-if edTeInfoNome.text <> '' then
+if edTeInfoPatrimonio5.text <> '' then
   begin
     btGravarInformacoes.Enabled := false;
     btGravarInformacoes.Caption := 'Enviando informações...';
     strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
 
-    strColetaAtual := StringReplace('[IDPatrimonio]'         + edTePatrimonioPc.Text      + '[/IDPatrimonio]'       +
-                                    '[UserLogado]'           + edTeInfoUserLogado.Text    + '[/UserLogado]'         +
-                                    '[UserName]'             + edTeInfoNome.Text          + '[/UserName]'           +
-                                    '[IPComputer]'           + edTeInfoIpComputador.Text  + '[/IPComputer]'         +
-                                    '[ComputerName]'         + edTeInfoNomeComputador.Text+ '[/ComputerName]'       +
-                                    '[PatrimonioMonitor1]'   + edTeInfoPatrimonio5.Text   + '[/PatrimonioMonitor1]' +
-                                    '[PatrimonioMonitor2]'   + edTeInfoPatrimonio6.Text   + '[/PatrimonioMonitor2]'
+    strColetaAtual := StringReplace('[IDPatrimonio]'         + edTeInfoPatrimonio1.Text   + '[/IDPatrimonio]'       +
+                                    '[UserLogado]'           + edTeInfoPatrimonio2.Text   + '[/UserLogado]'         +
+                                    '[PatrimonioMonitor1]'   + edTeInfoPatrimonio3.Text   + '[/PatrimonioMonitor1]' +
+                                    '[PatrimonioMonitor2]'   + edTeInfoPatrimonio4.Text   + '[/PatrimonioMonitor2]' +
+                                    '[UserName]'             + edTeInfoPatrimonio5.Text   + '[/UserName]'           +
+                                    '[Sala]'                 + edTeInfoPatrimonio6.Text   + '[/Sala]'               +
+                                    '[Coordenacao_Setor]'    + edTeInfoPatrimonio7.Text   + '[/Coordenacao_Setor]'  +
+                                    '[ComputerName]'         + edTeInfoPatrimonio8.text   + '[/ComputerName]'       +
+                                    '[IPComputer]'           + edTeInfoPatrimonio9.text   + '[/IPComputer]'
                                     , ',','[[COMMA]]',[rfReplaceAll]);
 
     strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Patrimonio='  +
@@ -401,8 +412,8 @@ if edTeInfoNome.text <> '' then
     Finalizar(true);
   end
   else
-    MessageDLG(#13#10+'Atenção!'+ #13#10 + 'É necessário digitar seu nome.'
-               + #13#10,mtError,[mbOK],0);
+    ShowMessage(#13#10+'Atenção!'+ #13#10 + 'É necessário digitar seu nome.'
+               + #13#10);
 end;
 
 
@@ -412,61 +423,9 @@ var strConfigsPatrimonioInterface,
 Begin
     btCombosUpdate.Enabled := false;
 
-//- ----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
-    edTeInfoNomeComputador.Text               := NomeComputador;
-    if edTeInfoNomeComputador.Text <> '' then
-    begin
-       lbEtiquetaNomeComputador.Visible       := true;
-       edTeInfoNomeComputador.Visible         := true;
-    end;
-    lbEtiquetaNomeComputador.Visible          := true;
-    edTeInfonomeComputador.Visible            := true;
-
-//-----------------------------USUARIO LOGADO-----------------------------------
-
-//    edTeInfoUserLogado.Text                   := getUserLogon;
-    strTeInfoPatrimonio3:=objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
-    strTeInfoPatrimonio3:=copy(strTeInfoPatrimonio3, pos('\', strTeInfoPatrimonio3)+1, length(strTeInfoPatrimonio3));
-    edTeInfoUserLogado.Text:=strTeInfoPatrimonio3;
-    if edTeInfoUserLogado.Text <> '' then
-    begin
-       lbEtiquetaUserLogado.Visible           := true;
-       edTeInfoUserLogado.Visible             := true;
-    end;
-
-    //-------------------------------NOME USUARIO-----------------------------------
-    strNomeLDAP := getLastValue(LDAPName, 'Attribute:', 'cn'+#$D#$A);
-
-
-    if (strNomeLDAP <> '') and (strNomeLDAP <> 'Results: 0') then
-    begin
-       edTeInfoNome.Text                      := strNomeLDAP;
-       edTeInfoNome.Visible                   := true;
-       lbEtiquetaNome.Visible                 := true;
-    end
-    else
-    begin
-       edTeInfoNome.Visible                   := true;
-       edTeInfoNome.Enabled                   := true;
-       lbEtiquetaNome.Visible                 := true;
-    end;
-    
-//-------------------------------CPF USUARIO------------------------------------
-
-{   edTeInfoCpfUser.Text                      := FormatarCpf(SetCpfUser);
-   if edTeInfoCpfUser.Text <> '' then
-   begin
-      lbEtiquetaCpfUser.Visible              := true;
-      edTeInfoCpfUser.Visible                := true;
-   end;}
-
-//-----------------------PUXA O IP DA MÁQUINA PARA O EDTEXT-------------------------------------
-    edTeInfoIpComputador.Text                 := idipwatch1.LocalIP;
-    if edTeInfoIpComputador.Text <> '' then
-    begin
-       lbEtiquetaIpComputador.Visible         := true;
-       edTeInfoIpComputador.Visible           := true;
-    end;
+    strConfigsPatrimonioInterface := objCacic.deCrypt(objCacic.getValueFromFile
+                                                      ('Configs','Patrimonio_Interface',
+                                                      strGerColsInfFileName));
 
 //-------------------------PATRIMONIO DA MAQUINA--------------------------------
 {   edTePatrimonioPc.Text                     := SetPatrimonioPc;
@@ -475,26 +434,71 @@ Begin
       lbEtiquetaPatrimonioPc.Visible         := true;
       edTePatrimonioPc.Visible               := true;
    end;}
-    edTePatrimonioPc.Text                     := strTeInfoPatrimonio1;
-    edTePatrimonioPc.Visible                  := true;
-    lbEtiquetaPatrimonioPc.Visible            := true;
+    edTeInfoPatrimonio1.Text        := strTeInfoPatrimonio1;
+    edTeInfoPatrimonio1.Visible     := true;
+    lbEtiqueta1.Visible             := true;
 
+//-----------------------------USUARIO LOGADO-----------------------------------
 
-    strConfigsPatrimonioInterface := objCacic.deCrypt(objCacic.getValueFromFile('Configs','Patrimonio_Interface',strGerColsInfFileName));
+//    edTeInfoUserLogado.Text                   := getUserLogon;
+    strTeInfoPatrimonio2:=objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
+    strTeInfoPatrimonio2:=copy(strTeInfoPatrimonio2, pos('\', strTeInfoPatrimonio2)+1, length(strTeInfoPatrimonio2));
+    edTeInfoPatrimonio2.Text:=strTeInfoPatrimonio2;
+    if edTeInfoPatrimonio2.Text <> '' then
+    begin
+       lbEtiqueta2.Visible          := true;
+       edTeInfoPatrimonio2.Visible  := true;
+    end;
 
-
-//   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta5 -> "'     +
-//                          objCacic.getValueFromTags('in_exibir_etiqueta5',
+//   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta3 -> "'     +
+//                          objCacic.getValueFromTags('in_exibir_etiqueta3',
 //                                                   strConfigsPatrimonioInterface)+'"');
 
-//   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta5', strConfigsPatrimonioInterface)) = 'S') then
+//   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta3', strConfigsPatrimonioInterface)) = 'S') then
 //   begin
-      //lbEtiqueta5.Caption         := objCacic.getValueFromTags('te_etiqueta5', strConfigsPatrimonioInterface);
-       lbEtiqueta5.Visible         := true;
-       edTeInfoPatrimonio5.Hint    := objCacic.getValueFromTags('te_help_etiqueta5', strConfigsPatrimonioInterface);
-       edTeInfoPatrimonio5.Text    := strTeInfoPatrimonio6;
-       edTeInfoPatrimonio5.visible := True;
+      //lbEtiqueta3.Caption         := objCacic.getValueFromTags('te_etiqueta3', strConfigsPatrimonioInterface);
+       lbEtiqueta3.Visible          := true;
+       edTeInfoPatrimonio3.Hint     := objCacic.getValueFromTags('te_help_etiqueta3', strConfigsPatrimonioInterface);
+       edTeInfoPatrimonio3.Text     := strTeInfoPatrimonio3;
+       edTeInfoPatrimonio3.visible  := True;
 //   end;
+
+//   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta4 -> "'     +
+//                          objCacic.getValueFromTags('in_exibir_etiqueta4',
+//                                                    strConfigsPatrimonioInterface)+'"');
+
+//   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta4', strConfigsPatrimonioInterface)) = 'S') then
+//   begin
+      //lbEtiqueta4.Caption         := objCacic.getValueFromTags('te_etiqueta4', strConfigsPatrimonioInterface);
+      lbEtiqueta4.Visible           := true;
+      edTeInfoPatrimonio4.Hint      := objCacic.getValueFromTags('te_help_etiqueta4', strConfigsPatrimonioInterface);
+      edTeInfoPatrimonio4.Text      := strTeInfoPatrimonio4;
+      edTeInfoPatrimonio4.visible   := True;
+//   end;
+
+    //-------------------------------NOME USUARIO-----------------------------------
+    strNomeLDAP := LDAPName;
+    strNomeLDAP := getLastValue(LDAPName, 'Attribute:', 'cn'+#$D#$A);
+
+
+    if (strNomeLDAP <> '') and (strNomeLDAP <> 'Results: 0') then
+    begin
+       edTeInfoPatrimonio5.Text     := strNomeLDAP;
+       edTeInfoPatrimonio5.Visible  := true;
+       lbEtiqueta5.Visible          := true;
+       lbEtiqueta5.ShowHint         := true;
+       lbEtiqueta5.hint             := 'Nome do usuário logado.';
+    end
+    else
+    begin
+       edTeInfoPatrimonio5.Visible  := true;
+       edTeInfoPatrimonio5.Enabled  := true;
+       lbEtiqueta5.Visible          := true;
+       lbEtiqueta5.ShowHint         := true;
+       lbEtiqueta5.hint             := 'Digite seu nome, não foi possível recuperá-lo.';
+    end;
+
+//---------------------------------PATRIMONIO MONITORES------------------------------
 
 //   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta6 -> "'     +
 //                          objCacic.getValueFromTags('in_exibir_etiqueta6',
@@ -503,12 +507,43 @@ Begin
 //   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta6', strConfigsPatrimonioInterface)) = 'S') then
 //   begin
       //lbEtiqueta6.Caption         := objCacic.getValueFromTags('te_etiqueta6', strConfigsPatrimonioInterface);
-      lbEtiqueta6.Visible         := true;
-      edTeInfoPatrimonio6.Hint    := objCacic.getValueFromTags('te_help_etiqueta6', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio6.Text    := strTeInfoPatrimonio7;
-      edTeInfoPatrimonio6.visible := True;
+      lbEtiqueta6.Visible           := true;
+      edTeInfoPatrimonio6.Hint      := objCacic.getValueFromTags('te_help_etiqueta6', strConfigsPatrimonioInterface);
+      edTeInfoPatrimonio6.Text      := strTeInfoPatrimonio6;
+      edTeInfoPatrimonio6.visible   := True;
 //   end;
 
+//   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta7 -> "'     +
+//                          objCacic.getValueFromTags('in_exibir_etiqueta7',
+//                                                    strConfigsPatrimonioInterface)+'"');
+
+//   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta7', strConfigsPatrimonioInterface)) = 'S') then
+//   begin
+      //lbEtiqueta7.Caption         := objCacic.getValueFromTags('te_etiqueta7', strConfigsPatrimonioInterface);
+      lbEtiqueta7.Visible           := true;
+      edTeInfoPatrimonio7.Hint      := objCacic.getValueFromTags('te_help_etiqueta7', strConfigsPatrimonioInterface);
+      edTeInfoPatrimonio7.Text      := strTeInfoPatrimonio7;
+      edTeInfoPatrimonio7.visible   := True;
+//   end;
+
+//-----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
+    edTeInfoPatrimonio8.Text               := NomeComputador;
+    if edTeInfoPatrimonio8.Text <> '' then
+    begin
+       lbEtiqueta8.Visible          := true;
+       edTeInfoPatrimonio8.Visible  := true;
+    end;
+    lbEtiqueta8.Visible             := true;
+    edTeInfoPatrimonio8.Visible     := true;
+
+//-----------------------PUXA O IP DA MÁQUINA PARA O EDTEXT-------------------------------------
+    strTeInfoPatrimonio9            := fetchWMIvalues('Win32_NetworkAdapterConfiguration', objCACIC.getLocalFolderName);
+    edTeInfoPatrimonio9.Text        := objCACIC.getValueFromTags('IPAddress',strTeInfoPatrimonio9);
+    if edTeInfoPatrimonio9.Text <> '' then
+    begin
+       lbEtiqueta9.Visible          := true;
+       edTeInfoPatrimonio9.Visible  := true;
+    end;
 
     btGravarInformacoes.Visible := true;
     btCombosUpdate.Enabled      := true;
@@ -607,18 +642,13 @@ begin
 
         frmMapaCacic.edWebManagerAddress.Caption := objCacic.GetValueFromFile('Configs','WebManagerAddress', strChkSisInfFileName);
 
-        frmMapaCacic.lbMensagens.Caption  := 'Entrada de Dados para Autenticação no Módulo Gerente WEB Cacic';
         objCacic.writeDebugLog('FormActivate: Versão do MapaCacic...: '    +
                                 pnVersao.Caption);
         ObjCacic.writeDebugLog('FormActivate: Hash-Code do MapaCacic: '    +
                                 objCacic.getFileHash(ParamStr(0)));
 
-
-        pnMessageBox.Visible := true;
-  
         // Povoamento com dados de configurações da interface patrimonial
         // Solicita ao servidor as configurações para a Coleta de Informações de Patrimônio
-        pnMessageBox.Visible := false;
         objCacic.writeDebugLog('FormActivate: Requisitando informações de patrimônio da estação...');
 
         if getConfigs <> '0' then
@@ -668,13 +698,17 @@ begin
 
 end;
 
+procedure TfrmMapaCacic.btKonamiCodeClick(Sender: TObject);
+begin
+  sair;
+end;
+
 //------------------------------------------------------------------------------
 //PROCEDURE CRIADO PARA DEIXAR O FORM FULLSCREEN E FOCADO, SEM QUE SEJA POSSÍVEL
 //FECHAR OU ALTERNAR ENTRE OUTRAS JANELAS ATÉ QUE ATUALIZE O PATRIMONIO.
 procedure TfrmMapaCacic.FormSetFocus(VerificaFoco: Boolean);
 var
   r : TRect;
-  H : HWnd;
 begin
   if VerificaFoco then
   begin
@@ -686,7 +720,6 @@ begin
     timerProcessos.Enabled    := True;
     SystemParametersInfo(SPI_GETWORKAREA, 0, @r,0);
     SetBounds(r.Left, r.Top, r.Right-r.Left, r.Bottom-r.Top);
-    Screen.WorkAreaRect;
     Top := Screen.WorkAreaTop;
     Left := Screen.WorkAreaLeft;
     Width := Screen.WorkAreaWidth;
@@ -730,9 +763,13 @@ begin
     else
       psswd:='';
   end;
-  if psswd = SENHA then
-    sair;
-
+  if psswd = SENHA then begin
+    FormStyle                 := fsNormal;
+    MessageDlg('KONAMICODE ACTIVATED!',mtWarning, [mbOK], 0);
+    btKonamiCode.Left    := width-btKonamiCode.Width;
+    btKonamiCode.visible := true;
+    btKonamiCode.enabled := true;
+  end;
 end;
 
 
@@ -862,9 +899,9 @@ begin
          ldap.UserName   := username;
          ldap.Password   := psswd;
          ldap.Timeout    := 5000;
-         if ldap.Login and ldap.BindSasl then    //Loga no LDAP e autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
+         if ldap.Login and ldap.Bind then    //Loga no LDAP e autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
          begin
-          ldap.Search(base, False, identificador+ '=' + strTeInfoPatrimonio3, retorno); //Faz a pesquisa, com o CPF repassado.
+          ldap.Search(base, False, identificador+ '=' + strTeInfoPatrimonio2, retorno); //Faz a pesquisa, com o CPF repassado.
           result := LDAPResultdump(ldap.SearchResult);
           ldap.Logout;
          end;
