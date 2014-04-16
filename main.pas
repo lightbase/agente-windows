@@ -668,7 +668,9 @@ Begin
   else if FileExists(objCACIC.getLocalFolderName + 'Temp\aguarde_GER.txt')      then
       Result := 1 // COLETANDO
   else if FileExists(objCACIC.getLocalFolderName + 'Temp\aguarde_SRCACIC.txt')  then
-      Result := 3; // EM SUPORTE REMOTO
+      Result := 3 // EM SUPORTE REMOTO
+  else if FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt') then
+      Result := 4;
 
   objCACIC.writeDebugLog('ActualActivity: Retornando '+IntToStr(Result));
   objCACIC.writeDebugLog('ActualActivity: END');
@@ -1214,7 +1216,7 @@ begin
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_GerCols: Criando Processo GerCols => "'+objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + '"');
             objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,false,SW_HIDE);
-            g_intStatus := 1;
+            g_intStatus :=             1;
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
           End
         else
@@ -1282,21 +1284,21 @@ var v_mensagem,
     intTentativas   : integer;
 begin
    try
-////////////////////////////////////////////////////////////////////////////////
-//               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
-////////////////////////////////////////////////////////////////////////////////
-   if trim(objCACIC.getValueFromFile('Configs','col_patr_exe',
-                                      strGerColsInfFileName))<>'s' then begin
-      Invoca_MapaCacic;
-   end;
-//          AGUARDANDO CONFIGURAÇÃO DO GERENTE, SENDO INVOCADO NA INSTALAÇÃO, ATÉ O MOMENTO.
-////////////////////////////// FIM /////////////////////////////////////////////
 
      if FindCmdLineSwitch('execute', True)     or
         FindCmdLineSwitch('atualizacao', True) or
         Pode_Coletar                           or
         (trim(objCACIC.getValueFromFile('Configs','DtHrUltimaColeta', strGerColsInfFileName))='') Then
         Begin
+          ////////////////////////////////////////////////////////////////////////////////
+          //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
+          ////////////////////////////////////////////////////////////////////////////////
+         if (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
+            and (ActualActivity<>4) then begin
+                objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
+                Invoca_MapaCacic;
+         end;
+
           timerCheckNoMinuto.Enabled := false;
           objCACIC.writeDebugLog('ExecutaCACIC: Preparando chamada ao Gerente de Coletas...');
 
