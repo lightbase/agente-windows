@@ -243,6 +243,9 @@ Begin
             Begin
               objCacic.setBoolCipher(not objCacic.isInDebugMode);
               objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
+              objCacic.setValueToFile('Configs','forca_coleta',
+                                      objCacic.getValueFromTags('forca_coleta', strRetorno),
+                                      strGerColsInfFileName);
               if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
                 Begin
                  objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);

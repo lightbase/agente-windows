@@ -273,10 +273,6 @@ type
     procedure Finaliza(boolNormal : boolean = true);
 //    procedure MontaVetoresPatrimonio(p_strConfigs : String);
     procedure Invoca_GerCols(p_acao:string; boolShowInfo : Boolean = true; boolCheckExecution : Boolean = false);
-
-////////////////////////////////////////////////////////////////////////////////
-//       PRÓXIMO PROCEDURE CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC         //
-////////////////////////////////////////////////////////////////////////////////
     procedure Invoca_MapaCacic;
     procedure CheckIfDownloadedVersion;
     procedure WMSysCommand(var Msg: TWMSysCommand); message WM_SYSCOMMAND;
@@ -972,8 +968,6 @@ begin
       g_intStatusAnterior      := -1;
 
       // Aplicar traduções GetText,etc...
-      //
-      //
 
       strMenuCaptionLAT := Mnu_LogAtividades.Caption;
       strMenuCaptionCON := Mnu_Configuracoes.Caption;
@@ -1288,7 +1282,8 @@ begin
      if FindCmdLineSwitch('execute', True)     or
         FindCmdLineSwitch('atualizacao', True) or
         Pode_Coletar                           or
-        (trim(objCACIC.getValueFromFile('Configs','DtHrUltimaColeta', strGerColsInfFileName))='') Then
+        (trim(objCACIC.getValueFromFile('Configs','DtHrUltimaColeta', strGerColsInfFileName))='') or
+        (trim(objCACIC.getValueFromFile('Configs','ForcaColeta', strGerColsInfFileName))='S') Then
         Begin
           ////////////////////////////////////////////////////////////////////////////////
           //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
@@ -1298,7 +1293,7 @@ begin
                 objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
                 Invoca_MapaCacic;
          end;
-
+         
           timerCheckNoMinuto.Enabled := false;
           objCACIC.writeDebugLog('ExecutaCACIC: Preparando chamada ao Gerente de Coletas...');
 

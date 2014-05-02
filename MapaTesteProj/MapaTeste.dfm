@@ -1,7 +1,7 @@
 object frmMapaCacic: TfrmMapaCacic
   Left = 274
   Top = 200
-  Caption = 'Mapa Cacic PGFN'
+  Caption = 'Mapa Cacic'
   ClientHeight = 448
   ClientWidth = 789
   Color = clBtnFace
