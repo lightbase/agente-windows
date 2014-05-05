@@ -1319,6 +1319,8 @@ begin
 
           objCACIC.writeDebugLog('ExecutaCACIC: Primeira chamada ao Gerente de Coletas...');
           Invoca_GerCols('getConfigs');
+          if (objCACIC.getValueFromFile('Configs', 'forca_coleta', strGercolsInfFileName) = 's') then
+            Invoca_GerCols('collect');
           sleep(3000); // Pausa para início do Gerente de Coletas e criação do arquivo temp\aguarde_GER.txt
 
           Application.ProcessMessages;

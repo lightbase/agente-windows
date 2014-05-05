@@ -243,15 +243,15 @@ Begin
             Begin
               objCacic.setBoolCipher(not objCacic.isInDebugMode);
               objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
-              objCacic.setValueToFile('Configs','forca_coleta',
-                                      objCacic.getValueFromTags('forca_coleta', strRetorno),
-                                      strGerColsInfFileName);
               if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
                 Begin
-                 objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
-                 objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);
-                 objCacic.setWebManagerAddress(objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>'));
-                 objCacic.setWebServicesFolderName(objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'));
+                  objCacic.setValueToFile('Configs','forca_coleta',
+                                          objCacic.getValueFromTags('forca_coleta', strRetorno),
+                                          strGerColsInfFileName);
+                  objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
+                  objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);
+                  objCacic.setWebManagerAddress(objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>'));
+                  objCacic.setWebServicesFolderName(objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'));
                 End;
 
               strAcaoGerCols := 'IP validado pelo Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').';
@@ -989,16 +989,16 @@ Begin
 
                                       // Coletas de todos os atributos de hardware
                                       tstrColetaHardware := fetchWmiValues('Win32_Keyboard', objCacic.getLocalFolderName, 'Availability,Caption,Description,InstallDate,Name');
-//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Keyboard=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Teclado=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Keyboard=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Teclado=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_PointingDevice', objCacic.getLocalFolderName, 'Availability,Caption,Description,InstallDate,Manufacturer,Name');
-//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PointingDevice=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Mouse=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PointingDevice=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Mouse=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_PhysicalMedia ', objCacic.getLocalFolderName, 'Caption,Description,InstallDate,Name,Manufacturer,Model,SKU,SerialNumber,Tag,Version,PartNumber,OtherIdentifyingInfo,Capacity,MediaType,MediaDescription');
-//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PhysicalMedia=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Mídia Física=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_PhysicalMedia=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+//                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Mídia Física=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       tstrColetaHardware := fetchWmiValues('Win32_BaseBoard', objCacic.getLocalFolderName, 'Caption,ConfigOptions,Depth,Description,Height,HostingBoard,InstallDate,Manufacturer,Model,Name,OtherIdentifyingInfo,PartNumber,Product,RequirementsDescription,SerialNumber,SKU,SlotLayout,SpecialRequirements,Tag,Version,Weight,Width');
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_BaseBoard=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
@@ -1580,8 +1580,10 @@ Begin
                                      objCacic.writeDebugLog('executeGerCols: Coleta Forçada? -> ' + objCacic.getValueFromTags('DT_HR_COLETA_FORCADA',strActionDefinition));
                                      // Se essas informações forem diferentes significa que houve alguma alteração na configuração. Nesse caso, gravo as informações no BD Central e,
                                      // se não houver problemas durante esse procedimento, atualizo o registro local.
+                                     // Se for uma coleta forçada, também grava as informações.
                                      If (objCacic.enCrypt(strColetaAtual) <> strColetaAnterior) or
-                                        (strColetaAnterior = '') Then
+                                        (strColetaAnterior = '') or
+                                        (objCacic.getValueFromFile('Configs', 'forca_coleta') = 's') Then
                                         Begin
                                           strAcaoGercols := 'Enviando coleta de informações sobre ' + objCacic.getValueFromTags('te_descricao_breve',strActionDefinition) +  ' para o Gerente WEB ('+objCacic.getWebManagerAddress+').';
                                           objCacic.writeDailyLog(strAcaoGercols);
