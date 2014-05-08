@@ -176,6 +176,7 @@ type
     ApplicationEvents1: TApplicationEvents;
     Panel1: TPanel;
     ExecutarMapa1: TMenuItem;
+    CheckForcaColeta: TTimer;
     procedure RemoveIconesMortos;
     procedure ChecaCONFIGS;
     procedure CriaFormSenha(Sender: TObject);
@@ -261,6 +262,7 @@ type
     procedure InvocaMapa1Click(Sender: TObject);
     procedure ExecutarMapa1DrawItem(Sender: TObject; ACanvas: TCanvas;
       ARect: TRect; Selected: Boolean);
+    procedure CheckForcaColetaTimer(Sender: TObject);
   private
     FUsb : TUsbClass;
     ShutdownEmExecucao : Boolean;
@@ -1204,12 +1206,15 @@ begin
 
             objCACIC.writeDebugLog('Invoca_GerCols: Invocando Gerente de Coletas com ação: "'+p_acao+'"');
 
-            if boolShowInfo then
+            if boolShowInfo and not (p_acao = 'getTest') then
               objCACIC.writeDailyLog('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
 
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_GerCols: Criando Processo GerCols => "'+objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + '"');
-            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,false,SW_HIDE);
+            if (p_acao = 'getTest') then //se for getTest, esperar a aplicação finalizar.
+              objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE)
+            else
+              objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,false,SW_HIDE);
             g_intStatus :=             1;
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
           End
@@ -1283,7 +1288,7 @@ begin
         FindCmdLineSwitch('atualizacao', True) or
         Pode_Coletar                           or
         (trim(objCACIC.getValueFromFile('Configs','DtHrUltimaColeta', strGerColsInfFileName))='') or
-        (trim(objCACIC.getValueFromFile('Configs','ForcaColeta', strGerColsInfFileName))='S') Then
+        (trim(objCACIC.getValueFromFile('Configs','forca_coleta', strGerColsInfFileName))='S') Then
         Begin
           ////////////////////////////////////////////////////////////////////////////////
           //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
@@ -1319,8 +1324,7 @@ begin
 
           objCACIC.writeDebugLog('ExecutaCACIC: Primeira chamada ao Gerente de Coletas...');
           Invoca_GerCols('getConfigs');
-          if (objCACIC.getValueFromFile('Configs', 'forca_coleta', strGercolsInfFileName) = 's') then
-            Invoca_GerCols('collect');
+          
           sleep(3000); // Pausa para início do Gerente de Coletas e criação do arquivo temp\aguarde_GER.txt
 
           Application.ProcessMessages;
@@ -1330,7 +1334,8 @@ begin
           // Serão 4 tentativas por minuto
           // Serão 30 minutos no máximo de tentativas, totalizando 120
           intTentativas := 0;
-          while not Pode_Coletar and (intTentativas < 121) do
+          while (not Pode_Coletar and (intTentativas < 121)) and
+                (objCACIC.getValueFromFile('Configs', 'forca_coleta',strGercolsInfFileName) <> 'S') do
             Begin
               objCACIC.writeDebugLog('ExecutaCACIC: Aguardando 15 segundos...');
               Application.ProcessMessages;
@@ -2215,6 +2220,13 @@ begin
       Mnu_SuporteRemoto.Caption := 'Ativar Suporte Remoto';
       HabilitaSuporteRemoto;
     End;
+end;
+
+procedure TFormularioGeral.CheckForcaColetaTimer(Sender: TObject);
+begin
+  Invoca_GerCols('getTest');
+  if (objCACIC.getValueFromFile('Configs', 'forca_coleta', strGerColsInfFileName) = 'S') then
+    Invoca_GerCols('collect');
 end;
 
 procedure TFormularioGeral.CheckIfDownloadedVersion;
