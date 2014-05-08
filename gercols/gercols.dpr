@@ -245,6 +245,7 @@ Begin
               objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
               if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
                 Begin
+                  objCacic.setValueToFile('Configs','forca_coleta', objCacic.getValueFromTags('ForcaColeta', strRetorno,'<>'), strGerColsInfFileName);
                   objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
                   objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);
                   objCacic.setWebManagerAddress(objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>'));
@@ -387,6 +388,7 @@ Begin
           objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
           if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
           Begin
+            objCacic.setValueToFile('Configs','forca_coleta', objCacic.getValueFromTags('ForcaColeta', strRetorno,'<>'), strGerColsInfFileName);
             objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
             objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);
             objCacic.setWebManagerAddress(objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>'));
