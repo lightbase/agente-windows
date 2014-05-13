@@ -1206,7 +1206,7 @@ begin
 
             objCACIC.writeDebugLog('Invoca_GerCols: Invocando Gerente de Coletas com ação: "'+p_acao+'"');
 
-            if boolShowInfo then
+            if boolShowInfo and not (p_acao = 'getTest') then
               objCACIC.writeDailyLog('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
 
             timerNuExecApos.Enabled  := False;
