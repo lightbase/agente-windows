@@ -292,7 +292,8 @@ end;
 //------------------------------------------------------------------------------
 
 function TfrmMapaCacic.getConfigs : String;
-
+var
+   teste : string;
 Begin
   btCombosUpdate.Enabled := false;
 
@@ -411,8 +412,7 @@ if edTeInfoPatrimonio5.text <> '' then
     Finalizar(true);
   end
   else
-    ShowMessage(#13#10+'Atenção!'+ #13#10 + 'É necessário digitar seu nome.'
-               + #13#10);
+    Application.messagebox(Pchar('Por favor, é necessário digitar seu nome!'), 'Atenção!',MB_ICONEXCLAMATION + mb_ok);
 end;
 
 

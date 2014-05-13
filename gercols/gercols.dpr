@@ -245,6 +245,9 @@ Begin
               objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
               if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
                 Begin
+                  objCacic.setValueToFile('Configs','forca_coleta',
+                                          objCacic.getValueFromTags('ForcaColeta', strRetorno, '<>'),
+                                          strGerColsInfFileName);
                   objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
                   objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);
                   objCacic.setWebManagerAddress(objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>'));
@@ -333,6 +336,7 @@ Begin
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //Gravação no DatFileName dos valores de REDE, COMPUTADOR e EXECUÇÃO obtidos, para consulta pelos outros módulos...
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                objCacic.setValueToFile('Configs'   ,'modulo_patr'                    ,objCacic.getValueFromTags('modPatrimonio'                    , strRetorno, '<>'), strGerColsInfFileName);
                 objCacic.setValueToFile('Configs'   ,'CollectsDefinitions'            ,objCacic.getValueFromTags('CollectsDefinitions'              , strRetorno, '<>'), strGerColsInfFileName);
                 objCacic.setValueToFile('Configs'   ,'TeServUpdates'                  ,objCacic.getValueFromTags('te_serv_updates'                  , strRetorno, '<>'), strChkSisInfFileName);
                 objCacic.setValueToFile('Configs'   ,'NuPortaServUpdates'             ,objCacic.getValueFromTags('nu_porta_serv_updates'            , strRetorno, '<>'), strChkSisInfFileName);
@@ -367,10 +371,7 @@ Begin
 end;
 
 procedure getTest();
-var strRetorno,
-    v_mensagem_log,
-    strKeyWord                  : string;
-    textfileKeyWord             : TextFile;
+var strRetorno: string;
 Begin
   Try
     // Verifico comunicação com o Módulo Gerente WEB.
@@ -391,7 +392,7 @@ Begin
           if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
           Begin
 			      objCacic.setValueToFile('Configs','forca_coleta',
-                                    objCacic.getValueFromTags('forca_coleta', strRetorno),
+                                    objCacic.getValueFromTags('ForcaColeta', strRetorno, '<>'),
                                     strGerColsInfFileName);
             objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
             objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);

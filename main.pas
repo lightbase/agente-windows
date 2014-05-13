@@ -1225,8 +1225,10 @@ end;
 
 procedure TFormularioGeral.InvocaMapa1Click(Sender: TObject);
 begin
-  if (ActualActivity<>4) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) <> 'ativo') then
-    Invoca_MapaCacic;
+  if (ActualActivity<>4) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) <> 'N') then
+    Invoca_MapaCacic
+  else
+    MessageDlg(#13#13+'Módulo desabilitado!',mtError, [mbOK], 0);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1296,7 +1298,7 @@ begin
           ////////////////////////////////////////////////////////////////////////////////
          if (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
             and (ActualActivity<>4)
-            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) <> 'ativo') then begin
+            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) <> 'N') then begin
                 objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
                 Invoca_MapaCacic;
          end;
@@ -1336,8 +1338,7 @@ begin
           // Serão 4 tentativas por minuto
           // Serão 30 minutos no máximo de tentativas, totalizando 120
           intTentativas := 0;
-          while (not Pode_Coletar and (intTentativas < 121)) and
-                (objCACIC.getValueFromFile('Configs', 'forca_coleta',strGercolsInfFileName) <> 'S') do
+          while (not Pode_Coletar and (intTentativas < 121)) do
             Begin
               objCACIC.writeDebugLog('ExecutaCACIC: Aguardando 15 segundos...');
               Application.ProcessMessages;
