@@ -245,9 +245,6 @@ Begin
               objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
               if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
                 Begin
-                  objCacic.setValueToFile('Configs','forca_coleta',
-                                          objCacic.getValueFromTags('forca_coleta', strRetorno),
-                                          strGerColsInfFileName);
                   objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
                   objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);
                   objCacic.setWebManagerAddress(objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>'));
@@ -365,6 +362,59 @@ Begin
      Begin
        objCacic.writeDebugLog('getConfigs: Lançando Exceção #5');
        objCacic.writeExceptionLog(E.Message,E.ClassName,'getConfigs: Exceção #5');
+     End;
+  End;
+end;
+
+procedure getTest();
+var strRetorno,
+    v_mensagem_log,
+    strKeyWord                  : string;
+    textfileKeyWord             : TextFile;
+Begin
+  Try
+    // Verifico comunicação com o Módulo Gerente WEB.
+    // Tratamentos de valores para tráfego POST:
+    objCacic.setValueToFile('Configs','ConexaoOK','N', strGerColsInfFileName);
+
+    strAcaoGerCols := 'Preparando teste de comunicação com Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').';
+
+    objCacic.writeDebugLog('getTest: Teste de Comunicação.');
+
+    Try
+        strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/test', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Testando comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
+
+        if (strRetorno <> '0') Then
+        Begin
+          objCacic.setBoolCipher(not objCacic.isInDebugMode);
+          objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
+          if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
+          Begin
+			      objCacic.setValueToFile('Configs','forca_coleta',
+                                    objCacic.getValueFromTags('forca_coleta', strRetorno),
+                                    strGerColsInfFileName);
+            objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
+            objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);
+            objCacic.setWebManagerAddress(objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>'));
+            objCacic.setWebServicesFolderName(objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'));
+          End;
+
+          strAcaoGerCols := 'IP validado pelo Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').';
+          objCacic.writeDebugLog('getTest: ' + strAcaoGerCols);
+        End;
+    except
+        on E : Exception do
+        Begin
+          objCacic.writeDebugLog('getTest: Lançando Exceção #2');
+          objCacic.writeExceptionLog(E.Message,E.ClassName,'Exceção #2 - Insucesso na comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
+          objCacic.writeDailyLog('Insucesso na comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
+        End;
+    End;
+  Except
+   on E : Exception do
+     Begin
+       objCacic.writeDebugLog('getTest: Lançando Exceção #5');
+       objCacic.writeExceptionLog(E.Message,E.ClassName,'getTest: Exceção #5');
      End;
   End;
 end;
@@ -783,10 +833,15 @@ Begin
 
     // Primeira chamada efetuada pelo Agente Principal para posterior ação de coletas
     If FindCmdLineSwitch('getConfigs', True) Then
-      Begin
+    Begin
          getConfigs(true);
          Finalizar(false);
-      End;
+    End
+    //Chamada realizada de minuto em minuto para verificar se há coleta a ser forçada.
+    else if FindCmdLineSwitch ('getTest', True) then
+    begin
+        getTest();
+    end;
 
     // Chamada efetuada pelo Agente Principal quando da existência de temp\<AgentePrincipal>.exe para AutoUpdate
     If FindCmdLineSwitch('UpdatePrincipal', True) Then
@@ -1583,7 +1638,7 @@ Begin
                                      // Se for uma coleta forçada, também grava as informações.
                                      If (objCacic.enCrypt(strColetaAtual) <> strColetaAnterior) or
                                         (strColetaAnterior = '') or
-                                        (objCacic.getValueFromFile('Configs', 'forca_coleta') = 's') Then
+                                        (objCacic.getValueFromFile('Configs', 'forca_coleta', strGerColsInfFileName) = 'S') Then
                                         Begin
                                           strAcaoGercols := 'Enviando coleta de informações sobre ' + objCacic.getValueFromTags('te_descricao_breve',strActionDefinition) +  ' para o Gerente WEB ('+objCacic.getWebManagerAddress+').';
                                           objCacic.writeDailyLog(strAcaoGercols);
@@ -1685,7 +1740,14 @@ begin
           CriaCookie('aguarde_GER.txt');
 
           // Esse teste também colocará a estação de trabalho em DEBUG, caso seja determinado no Gerente WEB
-          Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/test', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, strAcaoGerCols);
+          if FindCmdLineSwitch ('getTest', True) then
+          begin
+            getTest();
+            Finalizar(true);
+			      halt(0);
+          end
+          else
+            Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/test', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, strAcaoGerCols);
 
           objCacic.setBoolCipher(not objCacic.isInDebugMode);
 

@@ -1,6 +1,6 @@
 object FormularioGeral: TFormularioGeral
-  Left = 411
-  Top = 225
+  Left = 244
+  Top = 55
   HorzScrollBar.Visible = False
   VertScrollBar.Visible = False
   BiDiMode = bdLeftToRight
@@ -1768,6 +1768,12 @@ object FormularioGeral: TFormularioGeral
   object ApplicationEvents1: TApplicationEvents
     OnMessage = ApplicationEvents1Message
     Left = 8
+    Top = 568
+  end
+  object CheckForcaColeta: TTimer
+    Interval = 60000
+    OnTimer = CheckForcaColetaTimer
+    Left = 392
     Top = 568
   end
 end

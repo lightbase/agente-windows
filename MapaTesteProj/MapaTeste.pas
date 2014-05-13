@@ -299,7 +299,6 @@ Begin
   Result := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCacic.getLocalFolderName);
 
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
-
   objCacic.writeDebugLog('FormActivate: Retorno de getConfigs: "'+Result+'"');
 
   if (Result <> '0') then
