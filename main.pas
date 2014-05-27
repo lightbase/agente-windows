@@ -1225,14 +1225,14 @@ end;
 
 procedure TFormularioGeral.InvocaMapa1Click(Sender: TObject);
 begin
-  if (ActualActivity<>4) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) <> 'N') then
+  if (ActualActivity<>4) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then
     Invoca_MapaCacic
   else
     MessageDlg(#13#13+'Módulo desabilitado!',mtError, [mbOK], 0);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
-//               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
+//                 CRIADO PARA A CHAMADA DO MAPA CACIC                        //
 ////////////////////////////////////////////////////////////////////////////////
 
 procedure TFormularioGeral.Invoca_MapaCacic;
@@ -1296,13 +1296,12 @@ begin
           ////////////////////////////////////////////////////////////////////////////////
           //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
           ////////////////////////////////////////////////////////////////////////////////
-         if (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
+          if (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
             and (ActualActivity<>4)
-            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) <> 'N') then begin
+            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then begin
                 objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
                 Invoca_MapaCacic;
-         end;
-
+          end;
           timerCheckNoMinuto.Enabled := false;
           objCACIC.writeDebugLog('ExecutaCACIC: Preparando chamada ao Gerente de Coletas...');
 
@@ -1424,6 +1423,7 @@ begin
                   Invoca_GerCols('collect');
                 End;
             End;
+
           timerCheckNoMinuto.Enabled := true;            
         End;
 
