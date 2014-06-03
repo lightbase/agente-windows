@@ -1211,7 +1211,7 @@ begin
 
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_GerCols: Criando Processo GerCols => "'+objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + '"');
-            if (p_acao = 'getTest') then //se for getTest, esperar a aplicação finalizar.
+            if ((p_acao = 'getTest') or (p_acao = 'getConfigs')) then //se for getTest, esperar a aplicação finalizar.
               objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE)
             else
               objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,false,SW_HIDE);
@@ -1228,7 +1228,7 @@ begin
   if (ActualActivity<>4) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then
     Invoca_MapaCacic
   else
-    MessageDlg(#13#13+'Módulo desabilitado!',mtError, [mbOK], 0);
+    MessageDlg(#13#13+'Módulo desabilitado!',mtInformation, [mbOK], 0);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1293,15 +1293,7 @@ begin
         (trim(objCACIC.getValueFromFile('Configs','DtHrUltimaColeta', strGerColsInfFileName))='') or
         (trim(objCACIC.getValueFromFile('Configs','forca_coleta', strGerColsInfFileName))='S') Then
         Begin
-          ////////////////////////////////////////////////////////////////////////////////
-          //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
-          ////////////////////////////////////////////////////////////////////////////////
-          if (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
-            and (ActualActivity<>4)
-            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then begin
-                objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
-                Invoca_MapaCacic;
-          end;
+
           timerCheckNoMinuto.Enabled := false;
           objCACIC.writeDebugLog('ExecutaCACIC: Preparando chamada ao Gerente de Coletas...');
 
@@ -1327,8 +1319,19 @@ begin
 
           objCACIC.writeDebugLog('ExecutaCACIC: Primeira chamada ao Gerente de Coletas...');
           Invoca_GerCols('getConfigs');
-          
+
+          ////////////////////////////////////////////////////////////////////////////////
+          //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
+          ////////////////////////////////////////////////////////////////////////////////
+          if (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
+            and (ActualActivity<>4)
+            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then begin
+                objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
+                Invoca_MapaCacic;
+          end;
+
           sleep(3000); // Pausa para início do Gerente de Coletas e criação do arquivo temp\aguarde_GER.txt
+
 
           Application.ProcessMessages;
           InicializaTray;

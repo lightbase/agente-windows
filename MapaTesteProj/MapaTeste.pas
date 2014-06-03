@@ -304,6 +304,7 @@ Begin
 
   if (Result <> '0') then
     Begin
+      objCacic.setValueToFile('Configs' ,'modulo_patr'          , objCacic.getValueFromTags('modPatrimonio'                    , Result, '<>'), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'servidor_autenticacao', objCacic.getValueFromTags('dados_ldap'                  , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Interface' , objCacic.getValueFromTags('Configs_Patrimonio_Interface', Result), strGerColsInfFileName);
@@ -403,7 +404,11 @@ if edTeInfoPatrimonio5.text <> '' then
         btGravarInformacoes.Caption := 'Informações enviadas com sucesso...';
         objCacic.setValueToFile('Collects','col_patr_last' ,
                                 objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
-        objCacic.setValueToFile('Configs','col_patr_exe', 's', strGerColsInfFileName);
+        if objCacic.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'N' then
+            objCacic.setValueToFile('Configs','col_patr_exe', 'n', strGerColsInfFileName)
+        else
+            objCacic.setValueToFile('Configs','col_patr_exe', 's', strGerColsInfFileName);
+        
 
     End;
     objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');

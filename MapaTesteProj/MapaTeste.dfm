@@ -218,6 +218,7 @@ object frmMapaCacic: TfrmMapaCacic
       Top = 182
       Width = 250
       Height = 13
+      Hint = 'Nome do computador, constando o patrim'#244'nio.'
       AutoSize = False
       Caption = 'Computador'
       Font.Charset = DEFAULT_CHARSET
@@ -249,8 +250,8 @@ object frmMapaCacic: TfrmMapaCacic
       Width = 250
       Height = 13
       Hint = 
-        'Patrim'#244'nio do Computador. Gentileza procure o n'#250'mero que se enco' +
-        'ntra no mesmo.'
+        'N'#250'mero do Patrim'#244'nio do Computador. Gentileza procure o n'#250'mero q' +
+        'ue se encontra em uma etiqueta colada no mesmo.'
       HelpContext = 1
       AutoSize = False
       Caption = 'Patrim'#244'nio'
@@ -269,6 +270,7 @@ object frmMapaCacic: TfrmMapaCacic
       Top = 129
       Width = 250
       Height = 13
+      Hint = 'Nome do usu'#225'rio logado.'
       AutoSize = False
       Caption = 'Nome'
       Font.Charset = DEFAULT_CHARSET
@@ -550,7 +552,7 @@ object frmMapaCacic: TfrmMapaCacic
       AutoSize = False
       Caption = 
         'O preenchimento correto dos campos abaixo define a exatid'#227'o do c' +
-        'ontrole de patrim'#244'nio e localiza'#231#227'o f'#237'sica do equipamento. '
+        'ontrole de patrim'#244'nio e localiza'#231#227'o f'#237'sica do equipamento.  '
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlack
       Font.Height = -13
