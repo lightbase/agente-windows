@@ -194,6 +194,7 @@ type
     procedure Bt_Fechar_InfosGeraisClick(Sender: TObject);
 
     function  ChecaGERCOLS : boolean;
+    function  ChecaMAPACACIC : boolean;
     function  FindWindowByTitle(WindowTitle: string): Hwnd;
     function  ActualActivity  : integer;
     function  Posso_Rodar     : boolean;
@@ -797,6 +798,44 @@ begin
 end;
 
 // Verifico a existência do Gerente de Coletas, caso não exista, o chksis.exe fará download!
+function TFormularioGeral.ChecaMAPACACIC : boolean;
+var strFileSize : String;
+Begin
+  Result := true;
+
+  objCACIC.writeDebugLog('ChecaMAPA: Verificando existência e tamanho do Gerente de Coletas...');
+
+  strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',true);
+
+  Result := false;
+
+  objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe');
+
+  InicializaTray;
+
+  objCACIC.writeDailyLog('Acionando Recuperador de Mapa Cacic.');
+  objCACIC.writeDebugLog('ChecaMAPACACIC: Acionando Recuperador de Módulo Gerente de Coletas: '+objCACIC.getWinDir + 'chksis.exe');
+  objCACIC.createOneProcess(objCACIC.getWinDir + 'chksis.exe',false,SW_HIDE);
+
+  sleep(30000); // 30 segundos de espera para download do gercols.exe
+  objCacic.setBoolCipher(not objCacic.isInDebugMode);
+  strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + '\Modules\mapacacic.exe',true);
+  if not(strFileSize = '0') and not(strFileSize = '-1') then
+  Begin
+     objCACIC.writeDailyLog('Módulo Mapa Cacic RECUPERADO COM SUCESSO!');
+     objCACIC.writeDebugLog('ChecaMAPACACIC: Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
+     InicializaTray;
+     Result := True;
+  End
+  else
+  Begin
+      objCACIC.writeDailyLog('Módulo Mapa Cacic NÃO RECUPERADO!');
+      objCACIC.writeDebugLog('ChecaMAPACACIC: Módulo Gerente de Coletas NÃO RECUPERADO!');
+  End;
+  objCACIC.writeDebugLog('ChecaMAPACACIC: ' + DupeString('=',100));
+End;
+
+// Verifico a existência do Gerente de Coletas, caso não exista, o chksis.exe fará download!
 function TFormularioGeral.ChecaGERCOLS : boolean;
 var strFileSize : String;
 Begin
@@ -1207,7 +1246,7 @@ begin
             objCACIC.writeDebugLog('Invoca_GerCols: Invocando Gerente de Coletas com ação: "'+p_acao+'"');
 
             if boolShowInfo and not (p_acao = 'getTest') then
-              objCACIC.writeDailyLog('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
+              objCACIC.writeDebugLog('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
 
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_GerCols: Criando Processo GerCols => "'+objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + '"');
@@ -1239,19 +1278,23 @@ procedure TFormularioGeral.Invoca_MapaCacic;
 begin
   if ActualActivity = 0 then
      Begin
+     if ChecaMAPACACIC then
+     begin
         // Caso exista o Mapa Cacic será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
         if FileExists(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe') then
           Begin
             ChecaCONFIGS;
 
             timerNuExecApos.Enabled  := False;
+            objCacic.writeDailyLog('Invoca_MapaCacic: Criando processo mapa.');
             objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
-            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',true,SW_SHOW);
+            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_SHOW);
             g_intStatus := 1;
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
           End
         else
           objCACIC.writeDailyLog('Não foi possível invocar o Mapa Cacic!');
+        End;
      End;
 end;
 
@@ -1320,21 +1363,20 @@ begin
           objCACIC.writeDebugLog('ExecutaCACIC: Primeira chamada ao Gerente de Coletas...');
           Invoca_GerCols('getConfigs');
 
+          sleep(3000); // Pausa para início do   Gerente de Coletas e criação do arquivo temp\aguarde_GER.txt
+
+          Application.ProcessMessages;
+          InicializaTray;
+
           ////////////////////////////////////////////////////////////////////////////////
           //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
           ////////////////////////////////////////////////////////////////////////////////
           if (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
-            and (ActualActivity<>4)
+            and not (FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt'))
             and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then begin
                 objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
                 Invoca_MapaCacic;
           end;
-
-          sleep(3000); // Pausa para início do Gerente de Coletas e criação do arquivo temp\aguarde_GER.txt
-
-
-          Application.ProcessMessages;
-          InicializaTray;
 
           // Pausas de 15 segundos para o caso de ser(em) baixada(s) nova(s) versão(ões) de GerCols e/ou Cacic280.
           // Serão 4 tentativas por minuto

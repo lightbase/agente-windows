@@ -49,7 +49,7 @@ begin
           Application.Initialize;
           Application.Title := 'Mapa Cacic';
           Application.CreateForm(TfrmMapaCacic, frmMapaCacic);
-          Application.Run;
+  Application.Run;
         end;
      oCacic.Free();
 end.

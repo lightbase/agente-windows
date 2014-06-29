@@ -118,6 +118,7 @@ begin
         objCacic.setValueToFile('Hash-Codes','CACICSERVICE.EXE'         , objCacic.getValueFromTags('CACICSERVICE.EXE_HASH'              , strCommResponse, '<>'), strChkSisInfFileName);
         objCacic.setValueToFile('Hash-Codes','CHKSIS.EXE'               , objCacic.getValueFromTags('CHKSIS.EXE_HASH'                    , strCommResponse, '<>'), strChkSisInfFileName);
         objCacic.setValueToFile('Hash-Codes','GERCOLS.EXE'              , objCacic.getValueFromTags('GERCOLS.EXE_HASH'                   , strCommResponse, '<>'), strChkSisInfFileName);
+        objCacic.setValueToFile('Hash-Codes','MAPACACIC.EXE'            , objCacic.getValueFromTags('MAPACACIC.EXE_HASH'                 , strCommResponse, '<>'), strChkSisInfFileName);
         objCacic.setValueToFile('Hash-Codes',objCacic.getMainProgramName, objCacic.getValueFromTags(objCacic.getMainProgramName + '_HASH', strCommResponse, '<>'), strChkSisInfFileName);
 
         // Crio/Recrio/Atualizo o arquivo de configurações do Agente Principal
@@ -170,6 +171,14 @@ begin
         verifyAndGetModules('cacicservice.exe',
                             objCacic.deCrypt(objCacic.getValueFromTags('CACICSERVICE.EXE_HASH', strCommResponse, '<>'),true,true),
                             objCacic.getWinDir,
+                            objCacic.getLocalFolderName,
+                            objCacic,
+                            strChkSisInfFileName);
+
+        // Verificação de versão do Mapa Cacic
+        verifyAndGetModules('mapacacic.exe',
+                            objCacic.deCrypt(objCacic.getValueFromTags('MAPACACIC.EXE_HASH', strCommResponse, '<>'),true,true),
+                            objCacic.getLocalFolderName + 'Modules',
                             objCacic.getLocalFolderName,
                             objCacic,
                             strChkSisInfFileName);

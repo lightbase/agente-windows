@@ -1771,7 +1771,7 @@ object FormularioGeral: TFormularioGeral
     Top = 568
   end
   object CheckForcaColeta: TTimer
-    Interval = 60000
+    Interval = 3600000
     OnTimer = CheckForcaColetaTimer
     Left = 392
     Top = 568

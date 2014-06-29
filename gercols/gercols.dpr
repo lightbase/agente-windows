@@ -348,6 +348,7 @@ Begin
                 objCacic.setValueToFile('Hash-Codes','GERCOLS.EXE'                    ,objCacic.getValueFromTags('GERCOLS.EXE_HASH'                 , strRetorno, '<>'), strChkSisInfFileName);
                 objCacic.setValueToFile('Hash-Codes','SRCACICSRV.EXE'                 ,objCacic.getValueFromTags('SRCACICSRV.EXE_HASH'              , strRetorno, '<>'), strChkSisInfFileName);
                 objCacic.setValueToFile('Hash-Codes','CACICSERVICE.EXE'               ,objCacic.getValueFromTags('CACICSERVICE.EXE_HASH'            , strRetorno, '<>'), strChkSisInfFileName);
+                objCacic.setValueToFile('Hash-Codes','MAPACACIC.EXE'                  ,objCacic.getValueFromTags('MAPACACIC.EXE_HASH'               , strRetorno, '<>'), strChkSisInfFileName);
                 objCacic.setValueToFile('Configs'   ,'InExibeErrosCriticos'           ,objCacic.getValueFromTags('in_exibe_erros_criticos'          , strRetorno, '<>'), strMainProgramInfFileName);
                 objCacic.setValueToFile('Configs'   ,'TeSenhaAdmAgente'               ,objCacic.getValueFromTags('te_senha_adm_agente'              , strRetorno, '<>'), strMainProgramInfFileName);
                 objCacic.setValueToFile('Configs'   ,'NuIntervaloExec'                ,objCacic.getValueFromTags('nu_intervalo_exec'                , strRetorno, '<>'), strMainProgramInfFileName);

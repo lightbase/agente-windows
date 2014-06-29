@@ -143,7 +143,7 @@ type
     strChkSisInfFileName,
     strGerColsInfFileName       : String;
 
-    procedure Finalizar(p_pausa:boolean);
+    procedure Finalizar;
 
   end;
 
@@ -161,10 +161,13 @@ Begin
     Application.Terminate;
 End;
 
-procedure TfrmMapaCacic.Finalizar(p_pausa:boolean);
+procedure TfrmMapaCacic.Finalizar;
 Begin
   Visible                               := false;
 
+  reset(textFileAguarde);
+  objCACIC.deleteFileOrFolder(objCacic.getLocalFolderName +
+                   '\temp\aguarde_MAPACACIC.txt');
   Application.ProcessMessages;
 
   Sair;
@@ -296,7 +299,7 @@ var
    teste : string;
 Begin
   btCombosUpdate.Enabled := false;
-
+  objCACIC.writeDailyLog('getConfigs: Invocando getConfigs...');
   Result := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCacic.getLocalFolderName);
 
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
@@ -304,6 +307,7 @@ Begin
 
   if (Result <> '0') then
     Begin
+      objCACIC.writeDailyLog('getConfigs: Comunicação realizada com sucesso!');
       objCacic.setValueToFile('Configs' ,'modulo_patr'          , objCacic.getValueFromTags('modPatrimonio'                    , Result, '<>'), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'servidor_autenticacao', objCacic.getValueFromTags('dados_ldap'                  , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
@@ -323,6 +327,7 @@ End;
 procedure TfrmMapaCacic.RecuperaValoresAnteriores;
 var strCollectsPatrimonioLast : String;
 begin
+  objCACIC.writeDailyLog('RecuperaValoresAnteriores: Início.');
   btCombosUpdate.Enabled := false;
 
   strCollectsPatrimonioLast := objCacic.deCrypt( objCacic.GetValueFromFile
@@ -362,6 +367,7 @@ begin
     End;
   btCombosUpdate.Enabled := true;
   Application.ProcessMessages;
+  objCACIC.writeDailyLog('RecuperaValoresAnteriores: Fim.');
 end;
 
 procedure TfrmMapaCacic.AtualizaPatrimonio(Sender: TObject);
@@ -372,6 +378,7 @@ if edTeInfoPatrimonio5.text <> '' then
   begin
     btGravarInformacoes.Enabled := false;
     btGravarInformacoes.Caption := 'Enviando informações...';
+    objCACIC.writeDailyLog('Preparando para o envio das informações...');
     strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
 
     strColetaAtual := StringReplace('[IDPatrimonio]'         + edTeInfoPatrimonio1.Text   + '[/IDPatrimonio]'       +
@@ -396,11 +403,12 @@ if edTeInfoPatrimonio5.text <> '' then
     if (strRetorno = '0') then
     begin
        btGravarInformacoes.caption := 'Problema ao enviar informações...';
-       MessageDLG(#13#10+'Atenção!'+ #13#10 + 'Problema ao enviar as informações!'
-               + #13#10 + 'Se o problema persistir contate o adminsitrador.',mtError,[mbOK],0);
+       Application.messagebox(Pchar('Atenção!'+ #13#10 + 'Problema ao enviar as informações!'
+               + #13#10 + 'Se o problema persistir contate o adminsitrador.'), 'Erro!',MB_ICONERROR + mb_ok);
     end
     else
     Begin
+        objCACIC.writeDailyLog('Envio realizado com sucesso.');
         btGravarInformacoes.Caption := 'Informações enviadas com sucesso...';
         objCacic.setValueToFile('Collects','col_patr_last' ,
                                 objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
@@ -414,7 +422,7 @@ if edTeInfoPatrimonio5.text <> '' then
     objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');
     Application.ProcessMessages;
 
-    Finalizar(true);
+    Finalizar;
   end
   else
     Application.messagebox(Pchar('Por favor, é necessário digitar seu nome!'), 'Atenção!',MB_ICONEXCLAMATION + mb_ok);
@@ -481,7 +489,6 @@ Begin
 //   end;
 
     //-------------------------------NOME USUARIO-----------------------------------
-    strNomeLDAP := LDAPName;
     strNomeLDAP := getLastValue(LDAPName, 'Attribute:', 'cn'+#$D#$A);
 
 
@@ -552,6 +559,7 @@ Begin
     btGravarInformacoes.Visible := true;
     btCombosUpdate.Enabled      := true;
     Application.ProcessMessages;
+    objCACIC.writeDailyLog('Interface criada com sucesso.');
 end;
 
 procedure TfrmMapaCacic.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -563,7 +571,7 @@ begin
     Action := caFree;
     formSecondMonitor:=nil;
     objCacic.writeDebugLog('FormClose: ' + Sender.ClassName);
-    Finalizar(true);
+    Finalizar;
   end;
 end;
 
@@ -576,10 +584,10 @@ begin
   Except
     on E:Exception do
        Begin
-         MessageDlg(#13#13+'Problemas ao gerar formulário.',mtError, [mbOK], 0);
+         Application.messagebox(Pchar('Problemas ao gerar formulário.'), 'Erro!',MB_ICONERROR + mb_ok);
 //         EstadoBarraTarefa(TRUE);
          objCacic.writeExceptionLog(E.Message,e.ClassName);
-         Sair;
+         Finalizar;
        End;
   End;
 End;
@@ -657,26 +665,30 @@ begin
 
         if getConfigs <> '0' then
         begin
+           objCACIC.writeDailyLog('Iniciando formulário.');
            mapa;
            FormSetFocus(foco)
         end
         else
-           Sair;
-        end
-        else
-        Begin
-           frmMapaCacic.boolAcessoOK := false;
-           MessageDLG(#13#10+'Atenção! É necessário reinstalar o CACIC nesta estação.' + #13#10     + #13#10 +
-                            'A escctrutura encontra-se corrompida.'   + #13#10,mtError,[mbOK],0);
-           Application.ProcessMessages;
-           frmMapaCacic.Finalizar(false);
-        End;
+        begin
+           objCACIC.writeDailyLog('Falha!!!!.');
+           Finalizar;
+        end;
+      end
+      else
+      Begin
+        frmMapaCacic.boolAcessoOK := false;
+        MessageDLG(#13#10+'Atenção! É necessário reinstalar o CACIC nesta estação.' + #13#10     + #13#10 +
+                          'A escctrutura encontra-se corrompida.'   + #13#10,mtError,[mbOK],0);
+        Application.ProcessMessages;
+        frmMapaCacic.Finalizar;
+      End;
     end
     else
     Begin // Se NT/2000/XP/...
-      MessageDLG(#13#10+'ATENÇÃO! Essa aplicação requer execução com nível administrativo.',mtError,[mbOK],0);
+      Application.messagebox(Pchar('ATENÇÃO! Essa aplicação requer execução com nível administrativo.'), 'Erro!',MB_ICONERROR + mb_ok);
       objCacic.writeDailyLog('SEM PRIVILÉGIOS: Necessário ser administrador "local" ou de Domínio!');
-      Sair
+      Finalizar;
     End;
   Finally
   End;
@@ -704,7 +716,7 @@ end;
 
 procedure TfrmMapaCacic.btKonamiCodeClick(Sender: TObject);
 begin
-  sair;
+  finalizar;
 end;
 
 //------------------------------------------------------------------------------
@@ -752,7 +764,7 @@ begin
 
 end;
 
-//CODE PRA FECHAR O MAPA SEM PRESSIONAR NADA. (/\ + /\ + V + V + <- + -> + <- + -> + A + B)
+//CODE PRA FECHAR O MAPA SEM PRESSIONAR NADA. (up + up + down + down + <- + -> + <- + -> + B + A)
 procedure TfrmMapaCacic.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 
@@ -899,14 +911,18 @@ begin
     begin
       try
         try
+         objCACIC.writeDailyLog('Nome Usuário: Estabelecendo conexão.');
          ldap.TargetHost := host;
          ldap.UserName   := username;
          ldap.Password   := psswd;
          ldap.Timeout    := 5000;
          if ldap.Login and ldap.Bind then    //Loga no LDAP e autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
          begin
+         // 41680200020
+
           ldap.Search(base, False, identificador+ '=' + strTeInfoPatrimonio2, retorno); //Faz a pesquisa, com o CPF repassado.
           result := LDAPResultdump(ldap.SearchResult);
+          objCACIC.writeDailyLog('Nome Usuário: Conexão estabelecida, pesquisa realizada.');
           ldap.Logout;
          end;
         finally
@@ -919,10 +935,13 @@ begin
              MessageDlg(#13#13+'Problemas para pegar nome do usuário.'+#13#13+
                         'Por favor, digite seu nome no campo solicitado',mtError, [mbOK], 0);
              objCacic.writeExceptionLog(E.Message,e.ClassName);
+             objCACIC.writeDailyLog('Nome Usuário: Falha ao tentar recuperar o nome.');
            End; //on E:Exception do
       end; // Try
     end; // if (host<>'') or (base<>'') or (retorno.count=0) then
-  end;  //if strDadosLDAP<>'' then
+  end  //if strDadosLDAP<>'' then
+  else
+    objCACIC.writeDailyLog('Nome Usuário: Dados do servidor de autenticação inexistentes.');
 end;
 
 
