@@ -223,7 +223,8 @@ End;
 procedure getConfigs(p_mensagem_log : boolean);
 var strRetorno,
     v_mensagem_log,
-    strKeyWord                  : string;
+    strKeyWord,
+    strForcaColeta                  : string;
     textfileKeyWord             : TextFile;
 Begin
   Try
@@ -243,10 +244,16 @@ Begin
             Begin
               objCacic.setBoolCipher(not objCacic.isInDebugMode);
               objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
+
               if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
                 Begin
+                  strForcaColeta = objCacic.getValueFromTags('ForcaColeta', strRetorno, '<>');
+//                  if strForcaColeta <> 'S' then
+//                     objCacic.setValueToFile('Configs','col_patr_exe',
+//                                          'n',
+//                                          strGerColsInfFileName);
                   objCacic.setValueToFile('Configs','forca_coleta',
-                                          objCacic.getValueFromTags('ForcaColeta', strRetorno, '<>'),
+                                          strForcaColeta,
                                           strGerColsInfFileName);
                   objCacic.setValueToFile('Configs','WebManagerAddress'    ,objCacic.getValueFromTags('WebManagerAddress'    , strRetorno,'<>'), strChkSisInfFileName);
                   objCacic.setValueToFile('Configs','WebServicesFolderName',objCacic.getValueFromTags('WebServicesFolderName', strRetorno,'<>'), strChkSisInfFileName);

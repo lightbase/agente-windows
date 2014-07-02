@@ -412,11 +412,7 @@ if edTeInfoPatrimonio5.text <> '' then
         btGravarInformacoes.Caption := 'Informações enviadas com sucesso...';
         objCacic.setValueToFile('Collects','col_patr_last' ,
                                 objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
-        if objCacic.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'N' then
-            objCacic.setValueToFile('Configs','col_patr_exe', 'n', strGerColsInfFileName)
-        else
-            objCacic.setValueToFile('Configs','col_patr_exe', 's', strGerColsInfFileName);
-        
+        objCacic.setValueToFile('Configs','col_patr_exe', 's', strGerColsInfFileName);
 
     End;
     objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');
@@ -665,13 +661,23 @@ begin
 
         if getConfigs <> '0' then
         begin
-           objCACIC.writeDailyLog('Iniciando formulário.');
-           mapa;
-           FormSetFocus(foco)
+          if (objCACIC.getValueFromFile('Configs',
+                                        'modulo_patr',
+                                        strGerColsInfFileName) = 'S') then
+          begin
+            objCACIC.writeDailyLog('Iniciando formulário.');
+            mapa;
+            FormSetFocus(foco)
+          end
+          else
+          begin
+            objCACIC.writeDailyLog('Modulo desabilitado.');
+            Finalizar;
+          end;
         end
         else
         begin
-           objCACIC.writeDailyLog('Falha!!!!.');
+           objCACIC.writeDailyLog('Falha ao pegar informações!.');
            Finalizar;
         end;
       end

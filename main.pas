@@ -807,32 +807,36 @@ Begin
 
   strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',true);
 
-  Result := false;
+  if ((objCACIC.getFileHash(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe') <>
+      objCACIC.getValueFromFile('Hash-Codes', 'MAPACACIC.EXE', strChksisInfFileName)) or
+      (strFileSize <= '0')) then
+  begin
+    Result := false;
+    objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe');
 
-  objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe');
+    InicializaTray;
 
-  InicializaTray;
+    objCACIC.writeDailyLog('Acionando Recuperador de Mapa Cacic.');
+    objCACIC.writeDebugLog('ChecaMAPACACIC: Acionando Recuperador de Módulo Gerente de Coletas: '+objCACIC.getWinDir + 'chksis.exe');
+    objCACIC.createOneProcess(objCACIC.getWinDir + 'chksis.exe',false,SW_HIDE);
 
-  objCACIC.writeDailyLog('Acionando Recuperador de Mapa Cacic.');
-  objCACIC.writeDebugLog('ChecaMAPACACIC: Acionando Recuperador de Módulo Gerente de Coletas: '+objCACIC.getWinDir + 'chksis.exe');
-  objCACIC.createOneProcess(objCACIC.getWinDir + 'chksis.exe',false,SW_HIDE);
-
-  sleep(30000); // 30 segundos de espera para download do gercols.exe
-  objCacic.setBoolCipher(not objCacic.isInDebugMode);
-  strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + '\Modules\mapacacic.exe',true);
-  if not(strFileSize = '0') and not(strFileSize = '-1') then
-  Begin
-     objCACIC.writeDailyLog('Módulo Mapa Cacic RECUPERADO COM SUCESSO!');
-     objCACIC.writeDebugLog('ChecaMAPACACIC: Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
-     InicializaTray;
-     Result := True;
-  End
-  else
-  Begin
-      objCACIC.writeDailyLog('Módulo Mapa Cacic NÃO RECUPERADO!');
-      objCACIC.writeDebugLog('ChecaMAPACACIC: Módulo Gerente de Coletas NÃO RECUPERADO!');
-  End;
-  objCACIC.writeDebugLog('ChecaMAPACACIC: ' + DupeString('=',100));
+    sleep(30000); // 30 segundos de espera para download do gercols.exe
+    objCacic.setBoolCipher(not objCacic.isInDebugMode);
+    strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + '\Modules\mapacacic.exe',true);
+    if not(strFileSize = '0') and not(strFileSize = '-1') then
+    Begin
+       objCACIC.writeDailyLog('Módulo Mapa Cacic RECUPERADO COM SUCESSO!');
+       objCACIC.writeDebugLog('ChecaMAPACACIC: Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
+       InicializaTray;
+       Result := True;
+    End
+    else
+    Begin
+        objCACIC.writeDailyLog('Módulo Mapa Cacic NÃO RECUPERADO!');
+        objCACIC.writeDebugLog('ChecaMAPACACIC: Módulo Gerente de Coletas NÃO RECUPERADO!');
+    End;
+    objCACIC.writeDebugLog('ChecaMAPACACIC: ' + DupeString('=',100));
+  end;
 End;
 
 // Verifico a existência do Gerente de Coletas, caso não exista, o chksis.exe fará download!
@@ -1282,16 +1286,15 @@ begin
      begin
         // Caso exista o Mapa Cacic será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
         if FileExists(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe') then
-          Begin
-            ChecaCONFIGS;
-
-            timerNuExecApos.Enabled  := False;
-            objCacic.writeDailyLog('Invoca_MapaCacic: Criando processo mapa.');
-            objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
-            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_SHOW);
-            g_intStatus := 1;
-            objCacic.setBoolCipher(not objCacic.isInDebugMode);
-          End
+        Begin
+          objCacic.writeDailyLog('Invoca_MapaCacic: Criando processo mapa.');
+          objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
+          sleep(10000); //Pausa para dar tempo de realizar o login na máquina, senão o usuário fica em branco.
+          if (objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_NORMAL)) then
+            objCacic.writeDailyLog('Invoca_MapaCacic: Processo criado.')
+          else
+            objCacic.writeDailyLog('Invoca_MapaCacic: Falha ao criar processo.');
+        End
         else
           objCACIC.writeDailyLog('Não foi possível invocar o Mapa Cacic!');
         End;

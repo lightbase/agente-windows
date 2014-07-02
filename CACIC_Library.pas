@@ -1238,24 +1238,32 @@ begin
   writeDebugLog('createOneProcess: pStrCmd   => "' + pStrCmd                    + '"');
   writeDebugLog('createOneProcess: pBoolWait => "' + getBoolToString(pBoolWait) + '"');
   writeDebugLog('createOneProcess: ' + DupeString('*',100));
-  Result := CreateProcess(nil,
-                          PChar(pStrCmd),
-                          nil,
-                          nil,
-                          false,
-                          CREATE_NEW_CONSOLE or
-                          BELOW_NORMAL_PRIORITY_CLASS,
-                          nil,
-                          nil,
-                          SUInfo,
-                          ProcInfo);
-  if (Result) then
-  begin
-    if(pBoolWait) then begin
-       WaitForSingleObject(ProcInfo.hProcess, INFINITE);
-       CloseHandle(ProcInfo.hProcess);
-       CloseHandle(ProcInfo.hThread);
+  try
+    Result := CreateProcess(nil,
+                            PChar(pStrCmd),
+                            nil,
+                            nil,
+                            false,
+                            CREATE_NEW_CONSOLE or
+                            BELOW_NORMAL_PRIORITY_CLASS,
+                            nil,
+                            nil,
+                            SUInfo,
+                            ProcInfo);
+    if (Result) then
+    begin
+      if(pBoolWait) then begin
+         WaitForSingleObject(ProcInfo.hProcess, INFINITE);
+         CloseHandle(ProcInfo.hProcess);
+         CloseHandle(ProcInfo.hThread);
+      end;
     end;
+  Except
+  on E : Exception do
+  begin
+    writeExceptionLog(E.Message,E.ClassName,'createOnePcrocces: Falha ao criar processo');
+  end;
+
   end;
 end;
 
