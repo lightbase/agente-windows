@@ -60,6 +60,7 @@ uses	Windows,
       Tlhelp32,
       ComObj,
       ShellAPI,
+      WinSvc,
       Variants;
 
 type
@@ -124,7 +125,7 @@ type
 {*------------------------------------------------------------------------------
  Classe geral da biblioteca
 -------------------------------------------------------------------------------}
-   TCACIC = class(TCACIC_Windows)
+    TCACIC = class(TCACIC_Windows)
        constructor Create();
        destructor Destroy; override;
        private
@@ -140,7 +141,7 @@ type
          Windows : TCACIC_Windows; /// objeto de informacoes de windows
          function  checkIfFileDateIsToday(pStrFileName : String)                                                            : Boolean;
          function  countOccurences(const strSubText, strText: string)                                                       : Integer;
-         function  createOneProcess(pStrCmd: string; pBoolWait: boolean; pWordShowWindow : word = SW_HIDE)                  : Boolean;
+         function  createOneProcess(pStrCmd: string; pBoolWait: boolean; pWordShowWindow : word = SW_HIDE; waitMilliseconds : cardinal = INFINITE)                  : Boolean;
          function  capitalize (CONST s: STRING)                                                                             : String;
          function  checkModule(pStrModuleFileName, pStrModuleHashCode : String)                                             : String;
          function  deCrypt(pStrCipheredText : String; pBoolShowInLog : boolean = true; pBoolForceDecrypt : boolean = false) : String;
@@ -199,6 +200,10 @@ type
          procedure writeDailyLog(pStrLogMessage : String; pStrFileNameSuffix : String = '');
          procedure writeDebugLog(pStrDebugMessage : String); override;
          procedure writeExceptionLog(pStrExceptionMessage, pStrExceptionClassName : String; pStrAddedMessage : String = ''); override;
+
+         function serviceGetType(sMachine, sService: PChar): DWORD;
+         function serviceStart(sMachine,sService : string ) : boolean;
+         function ServiceGetStatus(sMachine, sService: PChar): DWORD;
    end;
 
 // Declaração de constantes para a biblioteca
@@ -1091,6 +1096,47 @@ begin
   end;
 end;
 
+function TCACIC.serviceStart(sMachine,sService : string ) : boolean;
+var
+  schm,schs   : SC_Handle;
+  ss     : TServiceStatus;
+  psTemp : PChar;
+  dwChkP : DWord;
+begin
+  ss.dwCurrentState := 0;
+  schm := OpenSCManager(PChar(sMachine),Nil,SC_MANAGER_CONNECT);
+  if(schm > 0)then
+  begin
+    schs := OpenService(schm,PChar(sService),SERVICE_START or SERVICE_QUERY_STATUS);
+    if(schs > 0)then
+    begin
+      psTemp := Nil;
+      if(StartService(schs,0,psTemp))then
+      begin
+        if(QueryServiceStatus(schs,ss))then
+        begin
+          while(SERVICE_RUNNING <> ss.dwCurrentState)do
+          begin
+            dwChkP := ss.dwCheckPoint;
+            Sleep(ss.dwWaitHint);
+            if(not QueryServiceStatus(schs,ss))then
+            begin
+              break;
+            end;
+            if(ss.dwCheckPoint < dwChkP)then
+            begin
+              break;
+            end;
+          end;
+        end;
+      end;
+      CloseServiceHandle(schs);
+    end;
+    CloseServiceHandle(schm);
+  end;
+  Result := SERVICE_RUNNING = ss.dwCurrentState;
+end;
+
 procedure TCACIC.writeDebugLog(pStrDebugMessage : String);
 Begin
   if isInDebugMode(copy(pStrDebugMessage,1,pos(':',pStrDebugMessage)-1)) then
@@ -1224,7 +1270,7 @@ end;
   @param p_wait       TRUE se deve aguardar término da excução, FALSE caso contrário
   @param p_showWindow Constante que define o tipo de exibição da janela do aplicativo
 -------------------------------------------------------------------------------}
-function TCACIC.createOneProcess(pStrCmd: string; pBoolWait: boolean; pWordShowWindow : word = SW_HIDE): boolean;
+function TCACIC.createOneProcess(pStrCmd: string; pBoolWait: boolean; pWordShowWindow : word = SW_HIDE; waitMilliseconds : cardinal = INFINITE): boolean;
 var
   SUInfo: TStartupInfo;
   ProcInfo: TProcessInformation;
@@ -1244,8 +1290,7 @@ begin
                             nil,
                             nil,
                             false,
-                            CREATE_NEW_CONSOLE or
-                            BELOW_NORMAL_PRIORITY_CLASS,
+                            NORMAL_PRIORITY_CLASS,
                             nil,
                             nil,
                             SUInfo,
@@ -1253,7 +1298,7 @@ begin
     if (Result) then
     begin
       if(pBoolWait) then begin
-         WaitForSingleObject(ProcInfo.hProcess, INFINITE);
+         WaitForSingleObject(ProcInfo.hProcess, waitMilliseconds);
          CloseHandle(ProcInfo.hProcess);
          CloseHandle(ProcInfo.hThread);
       end;
@@ -1950,5 +1995,102 @@ begin
 	  end;
   end;
 end;
+
+function TCACIC.ServiceGetType(sMachine, sService: PChar): DWORD;
+  {*******************************************}
+  {*** Parameters: ***}
+  {*** sService: specifies the name of the service to open
+  {*** sMachine: specifies the name of the target computer
+  {*** ***}
+  {*** Return Values: ***}
+
+var
+  SCManHandle, SvcHandle: SC_Handle;
+  SS: TServiceStatus;
+  dwStat: DWORD;
+begin
+  dwStat := 0;
+  // Open service manager handle.
+  writeDebugLog('ServiceGetStatus: Executando OpenSCManager.SC_MANAGER_CONNECT');
+  SCManHandle := OpenSCManager(sMachine, nil, SC_MANAGER_CONNECT);
+  if (SCManHandle > 0) then
+  begin
+    writeDebugLog('ServiceGetStatus: Executando OpenService.SERVICE_QUERY_STATUS');
+    SvcHandle := OpenService(SCManHandle, sService, SERVICE_ALL_ACCESS);
+    // if Service installed
+    if (SvcHandle > 0) then
+    begin
+      writeDebugLog('ServiceGetStatus: O serviço "'+ sService +'" já está instalado.');
+      // SS structure holds the service status (TServiceStatus);
+      if (QueryServiceStatus(SvcHandle, SS)) then
+        dwStat := ss.dwServiceType;
+      if dwStat <> 272 then
+      begin
+        ChangeServiceConfig(SvcHandle,
+                            272,  //iterative
+                            SERVICE_NO_CHANGE,
+                            SERVICE_NO_CHANGE,
+                            nil,
+                            nil,
+                            nil,
+                            nil,
+                            nil,
+                            nil,
+                            nil);
+      end;
+
+      if (QueryServiceStatus(SvcHandle, SS)) then
+        dwStat := ss.dwServiceType;
+      CloseServiceHandle(SvcHandle);
+    end;
+    CloseServiceHandle(SCManHandle);
+  end;
+  Result := dwStat;
+end;
+
+function TCACIC.ServiceGetStatus(sMachine, sService: PChar): DWORD;
+  {*******************************************}
+  {*** Parameters: ***}
+  {*** sService: specifies the name of the service to open
+  {*** sMachine: specifies the name of the target computer
+  {*** ***}
+  {*** Return Values: ***}
+  {*** -1 = Error opening service ***}
+  {*** 1 = SERVICE_STOPPED ***}
+  {*** 2 = SERVICE_START_PENDING ***}
+  {*** 3 = SERVICE_STOP_PENDING ***}
+  {*** 4 = SERVICE_RUNNING ***}
+  {*** 5 = SERVICE_CONTINUE_PENDING ***}
+  {*** 6 = SERVICE_PAUSE_PENDING ***}
+  {*** 7 = SERVICE_PAUSED ***}
+  {******************************************}
+var
+  SCManHandle, SvcHandle: SC_Handle;
+  SS: TServiceStatus;
+  dwStat: DWORD;
+begin
+  dwStat := 0;
+  // Open service manager handle.
+  writeDebugLog('ServiceGetStatus: Executando OpenSCManager.SC_MANAGER_CONNECT');
+  SCManHandle := OpenSCManager(sMachine, nil, SC_MANAGER_CONNECT);
+  if (SCManHandle > 0) then
+  begin
+    writeDebugLog('ServiceGetStatus: Executando OpenService.SERVICE_QUERY_STATUS');
+    SvcHandle := OpenService(SCManHandle, sService, SERVICE_QUERY_STATUS);
+    // if Service installed
+    if (SvcHandle > 0) then
+    begin
+      writeDebugLog('ServiceGetStatus: O serviço "'+ sService +'" já está instalado.');
+      // SS structure holds the service status (TServiceStatus);
+      if (QueryServiceStatus(SvcHandle, SS)) then
+        dwStat := ss.dwCurrentState;
+
+      CloseServiceHandle(SvcHandle);
+    end;
+    CloseServiceHandle(SCManHandle);
+  end;
+  Result := dwStat;
+end;
+
 end.
 

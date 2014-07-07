@@ -73,6 +73,7 @@ var strConfigsPatrimonio,
     g_intStatus,
     g_intStatusAnterior,
     g_intIconIndex       : integer;
+    bl_primeira_execucao : bool = false;
     objCACIC: TCACIC;
 
 type
@@ -961,8 +962,12 @@ Begin
   Result := not (FileExists(objCACIC.getLocalFolderName + 'aguarde_CACIC.txt'));
 End;
 
+
+
 procedure TFormularioGeral.FormCreate(Sender: TObject);
 var textFileAguarde : TextFile;
+    serviceType, wordServiceStatus     : Cardinal;
+    service_start    : bool;
 begin
   objCACIC := TCACIC.Create;
   objCACIC.setLocalFolderName(ExtractFilePath(ParamStr(0)));
@@ -971,6 +976,8 @@ begin
   strMainProgramInfFileName := objCACIC.getLocalFolderName + ChangeFileExt(objCACIC.getMainProgramName,'.inf');
   strGerColsInfFileName     := objCACIC.getLocalFolderName + 'gercols.inf';
   strChkSisInfFileName      := objCACIC.getWinDir          + 'chksis.inf';
+
+  bl_primeira_execucao := true;
 
   // A verificação dupla é uma solução de contorno para o caso de o boolCipher ter sido setado após criptografia/deCriptografia do dado gravado
   if (objCACIC.deCrypt( objCACIC.getValueFromFile('Hash-Codes',objCACIC.getMainProgramName,strChkSisInfFileName),false,true)  = objCACIC.getFileHash(ParamStr(0))) then
@@ -987,6 +994,44 @@ begin
 
       strWin32_NetworkAdapterConfiguration := fetchWMIvalues('Win32_NetworkAdapterConfiguration', objCACIC.getLocalFolderName);
       strWin32_ComputerSystem := fetchWMIvalues('Win32_ComputerSystem', objCACIC.getLocalFolderName);
+
+      //Correção do bug do script net logon da pgfn;
+      //O script estava instalando o cacic sem interação com desktop,
+      //bugando o mapa e o trayicon.
+
+      {*** 1 = SERVICE_STOPPED ***}
+      {*** 2 = SERVICE_START_PENDING ***}
+      {*** 3 = SERVICE_STOP_PENDING ***}
+      {*** 4 = SERVICE_RUNNING ***}
+      {*** 5 = SERVICE_CONTINUE_PENDING ***}
+      {*** 6 = SERVICE_PAUSE_PENDING ***}
+      {*** 7 = SERVICE_PAUSED ***}
+
+      // Verifico se o serviço está instalado/rodando,etc.
+      wordServiceStatus := objCacic.ServiceGetStatus(nil,'CacicSustainService');
+
+      //Verifico o serviço para correção de bug
+      // Verifico se o serviço está instalado/rodando,etc.
+
+      if wordServiceStatus <> 0 then
+      begin
+      //verifica o status, se não estiver correto altera
+        serviceType := objCacic.serviceGetType('', 'CacicSustainService');
+      end;
+
+      if (wordServiceStatus = 0) then
+      Begin
+      // Instalo e Habilito o serviço
+        objCacic.createOneProcess(objCacic.getWinDir + 'cacicservice.exe /install /silent',true);
+      End
+      else if (wordServiceStatus < 4)  then
+      Begin
+        objCacic.createOneProcess(objCacic.getWinDir + 'cacicservice.exe -start', true);
+      End
+      else if (wordServiceStatus > 4)  then
+      Begin
+        objCacic.createOneProcess(objCacic.getWinDir + 'cacicservice.exe -continue', true);
+      End;
 
       TrayIcon1           := TTrayIcon.Create(self);
       TrayIcon1.Hint      := pnVersao.Caption;
@@ -1257,7 +1302,7 @@ begin
             if ((p_acao = 'getTest') or (p_acao = 'getConfigs')) then //se for getTest, esperar a aplicação finalizar.
               objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE)
             else
-              objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,false,SW_HIDE);
+              objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE);
             g_intStatus :=             1;
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
           End
@@ -1290,7 +1335,7 @@ begin
           objCacic.writeDailyLog('Invoca_MapaCacic: Criando processo mapa.');
           objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
           sleep(10000); //Pausa para dar tempo de realizar o login na máquina, senão o usuário fica em branco.
-          if (objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_NORMAL)) then
+          if (objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_SHOW)) then
             objCacic.writeDailyLog('Invoca_MapaCacic: Processo criado.')
           else
             objCacic.writeDailyLog('Invoca_MapaCacic: Falha ao criar processo.');
@@ -1327,11 +1372,13 @@ end;
 procedure TFormularioGeral.ExecutaCACIC(Sender: TObject);
 var v_mensagem,
     v_tipo_mensagem,
+    primeira_execucao,
     v_TE_FILA_FTP   : string;
     v_MsgDlgType    : TMsgDlgType;
     intTentativas   : integer;
 begin
    try
+     primeira_execucao := FormatDateTime('yyyymmdd', Now);
 
      if FindCmdLineSwitch('execute', True)     or
         FindCmdLineSwitch('atualizacao', True) or
@@ -1374,9 +1421,14 @@ begin
           ////////////////////////////////////////////////////////////////////////////////
           //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
           ////////////////////////////////////////////////////////////////////////////////
-          if (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
+          if not FindCmdLineSwitch('atualizacao', True) and
+            (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
             and not (FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt'))
-            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then begin
+            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S')
+            and ((objCACIC.getValueFromFile('Configs','primeira_execucao',
+                                            objCacic.getLocalFolderName + 'cacic280.inf') <>
+                 primeira_execucao) and bl_primeira_execucao) then
+          begin
                 objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
                 Invoca_MapaCacic;
           end;
@@ -1481,6 +1533,9 @@ begin
         objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS AO TENTAR ATIVAR COLETAS.');
     end;
    objCACIC.writeDebugLog('ExecutaCACIC: ' + DupeString('=',100));
+   objCacic.setValueToFile('Configs','primeira_execucao', primeira_execucao,
+                            objCacic.getLocalFolderName + 'cacic280.inf');
+   bl_primeira_execucao := false;
 end;
 
 procedure TFormularioGeral.ExecutarMapa1DrawItem(Sender: TObject;

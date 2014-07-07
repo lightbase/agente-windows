@@ -247,7 +247,7 @@ Begin
 
               if (objCacic.getValueFromTags('WebManagerAddress', strRetorno,'<>') <> '') then
                 Begin
-                  strForcaColeta = objCacic.getValueFromTags('ForcaColeta', strRetorno, '<>');
+                  strForcaColeta := objCacic.getValueFromTags('ForcaColeta', strRetorno, '<>');
 //                  if strForcaColeta <> 'S' then
 //                     objCacic.setValueToFile('Configs','col_patr_exe',
 //                                          'n',
@@ -850,6 +850,7 @@ Begin
     else if FindCmdLineSwitch ('getTest', True) then
     begin
         getTest();
+        Finalizar(false);
     end;
 
     // Chamada efetuada pelo Agente Principal quando da existência de temp\<AgentePrincipal>.exe para AutoUpdate
@@ -925,7 +926,7 @@ Begin
         intTotalExecutedCollects  := 0;
         intTotalSendedCollects    := 0;
 
-        //getConfigs(true);
+        getConfigs(true);
 
         // Abaixo eu testo se existe um endereço configurado para não disparar os procedimentos de coleta em vão.
         if (objCacic.getWebManagerAddress <> '') then

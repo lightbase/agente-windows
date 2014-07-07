@@ -97,7 +97,7 @@ begin
   //TOKEN_ADJUST_SESSIONID := 256;
 
   // Log the client on to the local computer.
-
+  ServiceType := stWin32;
   dwSessionId := WTSGetActiveConsoleSessionId();
   hSnap := CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
   if (hSnap = INVALID_HANDLE_VALUE) then
@@ -432,15 +432,6 @@ Begin
     End
   else
     g_oCacic.writeDebugLog('ExecutaCACIC: Cookie Bloqueado pelo Agente Principal ENCONTRADO - CACIC em Execução!');
-
-  // Execução do MAPA.
-  if ((g_oCacic.getValueFromFile('Configs', 'modulo_patr',
-       g_oCacic.getLocalFolderName + 'GerCols.inf') = 'S') and
-      (g_oCacic.getValueFromFile('Configs', 'col_patr_exe',
-       g_oCacic.getLocalFolderName + 'GerCols.inf') <> 's')) then
-  begin
-    g_oCacic.createOneProcess(g_oCacic.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_NORMAL);
-  end;
 
   g_oCacic.writeDebugLog('ExecutaCACIC: Verificando existência de nova versão deste serviço para atualização.');
   // Verifico a existência de nova versão do serviço e finalizo em caso positivo...

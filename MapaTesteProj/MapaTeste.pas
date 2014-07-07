@@ -166,8 +166,10 @@ Begin
   Visible                               := false;
 
   reset(textFileAguarde);
-  objCACIC.deleteFileOrFolder(objCacic.getLocalFolderName +
-                   '\temp\aguarde_MAPACACIC.txt');
+  if FileExists(objCACIC.getLocalFolderName + '\temp\aguarde_MAPACACIC.txt') then
+      objCACIC.deleteFileOrFolder(objCacic.getLocalFolderName +
+                                  '\temp\aguarde_MAPACACIC.txt');
+
   Application.ProcessMessages;
 
   Sair;
@@ -315,7 +317,7 @@ Begin
     End
   else
     begin
-      MessageDlg(#13#13+'Não foi possível realizar a conexão!',mtError, [mbOK], 0);
+      objCACIC.writeDailyLog('Não foi possível realizar a conexão!');
     end;
   btCombosUpdate.Enabled := true;
 End;
@@ -428,7 +430,9 @@ end;
 procedure TfrmMapaCacic.MontaInterface;
 var strConfigsPatrimonioInterface,
     strNomeLDAP : String;
+    count : integer;
 Begin
+    count := 0;
     btCombosUpdate.Enabled := false;
 
     strConfigsPatrimonioInterface := objCacic.deCrypt(objCacic.getValueFromFile
@@ -449,9 +453,15 @@ Begin
 //-----------------------------USUARIO LOGADO-----------------------------------
 
 //    edTeInfoUserLogado.Text                   := getUserLogon;
-    strTeInfoPatrimonio2:=objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
-    strTeInfoPatrimonio2:=copy(strTeInfoPatrimonio2, pos('\', strTeInfoPatrimonio2)+1, length(strTeInfoPatrimonio2));
-    edTeInfoPatrimonio2.Text:=strTeInfoPatrimonio2;
+    while(strTeInfoPatrimonio2 = '') and (count < 600) do
+    begin
+      strTeInfoPatrimonio2:=objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
+      strTeInfoPatrimonio2:=copy(strTeInfoPatrimonio2, pos('\', strTeInfoPatrimonio2)+1, length(strTeInfoPatrimonio2));
+      edTeInfoPatrimonio2.Text:=strTeInfoPatrimonio2;
+      sleep(1000);
+      count := count + 1;
+    end;
+
     if edTeInfoPatrimonio2.Text <> '' then
     begin
        lbEtiqueta2.Visible          := true;
@@ -684,10 +694,10 @@ begin
       else
       Begin
         frmMapaCacic.boolAcessoOK := false;
-        MessageDLG(#13#10+'Atenção! É necessário reinstalar o CACIC nesta estação.' + #13#10     + #13#10 +
-                          'A escctrutura encontra-se corrompida.'   + #13#10,mtError,[mbOK],0);
-        Application.ProcessMessages;
-        frmMapaCacic.Finalizar;
+        Application.messagebox(Pchar('Atenção! É necessário reinstalar o CACIC nesta estação.'    +
+                                      #13#10     + #13#10 + 'A estrutura encontra-se corrompida.'),
+                               'Erro!',MB_ICONERROR + mb_ok);
+        Finalizar;
       End;
     end
     else

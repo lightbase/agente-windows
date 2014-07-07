@@ -111,7 +111,6 @@ type
     function  boolCanRunCACIC                                           : boolean;
     function  findWindowByTitle(pStrWindowTitle: string)                : Hwnd;
     function  listFileDir(pStrPath: string)                             : string;
-    function  serviceGetStatus(sMachine, sService: PChar)               : DWORD;
     function  serviceStart(pStrServiceName : string )                   : boolean;
     function  serviceRunning(pCharMachineName, pCharServiceName: PChar) : boolean;
     function  serviceStopped(pCharMachineName, pCharServiceName: PChar) : boolean;
@@ -135,6 +134,8 @@ implementation
 {$R *.dfm}
 
 procedure TfrmInstallCACIC.FormCreate(Sender: TObject);
+var
+wordServiceStatus, serviceType : DWord;
 begin
   Try
     boolShowForm := true;
@@ -198,49 +199,6 @@ begin
       End;
   Finally
   End;
-end;
-
-function TfrmInstallCACIC.ServiceGetStatus(sMachine, sService: PChar): DWORD;
-  {*******************************************}
-  {*** Parameters: ***}
-  {*** sService: specifies the name of the service to open
-  {*** sMachine: specifies the name of the target computer
-  {*** ***}
-  {*** Return Values: ***}
-  {*** -1 = Error opening service ***}
-  {*** 1 = SERVICE_STOPPED ***}
-  {*** 2 = SERVICE_START_PENDING ***}
-  {*** 3 = SERVICE_STOP_PENDING ***}
-  {*** 4 = SERVICE_RUNNING ***}
-  {*** 5 = SERVICE_CONTINUE_PENDING ***}
-  {*** 6 = SERVICE_PAUSE_PENDING ***}
-  {*** 7 = SERVICE_PAUSED ***}
-  {******************************************}
-var
-  SCManHandle, SvcHandle: SC_Handle;
-  SS: TServiceStatus;
-  dwStat: DWORD;
-begin
-  dwStat := 0;
-  // Open service manager handle.
-  objCacic.writeDebugLog('ServiceGetStatus: Executando OpenSCManager.SC_MANAGER_CONNECT');
-  SCManHandle := OpenSCManager(sMachine, nil, SC_MANAGER_CONNECT);
-  if (SCManHandle > 0) then
-  begin
-    objCacic.writeDebugLog('ServiceGetStatus: Executando OpenService.SERVICE_QUERY_STATUS');
-    SvcHandle := OpenService(SCManHandle, sService, SERVICE_QUERY_STATUS);
-    // if Service installed
-    if (SvcHandle > 0) then
-    begin
-      objCacic.writeDebugLog('ServiceGetStatus: O serviço "'+ sService +'" já está instalado.');
-      // SS structure holds the service status (TServiceStatus);
-      if (QueryServiceStatus(SvcHandle, SS)) then
-        dwStat := ss.dwCurrentState;
-      CloseServiceHandle(SvcHandle);
-    end;
-    CloseServiceHandle(SCManHandle);
-  end;
-  Result := dwStat;
 end;
 
 // start service
@@ -393,7 +351,7 @@ Begin
 End;
 
 procedure TfrmInstallCACIC.installCACIC;
-var wordServiceStatus                      : DWORD;
+var wordServiceStatus, serviceType         : cardinal;
     tstrRequest_ConfigIC                   : TStringList;
     strAuxInstallCACIC                     : String;
 begin
@@ -717,7 +675,11 @@ begin
                                 objCacic,
                                 strChkSisInfFileName);
 
-            objCacic.setValueToFile('Installation','chkSIS.exe', objCacic.checkModule(objCacic.getWinDir + 'chksis.exe', objCACIC.deCrypt( objCacic.getValueFromTags('CHKSIS.EXE_HASH', strCommResponse,'<>'),false,true)), strChkSisInfFileName);
+            objCacic.setValueToFile('Installation','chkSIS.exe',
+                                    objCacic.checkModule(objCacic.getWinDir + 'chksis.exe',
+                                    objCACIC.deCrypt( objCacic.getValueFromTags
+                                                     ('CHKSIS.EXE_HASH', strCommResponse,'<>'),
+                                    false,true)), strChkSisInfFileName);
 
             // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
             if  (objCacic.getValueFromFile('Installation','CacicService.exe' , strChkSisInfFileName) = 'Ok!') and
@@ -739,8 +701,7 @@ begin
                   ComunicaInsucesso('1'); // O indicador "1" sinalizará que não foi devido a privilégio na estação
                 End;
 
-            if boolCanRunCACIC and
-               (objCacic.getValueFromFile('Installation','ChkSIS.exe', strChkSisInfFileName) = 'Ok!') then
+            if (objCacic.getValueFromFile('Installation','ChkSIS.exe', strChkSisInfFileName) = 'Ok!') then
               Begin
                 // Se não for plataforma NT executo o agente principal
                 if not (objCacic.isWindowsNTPlataform()) then
@@ -761,8 +722,18 @@ begin
                     {*** 6 = SERVICE_PAUSE_PENDING ***}
                     {*** 7 = SERVICE_PAUSED ***}
 
+                    informaProgresso('Verificando CACICservice.');
                     // Verifico se o serviço está instalado/rodando,etc.
-                    wordServiceStatus := ServiceGetStatus(nil,'CacicSustainService');
+                    wordServiceStatus := objCacic.ServiceGetStatus(nil,'CacicSustainService');
+
+                    //Verifico o serviço para correção de bug
+                    if wordServiceStatus <> 0 then
+                    begin
+                          //verifica o status, se não estiver correto altera
+                          serviceType := objCacic.serviceGetType('', 'CacicSustainService');
+                    end;
+
+
                     if (wordServiceStatus = 0) then
                       Begin
                         // Instalo e Habilito o serviço
@@ -788,8 +759,10 @@ begin
                     MessageDLG(#13#10+'ATENÇÃO!'+#13#10+#13#10+'Se o ícone do CACIC não for exibido na bandeja do sistema, é recomendável a reinicialização da máquina.',mtInformation,[mbOK],0);
                     informaProgresso('Executando o Agente Principal do CACIC.');
                   End;
-
-                objCacic.createOneProcess(objCacic.getLocalFolderName + objCACIC.getMainProgramName, false);
+                  
+                if boolCanRunCACIC then
+                  objCacic.createOneProcess(objCacic.getLocalFolderName + objCACIC.getMainProgramName, false);
+                  
               End
             else
               if FileExists(objCacic.getLocalFolderName + 'aguarde_CACIC.txt') then
@@ -823,12 +796,12 @@ end;
 
 function TfrmInstallCACIC.serviceRunning(pCharMachineName, pCharServiceName: PChar): Boolean;
 begin
-  Result := SERVICE_RUNNING = ServiceGetStatus(pCharMachineName, pCharServiceName);
+  Result := SERVICE_RUNNING = objCacic.ServiceGetStatus(pCharMachineName, pCharServiceName);
 end;
 
 function TfrmInstallCACIC.serviceStopped(pCharMachineName, pCharServiceName: PChar): Boolean;
 begin
-  Result := SERVICE_STOPPED = ServiceGetStatus(pCharMachineName, pCharServiceName);
+  Result := SERVICE_STOPPED = objCacic.ServiceGetStatus(pCharMachineName, pCharServiceName);
 end;
 
 function TfrmInstallCACIC.findWindowByTitle(pStrWindowTitle: string): Hwnd;
