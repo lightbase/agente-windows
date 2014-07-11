@@ -33,7 +33,7 @@
     </DelphiCompile>
     <DCCReference Include="..\CACIC_Comm.pas" />
     <DCCReference Include="..\CACIC_Library.pas" />
-    <DCCReference Include="MapaTeste.pas">
+    <DCCReference Include="Mapa.pas">
       <Form>frmMapaCacic</Form>
     </DCCReference>
     <DCCReference Include="Source\asn1util.pas" />

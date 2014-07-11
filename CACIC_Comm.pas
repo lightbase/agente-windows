@@ -119,7 +119,6 @@ Begin
          idHTTP1.Tag                              := 0;
 
          // ATENÇÃO: Substituo os sinais de "+" acima por [[MAIS]] devido a problemas encontrados no envio POST (vide HTMLentities)
-
          Result := '0';
          Try
            IdHTTP1.Post(pStrFullURL, tstrRequest, tStringStrResponseCS);

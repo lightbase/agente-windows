@@ -3,7 +3,7 @@ program mapacacic;
 uses
   Forms,
   Windows,
-  MapaTeste in 'MapaTeste.pas' {frmMapaCacic},
+  Mapa in 'Mapa.pas' {frmMapaCacic},
   CACIC_Comm in '..\CACIC_Comm.pas',
   CACIC_Library in '..\CACIC_Library.pas',
   ldapsend in 'Source\ldapsend.pas',
