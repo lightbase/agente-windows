@@ -55,15 +55,6 @@
   <Target Name="installcacic:Make">
     <MSBuild Projects="installcacic\installcacic.dproj" Targets="Make" />
   </Target>
-  <Target Name="mapacacic">
-    <MSBuild Projects="MapaTesteProj\mapacacic.dproj" Targets="" />
-  </Target>
-  <Target Name="mapacacic:Clean">
-    <MSBuild Projects="MapaTesteProj\mapacacic.dproj" Targets="Clean" />
-  </Target>
-  <Target Name="mapacacic:Make">
-    <MSBuild Projects="MapaTesteProj\mapacacic.dproj" Targets="Make" />
-  </Target>
   <Target Name="CacicVersionsAndHashes">
     <MSBuild Projects="CacicVersionsAndHashes\CacicVersionsAndHashes.dproj" Targets="" />
   </Target>
@@ -82,13 +73,22 @@
   <Target Name="TesteSoftware:Make">
     <MSBuild Projects="C:\Documents and Settings\adriano\Meus documentos\RAD Studio\Projects\TesteSoftware.dproj" Targets="Make" />
   </Target>
+  <Target Name="mapacacic">
+    <MSBuild Projects="Mapa\mapacacic.dproj" Targets="" />
+  </Target>
+  <Target Name="mapacacic:Clean">
+    <MSBuild Projects="Mapa\mapacacic.dproj" Targets="Clean" />
+  </Target>
+  <Target Name="mapacacic:Make">
+    <MSBuild Projects="Mapa\mapacacic.dproj" Targets="Make" />
+  </Target>
   <Target Name="Build">
-    <CallTarget Targets="chksis;cacic280;cacicservice;gercols;installcacic;mapacacic;CacicVersionsAndHashes;TesteSoftware" />
+    <CallTarget Targets="chksis;cacic280;cacicservice;gercols;installcacic;CacicVersionsAndHashes;TesteSoftware;mapacacic" />
   </Target>
   <Target Name="Clean">
-    <CallTarget Targets="chksis:Clean;cacic280:Clean;cacicservice:Clean;gercols:Clean;installcacic:Clean;mapacacic:Clean;CacicVersionsAndHashes:Clean;TesteSoftware:Clean" />
+    <CallTarget Targets="chksis:Clean;cacic280:Clean;cacicservice:Clean;gercols:Clean;installcacic:Clean;CacicVersionsAndHashes:Clean;TesteSoftware:Clean;mapacacic:Clean" />
   </Target>
   <Target Name="Make">
-    <CallTarget Targets="chksis:Make;cacic280:Make;cacicservice:Make;gercols:Make;installcacic:Make;mapacacic:Make;CacicVersionsAndHashes:Make;TesteSoftware:Make" />
+    <CallTarget Targets="chksis:Make;cacic280:Make;cacicservice:Make;gercols:Make;installcacic:Make;CacicVersionsAndHashes:Make;TesteSoftware:Make;mapacacic:Make" />
   </Target>
 </Project>
