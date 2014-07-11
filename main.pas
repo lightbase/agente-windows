@@ -1378,7 +1378,6 @@ var v_mensagem,
     intTentativas   : integer;
 begin
    try
-     primeira_execucao := FormatDateTime('yyyymmdd', Now);
 
      if FindCmdLineSwitch('execute', True)     or
         FindCmdLineSwitch('atualizacao', True) or
@@ -1425,9 +1424,7 @@ begin
             (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
             and not (FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt'))
             and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S')
-            and ((objCACIC.getValueFromFile('Configs','primeira_execucao',
-                                            objCacic.getLocalFolderName + 'cacic280.inf') <>
-                 primeira_execucao) and bl_primeira_execucao) then
+            and bl_primeira_execucao then
           begin
                 objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
                 Invoca_MapaCacic;
@@ -1533,8 +1530,7 @@ begin
         objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS AO TENTAR ATIVAR COLETAS.');
     end;
    objCACIC.writeDebugLog('ExecutaCACIC: ' + DupeString('=',100));
-   objCacic.setValueToFile('Configs','primeira_execucao', primeira_execucao,
-                            objCacic.getLocalFolderName + 'cacic280.inf');
+
    bl_primeira_execucao := false;
 end;
 

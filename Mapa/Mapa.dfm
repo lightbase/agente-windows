@@ -445,7 +445,7 @@ object frmMapaCacic: TfrmMapaCacic
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 20
+      MaxLength = 34
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
