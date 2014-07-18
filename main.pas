@@ -1,16 +1,16 @@
 (**
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-Copyright 2000, 2001, 2002, 2003, 2004, 2005 Dataprev - Empresa de Tecnologia e Informações da Previdência Social, Brasil
+Copyright 2000, 2001, 2002, 2003, 2004, 2005 Dataprev - Empresa de Tecnologia e Informaï¿½ï¿½es da Previdï¿½ncia Social, Brasil
 
-Este arquivo é parte do programa CACIC - Configurador Automático e Coletor de Informações Computacionais
+Este arquivo ï¿½ parte do programa CACIC - Configurador Automï¿½tico e Coletor de Informaï¿½ï¿½es Computacionais
 
-O CACIC é um software livre; você pode redistribui-lo e/ou modifica-lo dentro dos termos da Licença Pública Geral GNU como
-publicada pela Fundação do Software Livre (FSF); na versão 2 da Licença, ou (na sua opinião) qualquer versão.
+O CACIC ï¿½ um software livre; vocï¿½ pode redistribui-lo e/ou modifica-lo dentro dos termos da Licenï¿½a Pï¿½blica Geral GNU como
+publicada pela Fundaï¿½ï¿½o do Software Livre (FSF); na versï¿½o 2 da Licenï¿½a, ou (na sua opiniï¿½o) qualquer versï¿½o.
 
-Este programa é distribuido na esperança que possa ser  util, mas SEM NENHUMA GARANTIA; sem uma garantia implicita de ADEQUAÇÂO a qualquer
-MERCADO ou APLICAÇÃO EM PARTICULAR. Veja a Licença Pública Geral GNU para maiores detalhes.
+Este programa ï¿½ distribuido na esperanï¿½a que possa ser  util, mas SEM NENHUMA GARANTIA; sem uma garantia implicita de ADEQUAï¿½ï¿½O a qualquer
+MERCADO ou APLICAï¿½ï¿½O EM PARTICULAR. Veja a Licenï¿½a Pï¿½blica Geral GNU para maiores detalhes.
 
-Você deve ter recebido uma cópia da Licença Pública Geral GNU, sob o título "LICENCA.txt", junto com este programa, se não, escreva para a Fundação do Software
+Vocï¿½ deve ter recebido uma cï¿½pia da Licenï¿½a Pï¿½blica Geral GNU, sob o tï¿½tulo "LICENCA.txt", junto com este programa, se nï¿½o, escreva para a Fundaï¿½ï¿½o do Software
 Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 *)
@@ -53,13 +53,13 @@ const
   GBYTE          = MBYTE shl 10;
   NORMAL         = 0; // Normal
   COLETANDO      = 1; // Raio - Coletando
-  DESCONFIGURADO = 2; // Interrogação - Identificando Host
+  DESCONFIGURADO = 2; // Interrogaï¿½ï¿½o - Identificando Host
   EM_SUPORTE     = 3; // Telefone - Em Suporte Remoto
-  LEFT_MENU_ITEM = 13; // Coordenada X para escrita das opções do menu de contexto
+  LEFT_MENU_ITEM = 13; // Coordenada X para escrita das opï¿½ï¿½es do menu de contexto
 
 
 
-// Declaração das variáveis globais.
+// Declaraï¿½ï¿½o das variï¿½veis globais.
 var strConfigsPatrimonio,
     strMenuCaptionLAT,
     strMenuCaptionCON,
@@ -280,7 +280,7 @@ type
     procedure Invoca_MapaCacic;
     procedure CheckIfDownloadedVersion;
     procedure WMSysCommand(var Msg: TWMSysCommand); message WM_SYSCOMMAND;
-    // A procedure WMQueryEndSession é usada para detectar o
+    // A procedure WMQueryEndSession ï¿½ usada para detectar o
     // Shutdown do Windows e "derrubar" o Cacic.
     procedure WMQueryEndSession(var Msg : TWMQueryEndSession); Message WM_QUERYENDSESSION;
     procedure WMMENUSELECT(var msg: TWMMENUSELECT); message WM_MENUSELECT;
@@ -490,15 +490,15 @@ begin
   if Result then
     objCACIC.writeDebugLog('ServiceStart: ' + sService + ' - OK!')
   else
-    objCACIC.writeDebugLog('ServiceStart: ' + sService + ' - Não Foi Possível Iniciar!');
+    objCACIC.writeDebugLog('ServiceStart: ' + sService + ' - Nï¿½o Foi Possï¿½vel Iniciar!');
 end;
 
-// Início de Procedimentos para monitoramento de dispositivos USB - Anderson Peterle - 02/2010
+// Inï¿½cio de Procedimentos para monitoramento de dispositivos USB - Anderson Peterle - 02/2010
 procedure TFormularioGeral.UsbIN(ASender : TObject; const ADevType,AVendorID,ADeviceID : string);
 begin
   // Envio de valores ao Gerente WEB
   // Formato: USBinfo=I_ddmmyyyyhhnnss_ADeviceID
-  // Os valores serão armazenados localmente (cacic280.inf) se for impossível o envio.
+  // Os valores serï¿½o armazenados localmente (cacic280.inf) se for impossï¿½vel o envio.
   objCACIC.writeDebugLog('UsbIN: << USB INSERIDO .:. Vendor ID => ' + AVendorID + ' .:. Device ID = ' + ADeviceID);
   Invoca_GerCols('USBinfo=I_'+FormatDateTime('yyyymmddhhnnss', now) + '_' + AVendorID + '_' + ADeviceID, false, false);
 end;
@@ -508,7 +508,7 @@ procedure TFormularioGeral.UsbOUT(ASender : TObject; const ADevType,AVendorID,AD
 begin
   // Envio de valores ao Gerente WEB
   // Formato: USBinfo=O_ddmmyyyyhhnnss_ADeviceID
-  // Os valores serão armazenados localmente (cacic280.inf) se for impossível o envio.
+  // Os valores serï¿½o armazenados localmente (cacic280.inf) se for impossï¿½vel o envio.
   objCACIC.writeDebugLog('UsbOUT: >> USB REMOVIDO .:. Vendor ID => ' + AVendorID + ' .:. Device ID = ' + ADeviceID);
   Invoca_GerCols('USBinfo=O_'+FormatDateTime('yyyymmddhhnnss', now) + '_' + AVendorID + '_' + ADeviceID, false, false);
 end;
@@ -529,7 +529,7 @@ begin
   Parser.LoadFromBuffer(PAnsiChar(p_strConfigs));
   objCACIC.writeDebugLog('MontaVetoresPatrimonio: p_strConfigs: '+p_strConfigs);
 
-  // Código para montar o vetor UON1
+  // Cï¿½digo para montar o vetor UON1
   Parser.StartScan;
   i := -1;
   strItemName := '';
@@ -540,7 +540,7 @@ begin
      if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT1') Then
        Begin
           i := i + 1;
-          SetLength(VetorUON1, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          SetLength(VetorUON1, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o nï¿½mero de itens recebidos.
           strTagName := 'IT1';
        end
      else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT1') then
@@ -561,7 +561,7 @@ begin
        End;
     End;
 
-  // Código para montar o vetor UON1a
+  // Cï¿½digo para montar o vetor UON1a
   Parser.StartScan;
   strTagName := '';
   strAux1    := '';
@@ -572,7 +572,7 @@ begin
      if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT1A') Then
        Begin
           i := i + 1;
-          SetLength(VetorUON1a, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          SetLength(VetorUON1a, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o nï¿½mero de itens recebidos.
           strTagName := 'IT1A';
        end
      else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT1A') then
@@ -608,7 +608,7 @@ begin
         End;
     end;
 
-  // Código para montar o vetor UON2
+  // Cï¿½digo para montar o vetor UON2
   Parser.StartScan;
   strTagName := '';
   i := -1;
@@ -618,7 +618,7 @@ begin
      if (Parser.CurPartType = ptStartTag) and (strItemName = 'IT2') Then
        Begin
           i := i + 1;
-          SetLength(VetorUON2, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o número de itens recebidos.
+          SetLength(VetorUON2, i + 1); // Aumento o tamanho da matriz dinamicamente de acordo com o nï¿½mero de itens recebidos.
           strTagName := 'IT2';
        end
      else if (Parser.CurPartType = ptEndTag) and (strItemName = 'IT2') then
@@ -654,7 +654,7 @@ end;
 }
 function TFormularioGeral.ActualActivity : integer;
 Begin
-  // Se eu conseguir matar os arquivos abaixo é porque srCACICsrv, GerCols e mapaCACIC já finalizaram suas atividades...
+  // Se eu conseguir matar os arquivos abaixo ï¿½ porque srCACICsrv, GerCols e mapaCACIC jï¿½ finalizaram suas atividades...
   objCACIC.writeDebugLog('ActualActivity: BEGIN');
 
   objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\aguarde_GER.txt');
@@ -689,10 +689,10 @@ Begin
 
     if (FormularioGeral.ActualActivity = 0) then
         Begin
-          // Verificação das janelas abertas para que não aconteça coletas caso haja aplicações pesadas rodando (configurado no Módulo Gerente)
+          // Verificaï¿½ï¿½o das janelas abertas para que nï¿½o aconteï¿½a coletas caso haja aplicaï¿½ï¿½es pesadas rodando (configurado no Mï¿½dulo Gerente)
           v_JANELAS_EXCECAO := objCACIC.GetValueFromFile('Configs','TeJanelasExcecao', FormularioGeral.strMainProgramInfFileName);
 
-          objCACIC.writeDebugLog('Pode_Coletar: Verificando Janelas para Exceção...');
+          objCACIC.writeDebugLog('Pode_Coletar: Verificando Janelas para Exceï¿½ï¿½o...');
           tstrJANELAS := TStrings.Create;
           if (v_JANELAS_EXCECAO <> '') then
             Begin
@@ -707,28 +707,28 @@ Begin
                     End;
             End;
 
-          // Caso alguma janela tenha algum nome de aplicação cadastrada como "crítica" ou "pesada"...
+          // Caso alguma janela tenha algum nome de aplicaï¿½ï¿½o cadastrada como "crï¿½tica" ou "pesada"...
           if (intContaJANELAS > 0) then
             Begin
-              objCACIC.writeDailyLog('EXECUÇÃO DE ATIVIDADES ADIADA!');
+              objCACIC.writeDailyLog('EXECUï¿½ï¿½O DE ATIVIDADES ADIADA!');
               v_contador := 0;
               v_plural1 := '';
-              v_plural2 := 'ÃO';
+              v_plural2 := 'ï¿½O';
               for intAux := 0 to tstrJANELAS.Count-1 Do
                 Begin
                   h := FormularioGeral.FindWindowByTitle(tstrJANELAS[intAux]);
                   if h <> 0 then
                     Begin
                       v_contador := v_contador + 1;
-                      objCACIC.writeDailyLog('Aplicação/Janela ' + inttostr(v_contador) + ': ' + tstrJANELAS[intAux]);
+                      objCACIC.writeDailyLog('Aplicaï¿½ï¿½o/Janela ' + inttostr(v_contador) + ': ' + tstrJANELAS[intAux]);
                     End;
                 End;
               if (v_contador > 1) then
                 Begin
                   v_plural1  := 'S';
-                  v_plural2 := 'ÕES';
+                  v_plural2 := 'ï¿½ES';
                 End;
-              objCACIC.writeDailyLog('-> PARA PROCEDER, FINALIZE A' + v_plural1 + ' APLICAÇ' + v_plural2 + ' LISTADA' + v_plural1 + ' ACIMA.');
+              objCACIC.writeDailyLog('-> PARA PROCEDER, FINALIZE A' + v_plural1 + ' APLICAï¿½' + v_plural2 + ' LISTADA' + v_plural1 + ' ACIMA.');
             End;
         End;
 
@@ -736,7 +736,7 @@ Begin
        Result := true
      else
         Begin
-          objCACIC.writeDebugLog('Pode_Coletar: A Ação foi NEGADA!');
+          objCACIC.writeDebugLog('Pode_Coletar: A Aï¿½ï¿½o foi NEGADA!');
           if (intContaJANELAS=0) then
             Begin
              if (FileExists(objCACIC.getLocalFolderName + 'Temp\aguarde_GER.txt')) then
@@ -746,7 +746,7 @@ Begin
                 objCACIC.writeDebugLog('Pode_Coletar: Suporte Remoto em atividade.');
 
              if (FileExists(objCACIC.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt')) then
-                objCACIC.writeDebugLog('Pode_Coletar: Módulo Avulso para Coleta de Patrimônio em atividade.');
+                objCACIC.writeDebugLog('Pode_Coletar: Mï¿½dulo Avulso para Coleta de Patrimï¿½nio em atividade.');
             End;
           //else
           //  objCACIC.cipherClose(objCACIC.getLocalFolderName + objCACIC.getDatFileName,v_tstrCipherOpened);
@@ -798,13 +798,13 @@ begin
   IsMenuOpen := not ((msg.MenuFlag and $FFFF > 0) and (msg.Menu = 0));
 end;
 
-// Verifico a existência do Gerente de Coletas, caso não exista, o chksis.exe fará download!
+// Verifico a existï¿½ncia do Gerente de Coletas, caso nï¿½o exista, o chksis.exe farï¿½ download!
 function TFormularioGeral.ChecaMAPACACIC : boolean;
 var strFileSize : String;
 Begin
   Result := true;
 
-  objCACIC.writeDebugLog('ChecaMAPA: Verificando existência e tamanho do Gerente de Coletas...');
+  objCACIC.writeDebugLog('ChecaMAPA: Verificando existï¿½ncia e tamanho do Gerente de Coletas...');
 
   strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',true);
 
@@ -818,7 +818,7 @@ Begin
     InicializaTray;
 
     objCACIC.writeDailyLog('Acionando Recuperador de Mapa Cacic.');
-    objCACIC.writeDebugLog('ChecaMAPACACIC: Acionando Recuperador de Módulo Gerente de Coletas: '+objCACIC.getWinDir + 'chksis.exe');
+    objCACIC.writeDebugLog('ChecaMAPACACIC: Acionando Recuperador de Mï¿½dulo Gerente de Coletas: '+objCACIC.getWinDir + 'chksis.exe');
     objCACIC.createOneProcess(objCACIC.getWinDir + 'chksis.exe',false,SW_HIDE);
 
     sleep(30000); // 30 segundos de espera para download do gercols.exe
@@ -826,27 +826,27 @@ Begin
     strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + '\Modules\mapacacic.exe',true);
     if not(strFileSize = '0') and not(strFileSize = '-1') then
     Begin
-       objCACIC.writeDailyLog('Módulo Mapa Cacic RECUPERADO COM SUCESSO!');
-       objCACIC.writeDebugLog('ChecaMAPACACIC: Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
+       objCACIC.writeDailyLog('Mï¿½dulo Mapa Cacic RECUPERADO COM SUCESSO!');
+       objCACIC.writeDebugLog('ChecaMAPACACIC: Mï¿½dulo Gerente de Coletas RECUPERADO COM SUCESSO!');
        InicializaTray;
        Result := True;
     End
     else
     Begin
-        objCACIC.writeDailyLog('Módulo Mapa Cacic NÃO RECUPERADO!');
-        objCACIC.writeDebugLog('ChecaMAPACACIC: Módulo Gerente de Coletas NÃO RECUPERADO!');
+        objCACIC.writeDailyLog('Mï¿½dulo Mapa Cacic Nï¿½O RECUPERADO!');
+        objCACIC.writeDebugLog('ChecaMAPACACIC: Mï¿½dulo Gerente de Coletas Nï¿½O RECUPERADO!');
     End;
     objCACIC.writeDebugLog('ChecaMAPACACIC: ' + DupeString('=',100));
   end;
 End;
 
-// Verifico a existência do Gerente de Coletas, caso não exista, o chksis.exe fará download!
+// Verifico a existï¿½ncia do Gerente de Coletas, caso nï¿½o exista, o chksis.exe farï¿½ download!
 function TFormularioGeral.ChecaGERCOLS : boolean;
 var strFileSize : String;
 Begin
   Result := true;
 
-  objCACIC.writeDebugLog('ChecaGERCOLS: Verificando existência e tamanho do Gerente de Coletas...');
+  objCACIC.writeDebugLog('ChecaGERCOLS: Verificando existï¿½ncia e tamanho do Gerente de Coletas...');
 
   strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + 'Modules\gercols.exe',true);
 
@@ -858,8 +858,8 @@ Begin
 
       InicializaTray;
 
-      objCACIC.writeDailyLog('Acionando Recuperador de Módulo Gerente de Coletas.');
-      objCACIC.writeDebugLog('ChecaGERCOLS: Acionando Recuperador de Módulo Gerente de Coletas: '+objCACIC.getWinDir + 'chksis.exe');
+      objCACIC.writeDailyLog('Acionando Recuperador de Mï¿½dulo Gerente de Coletas.');
+      objCACIC.writeDebugLog('ChecaGERCOLS: Acionando Recuperador de Mï¿½dulo Gerente de Coletas: '+objCACIC.getWinDir + 'chksis.exe');
       objCACIC.createOneProcess(objCACIC.getWinDir + 'chksis.exe',false,SW_HIDE);
 
       sleep(30000); // 30 segundos de espera para download do gercols.exe
@@ -867,15 +867,15 @@ Begin
       strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + '\Modules\gercols.exe',true);
       if not(strFileSize = '0') and not(strFileSize = '-1') then
         Begin
-          objCACIC.writeDailyLog('Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
-          objCACIC.writeDebugLog('ChecaGERCOLS: Módulo Gerente de Coletas RECUPERADO COM SUCESSO!');
+          objCACIC.writeDailyLog('Mï¿½dulo Gerente de Coletas RECUPERADO COM SUCESSO!');
+          objCACIC.writeDebugLog('ChecaGERCOLS: Mï¿½dulo Gerente de Coletas RECUPERADO COM SUCESSO!');
           InicializaTray;
           Result := True;
         End
       else
         Begin
-          objCACIC.writeDailyLog('Módulo Gerente de Coletas NÃO RECUPERADO!');
-          objCACIC.writeDebugLog('ChecaGERCOLS: Módulo Gerente de Coletas NÃO RECUPERADO!');
+          objCACIC.writeDailyLog('Mï¿½dulo Gerente de Coletas Nï¿½O RECUPERADO!');
+          objCACIC.writeDebugLog('ChecaGERCOLS: Mï¿½dulo Gerente de Coletas Nï¿½O RECUPERADO!');
         End;
     End;
   objCACIC.writeDebugLog('ChecaGERCOLS: ' + DupeString('=',100));
@@ -884,8 +884,8 @@ End;
 
 procedure ExibirConfiguracoes(Sender: TObject);
 begin
-  // SJI = Senha Já Informada...
-  // Esse valor é inicializado com "N"
+  // SJI = Senha Jï¿½ Informada...
+  // Esse valor ï¿½ inicializado com "N"
   if (objCACIC.deCrypt( objCACIC.GetValueFromFile('Configs','SJI',FormularioGeral.strMainProgramInfFileName)) = '') and
      (objCACIC.GetValueFromFile('Configs','WebManagerAddress',FormularioGeral.strChkSisInfFileName) <> '') then
     begin
@@ -903,7 +903,7 @@ end;
 
 procedure TFormularioGeral.CriaFormSenha(Sender: TObject);
 begin
-    // Caso ainda não exista senha para administração do CACIC, define ADMINCACIC como inicial.
+    // Caso ainda nï¿½o exista senha para administraï¿½ï¿½o do CACIC, define ADMINCACIC como inicial.
     if (objCACIC.deCrypt( objCACIC.GetValueFromFile('Configs','TeSenhaAdmAgente',FormularioGeral.strMainProgramInfFileName),false,true) = '') Then
       objCACIC.setValueToFile('Configs','TeSenhaAdmAgente', objCACIC.enCrypt('ADMINCACIC'), FormularioGeral.strMainProgramInfFileName);
 
@@ -914,17 +914,17 @@ procedure TFormularioGeral.ChecaCONFIGS;
 var strAux        : string;
 Begin
 
-  // Verifico se o endereço do servidor do cacic foi configurado.
+  // Verifico se o endereï¿½o do servidor do cacic foi configurado.
   if (objCACIC.GetValueFromFile('Configs','WebManagerAddress',strChkSisInfFileName) = '') then
     Begin
       strAux := objCACIC.fixWebAddress(objCACIC.GetValueFromFile('Configs','WebManagerAddress', strChkSisInfFileName));
 
       if (strAux = '') then
         begin
-          strAux := 'ATENÇÃO: Endereço do servidor do CACIC ainda não foi configurado.';
+          strAux := 'ATENï¿½ï¿½O: Endereï¿½o do servidor do CACIC ainda nï¿½o foi configurado.';
           objCACIC.writeDailyLog(strAux);
-          objCACIC.writeDailyLog('Ativando módulo de configuração de endereço de servidor.');
-          MessageDlg(strAux + chr(13) + 'Por favor, informe o endereço do servidor do CACIC na tela que será exibida a seguir.', mtWarning, [mbOk], 0);
+          objCACIC.writeDailyLog('Ativando mï¿½dulo de configuraï¿½ï¿½o de endereï¿½o de servidor.');
+          MessageDlg(strAux + chr(13) + 'Por favor, informe o endereï¿½o do servidor do CACIC na tela que serï¿½ exibida a seguir.', mtWarning, [mbOk], 0);
           ExibirConfiguracoes(Nil);
         end;
     End;
@@ -932,7 +932,7 @@ end;
 
 procedure TFormularioGeral.HabilitaInformacoesGerais;
 Begin
-  // Desabilita/Habilita a opção de Informações Gerais
+  // Desabilita/Habilita a opï¿½ï¿½o de Informaï¿½ï¿½es Gerais
   Mnu_InformacoesGerais.Enabled := (objCACIC.getValueFromTags('Caption'             ,strWin32_ComputerSystem)              +
                                     objCACIC.getValueFromTags('IPAddress'           ,strWin32_NetworkAdapterConfiguration) +
                                     objCACIC.getValueFromTags('DNSDomain'           ,strWin32_NetworkAdapterConfiguration) +
@@ -947,7 +947,7 @@ End;
 
 procedure TFormularioGeral.HabilitaSuporteRemoto;
 Begin
-  // Desabilita/Habilita a opção de Suporte Remoto
+  // Desabilita/Habilita a opï¿½ï¿½o de Suporte Remoto
   Mnu_SuporteRemoto.Enabled := (objCACIC.GetValueFromFile('Configs','CsSuporteRemoto',strMainProgramInfFileName) = 'S') and (FileExists(objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe'));
 End;
 
@@ -955,8 +955,8 @@ function TFormularioGeral.Posso_Rodar : boolean;
 Begin
   result := false;
 
-  objCACIC.writeDebugLog('Posso_Rodar: Verificando concomitância de sessões');
-  // Se eu conseguir matar o arquivo abaixo é porque não há outra sessão deste agente aberta... (POG? Nããão!  :) )
+  objCACIC.writeDebugLog('Posso_Rodar: Verificando concomitï¿½ncia de sessï¿½es');
+  // Se eu conseguir matar o arquivo abaixo ï¿½ porque nï¿½o hï¿½ outra sessï¿½o deste agente aberta... (POG? Nï¿½ï¿½ï¿½o!  :) )
   objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'aguarde_CACIC.txt');
 
   Result := not (FileExists(objCACIC.getLocalFolderName + 'aguarde_CACIC.txt'));
@@ -979,7 +979,7 @@ begin
 
   bl_primeira_execucao := true;
 
-  // A verificação dupla é uma solução de contorno para o caso de o boolCipher ter sido setado após criptografia/deCriptografia do dado gravado
+  // A verificaï¿½ï¿½o dupla ï¿½ uma soluï¿½ï¿½o de contorno para o caso de o boolCipher ter sido setado apï¿½s criptografia/deCriptografia do dado gravado
   if (objCACIC.deCrypt( objCACIC.getValueFromFile('Hash-Codes',objCACIC.getMainProgramName,strChkSisInfFileName),false,true)  = objCACIC.getFileHash(ParamStr(0))) then
     Begin
       objCACIC.setMainProgramHash(objCACIC.getFileHash(ParamStr(0)));
@@ -995,8 +995,8 @@ begin
       strWin32_NetworkAdapterConfiguration := fetchWMIvalues('Win32_NetworkAdapterConfiguration', objCACIC.getLocalFolderName);
       strWin32_ComputerSystem := fetchWMIvalues('Win32_ComputerSystem', objCACIC.getLocalFolderName);
 
-      //Correção do bug do script net logon da pgfn;
-      //O script estava instalando o cacic sem interação com desktop,
+      //Correï¿½ï¿½o do bug do script net logon da pgfn;
+      //O script estava instalando o cacic sem interaï¿½ï¿½o com desktop,
       //bugando o mapa e o trayicon.
 
       {*** 1 = SERVICE_STOPPED ***}
@@ -1007,21 +1007,21 @@ begin
       {*** 6 = SERVICE_PAUSE_PENDING ***}
       {*** 7 = SERVICE_PAUSED ***}
 
-      // Verifico se o serviço está instalado/rodando,etc.
+      // Verifico se o serviï¿½o estï¿½ instalado/rodando,etc.
       wordServiceStatus := objCacic.ServiceGetStatus(nil,'CacicSustainService');
 
-      //Verifico o serviço para correção de bug
-      // Verifico se o serviço está instalado/rodando,etc.
+      //Verifico o serviï¿½o para correï¿½ï¿½o de bug
+      // Verifico se o serviï¿½o estï¿½ instalado/rodando,etc.
 
       if wordServiceStatus <> 0 then
       begin
-      //verifica o status, se não estiver correto altera
+      //verifica o status, se nï¿½o estiver correto altera
         serviceType := objCacic.serviceGetType('', 'CacicSustainService');
       end;
 
       if (wordServiceStatus = 0) then
       Begin
-      // Instalo e Habilito o serviço
+      // Instalo e Habilito o serviï¿½o
         objCacic.createOneProcess(objCacic.getWinDir + 'cacicservice.exe /install /silent',true);
       End
       else if (wordServiceStatus < 4)  then
@@ -1042,22 +1042,22 @@ begin
       imgIconList.GetIcon(0,TrayIcon1.Icon);
       TrayIcon1.Show;
 
-      // Criação do objeto para monitoramento de dispositivos USB
+      // Criaï¿½ï¿½o do objeto para monitoramento de dispositivos USB
       FUsb                := TUsbClass.Create;
       FUsb.OnUsbInsertion := UsbIN;
       FUsb.OnUsbRemoval   := UsbOUT;
 
-      // Essas variáveis ajudarão a controlar o redesenho do ícone no systray,
+      // Essas variï¿½veis ajudarï¿½o a controlar o redesenho do ï¿½cone no systray,
       // evitando o "roubo" do foco.
       g_intTaskBarAtual    := 0;
       g_intTaskBarAnterior := 0;
       g_intDesktopWindow   := 0;
 
-      // Não mostrar o formulário...
+      // Nï¿½o mostrar o formulï¿½rio...
       Application.ShowMainForm := false;
       g_intStatusAnterior      := -1;
 
-      // Aplicar traduções GetText,etc...
+      // Aplicar traduï¿½ï¿½es GetText,etc...
 
       strMenuCaptionLAT := Mnu_LogAtividades.Caption;
       strMenuCaptionCON := Mnu_Configuracoes.Caption;
@@ -1069,7 +1069,7 @@ begin
 
       Try
 
-         // Apago o indicador de finalização normal
+         // Apago o indicador de finalizaï¿½ï¿½o normal
          objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'normal_CACIC.txt');
 
          if not DirectoryExists(objCACIC.getLocalFolderName + 'Temp') then
@@ -1090,21 +1090,21 @@ begin
 
          if Posso_Rodar then
             Begin
-              // Uma forma fácil de evitar que outra sessão deste agente seja iniciada! (POG? Nããããooo!) :))))
-              AssignFile(textFileAguarde,objCACIC.getLocalFolderName + 'aguarde_CACIC.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+              // Uma forma fï¿½cil de evitar que outra sessï¿½o deste agente seja iniciada! (POG? Nï¿½ï¿½ï¿½ï¿½ooo!) :))))
+              AssignFile(textFileAguarde,objCACIC.getLocalFolderName + 'aguarde_CACIC.txt'); {Associa o arquivo a uma variï¿½vel do tipo TextFile}
               {$IOChecks off}
               Reset(textFileAguarde); {Abre o arquivo texto}
               {$IOChecks on}
-              if (IOResult <> 0) then // Arquivo não existe, será recriado.
+              if (IOResult <> 0) then // Arquivo nï¿½o existe, serï¿½ recriado.
                 Rewrite (textFileAguarde);
 
               Append(textFileAguarde);
-              Writeln(textFileAguarde,'Apenas um pseudo-cookie para evitar sessões concomitantes...');
+              Writeln(textFileAguarde,'Apenas um pseudo-cookie para evitar sessï¿½es concomitantes...');
               Append(textFileAguarde);
-              Writeln(textFileAguarde,'Futuramente penso em colocar aqui o pID, para possibilitar finalização via software externo...');
+              Writeln(textFileAguarde,'Futuramente penso em colocar aqui o pID, para possibilitar finalizaï¿½ï¿½o via software externo...');
               Append(textFileAguarde);
 
-              // Inicializo bloqueando o módulo de suporte remoto seguro na FireWall nativa.
+              // Inicializo bloqueando o mï¿½dulo de suporte remoto seguro na FireWall nativa.
               if FileExists(objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe') then
                 objCACIC.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe', false);
 
@@ -1116,25 +1116,25 @@ begin
                 begin
                   if FindCmdLineSwitch('atualizacao', True) then
                     begin
-                      objCACIC.writeDebugLog('FormCreate: Opção /atualizacao recebida...');
-                      objCACIC.writeDailyLog('Reinicializando com versão '+ objCACIC.GetVersionInfo(ParamStr(0)));
+                      objCACIC.writeDebugLog('FormCreate: Opï¿½ï¿½o /atualizacao recebida...');
+                      objCACIC.writeDailyLog('Reinicializando com versï¿½o '+ objCACIC.GetVersionInfo(ParamStr(0)));
                     end
                   else
                     begin
-                      objCACIC.writeDebugLog('FormCreate: Opção /execute recebida...');
-                      objCACIC.writeDailyLog('Opção para execução imediata encontrada...');
+                      objCACIC.writeDebugLog('FormCreate: Opï¿½ï¿½o /execute recebida...');
+                      objCACIC.writeDailyLog('Opï¿½ï¿½o para execuï¿½ï¿½o imediata encontrada...');
                     end;
                   ExecutaCACIC(nil);
                 end;
 
-              // Os timers iniciam-se desabilitados... Mais à frente receberão parâmetros de tempo para execução.
+              // Os timers iniciam-se desabilitados... Mais ï¿½ frente receberï¿½o parï¿½metros de tempo para execuï¿½ï¿½o.
               timerNuExecApos.Enabled   := False;
               timerNuIntervalo.Enabled  := False;
 
               // Derruba o cacic durante o shutdown do windows.
               ShutdownEmExecucao := False;
 
-              // Não mostrar o formulário...
+              // Nï¿½o mostrar o formulï¿½rio...
               //Application.ShowMainForm:=false;
 
               Try
@@ -1142,32 +1142,32 @@ begin
                 SetaVariaveisGlobais;
               Except
                 on E : Exception do
-                objCACIC.writeExceptionLog(E.Message,E.ClassName,'SETANDO VARIÁVEIS GLOBAIS!');
+                objCACIC.writeExceptionLog(E.Message,E.ClassName,'SETANDO VARIï¿½VEIS GLOBAIS!');
               End;
 
               timerNuExecApos.Enabled  := True;
 
               InicializaTray;
 
-              // String list e objeto para captura de ações durante suporte remoto
+              // String list e objeto para captura de aï¿½ï¿½es durante suporte remoto
               tstrListRCActions := TStringList.Create;
             End
          else
             Begin
-              objCACIC.writeDebugLog('FormCreate: Agente finalizado devido a concomitância de sessões...');
+              objCACIC.writeDebugLog('FormCreate: Agente finalizado devido a concomitï¿½ncia de sessï¿½es...');
               Finaliza;
             End;
       Except
         on E:Exception do
           Begin
-            objCACIC.writeExceptionLog(E.Message,e.ClassName,'PROBLEMAS NA INICIALIZAÇÃO (2)');
+            objCACIC.writeExceptionLog(E.Message,e.ClassName,'PROBLEMAS NA INICIALIZAï¿½ï¿½O (2)');
             Finaliza(false);
           End;
       End
     End
   else
     Begin
-      objCACIC.writeDailyLog('Execução Impedida por Falta de Integridade do Agente Principal!');
+      objCACIC.writeDailyLog('Execuï¿½ï¿½o Impedida por Falta de Integridade do Agente Principal!');
       Finaliza(false);
     End;
 end;
@@ -1176,7 +1176,7 @@ procedure TFormularioGeral.SetaVariaveisGlobais;
 var v_aux : string;
 Begin
   Try
-    // Inicialização do indicador de SENHA JÁ INFORMADA
+    // Inicializaï¿½ï¿½o do indicador de SENHA Jï¿½ INFORMADA
     objCACIC.setValueToFile('Configs','SJI',objCACIC.enCrypt(''),strMainProgramInfFileName);
 
     if  (Trim(objCACIC.GetValueFromFile('Configs','InExibeBandeja' ,strMainProgramInfFileName)) = '')    or
@@ -1189,19 +1189,19 @@ Begin
     if (Trim(objCACIC.GetValueFromFile('Configs','NuIntervaloExec',strMainProgramInfFileName)) = '') then
       objCACIC.setValueToFile('Configs','NuIntervaloExec', '4'   ,strMainProgramInfFileName);
 
-    // IN_EXIBE_BANDEJA     O valor padrão é mostrar o ícone na bandeja.
-    // NU_EXEC_APOS         Assumirá o padrão de 0 minutos para execução imediata em caso de primeira execução (instalação).
-    // NU_INTERVALO_EXEC    Assumirá o padrão de 4 horas para o intervalo, no caso de problemas.
+    // IN_EXIBE_BANDEJA     O valor padrï¿½o ï¿½ mostrar o ï¿½cone na bandeja.
+    // NU_EXEC_APOS         Assumirï¿½ o padrï¿½o de 0 minutos para execuï¿½ï¿½o imediata em caso de primeira execuï¿½ï¿½o (instalaï¿½ï¿½o).
+    // NU_INTERVALO_EXEC    Assumirï¿½ o padrï¿½o de 4 horas para o intervalo, no caso de problemas.
 
-    // Número de horas do intervalo (3.600.000 milisegundos correspondem a 1 hora).
+    // Nï¿½mero de horas do intervalo (3.600.000 milisegundos correspondem a 1 hora).
     timerNuIntervalo.Interval := strtoint(objCACIC.GetValueFromFile('Configs','NuIntervaloExec',strMainProgramInfFileName)) * 3600000;
 
-    // Número de minutos para iniciar a execução (60.000 milisegundos correspondem a 1 minuto). Acrescento 1, pois se for zero ele não executa.
+    // Nï¿½mero de minutos para iniciar a execuï¿½ï¿½o (60.000 milisegundos correspondem a 1 minuto). Acrescento 1, pois se for zero ele nï¿½o executa.
     timerNuExecApos.Interval := (strtoint(objCACIC.GetValueFromFile('Configs','NuExecApos',strMainProgramInfFileName)) * 60000) + 1000;
 
-    // Se for a primeiríssima execução do agente naquela máquina (após sua instalação) já faz todas as coletas configuradas, sem esperar os minutos definidos pelo administrador.
-    // Também armazena os Hash-Codes dos módulos principais, evitando novo download...
-    If (objCACIC.GetValueFromFile('Configs','NuExecApos',strMainProgramInfFileName) = '12345') then // Flag usada na inicialização. Só entra nesse if se for a primeira execução do cacic após carregado.
+    // Se for a primeirï¿½ssima execuï¿½ï¿½o do agente naquela mï¿½quina (apï¿½s sua instalaï¿½ï¿½o) jï¿½ faz todas as coletas configuradas, sem esperar os minutos definidos pelo administrador.
+    // Tambï¿½m armazena os Hash-Codes dos mï¿½dulos principais, evitando novo download...
+    If (objCACIC.GetValueFromFile('Configs','NuExecApos',strMainProgramInfFileName) = '12345') then // Flag usada na inicializaï¿½ï¿½o. Sï¿½ entra nesse if se for a primeira execuï¿½ï¿½o do cacic apï¿½s carregado.
       begin
         timerNuExecApos.Interval := 1000; // 1 minuto para chamar GerCols /coletas
         objCACIC.setValueToFile('Configs','NuExecApos', '1',strMainProgramInfFileName);
@@ -1210,29 +1210,29 @@ Begin
       Begin
         objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\atualiza_CACIC.txt');
         timerNuExecApos.Interval := 1000; // 1 minuto para chamar GerCols /coletas
-        objCACIC.writeDailyLog('Reinicializando com versão '+ objCACIC.GetVersionInfo(ParamStr(0)));
+        objCACIC.writeDailyLog('Reinicializando com versï¿½o '+ objCACIC.GetVersionInfo(ParamStr(0)));
       End
     else
       Begin
-        objCACIC.writeDailyLog('Inicio automático de coletas programado para ' + objCACIC.GetValueFromFile('Configs','NuExecApos',strMainProgramInfFileName) + ' minutos.');
-        objCACIC.writeDailyLog('Executar as ações de coletas automaticamente a cada ' + objCACIC.GetValueFromFile('Configs','NuIntervaloExec',strMainProgramInfFileName) + ' horas.');
+        objCACIC.writeDailyLog('Inicio automï¿½tico de coletas programado para ' + objCACIC.GetValueFromFile('Configs','NuExecApos',strMainProgramInfFileName) + ' minutos.');
+        objCACIC.writeDailyLog('Executar as aï¿½ï¿½es de coletas automaticamente a cada ' + objCACIC.GetValueFromFile('Configs','NuIntervaloExec',strMainProgramInfFileName) + ' horas.');
         objCACIC.writeDailyLog(DupeString('=',100));
       End;
 
     v_aux := Trim(objCACIC.GetValueFromFile('Configs','DtHrUltimaColeta',strGerColsInfFileName));
     if (v_aux <> '') and (Copy(v_aux, 1, 8) <> FormatDateTime('YYYYmmdd', Now)) then timerNuExecApos.Enabled  := True;
 
-    // Desabilita/Habilita a opção de Informações Gerais
+    // Desabilita/Habilita a opï¿½ï¿½o de Informaï¿½ï¿½es Gerais
     HabilitaInformacoesGerais;
 
-    // Desabilita/Habilita a opção de Suporte Remoto
+    // Desabilita/Habilita a opï¿½ï¿½o de Suporte Remoto
     HabilitaSuporteRemoto;
 
     InicializaTray;
   Except
     on E : Exception do
       Begin
-        objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS NA INICIALIZAÇÃO (1)');
+        objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS NA INICIALIZAï¿½ï¿½O (1)');
         Finaliza;
       End;
   End;
@@ -1249,13 +1249,13 @@ Begin
 
     if (boolNormal) then
       Begin
-        // Criando um indicador de finalização normal da aplicação,
-        // evitando que o chkSIS.exe baixe outra cópia do Agente Principal ao "achar" que o agente encontra-se com problema.
-        AssignFile(txtFileNormal,objCACIC.getLocalFolderName + 'normal_CACIC.txt'); {Associa o arquivo a uma variável do tipo TextFile}
+        // Criando um indicador de finalizaï¿½ï¿½o normal da aplicaï¿½ï¿½o,
+        // evitando que o chkSIS.exe baixe outra cï¿½pia do Agente Principal ao "achar" que o agente encontra-se com problema.
+        AssignFile(txtFileNormal,objCACIC.getLocalFolderName + 'normal_CACIC.txt'); {Associa o arquivo a uma variï¿½vel do tipo TextFile}
         {$IOChecks off}
         Reset(txtFileNormal); {Abre o arquivo texto}
         {$IOChecks on}
-        if (IOResult <> 0) then // Arquivo não existe, será recriado.
+        if (IOResult <> 0) then // Arquivo nï¿½o existe, serï¿½ recriado.
           Rewrite (txtFileNormal);
 
         Append(txtFileNormal);
@@ -1268,7 +1268,7 @@ Begin
       End;
   Except
     on E : Exception do
-      objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS NA FINALIZAÇÃO');
+      objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS NA FINALIZAï¿½ï¿½O');
   End;
   objCACIC.Free;
   Halt(0);
@@ -1287,19 +1287,19 @@ begin
      (boolCheckExecution    and
      (ActualActivity = 0) ) then
      Begin
-        // Caso exista o Gerente de Coletas será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
+        // Caso exista o Gerente de Coletas serï¿½ verificada a versï¿½o e excluï¿½da caso antiga(Uma forma de aï¿½ï¿½o prï¿½-ativa)
         if ChecaGERCOLS then
           Begin
             ChecaCONFIGS;
 
-            objCACIC.writeDebugLog('Invoca_GerCols: Invocando Gerente de Coletas com ação: "'+p_acao+'"');
+            objCACIC.writeDebugLog('Invoca_GerCols: Invocando Gerente de Coletas com aï¿½ï¿½o: "'+p_acao+'"');
 
             if boolShowInfo and not (p_acao = 'getTest') then
-              objCACIC.writeDebugLog('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
+              objCACIC.writeDebugLog('Invocando Gerente de Coletas com aï¿½ï¿½o: "'+p_acao+'"');
 
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_GerCols: Criando Processo GerCols => "'+objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + '"');
-            if ((p_acao = 'getTest') or (p_acao = 'getConfigs')) then //se for getTest, esperar a aplicação finalizar.
+            if ((p_acao = 'getTest') or (p_acao = 'getConfigs')) then //se for getTest, esperar a aplicaï¿½ï¿½o finalizar.
               objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE)
             else
               objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE);
@@ -1307,7 +1307,7 @@ begin
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
           End
         else
-          objCACIC.writeDailyLog('Não foi possível invocar o Gerente de Coletas!');
+          objCACIC.writeDailyLog('Nï¿½o foi possï¿½vel invocar o Gerente de Coletas!');
      End;
 end;
 
@@ -1316,7 +1316,7 @@ begin
   if (ActualActivity<>4) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then
     Invoca_MapaCacic
   else
-    MessageDlg(#13#13+'Módulo desabilitado!',mtInformation, [mbOK], 0);
+    MessageDlg(#13#13+'Mï¿½dulo desabilitado!',mtInformation, [mbOK], 0);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1329,19 +1329,18 @@ begin
      Begin
      if ChecaMAPACACIC then
      begin
-        // Caso exista o Mapa Cacic será verificada a versão e excluída caso antiga(Uma forma de ação pró-ativa)
+        // Caso exista o Mapa Cacic serï¿½ verificada a versï¿½o e excluï¿½da caso antiga(Uma forma de aï¿½ï¿½o prï¿½-ativa)
         if FileExists(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe') then
         Begin
           objCacic.writeDailyLog('Invoca_MapaCacic: Criando processo mapa.');
           objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
-          sleep(10000); //Pausa para dar tempo de realizar o login na máquina, senão o usuário fica em branco.
           if (objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_SHOW)) then
             objCacic.writeDailyLog('Invoca_MapaCacic: Processo criado.')
           else
             objCacic.writeDailyLog('Invoca_MapaCacic: Falha ao criar processo.');
         End
         else
-          objCACIC.writeDailyLog('Não foi possível invocar o Mapa Cacic!');
+          objCACIC.writeDailyLog('Nï¿½o foi possï¿½vel invocar o Mapa Cacic!');
         End;
      End;
 end;
@@ -1389,8 +1388,8 @@ begin
           timerCheckNoMinuto.Enabled := false;
           objCACIC.writeDebugLog('ExecutaCACIC: Preparando chamada ao Gerente de Coletas...');
 
-          // Se foi gerado o arquivo ger_erro.txt o Log conterá a mensagem alí gravada como valor de chave
-          // O Gerente de Coletas deverá ser eliminado para que seja baixado novamente por ChecaGERCOLS
+          // Se foi gerado o arquivo ger_erro.txt o Log conterï¿½ a mensagem alï¿½ gravada como valor de chave
+          // O Gerente de Coletas deverï¿½ ser eliminado para que seja baixado novamente por ChecaGERCOLS
           if (FileExists(objCACIC.getLocalFolderName + 'gererro.txt')) then
             Begin
               objCACIC.writeDailyLog('Gerente de Coletas eliminado devido a falha:');
@@ -1407,12 +1406,12 @@ begin
               SetaVariaveisGlobais;
             End;
 
-          objCACIC.writeDailyLog('Iniciando execução de atividades.');
+          objCACIC.writeDailyLog('Iniciando execuï¿½ï¿½o de atividades.');
 
           objCACIC.writeDebugLog('ExecutaCACIC: Primeira chamada ao Gerente de Coletas...');
           Invoca_GerCols('getConfigs');
 
-          sleep(3000); // Pausa para início do   Gerente de Coletas e criação do arquivo temp\aguarde_GER.txt
+          sleep(3000); // Pausa para inï¿½cio do   Gerente de Coletas e criaï¿½ï¿½o do arquivo temp\aguarde_GER.txt
 
           Application.ProcessMessages;
           InicializaTray;
@@ -1430,9 +1429,9 @@ begin
                 Invoca_MapaCacic;
           end;
 
-          // Pausas de 15 segundos para o caso de ser(em) baixada(s) nova(s) versão(ões) de GerCols e/ou Cacic280.
-          // Serão 4 tentativas por minuto
-          // Serão 30 minutos no máximo de tentativas, totalizando 120
+          // Pausas de 15 segundos para o caso de ser(em) baixada(s) nova(s) versï¿½o(ï¿½es) de GerCols e/ou Cacic280.
+          // Serï¿½o 4 tentativas por minuto
+          // Serï¿½o 30 minutos no mï¿½ximo de tentativas, totalizando 120
           intTentativas := 0;
           while (not Pode_Coletar and (intTentativas < 121)) do
             Begin
@@ -1442,7 +1441,7 @@ begin
               inc(intTentativas);
             End;
 
-          // Neste caso o Gerente de Coletas deverá fazer novo contato devido à permissão de criptografia ter sido colocada em espera pelo próximo contato.
+          // Neste caso o Gerente de Coletas deverï¿½ fazer novo contato devido ï¿½ permissï¿½o de criptografia ter sido colocada em espera pelo prï¿½ximo contato.
           if (intTentativas > 120) or
              (objCACIC.GetValueFromFile('Configs','CsCipher', strGerColsInfFileName) = '2') then
             Begin
@@ -1454,23 +1453,23 @@ begin
             End
           else
             Begin
-              // Caso tenha sido baixada nova cópia do Gerente de Coletas, esta deverá ser movida para cima da atual
+              // Caso tenha sido baixada nova cï¿½pia do Gerente de Coletas, esta deverï¿½ ser movida para cima da atual
               if (FileExists(objCACIC.getLocalFolderName + 'Temp\gercols.exe')) then
                 Begin
-                  objCACIC.writeDailyLog('Atualizando versão do Gerente de Coletas para '+objCACIC.getVersionInfo(objCACIC.getLocalFolderName + 'Temp\gercols.exe'));
-                  // O MoveFileEx não se deu bem no Win98!  :|
+                  objCACIC.writeDailyLog('Atualizando versï¿½o do Gerente de Coletas para '+objCACIC.getVersionInfo(objCACIC.getLocalFolderName + 'Temp\gercols.exe'));
+                  // O MoveFileEx nï¿½o se deu bem no Win98!  :|
                   // MoveFileEx(PChar(objCACIC.getLocalFolderName + 'Temp\gercols.exe'),PChar(objCACIC.getLocalFolderName + 'Modulos\gercols.exe'),MOVEFILE_REPLACE_EXISTING);
 
                   CopyFile(PChar(objCACIC.getLocalFolderName + 'Temp\gercols.exe'),PChar(objCACIC.getLocalFolderName + 'Modules\gercols.exe'),false);
-                  sleep(2000); // 2 segundos de espera pela cópia!  :) (Rwindows!)
+                  sleep(2000); // 2 segundos de espera pela cï¿½pia!  :) (Rwindows!)
 
                   objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\gercols.exe');
-                  sleep(2000); // 2 segundos de espera pela deleção!
+                  sleep(2000); // 2 segundos de espera pela deleï¿½ï¿½o!
 
-                  ExecutaCACIC(nil); // Forçará uma reexecução de GerCols...
+                  ExecutaCACIC(nil); // Forï¿½arï¿½ uma reexecuï¿½ï¿½o de GerCols...
                 End;
 
-              // Verifico se foi gravada alguma mensagem pelo Gerente de Coletas e mostro caso a configuração permita
+              // Verifico se foi gravada alguma mensagem pelo Gerente de Coletas e mostro caso a configuraï¿½ï¿½o permita
               v_mensagem := objCACIC.GetValueFromFile('Mensagens','TeMensagem', strGerColsInfFileName);
               if (v_mensagem <> '') and
                  (objCACIC.GetValueFromFile('Configs','InExibeErrosCriticos', strMainProgramInfFileName) = 'S') then
@@ -1483,37 +1482,37 @@ begin
                   MessageDlg(v_mensagem,v_MsgDlgType, [mbOk], 0);
                   objCACIC.setValueToFile('Mensagens','TeMensagem', '', strGerColsInfFileName);
                   objCACIC.setValueToFile('Mensagens','CsTipo'    , '', strGerColsInfFileName);
-                  // Para evitar uma reexecução de GerCols sem necessidade...
-                  intTentativas := 121; // Apenas para ajudar na condição seguinte
+                  // Para evitar uma reexecuï¿½ï¿½o de GerCols sem necessidade...
+                  intTentativas := 121; // Apenas para ajudar na condiï¿½ï¿½o seguinte
                 End;
 
-              // Verifico se TE_FILA_FTP foi setado (por GerCols) e obedeço ao intervalo para nova tentativa de coletas
-              // Caso TE_FILA_FTP inicie com # é porque já passou nessa condição e deve iniciar nova tentativa de FTP...
+              // Verifico se TE_FILA_FTP foi setado (por GerCols) e obedeï¿½o ao intervalo para nova tentativa de coletas
+              // Caso TE_FILA_FTP inicie com # ï¿½ porque jï¿½ passou nessa condiï¿½ï¿½o e deve iniciar nova tentativa de FTP...
               v_TE_FILA_FTP := objCACIC.GetValueFromFile('Configs','TeFilaFTP', strGerColsInfFileName);
               if (intTentativas <> 121) and
                  (Copy(v_TE_FILA_FTP,1,1) <> '#') and
                  (v_TE_FILA_FTP <> '0') and
                  (v_TE_FILA_FTP <> '') then
                 Begin
-                  // Busquei o número de milisegundos setados em TeFilaFTP e o obedeço...
+                  // Busquei o nï¿½mero de milisegundos setados em TeFilaFTP e o obedeï¿½o...
                   // 60.000 milisegundos correspondem a 60 segundos (1 minuto).
-                  // Acrescento 1, pois se for zero ele não executa.
+                  // Acrescento 1, pois se for zero ele nï¿½o executa.
                   timerNuExecApos.Enabled  := False;
                   timerNuExecApos.Interval := strtoint(v_TE_FILA_FTP) * 60000;
                   timerNuExecApos.Enabled  := True;
-                  objCACIC.writeDailyLog('FTP de coletores adiado pelo Módulo Gerente.');
+                  objCACIC.writeDailyLog('FTP de coletores adiado pelo Mï¿½dulo Gerente.');
                   objCACIC.writeDailyLog('Nova tentativa em aproximadamente ' + v_TE_FILA_FTP+ ' minuto(s).');
                   objCACIC.setValueToFile('Configs','TeFilaFTP','#' + v_TE_FILA_FTP, strGerColsInfFileName);
                 End;
 
-              // Desabilita/Habilita a opção de Informações Gerais
+              // Desabilita/Habilita a opï¿½ï¿½o de Informaï¿½ï¿½es Gerais
               HabilitaInformacoesGerais;
 
-              // Desabilita/Habilita a opção de Suporte Remoto
+              // Desabilita/Habilita a opï¿½ï¿½o de Suporte Remoto
               HabilitaSuporteRemoto;
 
-              // O loop 1 foi dedicado a atualizações de versões e afins...
-              // O loop 2 deverá invocar as coletas propriamente ditas...
+              // O loop 1 foi dedicado a atualizaï¿½ï¿½es de versï¿½es e afins...
+              // O loop 2 deverï¿½ invocar as coletas propriamente ditas...
               if (intTentativas <> 121) then
                 Begin
                   objCACIC.writeDebugLog('ExecutaCACIC: Iniciando Chamada para Coletas...');
@@ -1556,8 +1555,8 @@ end;
 
 procedure TFormularioGeral.ExibirConfiguracoes(Sender: TObject);
 begin
-  // SJI = Senha Já Informada...
-  // Esse valor é inicializado com "N"
+  // SJI = Senha Jï¿½ Informada...
+  // Esse valor ï¿½ inicializado com "N"
   if (objCACIC.deCrypt( objCACIC.GetValueFromFile('Configs','SJI',strMainProgramInfFileName))='') and
      (objCACIC.GetValueFromFile('Configs','WebManagerAddress',strChkSisInfFileName)<>'') then
     begin
@@ -1575,13 +1574,13 @@ begin
 end;
 
 //=======================================================================
-// Todo o código deste ponto em diante está relacionado às rotinas de
-// de inclusão do ícone do programa na bandeja do sistema
+// Todo o cï¿½digo deste ponto em diante estï¿½ relacionado ï¿½s rotinas de
+// de inclusï¿½o do ï¿½cone do programa na bandeja do sistema
 //=======================================================================
 procedure TFormularioGeral.InicializaTray;
 var v_strHint : String;
 begin
-    // g_intStatus receberá 0 -> NORMAL  ou  1 -> COLETAS  ou  3 -> srCACIC
+    // g_intStatus receberï¿½ 0 -> NORMAL  ou  1 -> COLETAS  ou  3 -> srCACIC
     g_intStatus := ActualActivity;
 
     // Monto a frase a ser colocada no Hint
@@ -1590,14 +1589,14 @@ begin
     if not (objCACIC.getValueFromTags('IPAddress',strWin32_NetworkAdapterConfiguration) = '') then
       v_strHint := v_strHint + chr(13) + chr(10) + 'IP: ' + objCACIC.getValueFromTags('IPAddress',strWin32_NetworkAdapterConfiguration);
 
-    // Mostro a versão no painel de Informações Gerais
+    // Mostro a versï¿½o no painel de Informaï¿½ï¿½es Gerais
 
 
     if (g_intStatus = NORMAL) then
       Begin
         if not (UpperCase(objCACIC.GetValueFromFile('Configs','ConexaoOK', strGerColsInfFileName)) = 'S') then
           Begin
-            v_strHint := v_strHint + '  IDENTIFICAÇÃO LOCAL...';
+            v_strHint := v_strHint + '  IDENTIFICAï¿½ï¿½O LOCAL...';
             g_intStatus := DESCONFIGURADO;
           End
         else
@@ -1609,7 +1608,7 @@ begin
         if g_intStatus = EM_SUPORTE then
           v_strHint := v_strHint + chr(13) + chr(10) + ' Em Suporte Remoto...'
         else if g_intStatus = COLETANDO then
-          v_strHint := v_strHint + chr(13) + chr(10) + ' Coletas em Execução...';
+          v_strHint := v_strHint + chr(13) + chr(10) + ' Coletas em Execuï¿½ï¿½o...';
         objCACIC.writeDebugLog('InicializaTray: v_strHint Depois = "'+v_strHint+'"');
       End;
 
@@ -1623,19 +1622,19 @@ begin
           imgIconList.GetIcon(g_intIconIndex,TrayIcon1.Icon);
           g_intStatusAnterior := g_intStatus;
           timerCheckNoMinuto.Enabled    := false;
-          timerCheckNoMinuto.Interval   := 5000; // Durante as coletas altero o timer verificador de ações para 5 segundos
+          timerCheckNoMinuto.Interval   := 5000; // Durante as coletas altero o timer verificador de aï¿½ï¿½es para 5 segundos
 
           objCACIC.writeDebugLog('InicializaTray: Status alterado para ' + intToStr(g_intStatus));
           if      (g_intStatus = COLETANDO)      then
             Begin
               Mnu_InformacoesGerais.Enabled := False;
               Mnu_ExecutarAgora.Enabled     := False;
-              Mnu_InformacoesGerais.Caption := 'Aguarde, coletas em ação!';
+              Mnu_InformacoesGerais.Caption := 'Aguarde, coletas em aï¿½ï¿½o!';
               Mnu_ExecutarAgora.Caption     := Mnu_InformacoesGerais.Caption;
             End
           else if (g_intStatus = DESCONFIGURADO) then
             Begin
-              objCACIC.writeDebugLog('InicializaTray: Setando Ícones para "Interroga" (intStatus=' + IntToStr(g_intStatus) + ')...');
+              objCACIC.writeDebugLog('InicializaTray: Setando ï¿½cones para "Interroga" (intStatus=' + IntToStr(g_intStatus) + ')...');
             End
           else if (g_intStatus = EM_SUPORTE)     then
             Begin
@@ -1646,14 +1645,14 @@ begin
             End
           else
             Begin
-              timerCheckNoMinuto.Interval   := 60000; // Restauro o timer verificador de ações para 1 minuto
+              timerCheckNoMinuto.Interval   := 60000; // Restauro o timer verificador de aï¿½ï¿½es para 1 minuto
 
               Mnu_InformacoesGerais.Caption := strMenuCaptionINF;
               Mnu_ExecutarAgora.Caption     := strMenuCaptionEXE;
               Mnu_InformacoesGerais.Enabled := true;
               Mnu_ExecutarAgora.Enabled     := true;
 
-              objCACIC.writeDebugLog('InicializaTray: Setando Ícones para "Normal" (intStatus=' + IntToStr(g_intStatus) + ')...');
+              objCACIC.writeDebugLog('InicializaTray: Setando ï¿½cones para "Normal" (intStatus=' + IntToStr(g_intStatus) + ')...');
             End;
 
           objCACIC.writeDebugLog('InicializaTray: Setando o HINT do Systray para: "'+v_strHint+'"');
@@ -1663,13 +1662,13 @@ begin
 
         if (objCACIC.GetValueFromFile('Configs','InExibeBandeja', strMainProgramInfFileName) <> 'N') Then
            Begin
-             objCACIC.writeDebugLog('InicializaTray: Exibe/Renova Ícone do Systray...');
+             objCACIC.writeDebugLog('InicializaTray: Exibe/Renova ï¿½cone do Systray...');
              imgIconList.GetIcon(g_intStatus,TrayIcon1.Icon);
              TrayIcon1.Show;
            End
         else
            Begin
-             objCACIC.writeDebugLog('InicializaTray: Inibe Ícone do Systray...');
+             objCACIC.writeDebugLog('InicializaTray: Inibe ï¿½cone do Systray...');
              TrayIcon1.Hide;
            End;
       End
@@ -1695,22 +1694,22 @@ begin
     FormularioGeral.Visible:=false;
     if (objCACIC.GetValueFromFile('Configs','InExibeBandeja', strMainProgramInfFileName) = 'N') Then
       Begin
-        objCACIC.writeDebugLog('MinimizaParaTrayArea: Escondendo o ícone');
+        objCACIC.writeDebugLog('MinimizaParaTrayArea: Escondendo o ï¿½cone');
         TrayIcon1.Hide
       End
     else
       Begin
-        objCACIC.writeDebugLog('MinimizaParaTrayArea: Mostrando o ícone');
+        objCACIC.writeDebugLog('MinimizaParaTrayArea: Mostrando o ï¿½cone');
         TrayIcon1.Show;
       End;
 end;
 // -------------------------------------
-// Fim dos códigos da bandeja do sistema
+// Fim dos cï¿½digos da bandeja do sistema
 // -------------------------------------
 
 procedure TFormularioGeral.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-   // Esse evento é colocado em Nil durante o shutdown do windows.
+   // Esse evento ï¿½ colocado em Nil durante o shutdown do windows.
    // Ver o evento WMQueryEndSession.
    CanClose := False;
    MinimizaParaTrayArea(Nil);
@@ -1718,8 +1717,8 @@ end;
 
 procedure TFormularioGeral.WMQueryEndSession(var Msg: TWMQueryEndSession);
 begin
-   objCACIC.writeDailyLog('Windows em processo de finalização!');
-   // Quando há um shutdown do windows em execução, libera o close.
+   objCACIC.writeDailyLog('Windows em processo de finalizaï¿½ï¿½o!');
+   // Quando hï¿½ um shutdown do windows em execuï¿½ï¿½o, libera o close.
    OnCloseQuery := Nil;
    Msg.Result   := 1;
    Finaliza(true);
@@ -1748,7 +1747,7 @@ begin
     ST_VL_WinsPrimario.Caption    := objCACIC.getValueFromTags('WINSPrimaryServer'    ,strWin32_NetworkAdapterConfiguration);
     ST_VL_WinsSecundario.Caption  := objCACIC.getValueFromTags('WINSSecondaryServer'  ,strWin32_NetworkAdapterConfiguration);
 
-    // Exibição das informações de Sistemas Monitorados...
+    // Exibiï¿½ï¿½o das informaï¿½ï¿½es de Sistemas Monitorados...
     v_conta_perfis := 1;
     v_conta_infos_coletadas := 0;
     v_tripa_perfis := '*';
@@ -1764,7 +1763,7 @@ begin
           Begin
             v_array_perfis := objCACIC.explode(v_tripa_perfis,',');
 
-            // ATENÇÃO!!! Antes da implementação de INFORMAÇÕES GERAIS o Count ia até 11, ok?!
+            // ATENï¿½ï¿½O!!! Antes da implementaï¿½ï¿½o de INFORMAï¿½ï¿½ES GERAIS o Count ia atï¿½ 11, ok?!
             if (v_array_perfis.Count > 11) and (v_array_perfis[11]='S') then
               Begin
                 v_tripa_infos_coletadas := objCACIC.deCrypt( objCACIC.GetValueFromFile('Collects','ColMoni_Atual', strGerColsInfFileName));
@@ -1806,7 +1805,7 @@ begin
       Begin
         if (copy(strAux,0,8) = FormatDateTime('yyyymmdd', Date)) then
           Begin
-            // Vamos reaproveitar algumas variáveis!...
+            // Vamos reaproveitar algumas variï¿½veis!...
 
             v_array_perfis := objCACIC.explode(strAux,'#');
             for intAux := 1 to v_array_perfis.Count-1 Do
@@ -1825,7 +1824,7 @@ begin
                     v_array_infos_coletadas[3] := v_array_infos_coletadas[2];
                   End;
 
-                // Códigos Possíveis: -1 : Problema no Envio da Coleta
+                // Cï¿½digos Possï¿½veis: -1 : Problema no Envio da Coleta
                 //                     1 : Coleta Enviada
                 //                     0 : Sem Coleta para Envio
                 strAux := IfThen(v_array_infos_coletadas[3]='1','Coleta Enviada ao Gerente WEB!',
@@ -1841,7 +1840,7 @@ begin
     else
       Begin
         listSistemasMonitorados.Items.Add;
-        listSistemasMonitorados.Items[0].Caption := 'Não Há Coletas Registradas Nesta Data';
+        listSistemasMonitorados.Items[0].Caption := 'Nï¿½o Hï¿½ Coletas Registradas Nesta Data';
       End;
 
    strConfigsPatrimonio      := objCACIC.GetValueFromFile('Patrimonio','Configs', strMainProgramInfFileName);
@@ -1963,7 +1962,7 @@ procedure TFormularioGeral.Bt_Fechar_InfosGeraisClick(Sender: TObject);
   end;
 
 
-// Solução baixada de http://www.delphidabbler.com/codesnip.php?action=named&routines=URLDecode&showsrc=1
+// Soluï¿½ï¿½o baixada de http://www.delphidabbler.com/codesnip.php?action=named&routines=URLDecode&showsrc=1
 function TFormularioGeral.URLDecode(const S: string): string;
 var
   Idx: Integer;   // loops thru chars in string
@@ -2021,15 +2020,15 @@ var strXML,
 begin
 
   // **********************************************************************************************************
-  // Esta procedure tratará os comandos e suas ações, enviados em um pacote XML na requisição, conforme abaixo:
+  // Esta procedure tratarï¿½ os comandos e suas aï¿½ï¿½es, enviados em um pacote XML na requisiï¿½ï¿½o, conforme abaixo:
   // **********************************************************************************************************
-  // Execute  -> Comando que forçará a execução do Gerente de Coletas (Sugestão: Configurar coletas forçadas no Gerente WEB e executar esse comando)
-  //             Requisição: Tag <Execute>
+  // Execute  -> Comando que forï¿½arï¿½ a execuï¿½ï¿½o do Gerente de Coletas (Sugestï¿½o: Configurar coletas forï¿½adas no Gerente WEB e executar esse comando)
+  //             Requisiï¿½ï¿½o: Tag <Execute>
   //             Respostas:  AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK'
   //
-  // Ask      -> Comando que perguntará sobre a existência de um determinado arquivo na estação.
-  //             Requisição: Tag <FileName>: Nome do arquivo a pesquisar no repositório local
-  //                         Tag <FileHash>: Hash referente ao arquivo a ser pesquisado no repositório local
+  // Ask      -> Comando que perguntarï¿½ sobre a existï¿½ncia de um determinado arquivo na estaï¿½ï¿½o.
+  //             Requisiï¿½ï¿½o: Tag <FileName>: Nome do arquivo a pesquisar no repositï¿½rio local
+  //                         Tag <FileHash>: Hash referente ao arquivo a ser pesquisado no repositï¿½rio local
   //             Respostas:  AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'Tenho' ou
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'NaoTenho' ou
@@ -2037,38 +2036,38 @@ begin
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'Ocupado'.
   //
   //
-  // Erase    -> Comando que provocará a exclusão de determinado arquivo.
-  //             Deverá ser acompanhado das tags <FileName> e <FileHash>
-  //             Requisição: Tag <FileName>: Nome do arquivo a ser excluído do repositório local
-  //                         Tag <FileHash>: Hash referente ao arquivo a ser excluído do repositório local
+  // Erase    -> Comando que provocarï¿½ a exclusï¿½o de determinado arquivo.
+  //             Deverï¿½ ser acompanhado das tags <FileName> e <FileHash>
+  //             Requisiï¿½ï¿½o: Tag <FileName>: Nome do arquivo a ser excluï¿½do do repositï¿½rio local
+  //                         Tag <FileHash>: Hash referente ao arquivo a ser excluï¿½do do repositï¿½rio local
   //             Respostas:  AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'AcaoExecutada' ou
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'ArquivoNaoEncontrado' ou
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'EscritaNaoPermitida';
   //
-  // Registry -> Comando que provocará ação no Registry de estações com MS-Windows.
-  //             Deverá ser acompanhado das tags <Path>, <Action>, <Condition> e <Value>
-  //             Requisição: Tag <Path>      : Caminho no Registry
-  //                         Tag <Action>    : Ação para execução
-  //                                           SAVE   => Salva o valor contido na tag <Value> de acordo com condição contida na tag <Condition>
-  //                                           ERASE  => Apaga a chave de acordo com condição contida na tag <Condition>
-  //                         Tag <Condition> : Condiçção para execução da ação
+  // Registry -> Comando que provocarï¿½ aï¿½ï¿½o no Registry de estaï¿½ï¿½es com MS-Windows.
+  //             Deverï¿½ ser acompanhado das tags <Path>, <Action>, <Condition> e <Value>
+  //             Requisiï¿½ï¿½o: Tag <Path>      : Caminho no Registry
+  //                         Tag <Action>    : Aï¿½ï¿½o para execuï¿½ï¿½o
+  //                                           SAVE   => Salva o valor contido na tag <Value> de acordo com condiï¿½ï¿½o contida na tag <Condition>
+  //                                           ERASE  => Apaga a chave de acordo com condiï¿½ï¿½o contida na tag <Condition>
+  //                         Tag <Condition> : Condiï¿½ï¿½ï¿½o para execuï¿½ï¿½o da aï¿½ï¿½o
   //                                           EQUAL  => Se o valor contido na tag <Value> for IGUAL     ao valor encontrado na chave
   //                                           DIFFER => Se o valor contido na tag <Value> for DIFERENTE ao valor encontrado na chave
-  //                                           NONE   => Nenhuma condição, permitindo a execução da ação de forma incondicional
-  //                         Tag <Value>     : Valor a ser utilizado na ação
+  //                                           NONE   => Nenhuma condiï¿½ï¿½o, permitindo a execuï¿½ï¿½o da aï¿½ï¿½o de forma incondicional
+  //                         Tag <Value>     : Valor a ser utilizado na aï¿½ï¿½o
   //             Respostas:  AResponseinfo.ContentText := AResponseinfo.ContentText + 'OK';
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'AcaoExecutada' ou
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'ChaveNaoEncontrada' ou
   //                         AResponseinfo.ContentText := AResponseinfo.ContentText + 'EscritaNaoPermitida';
   //
-  // Exit     -> Comando para finalização do agente principal (bandeja)
+  // Exit     -> Comando para finalizaï¿½ï¿½o do agente principal (bandeja)
 
-  // Palavra Chave definida por GerCols, enviada e armazenada no BD. A autenticação da comunicação é baseada na verificação deste valor.
-  // A geração da palavra chave dar-se-á a cada contato do GerCols com o módulo Gerente WEB
+  // Palavra Chave definida por GerCols, enviada e armazenada no BD. A autenticaï¿½ï¿½o da comunicaï¿½ï¿½o ï¿½ baseada na verificaï¿½ï¿½o deste valor.
+  // A geraï¿½ï¿½o da palavra chave dar-se-ï¿½ a cada contato do GerCols com o mï¿½dulo Gerente WEB
   // te_palavra_chave -> <TE_PALAVRA_CHAVE>
 
-  // Tratamento da requisição http...
+  // Tratamento da requisiï¿½ï¿½o http...
   strXML := URLDecode(ARequestInfo.UnparsedParams);
   intAux := Pos('=',strXML);
   strXML := copy(strXML,(intAux+1),StrLen(PAnsiChar(strXML))-intAux);
@@ -2076,11 +2075,11 @@ begin
 
 
 
-  // Autenticação e tratamento da requisição
+  // Autenticaï¿½ï¿½o e tratamento da requisiï¿½ï¿½o
   if (objCACIC.xmlGetValue('te_palavra_chave',strXML) = objCACIC.getValueMemoryData('Configs.te_palavra_chave',v_tstrCipherOpened)) then
     Begin
       strCmd := objCACIC.xmlGetValue('cmd',strXML);
-      // As ações terão seus valores
+      // As aï¿½ï¿½es terï¿½o seus valores
 
       if (strCmd = 'Execute')   or
          (strCmd = 'Ask')       or
@@ -2089,10 +2088,10 @@ begin
          (strCmd = 'Exit')      then
           AResponseinfo.ContentText := 'OK'
       else
-        AResponseinfo.ContentText := 'COMANDO NÃO RECONHECIDO!';
+        AResponseinfo.ContentText := 'COMANDO Nï¿½O RECONHECIDO!';
     End
   else
-    AResponseinfo.ContentText := 'ACESSO NÃO PERMITIDO!';
+    AResponseinfo.ContentText := 'ACESSO Nï¿½O PERMITIDO!';
 
   if      (strCmd = 'Execute')  then
       ExecutaCACIC(nil)
@@ -2140,10 +2139,10 @@ if (pStrRCAction = '') then
 else
   Begin
     tstrActions := objCACIC.explode(pStrRCAction,'[FIELD]');
-    if (AnsiPos('OSCE_DEBUG'           ,tstrActions[1]) = 0) and  // Não informo sobre as ações temporárias do OfficeScan (vide docs.trendmicro.com -> HotFix 1197)
-       (AnsiPos('ck_conexao.'          ,tstrActions[1]) = 0) and  // Não informo sobre as ações com o arquivo de controle de conexao do srCACICsrv
-       (AnsiPos(objCACIC.getLocalFolderName,tstrActions[1]) = 0) and  // Não informo sobre as ações de rotina na pasta do CACIC
-       (trim(tstrActions[1])                          <> '') then // Não informo caso o parâmetro 1 (origem) esteja vazio
+    if (AnsiPos('OSCE_DEBUG'           ,tstrActions[1]) = 0) and  // Nï¿½o informo sobre as aï¿½ï¿½es temporï¿½rias do OfficeScan (vide docs.trendmicro.com -> HotFix 1197)
+       (AnsiPos('ck_conexao.'          ,tstrActions[1]) = 0) and  // Nï¿½o informo sobre as aï¿½ï¿½es com o arquivo de controle de conexao do srCACICsrv
+       (AnsiPos(objCACIC.getLocalFolderName,tstrActions[1]) = 0) and  // Nï¿½o informo sobre as aï¿½ï¿½es de rotina na pasta do CACIC
+       (trim(tstrActions[1])                          <> '') then // Nï¿½o informo caso o parï¿½metro 1 (origem) esteja vazio
       Begin
         objCACIC.writeDebugLog('CheckRCActions: ' + pStrRCAction);
         strRCActionsAux2 := objCACIC.getValueFromFile('srCACICcli','m_idConexao',objCACIC.getLocalFolderName + 'Temp\ck_conexao.ini');
@@ -2169,17 +2168,17 @@ var v_strTeSO,
 begin
   if boolServerON then // Ordeno ao SrCACICsrv que auto-finalize
     Begin
-      // Desligando a captura de ações
+      // Desligando a captura de aï¿½ï¿½es
       CN.Stop;
 
-      objCACIC.writeDailyLog('Desativando o Módulo de Suporte Remoto Seguro.');
+      objCACIC.writeDailyLog('Desativando o Mï¿½dulo de Suporte Remoto Seguro.');
 
       objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe -kill',false,SW_HIDE);
       objCacic.setBoolCipher(not objCacic.isInDebugMode);
-      // Bloqueio o módulo de suporte remoto seguro na FireWall nativa.
+      // Bloqueio o mï¿½dulo de suporte remoto seguro na FireWall nativa.
       objCACIC.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe', false);
 
-      Sleep(3000); // Pausa para liberação do aguarde_srCACIC.txt
+      Sleep(3000); // Pausa para liberaï¿½ï¿½o do aguarde_srCACIC.txt
 
       CheckRCActions;
 
@@ -2211,13 +2210,13 @@ begin
       v_strNuPortaSR     := trim(objCACIC.deCrypt( objCACIC.GetValueFromFile('Configs','NuPortaSrCacic'                     , strMainProgramInfFileName)));
       v_strNuTimeOutSR   := trim(objCACIC.GetValueFromFile('Configs','NuTimeOutSrCacic'                   , strMainProgramInfFileName));
 
-      // Detectar versão do Windows antes de fazer a chamada seguinte...
+      // Detectar versï¿½o do Windows antes de fazer a chamada seguinte...
       try
         AssignFile(fileAguarde,objCACIC.getLocalFolderName + 'Temp\aguarde_srCACIC.txt');
         {$IOChecks off}
         Reset(fileAguarde); {Abre o arquivo texto}
         {$IOChecks on}
-        if (IOResult <> 0) then // Arquivo não existe, será recriado.
+        if (IOResult <> 0) then // Arquivo nï¿½o existe, serï¿½ recriado.
           begin
             Rewrite (fileAguarde);
             Append(fileAguarde);
@@ -2228,11 +2227,11 @@ begin
       Finally
       End;
 
-      objCACIC.writeDebugLog('Mnu_SuporteRemotoClick: Verificando validade do módulo srCACICsrv para chamada!');
+      objCACIC.writeDebugLog('Mnu_SuporteRemotoClick: Verificando validade do mï¿½dulo srCACICsrv para chamada!');
 
       objCACIC.writeDebugLog('Mnu_SuporteRemotoClick: objCACIC.getFileHash('+objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe'+') = "'+objCACIC.getFileHash(objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe'+'"'));
 
-      // Executarei o srCACICsrv após batimento do HASHCode
+      // Executarei o srCACICsrv apï¿½s batimento do HASHCode
       if (objCACIC.getFileHash(objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe') = objCACIC.deCrypt( objCACIC.GetValueFromFile('Hash-Codes','SRCACICSRV.EXE', strChkSisInfFileName),false,true))  then
         Begin
           objCACIC.writeDebugLog('Mnu_SuporteRemotoClick: Invocando (Criptografado)"'+objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe -start [' + objCACIC.getWebManagerAddress                                                                                                     + ']' +
@@ -2251,7 +2250,7 @@ begin
                                                                                                                                                 '[' + v_strNuPortaSR                                                                                                                                   + ']' +
                                                                                                                                                 '[' + v_strNuTimeOutSR                                                                                                                                 + ']');
 
-          // Libero o módulo de suporte remoto seguro na FireWall nativa.
+          // Libero o mï¿½dulo de suporte remoto seguro na FireWall nativa.
           objCACIC.addApplicationToFirewall('srCACIC - Suporte Remoto Seguro do Sistema CACIC',objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe', true);
 
           objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe -start [' + objCACIC.getWebManagerAddress                                                                                                                                                      + ']' +
@@ -2262,19 +2261,19 @@ begin
                                                                                                 '[' + v_strNuPortaSR                                                                                                                                                                                 + ']' +
                                                                                                 '[' + v_strNuTimeOutSR                                                                                                                                                                               + ']',false,SW_NORMAL);
           tstrAux.Free;
-          Sleep(3000); // Pausa para criação do aguarde_srCACIC.txt
+          Sleep(3000); // Pausa para criaï¿½ï¿½o do aguarde_srCACIC.txt
           objCACIC.setBoolCipher(not objCACIC.isInDebugMode);          
           InicializaTray;
 
-          // Ligando a captura de ações
+          // Ligando a captura de aï¿½ï¿½es
           CN.Execute;
 
           BoolServerON := true;
         End
       else
         Begin
-          objCACIC.writeDailyLog('Execução de srCACICsrv impedida por falta de integridade!');
-          objCACIC.writeDailyLog('Providenciando nova cópia.');
+          objCACIC.writeDailyLog('Execuï¿½ï¿½o de srCACICsrv impedida por falta de integridade!');
+          objCACIC.writeDailyLog('Providenciando nova cï¿½pia.');
           objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Modules\srcacicsrv.exe');
           Invoca_GerCols('recuperaSR');
           intPausaRecupera := 0;
@@ -2333,26 +2332,26 @@ end;
 
 procedure TFormularioGeral.CheckIfDownloadedVersion;
 Begin
-  objCACIC.writeDebugLog('CheckIfDownloadedVersion: Verificando existência de nova versão baixada do Agente Principal...');
+  objCACIC.writeDebugLog('CheckIfDownloadedVersion: Verificando existï¿½ncia de nova versï¿½o baixada do Agente Principal...');
 
-  // Caso tenha sido baixada nova cópia do Agente Principal, esta deverá ser movida para cima da atual pelo Gerente de Coletas...
+  // Caso tenha sido baixada nova cï¿½pia do Agente Principal, esta deverï¿½ ser movida para cima da atual pelo Gerente de Coletas...
   if (FileExists(objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName)) then
     Begin
-      objCACIC.writeDebugLog('CheckIfDownloadedVersion: Hash Code de Executável("'+objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName+'") = "' + objCACIC.getFileHash(objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName) + '"');
-      objCACIC.writeDebugLog('CheckIfDownloadedVersion: Hash Code Desejável     = "' + objCACIC.deCrypt( objCACIC.GetValueFromFile('Hash-Codes', objCACIC.getMainProgramName,strChkSisInfFileName),false,true) + '"');
+      objCACIC.writeDebugLog('CheckIfDownloadedVersion: Hash Code de Executï¿½vel("'+objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName+'") = "' + objCACIC.getFileHash(objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName) + '"');
+      objCACIC.writeDebugLog('CheckIfDownloadedVersion: Hash Code Desejï¿½vel     = "' + objCACIC.deCrypt( objCACIC.GetValueFromFile('Hash-Codes', objCACIC.getMainProgramName,strChkSisInfFileName),false,true) + '"');
       if (objCACIC.deCrypt( objCACIC.GetValueFromFile('Hash-Codes',objCACIC.getMainProgramName, strChkSisInfFileName),false,true)  = objCACIC.getFileHash(objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName)) then  //AutoUpdate!
         Begin
-          objCACIC.writeDebugLog('CheckIfDownloadedVersion: Encontrei a nova versão em '+objCACIC.getLocalFolderName + 'Temp\');
+          objCACIC.writeDebugLog('CheckIfDownloadedVersion: Encontrei a nova versï¿½o em '+objCACIC.getLocalFolderName + 'Temp\');
           if (objCACIC.getFileHash(objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName) = objCACIC.getFileHash(objCACIC.getLocalFolderName + objCACIC.getMainProgramName)) then
             Begin
-              objCACIC.writeDebugLog('CheckIfDownloadedVersion: Os hashs codes entre '+objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName + ' e ' + objCACIC.getLocalFolderName + objCACIC.getMainProgramName + ' são iguais!');
+              objCACIC.writeDebugLog('CheckIfDownloadedVersion: Os hashs codes entre '+objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName + ' e ' + objCACIC.getLocalFolderName + objCACIC.getMainProgramName + ' sï¿½o iguais!');
               objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName)
             End
           else
             Begin
-              objCACIC.writeDebugLog('CheckIfDownloadedVersion: Os hashs codes entre '+objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName + ' e ' + objCACIC.getLocalFolderName + objCACIC.getMainProgramName + ' são diferentes!');
-              objCACIC.writeDailyLog('Versão Nova de '+objCACIC.getMainProgramName+' Encontrada. ('+objCACIC.GetVersionInfo(objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName)+')');
-              objCACIC.writeDailyLog('Finalizando para Auto-Atualização.');
+              objCACIC.writeDebugLog('CheckIfDownloadedVersion: Os hashs codes entre '+objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName + ' e ' + objCACIC.getLocalFolderName + objCACIC.getMainProgramName + ' sï¿½o diferentes!');
+              objCACIC.writeDailyLog('Versï¿½o Nova de '+objCACIC.getMainProgramName+' Encontrada. ('+objCACIC.GetVersionInfo(objCACIC.getLocalFolderName + 'Temp\' + objCACIC.getMainProgramName)+')');
+              objCACIC.writeDailyLog('Finalizando para Auto-Atualizaï¿½ï¿½o.');
               CopyFile(PChar(objCACIC.getLocalFolderName + 'aguarde_CACIC.txt'),PChar(objCACIC.getLocalFolderName + 'Temp\atualiza_CACIC.txt'),false);
               Finaliza(false);
             End;
@@ -2566,8 +2565,8 @@ begin
             objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\ck_conexao.ini');
             FormularioGeral.ExecutaCACIC(nil);
           End;
-        objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Verificando existência de nova versão de CACICservice para atualização');
-        // Verificação de existência de nova versão do CACICservice para substituição e execução
+        objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Verificando existï¿½ncia de nova versï¿½o de CACICservice para atualizaï¿½ï¿½o');
+        // Verificaï¿½ï¿½o de existï¿½ncia de nova versï¿½o do CACICservice para substituiï¿½ï¿½o e execuï¿½ï¿½o
         if FileExists(objCACIC.getLocalFolderName + 'Temp\cacicservice.exe') then
           Begin
             objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Eliminando "'+objCACIC.getWinDir + 'cacicservice.exe"');
@@ -2577,21 +2576,21 @@ begin
 
             if not FileExists(objCACIC.getWinDir + 'cacicservice.exe') then
               Begin
-                objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Eliminação OK! Movendo "'+objCACIC.getLocalFolderName + 'Temp\cacicservice.exe" para "'+objCACIC.getWinDir + 'cacicservice.exe"');
+                objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Eliminaï¿½ï¿½o OK! Movendo "'+objCACIC.getLocalFolderName + 'Temp\cacicservice.exe" para "'+objCACIC.getWinDir + 'cacicservice.exe"');
                 MoveFile(PChar(objCACIC.getLocalFolderName + 'Temp\cacicservice.exe'),PChar(objCACIC.getWinDir + 'cacicservice.exe'));
                 sleep(2000);
 
                 FormularioGeral.ServiceStart('','CacicSustainService');
               End
             else
-              objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Impossível Eliminar "'+objCACIC.getWinDir + 'cacicservice.exe"');
+              objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Impossï¿½vel Eliminar "'+objCACIC.getWinDir + 'cacicservice.exe"');
           End;
       End;
   Finally
     g_intTaskBarAtual  := FindWindow('Shell_TrayWnd', Nil);
     g_intDesktopWindow := FormularioGeral.getDesktopWindowHandle;
 
-    objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Valores para Condição de Redesenho do ícone no SysTRAY...');
+    objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Valores para Condiï¿½ï¿½o de Redesenho do ï¿½cone no SysTRAY...');
     objCACIC.writeDebugLog('timerCheckNoMinutoTimer: g_intTaskBarAnterior : ' + IntToStr(g_intTaskBarAnterior));
     objCACIC.writeDebugLog('timerCheckNoMinutoTimer: g_intTaskBarAtual : ' + IntToStr(g_intTaskBarAtual));
     objCACIC.writeDebugLog('timerCheckNoMinutoTimer: g_intDesktopWindow : ' + IntToStr(g_intDesktopWindow));
@@ -2604,7 +2603,7 @@ begin
       Begin
         objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Invocando InicializaTray...');
         if ((g_intTaskBarAnterior = 0) and (g_intTaskBarAtual > 0)) then
-          g_intStatusAnterior := -1; // Para forçar o redesenho no systray
+          g_intStatusAnterior := -1; // Para forï¿½ar o redesenho no systray
 
         FormularioGeral.InicializaTray;
       End;
@@ -2647,7 +2646,7 @@ begin
  ARect.Left := LEFT_MENU_ITEM;
  ACanvas.FillRect(ARect);
 
- DrawText(ACanvas.Handle, PChar('Configurações'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
+ DrawText(ACanvas.Handle, PChar('Configuraï¿½ï¿½es'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
 end;
 
 procedure TFormularioGeral.Mnu_ExecutarAgoraDrawItem(Sender: TObject;
@@ -2675,7 +2674,7 @@ begin
  ARect.Left := LEFT_MENU_ITEM;
  ACanvas.FillRect(ARect);
 
- DrawText(ACanvas.Handle, PChar('Informações Gerais'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
+ DrawText(ACanvas.Handle, PChar('Informaï¿½ï¿½es Gerais'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
 end;
 
 procedure TFormularioGeral.Mnu_SuporteRemotoDrawItem(Sender: TObject;
@@ -2734,7 +2733,7 @@ begin
         // it will fail because it no longer exists when the explorer restarts.
         on E:Exception do
           Begin
-            objCACIC.writeExceptionLog(E.Message,e.ClassName,'ApplicationEvents1Message - Liberando Systray Icon para recriação');
+            objCACIC.writeExceptionLog(E.Message,e.ClassName,'ApplicationEvents1Message - Liberando Systray Icon para recriaï¿½ï¿½o');
           End;
       end;
       TrayIcon1           := TTrayIcon.Create(self);
