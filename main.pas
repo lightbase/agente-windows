@@ -1313,8 +1313,17 @@ end;
 
 procedure TFormularioGeral.InvocaMapa1Click(Sender: TObject);
 begin
-  if (ActualActivity<>4) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then
+  if (ActualActivity=0) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then
     Invoca_MapaCacic
+  else if(ActualActivity <> 0) then
+  begin
+    if ActualActivity = 1 then
+      MessageDlg(#13#13+'Coleta em execução!',mtInformation, [mbOK], 0);
+    if ActualActivity = 3 then
+      MessageDlg(#13#13+'Cacic sendo executado em suporte remoto!',mtInformation, [mbOK], 0);
+    if ActualActivity = 4 then
+      MessageDlg(#13#13+'Mapa já está em execução!',mtInformation, [mbOK], 0);
+  end
   else
     MessageDlg(#13#13+'Módulo desabilitado!',mtInformation, [mbOK], 0);
 end;
@@ -1334,16 +1343,15 @@ begin
         Begin
           objCacic.writeDailyLog('Invoca_MapaCacic: Criando processo mapa.');
           objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
-          sleep(10000); //Pausa para dar tempo de realizar o login na máquina, senão o usuário fica em branco.
           if (objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_SHOW)) then
             objCacic.writeDailyLog('Invoca_MapaCacic: Processo criado.')
           else
             objCacic.writeDailyLog('Invoca_MapaCacic: Falha ao criar processo.');
         End
-        else
-          objCACIC.writeDailyLog('Não foi possível invocar o Mapa Cacic!');
-        End;
+     else
+     objCACIC.writeDailyLog('Não foi possível invocar o Mapa Cacic!');
      End;
+  End;
 end;
 
 function TFormularioGeral.FindWindowByTitle(WindowTitle: string): Hwnd;

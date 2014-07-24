@@ -2,7 +2,7 @@ object frmMapaCacic: TfrmMapaCacic
   Left = 274
   Top = 200
   Caption = 'Mapa Cacic'
-  ClientHeight = 448
+  ClientHeight = 461
   ClientWidth = 789
   Color = clBtnFace
   TransparentColorValue = clBtnFace
@@ -92,12 +92,12 @@ object frmMapaCacic: TfrmMapaCacic
   OnKeyDown = FormKeyDown
   DesignSize = (
     789
-    448)
+    461)
   PixelsPerInch = 96
   TextHeight = 13
   object edWebManagerAddress: TLabel
     Left = 155
-    Top = 426
+    Top = 439
     Width = 500
     Height = 14
     Anchors = [akBottom]
@@ -108,10 +108,11 @@ object frmMapaCacic: TfrmMapaCacic
     Font.Name = 'Arial'
     Font.Style = [fsBold]
     ParentFont = False
+    ExplicitTop = 426
   end
   object lbWebManagerAddress: TLabel
     Left = 3
-    Top = 429
+    Top = 442
     Width = 153
     Height = 13
     Anchors = [akLeft, akBottom]
@@ -123,10 +124,11 @@ object frmMapaCacic: TfrmMapaCacic
     Font.Name = 'Arial'
     Font.Style = []
     ParentFont = False
+    ExplicitTop = 429
   end
   object pnVersao: TPanel
     Left = 683
-    Top = 420
+    Top = 433
     Width = 105
     Height = 20
     Anchors = [akRight, akBottom]
@@ -139,12 +141,13 @@ object frmMapaCacic: TfrmMapaCacic
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 0
+    ExplicitTop = 420
   end
   object gbInformacoesSobreComputador: TGroupBox
     Left = 1
-    Top = 58
+    Top = 62
     Width = 780
-    Height = 361
+    Height = 374
     Anchors = []
     Caption = 
       ' Informa'#231#245'es sobre localiza'#231#227'o f'#237'sica e patrimonial deste comput' +
@@ -158,7 +161,7 @@ object frmMapaCacic: TfrmMapaCacic
     TabOrder = 1
     DesignSize = (
       780
-      361)
+      374)
     object lbEtiqueta3: TLabel
       Left = 107
       Top = 82
@@ -166,7 +169,7 @@ object frmMapaCacic: TfrmMapaCacic
       Height = 13
       Hint = 'Insira o n'#250'mero do patrim'#244'nio do monitor, se o tiver.'
       AutoSize = False
-      Caption = 'Monitor 1'
+      Caption = 'Patrim'#244'nio do Monitor Principal'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -184,7 +187,7 @@ object frmMapaCacic: TfrmMapaCacic
       Height = 13
       Hint = 'Insira o n'#250'mero do patrim'#244'nio do segundo monitor, se o tiver.'
       AutoSize = False
-      Caption = 'Monitor 2'
+      Caption = 'Patrim'#244'nio do Monitor Secund'#225'rio'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
@@ -456,24 +459,30 @@ object frmMapaCacic: TfrmMapaCacic
       Left = 3
       Top = 231
       Width = 774
-      Height = 58
+      Height = 83
       Caption = 'Termo de Responsabilidade'
       TabOrder = 9
       object rdConcordaTermos: TRadioButton
-        Left = 24
-        Top = 24
-        Width = 553
-        Height = 17
+        Left = 16
+        Top = 16
+        Width = 737
+        Height = 57
+        BiDiMode = bdLeftToRight
         Caption = 
-          'Declaro minha responsabilidade pelas informa'#231#245'es e pelo(s) equip' +
-          'amento(s) cadastrado(s).'
+          'Declaro minha responsabilidade pelas informa'#231#245'es prestadas, pelo' +
+          '(s) equipamento(s) cadastrado(s), e que tenho pleno conhecimento' +
+          ' das orienta'#231#245'es contidas no memorando Circular n'#186'  999/2014/CGA' +
+          ', que traz orienta'#231#245'es sobre o armazenamento seguro de dados no ' +
+          'ambiente computacional da PGFN.'
+        ParentBiDiMode = False
         TabOrder = 0
+        WordWrap = True
         OnClick = rdConcordaTermosClick
       end
     end
     object btGravarInformacoes: TButton
       Left = 186
-      Top = 308
+      Top = 320
       Width = 401
       Height = 37
       Anchors = []
@@ -488,6 +497,7 @@ object frmMapaCacic: TfrmMapaCacic
       TabOrder = 10
       Visible = False
       OnClick = AtualizaPatrimonio
+      ExplicitTop = 308
     end
     object edTeInfoPatrimonio6: TEdit
       Left = 420
@@ -526,7 +536,7 @@ object frmMapaCacic: TfrmMapaCacic
   end
   object gbLeiaComAtencao: TGroupBox
     Left = 0
-    Top = 2
+    Top = 3
     Width = 780
     Height = 53
     Anchors = []
@@ -540,6 +550,7 @@ object frmMapaCacic: TfrmMapaCacic
     ParentColor = False
     ParentFont = False
     TabOrder = 2
+    ExplicitTop = 2
     DesignSize = (
       780
       53)

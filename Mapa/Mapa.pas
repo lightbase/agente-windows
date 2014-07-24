@@ -164,8 +164,7 @@ End;
 procedure TfrmMapaCacic.Finalizar;
 Begin
   Visible                               := false;
-
-  reset(textFileAguarde);
+  
   if FileExists(objCACIC.getLocalFolderName + '\temp\aguarde_MAPACACIC.txt') then
       objCACIC.deleteFileOrFolder(objCacic.getLocalFolderName +
                                   '\temp\aguarde_MAPACACIC.txt');
@@ -453,6 +452,7 @@ Begin
 //-----------------------------USUARIO LOGADO-----------------------------------
 
 //    edTeInfoUserLogado.Text                   := getUserLogon;
+    strTeInfoPatrimonio2 := '';
     while(strTeInfoPatrimonio2 = '') and (count < 600) do
     begin
       strTeInfoPatrimonio2    := objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
