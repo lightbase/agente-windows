@@ -141,11 +141,10 @@ object frmMapaCacic: TfrmMapaCacic
     Font.Style = [fsBold]
     ParentFont = False
     TabOrder = 0
-    ExplicitTop = 420
   end
   object gbInformacoesSobreComputador: TGroupBox
     Left = 1
-    Top = 62
+    Top = 59
     Width = 780
     Height = 374
     Anchors = []
@@ -162,9 +161,9 @@ object frmMapaCacic: TfrmMapaCacic
     DesignSize = (
       780
       374)
-    object lbEtiqueta3: TLabel
-      Left = 107
-      Top = 82
+    object lbEtiqueta2: TLabel
+      Left = 277
+      Top = 33
       Width = 250
       Height = 13
       Hint = 'Insira o n'#250'mero do patrim'#244'nio do monitor, se o tiver.'
@@ -180,9 +179,9 @@ object frmMapaCacic: TfrmMapaCacic
       ShowHint = True
       Visible = False
     end
-    object lbEtiqueta4: TLabel
-      Left = 420
-      Top = 82
+    object lbEtiqueta3: TLabel
+      Left = 511
+      Top = 33
       Width = 250
       Height = 13
       Hint = 'Insira o n'#250'mero do patrim'#244'nio do segundo monitor, se o tiver.'
@@ -198,9 +197,9 @@ object frmMapaCacic: TfrmMapaCacic
       ShowHint = True
       Visible = False
     end
-    object lbEtiqueta2: TLabel
-      Left = 420
-      Top = 33
+    object lbEtiqueta4: TLabel
+      Left = 43
+      Top = 80
       Width = 250
       Height = 13
       Hint = 'Este '#233' o usu'#225'rio logado atualmente'
@@ -216,8 +215,8 @@ object frmMapaCacic: TfrmMapaCacic
       ShowHint = True
       Visible = False
     end
-    object lbEtiqueta8: TLabel
-      Left = 107
+    object lbEtiqueta9: TLabel
+      Left = 43
       Top = 182
       Width = 250
       Height = 13
@@ -232,7 +231,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       Visible = False
     end
-    object lbEtiqueta9: TLabel
+    object lbEtiqueta10: TLabel
       Left = 420
       Top = 182
       Width = 250
@@ -248,7 +247,7 @@ object frmMapaCacic: TfrmMapaCacic
       Visible = False
     end
     object lbEtiqueta1: TLabel
-      Left = 107
+      Left = 43
       Top = 33
       Width = 250
       Height = 13
@@ -269,8 +268,8 @@ object frmMapaCacic: TfrmMapaCacic
       Visible = False
     end
     object lbEtiqueta5: TLabel
-      Left = 107
-      Top = 129
+      Left = 420
+      Top = 82
       Width = 250
       Height = 13
       Hint = 'Nome do usu'#225'rio logado.'
@@ -284,7 +283,7 @@ object frmMapaCacic: TfrmMapaCacic
       ParentFont = False
       Visible = False
     end
-    object lbEtiqueta6: TLabel
+    object lbEtiqueta7: TLabel
       Left = 420
       Top = 129
       Width = 69
@@ -302,8 +301,8 @@ object frmMapaCacic: TfrmMapaCacic
       ShowHint = True
       Visible = False
     end
-    object lbEtiqueta7: TLabel
-      Left = 495
+    object lbEtiqueta6: TLabel
+      Left = 43
       Top = 129
       Width = 175
       Height = 13
@@ -322,38 +321,75 @@ object frmMapaCacic: TfrmMapaCacic
       ShowHint = True
       Visible = False
     end
-    object edTeInfoPatrimonio3: TEdit
-      Left = 107
-      Top = 101
-      Width = 250
-      Height = 24
+    object lbEtiquetaTel: TLabel
+      Left = 514
+      Top = 129
+      Width = 69
+      Height = 13
+      Hint = 'Digite o telefone do seu local de trabalho.'
+      AutoSize = False
+      Caption = 'Telefone'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -13
+      Font.Height = -11
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 20
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
-      TabOrder = 2
+      Visible = False
+    end
+    object lbEtiqueta8: TLabel
+      Left = 632
+      Top = 129
+      Width = 69
+      Height = 13
+      Hint = 'Digite o ramal do seu local de trabalho.'
+      AutoSize = False
+      Caption = 'Ramal'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
       Visible = False
     end
     object edTeInfoPatrimonio4: TEdit
-      Left = 420
+      Left = 43
       Top = 99
-      Width = 250
+      Width = 310
       Height = 24
+      Enabled = False
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 20
+      MaxLength = 43
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
       TabOrder = 3
+      Visible = False
+    end
+    object edTeInfoPatrimonio3: TEdit
+      Left = 509
+      Top = 52
+      Width = 221
+      Height = 24
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      MaxLength = 34
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 2
       Visible = False
     end
     object btCombosUpdate: TButton
@@ -363,21 +399,20 @@ object frmMapaCacic: TfrmMapaCacic
       Height = 20
       Caption = 'Recarregar'
       Enabled = False
-      TabOrder = 11
+      TabOrder = 13
       OnClick = btCombosUpdateClick
     end
     object edTeInfoPatrimonio2: TEdit
-      Left = 420
+      Left = 277
       Top = 52
-      Width = 250
+      Width = 221
       Height = 24
-      Enabled = False
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 20
+      MaxLength = 34
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
@@ -385,52 +420,51 @@ object frmMapaCacic: TfrmMapaCacic
       Visible = False
     end
     object edTeInfoPatrimonio8: TEdit
-      Left = 107
-      Top = 201
-      Width = 250
+      Left = 632
+      Top = 148
+      Width = 98
       Height = 24
-      Enabled = False
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 20
-      ParentFont = False
-      ParentShowHint = False
-      ShowHint = True
-      TabOrder = 7
-      Visible = False
-    end
-    object edTeInfoPatrimonio9: TEdit
-      Left = 420
-      Top = 201
-      Width = 250
-      Height = 24
-      Enabled = False
-      Font.Charset = DEFAULT_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      MaxLength = 20
+      MaxLength = 10
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
       TabOrder = 8
       Visible = False
     end
+    object edTeInfoPatrimonio9: TEdit
+      Left = 43
+      Top = 201
+      Width = 310
+      Height = 24
+      Enabled = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      MaxLength = 43
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 9
+      Visible = False
+    end
     object edTeInfoPatrimonio1: TEdit
-      Left = 107
+      Left = 43
       Top = 52
-      Width = 250
+      Width = 221
       Height = 24
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 20
+      MaxLength = 34
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
@@ -438,9 +472,9 @@ object frmMapaCacic: TfrmMapaCacic
       Visible = False
     end
     object edTeInfoPatrimonio5: TEdit
-      Left = 107
-      Top = 148
-      Width = 250
+      Left = 420
+      Top = 99
+      Width = 310
       Height = 24
       Enabled = False
       Font.Charset = DEFAULT_CHARSET
@@ -448,7 +482,7 @@ object frmMapaCacic: TfrmMapaCacic
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 34
+      MaxLength = 43
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
@@ -461,19 +495,18 @@ object frmMapaCacic: TfrmMapaCacic
       Width = 774
       Height = 83
       Caption = 'Termo de Responsabilidade'
-      TabOrder = 9
+      TabOrder = 11
       object rdConcordaTermos: TRadioButton
-        Left = 16
-        Top = 16
-        Width = 737
+        Left = 3
+        Top = 23
+        Width = 742
         Height = 57
         BiDiMode = bdLeftToRight
         Caption = 
-          'Declaro minha responsabilidade pelas informa'#231#245'es prestadas, pelo' +
-          '(s) equipamento(s) cadastrado(s), e que tenho pleno conhecimento' +
-          ' das orienta'#231#245'es contidas no memorando Circular n'#186'  999/2014/CGA' +
-          ', que traz orienta'#231#245'es sobre o armazenamento seguro de dados no ' +
-          'ambiente computacional da PGFN.'
+          'Declaro minha responsabilidade pelas informa'#231#245'es prestadas e que' +
+          ' tenho pleno conhecimento das orienta'#231#245'es contidas no Memorando-' +
+          'Circular N'#186' 116/2014/PGFN/DGC/CGA-CTI, sobre o armazenamento seg' +
+          'uro de dados no ambiente computacional da PGFN.'
         ParentBiDiMode = False
         TabOrder = 0
         WordWrap = True
@@ -494,22 +527,21 @@ object frmMapaCacic: TfrmMapaCacic
       Font.Name = 'Arial'
       Font.Style = [fsBold]
       ParentFont = False
-      TabOrder = 10
+      TabOrder = 12
       Visible = False
       OnClick = AtualizaPatrimonio
-      ExplicitTop = 308
     end
     object edTeInfoPatrimonio6: TEdit
-      Left = 420
+      Left = 43
       Top = 148
-      Width = 69
+      Width = 310
       Height = 24
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 20
+      MaxLength = 9
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
@@ -517,20 +549,54 @@ object frmMapaCacic: TfrmMapaCacic
       Visible = False
     end
     object edTeInfoPatrimonio7: TEdit
-      Left = 495
+      Left = 420
       Top = 148
-      Width = 175
+      Width = 67
       Height = 24
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
       Font.Name = 'MS Sans Serif'
       Font.Style = []
-      MaxLength = 20
+      MaxLength = 9
       ParentFont = False
       ParentShowHint = False
       ShowHint = True
       TabOrder = 6
+      Visible = False
+    end
+    object edTeInfoPatrimonio10: TEdit
+      Left = 422
+      Top = 201
+      Width = 310
+      Height = 24
+      Enabled = False
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -13
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      MaxLength = 43
+      ParentFont = False
+      ParentShowHint = False
+      ShowHint = True
+      TabOrder = 10
+      Visible = False
+    end
+    object edTeInfoPatrimonioTel: TMaskEdit
+      Left = 514
+      Top = 148
+      Width = 89
+      Height = 24
+      EditMask = '!\(999\)99999-9999;0;_'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clBlack
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = []
+      MaxLength = 15
+      ParentFont = False
+      TabOrder = 7
       Visible = False
     end
   end
@@ -550,7 +616,6 @@ object frmMapaCacic: TfrmMapaCacic
     ParentColor = False
     ParentFont = False
     TabOrder = 2
-    ExplicitTop = 2
     DesignSize = (
       780
       53)

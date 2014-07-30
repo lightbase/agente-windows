@@ -74,15 +74,15 @@ type
     gbLeiaComAtencao: TGroupBox;
     lbLeiaComAtencao: TLabel;
     gbInformacoesSobreComputador: TGroupBox;
+    lbEtiqueta2: TLabel;
     lbEtiqueta3: TLabel;
     lbEtiqueta4: TLabel;
-    lbEtiqueta2: TLabel;
-    lbEtiqueta8: TLabel;
     lbEtiqueta9: TLabel;
+    lbEtiqueta10: TLabel;
     lbEtiqueta1: TLabel;
     lbEtiqueta5: TLabel;
-    edTeInfoPatrimonio3: TEdit;
     edTeInfoPatrimonio4: TEdit;
+    edTeInfoPatrimonio3: TEdit;
     btCombosUpdate: TButton;
     edTeInfoPatrimonio2: TEdit;
     edTeInfoPatrimonio8: TEdit;
@@ -92,11 +92,15 @@ type
     bgTermoResponsabilidade: TGroupBox;
     rdConcordaTermos: TRadioButton;
     btGravarInformacoes: TButton;
-    lbEtiqueta6: TLabel;
-    edTeInfoPatrimonio6: TEdit;
     lbEtiqueta7: TLabel;
+    edTeInfoPatrimonio6: TEdit;
+    lbEtiqueta6: TLabel;
     edTeInfoPatrimonio7: TEdit;
     btKonamiCode: TPanel;
+    edTeInfoPatrimonioTel: TMaskEdit;
+    lbEtiquetaTel: TLabel;
+    lbEtiqueta8: TLabel;
+    edTeInfoPatrimonio10: TEdit;
     
     procedure FormCreate(Sender: TObject);
     procedure AtualizaPatrimonio(Sender: TObject);
@@ -128,7 +132,9 @@ type
     strTeInfoPatrimonio6,
     strTeInfoPatrimonio7,
     strTeInfoPatrimonio8,
-    strTeInfoPatrimonio9    : String;
+    strTeInfoPatrimonio9,
+    strTeInfoPatrimonio10,
+    strTeInfoPatrimonioTel     : String;
     psswd : String;
     foco : boolean;
 
@@ -342,28 +348,34 @@ begin
         strTeInfoPatrimonio1 := objCacic.getValueFromTags('IDPatrimonio',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio2='') then
-        strTeInfoPatrimonio2 := objCacic.getValueFromTags('UserLogado',
+        strTeInfoPatrimonio2 := objCacic.getValueFromTags('PatrimonioMonitor1',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio3='') then
-        strTeInfoPatrimonio3 := objCacic.getValueFromTags('PatrimonioMonitor1',
+        strTeInfoPatrimonio3 := objCacic.getValueFromTags('PatrimonioMonitor2',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio4='') then
-        strTeInfoPatrimonio4 := objCacic.getValueFromTags('PatrimonioMonitor2',
+        strTeInfoPatrimonio4 := objCacic.getValueFromTags('UserLogado',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio5='') then
         strTeInfoPatrimonio5 := objCacic.getValueFromTags('UserName',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio6='') then
-        strTeInfoPatrimonio6 := objCacic.getValueFromTags('Sala',
+        strTeInfoPatrimonio6 := objCacic.getValueFromTags('Coordenacao_Setor',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio7='') then
-        strTeInfoPatrimonio7 := objCacic.getValueFromTags('Coordenacao_Setor',
+        strTeInfoPatrimonio7 := objCacic.getValueFromTags('Sala',
+                                                          strCollectsPatrimonioLast);
+      if (strTeInfoPatrimonioTel='') then
+        strTeInfoPatrimonioTel := objCacic.getValueFromTags('Tel',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio8='') then
-        strTeInfoPatrimonio8 := objCacic.getValueFromTags('ComputerName',
+        strTeInfoPatrimonio8 := objCacic.getValueFromTags('Ramal',
                                                           strCollectsPatrimonioLast);
       if (strTeInfoPatrimonio9='') then
-        strTeInfoPatrimonio9 := objCacic.getValueFromTags('IPComputer',
+        strTeInfoPatrimonio9 := objCacic.getValueFromTags('ComputerName',
+                                                          strCollectsPatrimonioLast);
+      if (strTeInfoPatrimonio10='') then
+        strTeInfoPatrimonio10 := objCacic.getValueFromTags('IPComputer',
                                                           strCollectsPatrimonioLast);
     End;
   btCombosUpdate.Enabled := true;
@@ -383,14 +395,16 @@ if edTeInfoPatrimonio5.text <> '' then
     strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
 
     strColetaAtual := StringReplace('[IDPatrimonio]'         + edTeInfoPatrimonio1.Text   + '[/IDPatrimonio]'       +
-                                    '[UserLogado]'           + edTeInfoPatrimonio2.Text   + '[/UserLogado]'         +
-                                    '[PatrimonioMonitor1]'   + edTeInfoPatrimonio3.Text   + '[/PatrimonioMonitor1]' +
-                                    '[PatrimonioMonitor2]'   + edTeInfoPatrimonio4.Text   + '[/PatrimonioMonitor2]' +
+                                    '[PatrimonioMonitor1]'   + edTeInfoPatrimonio2.Text   + '[/PatrimonioMonitor1]' +
+                                    '[PatrimonioMonitor2]'   + edTeInfoPatrimonio3.Text   + '[/PatrimonioMonitor2]' +
+                                    '[UserLogado]'           + edTeInfoPatrimonio4.Text   + '[/UserLogado]'         +
                                     '[UserName]'             + edTeInfoPatrimonio5.Text   + '[/UserName]'           +
-                                    '[Sala]'                 + edTeInfoPatrimonio6.Text   + '[/Sala]'               +
-                                    '[Coordenacao_Setor]'    + edTeInfoPatrimonio7.Text   + '[/Coordenacao_Setor]'  +
-                                    '[ComputerName]'         + edTeInfoPatrimonio8.text   + '[/ComputerName]'       +
-                                    '[IPComputer]'           + edTeInfoPatrimonio9.text   + '[/IPComputer]'
+                                    '[Coordenacao_Setor]'    + edTeInfoPatrimonio6.Text   + '[/Coordenacao_Setor]'  +
+                                    '[Sala]'                 + edTeInfoPatrimonio7.Text   + '[/Sala]'               +
+                                    '[Tel]'                  + edTeInfoPatrimonioTel.text + '[/Tel]'                +
+                                    '[Ramal]'                + edTeInfoPatrimonio8.text   + '[/Ramal]'              +
+                                    '[ComputerName]'         + edTeInfoPatrimonio9.text   + '[/ComputerName]'       +
+                                    '[IPComputer]'           + edTeInfoPatrimonio10.text  + '[/IPComputer]'
                                     , ',','[[COMMA]]',[rfReplaceAll]);
 
     strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Patrimonio='  +
@@ -449,24 +463,17 @@ Begin
     edTeInfoPatrimonio1.Visible     := true;
     lbEtiqueta1.Visible             := true;
 
-//-----------------------------USUARIO LOGADO-----------------------------------
+//   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta2 -> "'     +
+//                          objCacic.getValueFromTags('in_exibir_etiqueta2',
+//                                                   strConfigsPatrimonioInterface)+'"');
 
-//    edTeInfoUserLogado.Text                   := getUserLogon;
-    strTeInfoPatrimonio2 := '';
-    while(strTeInfoPatrimonio2 = '') and (count < 600) do
-    begin
-      strTeInfoPatrimonio2    := objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
-      strTeInfoPatrimonio2    := copy(strTeInfoPatrimonio2, pos('\', strTeInfoPatrimonio2)+1, length(strTeInfoPatrimonio2));
-      edTeInfoPatrimonio2.Text:= strTeInfoPatrimonio2;
-      sleep(1000);
-      count := count + 1;
-    end;
-
-    if edTeInfoPatrimonio2.Text <> '' then
-    begin
+//   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta2', strConfigsPatrimonioInterface)) = 'S') then
+//   begin
+      //lbEtiqueta3.Caption         := objCacic.getValueFromTags('te_etiqueta2', strConfigsPatrimonioInterface);
        lbEtiqueta2.Visible          := true;
-       edTeInfoPatrimonio2.Visible  := true;
-    end;
+       edTeInfoPatrimonio2.Text     := strTeInfoPatrimonio2;
+       edTeInfoPatrimonio2.visible  := True;
+//   end;
 
 //   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta3 -> "'     +
 //                          objCacic.getValueFromTags('in_exibir_etiqueta3',
@@ -476,23 +483,28 @@ Begin
 //   begin
       //lbEtiqueta3.Caption         := objCacic.getValueFromTags('te_etiqueta3', strConfigsPatrimonioInterface);
        lbEtiqueta3.Visible          := true;
-       edTeInfoPatrimonio3.Hint     := objCacic.getValueFromTags('te_help_etiqueta3', strConfigsPatrimonioInterface);
        edTeInfoPatrimonio3.Text     := strTeInfoPatrimonio3;
        edTeInfoPatrimonio3.visible  := True;
 //   end;
 
-//   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta4 -> "'     +
-//                          objCacic.getValueFromTags('in_exibir_etiqueta4',
-//                                                    strConfigsPatrimonioInterface)+'"');
+//-----------------------------USUARIO LOGADO-----------------------------------
 
-//   if (trim(objCacic.getValueFromTags('in_exibir_etiqueta4', strConfigsPatrimonioInterface)) = 'S') then
-//   begin
-      //lbEtiqueta4.Caption         := objCacic.getValueFromTags('te_etiqueta4', strConfigsPatrimonioInterface);
-      lbEtiqueta4.Visible           := true;
-      edTeInfoPatrimonio4.Hint      := objCacic.getValueFromTags('te_help_etiqueta4', strConfigsPatrimonioInterface);
-      edTeInfoPatrimonio4.Text      := strTeInfoPatrimonio4;
-      edTeInfoPatrimonio4.visible   := True;
-//   end;
+//    edTeInfoUserLogado.Text                   := getUserLogon;
+    strTeInfoPatrimonio4 := '';
+    while(strTeInfoPatrimonio4 = '') and (count < 600) do
+    begin
+      strTeInfoPatrimonio4    := objCACIC.getValueFromTags('UserName',fetchWMIvalues('Win32_ComputerSystem',objCACIC.getLocalFolderName,'UserName'));
+      strTeInfoPatrimonio4    := copy(strTeInfoPatrimonio4, pos('\', strTeInfoPatrimonio4)+1, length(strTeInfoPatrimonio4));
+      edTeInfoPatrimonio4.Text:= strTeInfoPatrimonio4;
+      sleep(1000);
+      count := count + 1;
+    end;
+
+    if edTeInfoPatrimonio4.Text <> '' then
+    begin
+       lbEtiqueta4.Visible          := true;
+       edTeInfoPatrimonio4.Visible  := true;
+    end;
 
     //-------------------------------NOME USUARIO-----------------------------------
     strNomeLDAP := getLastValue(LDAPName, 'Attribute:', 'cn'+#$D#$A);
@@ -514,8 +526,6 @@ Begin
        lbEtiqueta5.ShowHint         := true;
        lbEtiqueta5.hint             := 'Digite seu nome, não foi possível recuperá-lo.';
     end;
-
-//---------------------------------PATRIMONIO MONITORES------------------------------
 
 //   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta6 -> "'     +
 //                          objCacic.getValueFromTags('in_exibir_etiqueta6',
@@ -543,8 +553,12 @@ Begin
       edTeInfoPatrimonio7.visible   := True;
 //   end;
 
-//-----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
-    edTeInfoPatrimonio8.Text               := NomeComputador;
+    lbEtiquetaTel.Visible           := true;
+    edTeInfoPatrimonioTel.Hint      := objCacic.getValueFromTags('te_help_etiqueta_tel', strConfigsPatrimonioInterface);
+    edTeInfoPatrimonioTel.Text      := strTeInfoPatrimonioTel;
+    edTeInfoPatrimonioTel.visible   := True;
+
+    edTeInfoPatrimonio8.Text               := strTeInfoPatrimonio8;
     if edTeInfoPatrimonio8.Text <> '' then
     begin
        lbEtiqueta8.Visible          := true;
@@ -552,14 +566,23 @@ Begin
     end;
     lbEtiqueta8.Visible             := true;
     edTeInfoPatrimonio8.Visible     := true;
-
-//-----------------------PUXA O IP DA MÁQUINA PARA O EDTEXT-------------------------------------
-    strTeInfoPatrimonio9            := fetchWMIvalues('Win32_NetworkAdapterConfiguration', objCACIC.getLocalFolderName);
-    edTeInfoPatrimonio9.Text        := objCACIC.getValueFromTags('IPAddress',strTeInfoPatrimonio9);
+//-----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
+    edTeInfoPatrimonio9.Text               := NomeComputador;
     if edTeInfoPatrimonio9.Text <> '' then
     begin
        lbEtiqueta9.Visible          := true;
        edTeInfoPatrimonio9.Visible  := true;
+    end;
+    lbEtiqueta9.Visible             := true;
+    edTeInfoPatrimonio9.Visible     := true;
+
+//-----------------------PUXA O IP DA MÁQUINA PARA O EDTEXT-------------------------------------
+    strTeInfoPatrimonio10            := fetchWMIvalues('Win32_NetworkAdapterConfiguration', objCACIC.getLocalFolderName);
+    edTeInfoPatrimonio10.Text        := objCACIC.getValueFromTags('IPAddress',strTeInfoPatrimonio10);
+    if edTeInfoPatrimonio10.Text <> '' then
+    begin
+       lbEtiqueta10.Visible          := true;
+       edTeInfoPatrimonio10.Visible  := true;
     end;
 
     btGravarInformacoes.Visible := true;
