@@ -1376,13 +1376,6 @@ object FormularioGeral: TFormularioGeral
       Spacing = 1
     end
   end
-  object timerNuIntervalo: TTimer
-    Enabled = False
-    Interval = 5000
-    OnTimer = timerNuIntervaloTimer
-    Left = 226
-    Top = 570
-  end
   object timerNuExecApos: TTimer
     Enabled = False
     Interval = 1
@@ -1755,7 +1748,7 @@ object FormularioGeral: TFormularioGeral
       000000000000}
   end
   object timerCheckNoMinuto: TTimer
-    Interval = 60000
+    Interval = 600000
     OnTimer = timerCheckNoMinutoTimer
     Left = 36
     Top = 566
@@ -1774,6 +1767,12 @@ object FormularioGeral: TFormularioGeral
     Interval = 3600000
     OnTimer = CheckForcaColetaTimer
     Left = 392
+    Top = 568
+  end
+  object timerNuIntervalo: TTimer
+    Enabled = False
+    Interval = 1
+    Left = 232
     Top = 568
   end
 end

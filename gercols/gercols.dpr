@@ -677,8 +677,8 @@ var
   SubRegistry: TRegistry;
   saida: String;
 begin
-  Registry := TRegistry.Create;
-  SubRegistry := TRegistry.Create;
+  Registry := TRegistry.Create(KEY_WOW64_64KEY);
+  SubRegistry := TRegistry.Create(KEY_WOW64_64KEY);
   Registry.RootKey := HKEY_LOCAL_MACHINE;
   if Registry.OpenKeyReadOnly(Key) then begin
     Try
@@ -736,16 +736,22 @@ end;
 Function SoftwareList: String;
 var
   strChave: String;
+  strChave6432: String;
   outString: String;
+  outString6432: String;
 begin
     // Esse registro é onde vamos buscar a chave do SO
-    strChave := '\Software\Microsoft\Windows\CurrentVersion\Uninstall';
-
+    strChave     := '\Software\Microsoft\Windows\CurrentVersion\Uninstall';
+    strChave6432 := '\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall';
     // Passo aqui o registro e a profundidade dos campos que quero ver
+    outString6432 := DisplayKeys(strChave6432, 3);
     outString := DisplayKeys(strChave, 3);
 //    objCacic.setValueToFile('collects', 'colsoft_puro', outString, 'c:\Cacic\colsoft.inf');
     // Retorno uma string com todas as tags coletadas do registro
-    Result := outString;
+    if ((outString <> outString6432) and (outString6432 <> '')) then
+      Result := outString + outString6432
+    else
+      result := outString;
 end;
 
 // Procedimento que executa a coleta de hardware

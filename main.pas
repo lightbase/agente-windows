@@ -1,4 +1,4 @@
-(**
+﻿(**
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 Copyright 2000, 2001, 2002, 2003, 2004, 2005 Dataprev - Empresa de Tecnologia e Informa��es da Previd�ncia Social, Brasil
 
@@ -114,7 +114,6 @@ type
     Pn_Linha4_TCPIP: TPanel;
     Pn_Linha6_TCPIP: TPanel;
     Pn_Linha5_TCPIP: TPanel;
-    timerNuIntervalo: TTimer;
     timerNuExecApos: TTimer;
     Popup_Menu_Contexto: TPopupMenu;
     Mnu_LogAtividades: TMenuItem;
@@ -173,6 +172,7 @@ type
     cn: TSHChangeNotify;
     imgIconList: TImageList;
     timerCheckNoMinuto: TTimer;
+    timerNuIntervalo: TTimer;
     TrayIcon1: TTrayIcon;
     ApplicationEvents1: TApplicationEvents;
     Panel1: TPanel;
@@ -1350,7 +1350,6 @@ begin
         End
         else
           objCACIC.writeDailyLog('Não foi possível invocar o Mapa Cacic!');
-        End;
      End;
   End;
 end;
@@ -2656,7 +2655,7 @@ begin
  ARect.Left := LEFT_MENU_ITEM;
  ACanvas.FillRect(ARect);
 
- DrawText(ACanvas.Handle, PChar('Configura��es'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
+ DrawText(ACanvas.Handle, PChar('Configuracoes'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
 end;
 
 procedure TFormularioGeral.Mnu_ExecutarAgoraDrawItem(Sender: TObject;
@@ -2684,7 +2683,7 @@ begin
  ARect.Left := LEFT_MENU_ITEM;
  ACanvas.FillRect(ARect);
 
- DrawText(ACanvas.Handle, PChar('Informa��es Gerais'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
+ DrawText(ACanvas.Handle, PChar('Informacoes Gerais'), -1, ARect, DT_LEFT or DT_VCENTER or DT_SINGLELINE{ or DT_NOCLIP});
 end;
 
 procedure TFormularioGeral.Mnu_SuporteRemotoDrawItem(Sender: TObject;

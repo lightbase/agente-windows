@@ -85,7 +85,6 @@ type
     edTeInfoPatrimonio3: TEdit;
     btCombosUpdate: TButton;
     edTeInfoPatrimonio2: TEdit;
-    edTeInfoPatrimonio8: TEdit;
     edTeInfoPatrimonio9: TEdit;
     edTeInfoPatrimonio1: TEdit;
     edTeInfoPatrimonio5: TEdit;
@@ -97,9 +96,6 @@ type
     lbEtiqueta6: TLabel;
     edTeInfoPatrimonio7: TEdit;
     btKonamiCode: TPanel;
-    edTeInfoPatrimonioTel: TMaskEdit;
-    lbEtiquetaTel: TLabel;
-    lbEtiqueta8: TLabel;
     edTeInfoPatrimonio10: TEdit;
     
     procedure FormCreate(Sender: TObject);
@@ -170,7 +166,7 @@ End;
 procedure TfrmMapaCacic.Finalizar;
 Begin
   Visible                               := false;
-  
+
   if FileExists(objCACIC.getLocalFolderName + '\temp\aguarde_MAPACACIC.txt') then
       objCACIC.deleteFileOrFolder(objCacic.getLocalFolderName +
                                   '\temp\aguarde_MAPACACIC.txt');
@@ -401,8 +397,6 @@ if edTeInfoPatrimonio5.text <> '' then
                                     '[UserName]'             + edTeInfoPatrimonio5.Text   + '[/UserName]'           +
                                     '[Coordenacao_Setor]'    + edTeInfoPatrimonio6.Text   + '[/Coordenacao_Setor]'  +
                                     '[Sala]'                 + edTeInfoPatrimonio7.Text   + '[/Sala]'               +
-                                    '[Tel]'                  + edTeInfoPatrimonioTel.text + '[/Tel]'                +
-                                    '[Ramal]'                + edTeInfoPatrimonio8.text   + '[/Ramal]'              +
                                     '[ComputerName]'         + edTeInfoPatrimonio9.text   + '[/ComputerName]'       +
                                     '[IPComputer]'           + edTeInfoPatrimonio10.text  + '[/IPComputer]'
                                     , ',','[[COMMA]]',[rfReplaceAll]);
@@ -553,19 +547,6 @@ Begin
       edTeInfoPatrimonio7.visible   := True;
 //   end;
 
-    lbEtiquetaTel.Visible           := true;
-    edTeInfoPatrimonioTel.Hint      := objCacic.getValueFromTags('te_help_etiqueta_tel', strConfigsPatrimonioInterface);
-    edTeInfoPatrimonioTel.Text      := strTeInfoPatrimonioTel;
-    edTeInfoPatrimonioTel.visible   := True;
-
-    edTeInfoPatrimonio8.Text               := strTeInfoPatrimonio8;
-    if edTeInfoPatrimonio8.Text <> '' then
-    begin
-       lbEtiqueta8.Visible          := true;
-       edTeInfoPatrimonio8.Visible  := true;
-    end;
-    lbEtiqueta8.Visible             := true;
-    edTeInfoPatrimonio8.Visible     := true;
 //-----------------------NOME DO COMPUTADOR PARA O EDTEXT-----------------------
     edTeInfoPatrimonio9.Text               := NomeComputador;
     if edTeInfoPatrimonio9.Text <> '' then
@@ -729,8 +710,14 @@ begin
       objCacic.writeDailyLog('SEM PRIVILÉGIOS: Necessário ser administrador "local" ou de Domínio!');
       Finalizar;
     End;
-  Finally
-  End;
+    Except
+      on E:Exception do
+        Begin
+          objCacic.writeExceptionLog(E.Message,e.ClassName + 'Erro ao criar formulario.');
+          objCACIC.writeDailyLog('Erro ao criar formulario.');
+          Finalizar;
+      End; //on E:Exception do
+    end;
 end;
 
 
@@ -957,8 +944,6 @@ begin
          ldap.Timeout    := 5000;
          if ldap.Login and ldap.Bind then    //Loga no LDAP e autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
          begin
-         // 41680200020
-
           ldap.Search(base, False, identificador+ '=' + strTeInfoPatrimonio2, retorno); //Faz a pesquisa, com o CPF repassado.
           result := LDAPResultdump(ldap.SearchResult);
           objCACIC.writeDailyLog('Nome Usuário: Conexão estabelecida, pesquisa realizada.');
@@ -971,8 +956,6 @@ begin
       Except
         on E:Exception do
            Begin
-             MessageDlg(#13#13+'Problemas para pegar nome do usuário.'+#13#13+
-                        'Por favor, digite seu nome no campo solicitado',mtError, [mbOK], 0);
              objCacic.writeExceptionLog(E.Message,e.ClassName);
              objCACIC.writeDailyLog('Nome Usuário: Falha ao tentar recuperar o nome.');
            End; //on E:Exception do
