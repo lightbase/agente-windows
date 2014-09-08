@@ -19,7 +19,8 @@ uses
   synsock in 'Source\synsock.pas',
   asn1util in 'Source\asn1util.pas',
   blcksock in 'Source\blcksock.pas',
-  cryptlib in 'Source\cryptlib.pas';
+  cryptlib in 'Source\cryptlib.pas',
+  CACIC_WMI in '..\CACIC_WMI.pas';
 
 {$R *.res}
 

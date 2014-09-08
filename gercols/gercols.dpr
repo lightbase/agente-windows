@@ -852,7 +852,7 @@ Begin
          getConfigs(true);
          Finalizar(false);
     End
-    //Chamada realizada de minuto em minuto para verificar se há coleta a ser forçada.
+    //Chamada realizada para verificar se há coleta a ser forçada.
     else if FindCmdLineSwitch ('getTest', True) then
     begin
         getTest();

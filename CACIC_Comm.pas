@@ -36,7 +36,8 @@ var tStringStrResponseCS                 : TStringStream;
     strWin32_OperatingSystem,
     strWin32_SoftwareFeature,
     strTeDebugging,
-    strMac                       : String;
+    strMac,
+    strSubnet                       : String;
 Begin
     Try
       tStringStrResponseCS                     := TStringStream.Create('');
@@ -54,9 +55,9 @@ Begin
       strWin32_OperatingSystem             := fetchWmiValues('Win32_OperatingSystem'            ,objCacicCOMM.getLocalFolderName);
       strWin32_ComputerSystem              := fetchWmiValues('Win32_ComputerSystem'             ,objCacicCOMM.getLocalFolderName);
       strWin32_NetworkAdapterConfiguration := fetchWmiValues('Win32_NetworkAdapterConfiguration',objCacicCOMM.getLocalFolderName);
-      strMac := objCacicCOMM.getValueFromTags('MACAddress',fetchWMIvalues('Win32_NetworkAdapterConfiguration',objCacicCOMM.getLocalFolderName,'MACAddress'));
-      if pos('[', strMac) > 0 then
-        strMac     := copy(strMac, 0, pos('[', strMac) - 1);
+      strMac    := getOneValue('Win32_NetworkAdapterConfiguration', 'MACAddress');
+      strSubnet := getOneValue('Win32_NetworkAdapterConfiguration', 'IPSubnet');
+      delete(strSubnet, pos(strSubnet, '|'), Length(strSubnet));
 
 //      if (not (pos('get/test', pStrFullURL) > 0)) and (not (pos('get/config', pStrFullURL) > 0)) then
 //      begin
@@ -83,7 +84,8 @@ Begin
         Values['te_so'                      ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getWindowsStrId()                                                                );
         Values['te_versao_cacic'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getVersionInfo(objCacicCOMM.getLocalFolderName + objCacicCOMM.getMainProgramName));
         Values['te_versao_gercols'          ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.getVersionInfo(objCacicCOMM.getLocalFolderName + 'Modules\gercols.exe'          ));
-        Values['te_node_address'            ] := objCacicCOMM.replaceInvalidHTTPChars(objCacicCOMM.enCrypt(strMac, true, true));
+        Values['te_node_address'            ] := objCacicCOMM.replaceInvalidHTTPChars(strMac);
+        Values['netmask'                    ] := objCacicCOMM.replaceInvalidHTTPChars(strSubnet);
       End;
 
       if objCacicCOMM.isInDebugMode then

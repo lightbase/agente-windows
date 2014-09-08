@@ -30,9 +30,49 @@ uses  Windows,
 
 function  fetchWMIvalues(pStrWin32ClassName, pStrLocalFolderName : String; pStrColumnsNames : String = ''; pStrWhereClause : String = '') : String;
 procedure fixNetworkAdapterConfigurationInformations(var pStrWin32_NetworkAdapterConfigurationInformations : String; pStrLocalFolderName : String);
+function getOneValue(className, selectValue : string; whereValue : string = '') : string;
 
 implementation
 
+function getOneValue(className, selectValue : string; whereValue : string = '') : string;
+var
+  strWMIQuery : string;
+  arrWMIResults       : T2DimStrArray;
+  intTotalOfRows,
+  intTotalOfInstances,
+  Y, X : integer;
+  objCacicWMI                    : TCACIC;
+begin
+  result := '';
+  objCacicWMI := TCACIC.Create;
+  strWMIQuery := 'SELECT ' + selectValue + ' FROM ' + className;
+  if whereValue <> '' then
+    strWMIQuery := strWMIQuery + ' WHERE ' + whereValue;
+  Try
+    Try
+      CoInitialize(nil);
+      intTotalOfRows := MagWmiGetInfo('.','root/CIMV2','','',strWMIQuery, arrWMIResults, intTotalOfInstances);
+      for X := 1 to intTotalOfInstances do
+      begin
+        for Y := 0 to intTotalOfRows do
+        begin
+          if arrWMIResults[0, Y] = selectValue then
+          begin
+            result := arrWMIResults[X,Y];
+          end;
+        end;
+        if (result <> '') AND (result <> 'NULL') then break;
+      End;
+      Finally
+        CoUninitialize;
+      end;
+    Except
+      on E : Exception do
+        Begin
+           objCacicWMI.writeExceptionLog(E.Message,E.ClassName,'ERRO em MagWmiGetInfo');
+        End;
+    End;
+end;
 // Procedimento para encontrar o DefaultIPGateway diferente de ""
 procedure fixNetworkAdapterConfigurationInformations(var pStrWin32_NetworkAdapterConfigurationInformations : String; pStrLocalFolderName : String);
 var intFNACI_CorrectIndex,
