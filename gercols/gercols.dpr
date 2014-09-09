@@ -343,7 +343,6 @@ Begin
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //Gravação no DatFileName dos valores de REDE, COMPUTADOR e EXECUÇÃO obtidos, para consulta pelos outros módulos...
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                objCacic.setValueToFile('Configs'   ,'modulo_patr'                    ,objCacic.getValueFromTags('modPatrimonio'                    , strRetorno, '<>'), strGerColsInfFileName);
                 objCacic.setValueToFile('Configs'   ,'CollectsDefinitions'            ,objCacic.getValueFromTags('CollectsDefinitions'              , strRetorno, '<>'), strGerColsInfFileName);
                 objCacic.setValueToFile('Configs'   ,'TeServUpdates'                  ,objCacic.getValueFromTags('te_serv_updates'                  , strRetorno, '<>'), strChkSisInfFileName);
                 objCacic.setValueToFile('Configs'   ,'NuPortaServUpdates'             ,objCacic.getValueFromTags('nu_porta_serv_updates'            , strRetorno, '<>'), strChkSisInfFileName);
@@ -374,6 +373,45 @@ Begin
      Begin
        objCacic.writeDebugLog('getConfigs: Lançando Exceção #5');
        objCacic.writeExceptionLog(E.Message,E.ClassName,'getConfigs: Exceção #5');
+     End;
+  End;
+end;
+
+procedure getMapa();
+var strRetorno: string;
+Begin
+  Try
+    strAcaoGerCols := 'Preparando teste de comunicação com Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').';
+
+    objCacic.writeDebugLog('getMapa: Recebendo informações do módulo de patrimônio.');
+
+    Try
+        strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/mapa', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Pegando informações do módulo de patrimônio. ('+objCacic.getWebManagerAddress+').');
+
+        if (strRetorno <> '0') Then
+        Begin
+          objCacic.setBoolCipher(not objCacic.isInDebugMode);
+          if (objCacic.getValueFromTags('Comm_Status', strRetorno,'<>') = 'OK') then
+          Begin
+			      objCacic.setValueToFile('Configs','Patrimonio',
+                                    objCacic.getValueFromTags('Patrimonio', strRetorno, '<>'),
+                                    strGerColsInfFileName);
+            objCacic.setValueToFile('Configs','termos_patrimonio'    ,objCacic.getValueFromTags('Mensagem'    , strRetorno,'<>'), strGerColsInfFileName);
+          End;
+        End;
+    except
+        on E : Exception do
+        Begin
+          objCacic.writeDebugLog('getTest: Lançando Exceção #2');
+          objCacic.writeExceptionLog(E.Message,E.ClassName,'Exceção #2 - Insucesso na comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
+          objCacic.writeDailyLog('Insucesso na comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
+        End;
+    End;
+  Except
+   on E : Exception do
+     Begin
+       objCacic.writeDebugLog('getMapa: Lançando Exceção #5');
+       objCacic.writeExceptionLog(E.Message,E.ClassName,'getMapa: Exceção #5');
      End;
   End;
 end;
@@ -1762,8 +1800,13 @@ begin
             Finalizar(true);
 			      halt(0);
           end
-          else
-            Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/test', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, strAcaoGerCols);
+          else if FindCmdLineSwitch ('getMapa', True) then
+          begin
+            getConfigs(true);
+            getMapa();
+            Finalizar(true);
+            halt(0);
+          end;
 
           objCacic.setBoolCipher(not objCacic.isInDebugMode);
 

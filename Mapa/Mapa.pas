@@ -311,7 +311,6 @@ Begin
   if (Result <> '0') then
     Begin
       objCACIC.writeDailyLog('getConfigs: Comunicação realizada com sucesso!');
-      objCacic.setValueToFile('Configs' ,'modulo_patr'          , objCacic.getValueFromTags('modPatrimonio'                    , Result, '<>'), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'servidor_autenticacao', objCacic.getValueFromTags('dados_ldap'                  , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Interface' , objCacic.getValueFromTags('Configs_Patrimonio_Interface', Result), strGerColsInfFileName);
@@ -421,12 +420,9 @@ if edTeInfoPatrimonio5.text <> '' then
         btGravarInformacoes.Caption := 'Informações enviadas com sucesso...';
         objCacic.setValueToFile('Collects','col_patr_last' ,
                                 objCacic.enCrypt(strColetaAtual), strGerColsInfFileName);
-        objCacic.setValueToFile('Configs','col_patr_exe', 's', strGerColsInfFileName);
-
     End;
     objCacic.writeDebugLog(#13#10 + 'AtualizaPatrimonio: Dados Enviados ao Servidor!');
     Application.ProcessMessages;
-
     Finalizar;
   end
   else
@@ -436,6 +432,7 @@ end;
 
 procedure TfrmMapaCacic.MontaInterface;
 var strConfigsPatrimonioInterface,
+    termosPatrimonio,
     strNomeLDAP : String;
     count : integer;
 Begin
@@ -445,6 +442,7 @@ Begin
     strConfigsPatrimonioInterface := objCacic.deCrypt(objCacic.getValueFromFile
                                                       ('Configs','Patrimonio_Interface',
                                                       strGerColsInfFileName));
+    termosPatrimonio := objCacic.getValueFromFile('Configs', 'termos_patrimonio', strGercolsInfFileName);
 
 //-------------------------PATRIMONIO DA MAQUINA--------------------------------
 {   edTePatrimonioPc.Text                     := SetPatrimonioPc;
@@ -566,6 +564,9 @@ Begin
        edTeInfoPatrimonio10.Visible  := true;
     end;
 
+    if termosPatrimonio <> '' then
+      rdConcordaTermos.Caption := termosPatrimonio;
+
     btGravarInformacoes.Visible := true;
     btCombosUpdate.Enabled      := true;
     Application.ProcessMessages;
@@ -676,8 +677,8 @@ begin
         if getConfigs <> '0' then
         begin
           if (objCACIC.getValueFromFile('Configs',
-                                        'modulo_patr',
-                                        strGerColsInfFileName) = 'S') then
+                                        'Patrimonio',
+                                        strGerColsInfFileName) = 'true') then
           begin
             objCACIC.writeDailyLog('Iniciando formulário.');
             mapa;

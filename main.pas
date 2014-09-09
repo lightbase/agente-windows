@@ -819,9 +819,8 @@ Begin
 
     objCACIC.writeDailyLog('Acionando Recuperador de Mapa Cacic.');
     objCACIC.writeDebugLog('ChecaMAPACACIC: Acionando Recuperador de M�dulo Gerente de Coletas: '+objCACIC.getWinDir + 'chksis.exe');
-    objCACIC.createOneProcess(objCACIC.getWinDir + 'chksis.exe',false,SW_HIDE);
+    objCACIC.createOneProcess(objCACIC.getWinDir + 'chksis.exe',true,SW_HIDE);
 
-    sleep(30000); // 30 segundos de espera para download do gercols.exe
     objCacic.setBoolCipher(not objCacic.isInDebugMode);
     strFileSize := objCACIC.getFileSize(objCACIC.getLocalFolderName + '\Modules\mapacacic.exe',true);
     if not(strFileSize = '0') and not(strFileSize = '-1') then
@@ -1124,6 +1123,7 @@ begin
                       objCACIC.writeDebugLog('FormCreate: Op��o /execute recebida...');
                       objCACIC.writeDailyLog('Op��o para execu��o imediata encontrada...');
                     end;
+                  Invoca_GerCols('getMapa');
                   ExecutaCACIC(nil);
                 end;
 
@@ -1299,10 +1299,9 @@ begin
 
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_GerCols: Criando Processo GerCols => "'+objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + '"');
-            if ((p_acao = 'getTest') or (p_acao = 'getConfigs')) then //se for getTest, esperar a aplica��o finalizar.
-              objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE)
-            else
-              objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE);
+
+            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE);
+
             g_intStatus :=             1;
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
           End
@@ -1428,11 +1427,9 @@ begin
           ////////////////////////////////////////////////////////////////////////////////
           //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
           ////////////////////////////////////////////////////////////////////////////////
-          if not FindCmdLineSwitch('atualizacao', True) and
-            (trim(objCACIC.getValueFromFile('Configs','col_patr_exe', strGerColsInfFileName))<>'s')
+          if not FindCmdLineSwitch('atualizacao', True)
             and not (FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt'))
-            and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S')
-            and bl_primeira_execucao then
+            and (objCACIC.getValueFromFile('Configs', 'Patrimonio', strGerColsInfFileName) = 'true') then
           begin
                 objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
                 Invoca_MapaCacic;
