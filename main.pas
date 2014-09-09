@@ -1098,9 +1098,9 @@ begin
                 Rewrite (textFileAguarde);
 
               Append(textFileAguarde);
-              Writeln(textFileAguarde,'Apenas um pseudo-cookie para evitar sess�es concomitantes...');
+              Writeln(textFileAguarde,'Apenas um pseudo-cookie para evitar sessões concomitantes...');
               Append(textFileAguarde);
-              Writeln(textFileAguarde,'Futuramente penso em colocar aqui o pID, para possibilitar finaliza��o via software externo...');
+              Writeln(textFileAguarde,'Futuramente penso em colocar aqui o pID, para possibilitar finalização via software externo...');
               Append(textFileAguarde);
 
               // Inicializo bloqueando o m�dulo de suporte remoto seguro na FireWall nativa.
@@ -1115,13 +1115,13 @@ begin
                 begin
                   if FindCmdLineSwitch('atualizacao', True) then
                     begin
-                      objCACIC.writeDebugLog('FormCreate: Op��o /atualizacao recebida...');
-                      objCACIC.writeDailyLog('Reinicializando com vers�o '+ objCACIC.GetVersionInfo(ParamStr(0)));
+                      objCACIC.writeDebugLog('FormCreate: Opção /atualizacao recebida...');
+                      objCACIC.writeDailyLog('Reinicializando com versão '+ objCACIC.GetVersionInfo(ParamStr(0)));
                     end
                   else
                     begin
-                      objCACIC.writeDebugLog('FormCreate: Op��o /execute recebida...');
-                      objCACIC.writeDailyLog('Op��o para execu��o imediata encontrada...');
+                      objCACIC.writeDebugLog('FormCreate: Opção /execute recebida...');
+                      objCACIC.writeDailyLog('Opção para execução imediata encontrada...');
                     end;
                   Invoca_GerCols('getMapa');
                   ExecutaCACIC(nil);
@@ -1142,10 +1142,12 @@ begin
                 SetaVariaveisGlobais;
               Except
                 on E : Exception do
-                objCACIC.writeExceptionLog(E.Message,E.ClassName,'SETANDO VARI�VEIS GLOBAIS!');
+                objCACIC.writeExceptionLog(E.Message,E.ClassName,'SETANDO VARIÁVEIS GLOBAIS!');
               End;
 
               timerNuExecApos.Enabled  := True;
+
+              CheckForcaColeta.Enabled := True;
 
               InicializaTray;
 
@@ -1154,20 +1156,20 @@ begin
             End
          else
             Begin
-              objCACIC.writeDebugLog('FormCreate: Agente finalizado devido a concomit�ncia de sess�es...');
+              objCACIC.writeDebugLog('FormCreate: Agente finalizado devido a concomitância de sessões...');
               Finaliza;
             End;
       Except
         on E:Exception do
           Begin
-            objCACIC.writeExceptionLog(E.Message,e.ClassName,'PROBLEMAS NA INICIALIZA��O (2)');
+            objCACIC.writeExceptionLog(E.Message,e.ClassName,'PROBLEMAS NA INICIALIZAÇÃO (2)');
             Finaliza(false);
           End;
       End
     End
   else
     Begin
-      objCACIC.writeDailyLog('Execu��o Impedida por Falta de Integridade do Agente Principal!');
+      objCACIC.writeDailyLog('Execução Impedida por Falta de Integridade do Agente Principal!');
       Finaliza(false);
     End;
 end;
@@ -1189,9 +1191,14 @@ Begin
     if (Trim(objCACIC.GetValueFromFile('Configs','NuIntervaloExec',strMainProgramInfFileName)) = '') then
       objCACIC.setValueToFile('Configs','NuIntervaloExec', '4'   ,strMainProgramInfFileName);
 
+    if (Trim(objCACIC.GetValueFromFile('Configs','timerForcaColeta',strMainProgramInfFileName)) = '') then
+      objCACIC.setValueToFile('Configs', 'timerForcaColeta', '60', strMainProgramInfFileName);
+    
     // IN_EXIBE_BANDEJA     O valor padr�o � mostrar o �cone na bandeja.
     // NU_EXEC_APOS         Assumir� o padr�o de 0 minutos para execu��o imediata em caso de primeira execu��o (instala��o).
     // NU_INTERVALO_EXEC    Assumir� o padr�o de 4 horas para o intervalo, no caso de problemas.
+
+    CheckForcaColeta.Interval := strtoint(objCACIC.getValueFromFile('Configs', 'timerForcaColeta', strMainProgramInfFileName)) * 60000;
 
     // N�mero de horas do intervalo (3.600.000 milisegundos correspondem a 1 hora).
     timerNuIntervalo.Interval := strtoint(objCACIC.GetValueFromFile('Configs','NuIntervaloExec',strMainProgramInfFileName)) * 3600000;
@@ -1210,12 +1217,12 @@ Begin
       Begin
         objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\atualiza_CACIC.txt');
         timerNuExecApos.Interval := 1000; // 1 minuto para chamar GerCols /coletas
-        objCACIC.writeDailyLog('Reinicializando com vers�o '+ objCACIC.GetVersionInfo(ParamStr(0)));
+        objCACIC.writeDailyLog('Reinicializando com versão '+ objCACIC.GetVersionInfo(ParamStr(0)));
       End
     else
       Begin
-        objCACIC.writeDailyLog('Inicio autom�tico de coletas programado para ' + objCACIC.GetValueFromFile('Configs','NuExecApos',strMainProgramInfFileName) + ' minutos.');
-        objCACIC.writeDailyLog('Executar as a��es de coletas automaticamente a cada ' + objCACIC.GetValueFromFile('Configs','NuIntervaloExec',strMainProgramInfFileName) + ' horas.');
+        objCACIC.writeDailyLog('Inicio automático de coletas programado para ' + objCACIC.GetValueFromFile('Configs','NuExecApos',strMainProgramInfFileName) + ' minutos.');
+        objCACIC.writeDailyLog('Executar as ações de coletas automaticamente a cada ' + objCACIC.GetValueFromFile('Configs','NuIntervaloExec',strMainProgramInfFileName) + ' horas.');
         objCACIC.writeDailyLog(DupeString('=',100));
       End;
 
@@ -1232,7 +1239,7 @@ Begin
   Except
     on E : Exception do
       Begin
-        objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS NA INICIALIZA��O (1)');
+        objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS NA INICIALIZAÇÃO (1)');
         Finaliza;
       End;
   End;
@@ -1268,7 +1275,7 @@ Begin
       End;
   Except
     on E : Exception do
-      objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS NA FINALIZA��O');
+      objCACIC.writeExceptionLog(E.Message,E.ClassName,'PROBLEMAS NA FINALIZAÇÃO');
   End;
   objCACIC.Free;
   Halt(0);
@@ -1292,15 +1299,18 @@ begin
           Begin
             ChecaCONFIGS;
 
-            objCACIC.writeDebugLog('Invoca_GerCols: Invocando Gerente de Coletas com a��o: "'+p_acao+'"');
+            objCACIC.writeDebugLog('Invoca_GerCols: Invocando Gerente de Coletas com ação: "'+p_acao+'"');
 
             if boolShowInfo and not (p_acao = 'getTest') then
-              objCACIC.writeDebugLog('Invocando Gerente de Coletas com a��o: "'+p_acao+'"');
+              objCACIC.writeDebugLog('Invocando Gerente de Coletas com ação: "'+p_acao+'"');
 
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_GerCols: Criando Processo GerCols => "'+objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + '"');
 
-            objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE);
+            if (p_acao = 'getTest') or (p_acao = 'getConfig') then
+              objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE)            
+            else
+              objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,false,SW_HIDE);
 
             g_intStatus :=             1;
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
@@ -1392,7 +1402,6 @@ begin
         (trim(objCACIC.getValueFromFile('Configs','DtHrUltimaColeta', strGerColsInfFileName))='') or
         (trim(objCACIC.getValueFromFile('Configs','forca_coleta', strGerColsInfFileName))='S') Then
         Begin
-
           timerCheckNoMinuto.Enabled := false;
           objCACIC.writeDebugLog('ExecutaCACIC: Preparando chamada ao Gerente de Coletas...');
 
@@ -1525,7 +1534,6 @@ begin
                   Invoca_GerCols('collect');
                 End;
             End;
-
           timerCheckNoMinuto.Enabled := true;            
         End;
 
@@ -2333,7 +2341,8 @@ procedure TFormularioGeral.CheckForcaColetaTimer(Sender: TObject);
 begin
   Invoca_GerCols('getTest');
   if (objCACIC.getValueFromFile('Configs', 'forca_coleta', strGerColsInfFileName) = 'S') then
-    Invoca_GerCols('collect');
+//    Invoca_GerCols('collect');
+    FormularioGeral.ExecutaCACIC(nil);
 end;
 
 procedure TFormularioGeral.CheckIfDownloadedVersion;

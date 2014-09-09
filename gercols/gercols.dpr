@@ -366,6 +366,7 @@ Begin
                 objCacic.setValueToFile('Configs'   ,'NuTimeOutSrCacic'               ,objCacic.getValueFromTags('nu_timeout_srcacic'               , strRetorno, '<>'), strMainProgramInfFileName);
                 objCacic.setValueToFile('Configs'   ,'CsPermitirDesativarSrCacic'     ,objCacic.getValueFromTags('cs_permitir_desativar_srcacic'    , strRetorno, '<>'), strMainProgramInfFileName);
                 objCacic.setValueToFile('Configs'   ,'TeEnderecosMacInvalidos'        ,objCacic.getValueFromTags('te_enderecos_mac_invalidos'       , strRetorno, '<>'), strMainProgramInfFileName);
+                objCacic.setValueToFile('Configs'   ,'timerForcaColeta'               ,objCacic.getValueFromTags('timerForcaColeta'                 , strRetorno, '<>'), strMainProgramInfFileName);
               end;
         end;
   Except
@@ -396,7 +397,9 @@ Begin
 			      objCacic.setValueToFile('Configs','Patrimonio',
                                     objCacic.getValueFromTags('Patrimonio', strRetorno, '<>'),
                                     strGerColsInfFileName);
-            objCacic.setValueToFile('Configs','termos_patrimonio'    ,objCacic.getValueFromTags('Mensagem'    , strRetorno,'<>'), strGerColsInfFileName);
+            objCacic.setValueToFile('Configs','termos_patrimonio',
+                                    objCacic.getValueFromTags('Mensagem', strRetorno,'<>'),
+                                    strGerColsInfFileName);
           End;
         End;
     except
