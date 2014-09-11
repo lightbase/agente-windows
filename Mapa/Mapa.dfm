@@ -445,16 +445,20 @@ object frmMapaCacic: TfrmMapaCacic
       TabOrder = 9
       object rdConcordaTermos: TRadioButton
         Left = 3
-        Top = 23
-        Width = 742
-        Height = 57
+        Top = 16
+        Width = 758
+        Height = 64
         BiDiMode = bdLeftToRight
         Caption = 
           'Declaro minha responsabilidade pelas informa'#231#245'es prestadas e que' +
-          ' tenho pleno conhecimento das orienta'#231#245'es contidas no Memorando-' +
-          'Circular N'#186' 116/2014/PGFN/DGC/CGA-CTI, sobre o armazenamento seg' +
-          'uro de dados no ambiente computacional da PGFN.'
+          ' tenho pleno conhecimento das orienta'#231#245'es repassadas.'
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clBlue
+        Font.Height = -11
+        Font.Name = 'MS Sans Serif'
+        Font.Style = [fsBold]
         ParentBiDiMode = False
+        ParentFont = False
         TabOrder = 0
         WordWrap = True
         OnClick = rdConcordaTermosClick

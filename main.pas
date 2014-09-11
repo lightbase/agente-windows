@@ -1123,10 +1123,9 @@ begin
                       objCACIC.writeDebugLog('FormCreate: Opção /execute recebida...');
                       objCACIC.writeDailyLog('Opção para execução imediata encontrada...');
                     end;
-                  Invoca_GerCols('getMapa');
                   ExecutaCACIC(nil);
                 end;
-
+              Invoca_GerCols('getMapa');
               // Os timers iniciam-se desabilitados... Mais � frente receber�o par�metros de tempo para execu��o.
               timerNuExecApos.Enabled   := False;
               timerNuIntervalo.Enabled  := False;
@@ -1181,8 +1180,8 @@ Begin
     // Inicializa��o do indicador de SENHA J� INFORMADA
     objCACIC.setValueToFile('Configs','SJI',objCACIC.enCrypt(''),strMainProgramInfFileName);
 
-    if  (Trim(objCACIC.GetValueFromFile('Configs','InExibeBandeja' ,strMainProgramInfFileName)) = '')    or
-       ((Trim(objCACIC.GetValueFromFile('Configs','InExibeBandeja' ,strMainProgramInfFileName)) <> 'S')) then
+    if  (Trim(objCACIC.GetValueFromFile('Configs','InExibeBandeja' ,strMainProgramInfFileName)) = ''  ) or
+        (Trim(objCACIC.GetValueFromFile('Configs','InExibeBandeja' ,strMainProgramInfFileName)) <> 'S') then
         objCACIC.setValueToFile('Configs','InExibeBandeja' , 'S'  ,strMainProgramInfFileName);
 
     if (objCACIC.GetValueFromFile('Configs','NuExecApos'      ,strMainProgramInfFileName) = '') then
@@ -1307,7 +1306,7 @@ begin
             timerNuExecApos.Enabled  := False;
             objCACIC.writeDebugLog('Invoca_GerCols: Criando Processo GerCols => "'+objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + '"');
 
-            if (p_acao = 'getTest') or (p_acao = 'getConfig') then
+            if (p_acao = 'getTest') or (p_acao = 'getConfig') or (p_acao = 'getMapa') then
               objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,true,SW_HIDE)            
             else
               objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,false,SW_HIDE);
@@ -1322,6 +1321,7 @@ end;
 
 procedure TFormularioGeral.InvocaMapa1Click(Sender: TObject);
 begin
+  FormularioGeral.Invoca_GerCols('getMapa');
   if (ActualActivity=0) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then
     Invoca_MapaCacic
   else if(ActualActivity <> 0) then
@@ -2340,8 +2340,9 @@ end;
 procedure TFormularioGeral.CheckForcaColetaTimer(Sender: TObject);
 begin
   Invoca_GerCols('getTest');
-  if (objCACIC.getValueFromFile('Configs', 'forca_coleta', strGerColsInfFileName) = 'S') then
-//    Invoca_GerCols('collect');
+  if (objCACIC.getValueFromFile('Configs', 'forca_coleta', strGerColsInfFileName) = 'S') or
+     (objCACIC.GetValueFromFile('Configs','ConexaoOK', strGerColsInfFileName) <> 'S') then
+    objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\ck_conexao.ini');
     FormularioGeral.ExecutaCACIC(nil);
 end;
 
@@ -2575,11 +2576,6 @@ begin
       FormularioGeral.Finaliza(false)
     else if (FormularioGeral.ActualActivity = 0) THEN
       Begin
-        if (objCACIC.GetValueFromFile('Configs','ConexaoOK', strGerColsInfFileName) <> 'S') then
-          Begin
-            objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\ck_conexao.ini');
-            FormularioGeral.ExecutaCACIC(nil);
-          End;
         objCACIC.writeDebugLog('timerCheckNoMinutoTimer: Verificando exist�ncia de nova vers�o de CACICservice para atualiza��o');
         // Verifica��o de exist�ncia de nova vers�o do CACICservice para substitui��o e execu��o
         if FileExists(objCACIC.getLocalFolderName + 'Temp\cacicservice.exe') then

@@ -405,7 +405,7 @@ Begin
     except
         on E : Exception do
         Begin
-          objCacic.writeDebugLog('getTest: Lançando Exceção #2');
+          objCacic.writeDebugLog('getMapa: Lançando Exceção #2');
           objCacic.writeExceptionLog(E.Message,E.ClassName,'Exceção #2 - Insucesso na comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
           objCacic.writeDailyLog('Insucesso na comunicação com o Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').');
         End;

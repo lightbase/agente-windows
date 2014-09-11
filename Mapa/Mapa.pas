@@ -699,9 +699,7 @@ begin
       else
       Begin
         frmMapaCacic.boolAcessoOK := false;
-        Application.messagebox(Pchar('Atenção! É necessário reinstalar o CACIC nesta estação.'    +
-                                      #13#10     + #13#10 + 'A estrutura encontra-se corrompida.'),
-                               'Erro!',MB_ICONERROR + mb_ok);
+        objCACIC.writeDailyLog('Atenção! É necessário reinstalar o CACIC nesta estação. A estrutura encontra-se corrompida.');
         Finalizar;
       End;
     end
