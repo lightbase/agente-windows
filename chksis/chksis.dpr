@@ -185,7 +185,81 @@ begin
 
         // 5 segundos para espera de possível FTP em andamento...
         Sleep(5000);
-      End;
+      End
+      else
+      begin
+        strCommResponse := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/update', strFieldsAndValuesToRequest, objCacic.getLocalFolderName);
+        if (strCommResponse <> '0') then
+        begin
+          objCacic.writeDailyLog('executeChkSIS: Iniciando segunda tentativa de comunicação sem a obrigatoriedade do MAC');
+          objCacic.setBoolCipher(not objCacic.isInDebugMode);
+          objCacic.setMainProgramName(      objCacic.deCrypt(objCacic.getValueFromTags('MainProgramName'                     , strCommResponse, '<>')));
+          objCacic.setMainProgramHash(      objCacic.deCrypt(objCacic.getValueFromTags(objCacic.getMainProgramName + '_HASH' , strCommResponse, '<>'),true,true));
+          objCacic.setWebManagerAddress(    objCacic.deCrypt(objCacic.getValueFromTags('WebManagerAddress'                   , strCommResponse, '<>')));
+          objCacic.setWebServicesFolderName(objCacic.deCrypt(objCacic.getValueFromTags('WebServicesFolderName'               , strCommResponse, '<>')));
+          objCacic.setLocalFolderName(      objCacic.deCrypt(objCacic.getValueFromTags('LocalFolderName'                     , strCommResponse, '<>')));
+
+          objCacic.writeDebugLog('executeChkSIS: Resposta: ' + strCommResponse);
+
+          objCacic.setValueToFile('Configs'   ,'NmUsuarioLoginServUpdates', objCacic.getValueFromTags('nm_usuario_login_serv_updates'      , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Configs'   ,'NuPortaServUpdates'       , objCacic.getValueFromTags('nu_porta_serv_updates'              , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Configs'   ,'TePathServUpdates'        , objCacic.getValueFromTags('te_path_serv_updates'               , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Configs'   ,'TeSenhaLoginServUpdates'  , objCacic.getValueFromTags('te_senha_login_serv_updates'        , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Configs'   ,'TeServUpdates'            , objCacic.getValueFromTags('te_serv_updates'                    , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Configs'   ,'WebManagerAddress'        , objCacic.getValueFromTags('WebManagerAddress'                  , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Configs'   ,'WebServicesFolderName'    , objCacic.getValueFromTags('WebServicesFolderName'              , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Hash-Codes','CACICSERVICE.EXE'         , objCacic.getValueFromTags('CACICSERVICE.EXE_HASH'              , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Hash-Codes','CHKSIS.EXE'               , objCacic.getValueFromTags('CHKSIS.EXE_HASH'                    , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Hash-Codes','GERCOLS.EXE'              , objCacic.getValueFromTags('GERCOLS.EXE_HASH'                   , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Hash-Codes','MAPACACIC.EXE'            , objCacic.getValueFromTags('MAPACACIC.EXE_HASH'                 , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Hash-Codes',objCacic.getMainProgramName, objCacic.getValueFromTags(objCacic.getMainProgramName + '_HASH', strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.deleteFileOrFolder(objCacic.getLocalFolderName + 'aguarde_CACIC.txt');
+
+          // Auto verificação de versão
+          verifyAndGetModules('chksis.exe',
+                              objCacic.deCrypt(objCacic.getValueFromTags('CHKSIS.EXE_HASH', strCommResponse, '<>'),true,true),
+                              objCacic.getWinDir,
+                              objCacic.getLocalFolderName,
+                              objCacic,
+                              strChkSisInfFileName);
+
+          // Verificação de versão do Agente Principal
+          verifyAndGetModules(LowerCase(objCacic.getMainProgramName),
+                                        objCacic.getMainProgramHash,
+                                        objCacic.getLocalFolderName,
+                                        objCacic.getLocalFolderName,
+                                        objCacic,
+                                        strChkSisInfFileName);
+
+          // Verificação de versão do Agente Gerente de Coletas
+          verifyAndGetModules('gercols.exe',
+                              objCacic.deCrypt(objCacic.getValueFromTags('GERCOLS.EXE_HASH', strCommResponse, '<>'),true,true),
+                              objCacic.getLocalFolderName + 'Modules',
+                              objCacic.getLocalFolderName,
+                              objCacic,
+                              strChkSisInfFileName);
+
+          // Verificação de versão do Serviço de Sustentação do Agente CACIC
+          verifyAndGetModules('cacicservice.exe',
+                              objCacic.deCrypt(objCacic.getValueFromTags('CACICSERVICE.EXE_HASH', strCommResponse, '<>'),true,true),
+                              objCacic.getWinDir,
+                              objCacic.getLocalFolderName,
+                              objCacic,
+                              strChkSisInfFileName);
+
+          // Verificação de versão do Mapa Cacic
+          verifyAndGetModules('mapacacic.exe',
+                              objCacic.deCrypt(objCacic.getValueFromTags('MAPACACIC.EXE_HASH', strCommResponse, '<>'),true,true),
+                              objCacic.getLocalFolderName + 'Modules',
+                              objCacic.getLocalFolderName,
+                              objCacic,
+                              strChkSisInfFileName);
+
+          // 5 segundos para espera de possível FTP em andamento...
+          Sleep(5000);
+        end;
+      end;
+           
   Except
     on E : Exception do
       Begin

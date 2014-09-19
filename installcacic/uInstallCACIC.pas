@@ -487,7 +487,9 @@ begin
         objCacic.writeDebugLog('installCACIC: Preparando Chamada ao Gerente WEB: "' + objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName +'get/config');
         informaProgresso('Fazendo contato com Gerente WEB.');
         informaProgresso('Endereço do gerente: ' + objCacic.getWebManagerAddress);
+
         strCommResponse := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCACIC.getLocalFolderName);
+
         if (strCommResponse <> '0') then
           Begin
             { Já realizados na chamada ao get_test.php substituido por get/test

@@ -1126,6 +1126,16 @@ begin
                   ExecutaCACIC(nil);
                 end;
               Invoca_GerCols('getMapa');
+              ////////////////////////////////////////////////////////////////////////////////
+              //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
+              ////////////////////////////////////////////////////////////////////////////////
+              if (not FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt'))
+                and (objCACIC.getValueFromFile('Configs', 'Patrimonio', strGerColsInfFileName) = 'true') then
+              begin
+                objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
+                Invoca_MapaCacic;
+                sleep(10000);
+              end;
               // Os timers iniciam-se desabilitados... Mais � frente receber�o par�metros de tempo para execu��o.
               timerNuExecApos.Enabled   := False;
               timerNuIntervalo.Enabled  := False;
@@ -1322,7 +1332,7 @@ end;
 procedure TFormularioGeral.InvocaMapa1Click(Sender: TObject);
 begin
   FormularioGeral.Invoca_GerCols('getMapa');
-  if (ActualActivity=0) and (objCACIC.getValueFromFile('Configs', 'modulo_patr', strGerColsInfFileName) = 'S') then
+  if (ActualActivity=0) and (objCACIC.getValueFromFile('Configs', 'Patrimonio', strGerColsInfFileName) = 'true') then
     Invoca_MapaCacic
   else if(ActualActivity <> 0) then
   begin
@@ -1334,7 +1344,7 @@ begin
       MessageDlg(#13#13+'Mapa já está em execução!',mtInformation, [mbOK], 0);
   end
   else
-    MessageDlg(#13#13+'M�dulo desabilitado!',mtInformation, [mbOK], 0);
+    MessageDlg(#13#13+'Módulo desabilitado ou já coletado!',mtInformation, [mbOK], 0);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1353,7 +1363,9 @@ begin
           objCacic.writeDailyLog('Invoca_MapaCacic: Criando processo mapa.');
           objCACIC.writeDebugLog('Invoca_MapaCacic: Criando Processo Mapa => "'+objCACIC.getLocalFolderName + 'Modules\MapaCACIC.exe');
           if (objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\mapacacic.exe',false,SW_SHOW)) then
-            objCacic.writeDailyLog('Invoca_MapaCacic: Processo criado.')
+          Begin
+            objCacic.writeDailyLog('Invoca_MapaCacic: Processo criado.');
+          End
           else
             objCacic.writeDailyLog('Invoca_MapaCacic: Falha ao criar processo.');
         End
@@ -1395,7 +1407,6 @@ var v_mensagem,
     intTentativas   : integer;
 begin
    try
-
      if FindCmdLineSwitch('execute', True)     or
         FindCmdLineSwitch('atualizacao', True) or
         Pode_Coletar                           or
@@ -1432,17 +1443,6 @@ begin
 
           Application.ProcessMessages;
           InicializaTray;
-
-          ////////////////////////////////////////////////////////////////////////////////
-          //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
-          ////////////////////////////////////////////////////////////////////////////////
-          if not FindCmdLineSwitch('atualizacao', True)
-            and not (FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt'))
-            and (objCACIC.getValueFromFile('Configs', 'Patrimonio', strGerColsInfFileName) = 'true') then
-          begin
-                objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
-                Invoca_MapaCacic;
-          end;
 
           // Pausas de 15 segundos para o caso de ser(em) baixada(s) nova(s) vers�o(�es) de GerCols e/ou Cacic280.
           // Ser�o 4 tentativas por minuto
@@ -1622,7 +1622,7 @@ begin
         if g_intStatus = EM_SUPORTE then
           v_strHint := v_strHint + chr(13) + chr(10) + ' Em Suporte Remoto...'
         else if g_intStatus = COLETANDO then
-          v_strHint := v_strHint + chr(13) + chr(10) + ' Coletas em Execu��o...';
+          v_strHint := v_strHint + chr(13) + chr(10) + ' Coletas em Execução...';
         objCACIC.writeDebugLog('InicializaTray: v_strHint Depois = "'+v_strHint+'"');
       End;
 
@@ -1731,7 +1731,7 @@ end;
 
 procedure TFormularioGeral.WMQueryEndSession(var Msg: TWMQueryEndSession);
 begin
-   objCACIC.writeDailyLog('Windows em processo de finaliza��o!');
+   objCACIC.writeDailyLog('Windows em processo de finalização!');
    // Quando h� um shutdown do windows em execu��o, libera o close.
    OnCloseQuery := Nil;
    Msg.Result   := 1;
@@ -1960,7 +1960,7 @@ begin
       st_lb_Etiqueta9.Caption := st_lb_Etiqueta9.Caption + IfThen(st_lb_Etiqueta9.Caption='','',':');
       st_lb_Etiqueta9.Visible := true;
       st_vl_etiqueta9.Caption := objCACIC.deCrypt( objCACIC.GetValueFromFile('Patrimonio','TeInfoPatrimonio6', strMainProgramInfFileName));
-    end
+    end                        
    else
     Begin
       st_lb_Etiqueta9.Visible := false;

@@ -170,7 +170,7 @@ Begin
   if FileExists(objCACIC.getLocalFolderName + '\temp\aguarde_MAPACACIC.txt') then
       objCACIC.deleteFileOrFolder(objCacic.getLocalFolderName +
                                   '\temp\aguarde_MAPACACIC.txt');
-
+  objCacic.setValueToFile('Configs', 'Patrimonio', 'false', strGercolsInfFileName);
   Application.ProcessMessages;
 
   Sair;
@@ -517,6 +517,7 @@ Begin
        lbEtiqueta5.Visible          := true;
        lbEtiqueta5.ShowHint         := true;
        lbEtiqueta5.hint             := 'Digite seu nome, não foi possível recuperá-lo.';
+       objCacic.writeDailyLog('Não foi possível pegar nome do ldap');
     end;
 
 //   objCacic.writeDebugLog('MontaInterface: in_exibir_etiqueta6 -> "'     +
@@ -943,7 +944,7 @@ begin
          ldap.Timeout    := 5000;
          if ldap.Login and ldap.Bind then    //Loga no LDAP e autentica no LDAP com Usuário e senha repassado. (BindSasl é mais seguro que Bind)
          begin
-          ldap.Search(base, False, identificador+ '=' + strTeInfoPatrimonio2, retorno); //Faz a pesquisa, com o CPF repassado.
+          ldap.Search(base, False, identificador+ '=' + strTeInfoPatrimonio4, retorno); //Faz a pesquisa, com o CPF repassado.
           result := LDAPResultdump(ldap.SearchResult);
           objCACIC.writeDailyLog('Nome Usuário: Conexão estabelecida, pesquisa realizada.');
           ldap.Logout;

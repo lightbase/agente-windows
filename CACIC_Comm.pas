@@ -37,7 +37,8 @@ var tStringStrResponseCS                 : TStringStream;
     strWin32_SoftwareFeature,
     strTeDebugging,
     strMac,
-    strSubnet                       : String;
+    strSubnet,
+    route                       : String;
 Begin
     Try
       tStringStrResponseCS                     := TStringStream.Create('');
@@ -112,7 +113,7 @@ Begin
       Try
          idHTTP1.AllowCookies                     := true;
          idHTTP1.AuthRetries                      := 1;
-         idHTTP1.HandleRedirects                  := false;
+         idHTTP1.HandleRedirects                  := true;
          idHTTP1.ProxyParams.BasicAuthentication  := false;
          idHTTP1.ProxyParams.ProxyPort            := 0;
          idHTTP1.ReadTimeout                      := 0;
@@ -131,9 +132,25 @@ Begin
            IdHTTP1.Post(pStrFullURL, tstrRequest, tStringStrResponseCS);
          Except
           on E : Exception do
-                Begin
-                 objCacicCOMM.writeExceptionLog(E.Message,E.ClassName,'ERRO! Comunicação impossível com o endereço ' + pStrFullURL);
-                End;
+            Begin
+              objCacicCOMM.writeExceptionLog(E.Message,E.ClassName,'ERRO![1] Comunicação impossível com o endereço ' + pStrFullURL);
+              if not (pos('get/update',pStrFullUrl) > 0) then
+              begin
+                 route:= '';
+                 if (pos('get/test', pStrFullUrl) > 0) then
+                  route:= 'get/test'
+                 else if (pos('get/config', pStrFullUrl) > 0) then
+                   route:= 'get/config';
+                 if (route <> '') then
+                 begin
+                   delete(pStrFullUrl, pos(route, pStrFullUrl), length(pStrFullUrl));
+                   pStrFullUrl := pStrFullUrl + 'get/update';
+                   objCacicCOMM.writeExceptionLog(E.Message,E.ClassName,'Realizando nova tentativa em ' + pStrFullURL);
+                   objCacicCOMM.writeDailyLog('Realizando nova tentativa em rota alternativa');
+                   IdHTTP1.Post(pStrFullUrl, tstrRequest, tStringStrResponseCS);
+                 end;
+              end;
+           End;
          End;
          objCacicCOMM.writeDebugLog('Comm: Retorno -> ' + tStringStrResponseCS.DataString);
          idHTTP1.Disconnect;
