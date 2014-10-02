@@ -811,6 +811,8 @@ begin
   outString := outString + fetchWmiValues('Win32_PhysicalMemory', 'BankLabel,Capacity,Caption,DataWidth,Description,DeviceLocator,FormFactor,InstallDate,InterleaveDataDepth,InterleavePosition,Manufacturer,MemoryType,Model,Name,OtherIdentifyingInfo,PartNumber,PositionInRow,' + 'SerialNumber,SKU,Speed,Tag,TotalWidth,TypeDetail,Version', objCacic.getLocalFolderName);
   outString := outString + fetchWmiValues('Win32_Processor', 'AddressWidth,Architecture,Availability,Caption,CreationClassName,DataWidth,Description,DeviceID,ExtClock,Family,InstallDate,L2CacheSize,L2CacheSpeed,L3CacheSize,L3CacheSpeed,Level,LoadPercentage,Manufacturer,'+ 'MaxClockSpeed,Name,NumberOfCores,NumberOfLogicalProcessors,OtherFamilyDescription,PNPDeviceID,ProcessorId,ProcessorType,Revision,Role,SocketDesignation,SystemName,UniqueId,UpgradeMethod,Version,VoltageCaps', objCacic.getLocalFolderName);
   outString := outString + fetchWmiValues('Win32_Printer', 'Attributes,Availability,Caption,CharSetsSupported,Comment,CurrentCharSet,Default,Description,DeviceID,Direct,DriverName,HorizontalResolution,InstallDate,JobCountSinceLastReset,KeepPrintedJobs,LanguagesSupported,' + 'Local,Location,MarkingTechnology,MaxCopies,MaxNumberUp,MaxSizeSupported,MimeTypesSupported,Name,Network,PaperSizesSupported,PaperTypesAvailable,Parameters,PNPDeviceID,PortName,PrintProcessor,' + 'ServerName,Shared,ShareName,SpoolEnabled,SystemName,VerticalResolution,WorkOffline', objCacic.getLocalFolderName);
+  if getOneValue('Win32_PortableBattery', 'BatteryStatus') <> '' then
+    outString:= outString + '[Notebook]Sim[/Notebook]';
 
   // Retorna uma string com todas as coletas
   Result := outString;
@@ -972,7 +974,7 @@ Begin
         strAcaoGercols            := 'GerCols invocado para coletas...';
         intTotalExecutedCollects  := 0;
         intTotalSendedCollects    := 0;
-
+        objCacic.setValueToFile('Configs', 'CollectsDefinitions', '', strGercolsInfFileName);
         getConfigs(true);
 
         // Abaixo eu testo se existe um endereço configurado para não disparar os procedimentos de coleta em vão.
@@ -1135,6 +1137,13 @@ Begin
 
                                       tstrColetaHardware := fetchWmiValues('Win32_Printer', objCacic.getLocalFolderName, 'Attributes,Availability,Caption,CharSetsSupported,Comment,CurrentCharSet,Default,Description,DeviceID,Direct,DriverName,HorizontalResolution,InstallDate,JobCountSinceLastReset,KeepPrintedJobs,LanguagesSupported,' + 'Local,Location,MarkingTechnology,MaxCopies,MaxNumberUp,MaxSizeSupported,MimeTypesSupported,Name,Network,PaperSizesSupported,PaperTypesAvailable,Parameters,PNPDeviceID,PortName,PrintProcessor,' + 'ServerName,Shared,ShareName,SpoolEnabled,SystemName,VerticalResolution,WorkOffline');
                                       strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Win32_Printer=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      tstrColetaHardware := getOneValue('Win32_PortableBattery', 'BatteryStatus');
+                                      if tstrColetaHardware <> '' then
+                                        tstrColetaHardware := 'Sim'
+                                      else
+                                        tstrColetaHardware := 'Nao';
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Notebook=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 //                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Impressora=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       // Adiciona variáveis da coleta de hardware na requisição

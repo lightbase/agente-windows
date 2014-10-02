@@ -302,7 +302,7 @@ var
    teste : string;
 Begin
   btCombosUpdate.Enabled := false;
-  objCACIC.writeDailyLog('getConfigs: Invocando getConfigs...');
+  objCACIC.writeDebugLog('getConfigs: Invocando getConfigs...');
   Result := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCacic.getLocalFolderName);
 
   objCacic.setBoolCipher(not objCacic.isInDebugMode);
@@ -310,7 +310,7 @@ Begin
 
   if (Result <> '0') then
     Begin
-      objCACIC.writeDailyLog('getConfigs: Comunicação realizada com sucesso!');
+      objCACIC.writeDebugLog('getConfigs: Comunicação realizada com sucesso!');
       objCacic.setValueToFile('Configs' ,'servidor_autenticacao', objCacic.getValueFromTags('dados_ldap'                  , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Combos'    , objCacic.getValueFromTags('Configs_Patrimonio_Combos'   , Result), strGerColsInfFileName);
       objCacic.setValueToFile('Configs' ,'Patrimonio_Interface' , objCacic.getValueFromTags('Configs_Patrimonio_Interface', Result), strGerColsInfFileName);
@@ -329,7 +329,7 @@ End;
 procedure TfrmMapaCacic.RecuperaValoresAnteriores;
 var strCollectsPatrimonioLast : String;
 begin
-  objCACIC.writeDailyLog('RecuperaValoresAnteriores: Início.');
+  objCACIC.writeDebugLog('RecuperaValoresAnteriores: Início.');
   btCombosUpdate.Enabled := false;
 
   strCollectsPatrimonioLast := objCacic.deCrypt( objCacic.GetValueFromFile
@@ -375,7 +375,7 @@ begin
     End;
   btCombosUpdate.Enabled := true;
   Application.ProcessMessages;
-  objCACIC.writeDailyLog('RecuperaValoresAnteriores: Fim.');
+  objCACIC.writeDebugLog('RecuperaValoresAnteriores: Fim.');
 end;
 
 procedure TfrmMapaCacic.AtualizaPatrimonio(Sender: TObject);
@@ -386,7 +386,7 @@ if edTeInfoPatrimonio5.text <> '' then
   begin
     btGravarInformacoes.Enabled := false;
     btGravarInformacoes.Caption := 'Enviando informações...';
-    objCACIC.writeDailyLog('Preparando para o envio das informações...');
+    objCACIC.writeDebugLog('Preparando para o envio das informações...');
     strFieldsAndValuesToRequest := 'CollectType=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt('col_patr')) ;
 
     strColetaAtual := StringReplace('[IDPatrimonio]'         + edTeInfoPatrimonio1.Text   + '[/IDPatrimonio]'       +
@@ -571,7 +571,7 @@ Begin
     btGravarInformacoes.Visible := true;
     btCombosUpdate.Enabled      := true;
     Application.ProcessMessages;
-    objCACIC.writeDailyLog('Interface criada com sucesso.');
+    objCACIC.writeDebugLog('Interface criada com sucesso.');
 end;
 
 procedure TfrmMapaCacic.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -681,7 +681,7 @@ begin
                                         'Patrimonio',
                                         strGerColsInfFileName) = 'true') then
           begin
-            objCACIC.writeDailyLog('Iniciando formulário.');
+            objCACIC.writeDebugLog('Iniciando formulário.');
             mapa;
             FormSetFocus(foco)
           end
@@ -937,7 +937,7 @@ begin
     begin
       try
         try
-         objCACIC.writeDailyLog('Nome Usuário: Estabelecendo conexão.');
+         objCACIC.writeDebugLog('Nome Usuário: Estabelecendo conexão.');
          ldap.TargetHost := host;
          ldap.UserName   := username;
          ldap.Password   := psswd;
@@ -946,7 +946,7 @@ begin
          begin
           ldap.Search(base, False, identificador+ '=' + strTeInfoPatrimonio4, retorno); //Faz a pesquisa, com o CPF repassado.
           result := LDAPResultdump(ldap.SearchResult);
-          objCACIC.writeDailyLog('Nome Usuário: Conexão estabelecida, pesquisa realizada.');
+          objCACIC.writeDebugLog('Nome Usuário: Conexão estabelecida, pesquisa realizada.');
           ldap.Logout;
          end;
         finally
