@@ -763,6 +763,7 @@ begin
     FileSetAttr(pStrFileName, FileGetAttr(pStrFileName) xor faReadOnly);
 
   InfFile := TIniFile.Create(pStrFileName);
+  InfFile.DeleteKey(pStrSectionName, pStrKeyName);
   InfFile.WriteString(pStrSectionName, pStrKeyName, pStrValue);
   InfFile.Free;
 end;

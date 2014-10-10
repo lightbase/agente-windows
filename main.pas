@@ -1321,11 +1321,13 @@ begin
             else
               objCACIC.createOneProcess(objCACIC.getLocalFolderName + 'Modules\gercols.exe /'+p_acao+' /WebServicesFolderName='+objCACIC.getWebServicesFolderName +' /LocalFolderName='+objCACIC.getLocalFolderName + ' /WebManagerAddress=' + objCACIC.getWebManagerAddress + ' /MainProgramName=' + objCACIC.getMainProgramName + ' /MainProgramHash=' + objCACIC.getMainProgramHash,false,SW_HIDE);
 
+            //garantir que os dados sejam salvos
+            sleep (5000);
             g_intStatus :=             1;
             objCacic.setBoolCipher(not objCacic.isInDebugMode);
           End
         else
-          objCACIC.writeDailyLog('N�o foi poss�vel invocar o Gerente de Coletas!');
+          objCACIC.writeDailyLog('Não foi possível invocar o Gerente de Coletas!');
      End;
 end;
 
@@ -1434,7 +1436,7 @@ begin
               SetaVariaveisGlobais;
             End;
 
-          objCACIC.writeDailyLog('Iniciando execu��o de atividades.');
+          objCACIC.writeDailyLog('Iniciando execução de atividades.');
 
           objCACIC.writeDebugLog('ExecutaCACIC: Primeira chamada ao Gerente de Coletas...');
           Invoca_GerCols('getConfigs');
@@ -2341,9 +2343,11 @@ procedure TFormularioGeral.CheckForcaColetaTimer(Sender: TObject);
 begin
   Invoca_GerCols('getTest');
   if (objCACIC.getValueFromFile('Configs', 'forca_coleta', strGerColsInfFileName) = 'S') or
-     (objCACIC.GetValueFromFile('Configs','ConexaoOK', strGerColsInfFileName) <> 'S') then
+  not (objCACIC.getValueFromFile('Configs', 'ConexaoOK'   , strGerColsInfFileName) = 'S') then
+  begin
     objCACIC.deleteFileOrFolder(objCACIC.getLocalFolderName + 'Temp\ck_conexao.ini');
     FormularioGeral.ExecutaCACIC(nil);
+  end;
 end;
 
 procedure TFormularioGeral.CheckIfDownloadedVersion;

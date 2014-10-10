@@ -9,14 +9,14 @@ publicada pela Fundação do Software Livre (FSF); na versão 2 da Licença, ou (na 
 
 Este programa é distribuido na esperança que possa ser  util, mas SEM NENHUMA GARANTIA; sem uma garantia implicita de ADEQUAÇÂO a qualquer
 MERCADO ou APLICAÇÃO EM PARTICULAR. Veja a Licença Pública Geral GNU para maiores detalhes.
-
+                                F
 Você deve ter recebido uma cópia da Licença Pública Geral GNU, sob o título "LICENCA.txt", junto com este programa, se não, escreva para a Fundação do Software
 Livre(FSF) Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 NOTA: O componente MiTeC System Information Component (MSIC) é baseado na classe TComponent e contém alguns subcomponentes baseados na classe TPersistent
       Este componente é apenas freeware e não open-source, e foi baixado de http://www.mitec.cz/Downloads/MSIC.zip
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-*)
+*)                                        
 
 program gercols;
 {$R *.res}
@@ -242,6 +242,7 @@ Begin
 
           if (strRetorno <> '0') Then
             Begin
+              objCacic.setValueToFile('Configs', 'CollectsDefinitions', '', strGercolsInfFileName);
               objCacic.setBoolCipher(not objCacic.isInDebugMode);
               objCacic.setValueToFile('Configs','ConexaoOK','S', strGerColsInfFileName);
 
@@ -974,7 +975,6 @@ Begin
         strAcaoGercols            := 'GerCols invocado para coletas...';
         intTotalExecutedCollects  := 0;
         intTotalSendedCollects    := 0;
-        objCacic.setValueToFile('Configs', 'CollectsDefinitions', '', strGercolsInfFileName);
         getConfigs(true);
 
         // Abaixo eu testo se existe um endereço configurado para não disparar os procedimentos de coleta em vão.
@@ -1143,7 +1143,8 @@ Begin
                                         tstrColetaHardware := 'Sim'
                                       else
                                         tstrColetaHardware := 'Nao';
-                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Notebook=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
+
+                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',isNotebook=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 //                                      strFieldsAndValuesToRequest := strFieldsAndValuesToRequest + ',Impressora=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(objCacic.replaceInvalidHTTPChars(tstrColetaHardware)));
 
                                       // Adiciona variáveis da coleta de hardware na requisição
