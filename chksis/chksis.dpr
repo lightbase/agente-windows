@@ -115,6 +115,7 @@ begin
         objCacic.setValueToFile('Configs'   ,'TeServUpdates'            , objCacic.getValueFromTags('te_serv_updates'                    , strCommResponse, '<>'), strChkSisInfFileName);
         objCacic.setValueToFile('Configs'   ,'WebManagerAddress'        , objCacic.getValueFromTags('WebManagerAddress'                  , strCommResponse, '<>'), strChkSisInfFileName);
         objCacic.setValueToFile('Configs'   ,'WebServicesFolderName'    , objCacic.getValueFromTags('WebServicesFolderName'              , strCommResponse, '<>'), strChkSisInfFileName);
+        objCacic.setValueToFile('Configs'   ,'apikey'                   , objCacic.getValueFromTags('apikey'                             , strCommResponse, '<>'), strChkSisInfFileName);
         objCacic.setValueToFile('Hash-Codes','CACICSERVICE.EXE'         , objCacic.getValueFromTags('CACICSERVICE.EXE_HASH'              , strCommResponse, '<>'), strChkSisInfFileName);
         objCacic.setValueToFile('Hash-Codes','CHKSIS.EXE'               , objCacic.getValueFromTags('CHKSIS.EXE_HASH'                    , strCommResponse, '<>'), strChkSisInfFileName);
         objCacic.setValueToFile('Hash-Codes','GERCOLS.EXE'              , objCacic.getValueFromTags('GERCOLS.EXE_HASH'                   , strCommResponse, '<>'), strChkSisInfFileName);
@@ -183,6 +184,14 @@ begin
                             objCacic,
                             strChkSisInfFileName);
 
+        verifyAndGetModules('Cacic.msi',
+                              '0',
+                              objCacic.getLocalFolderName + 'Modules',
+                              objCacic.getLocalFolderName,
+                              objCacic,
+                              strChkSisInfFileName);                            
+
+
         // 5 segundos para espera de possível FTP em andamento...
         Sleep(5000);
       End
@@ -208,6 +217,7 @@ begin
           objCacic.setValueToFile('Configs'   ,'TeServUpdates'            , objCacic.getValueFromTags('te_serv_updates'                    , strCommResponse, '<>'), strChkSisInfFileName);
           objCacic.setValueToFile('Configs'   ,'WebManagerAddress'        , objCacic.getValueFromTags('WebManagerAddress'                  , strCommResponse, '<>'), strChkSisInfFileName);
           objCacic.setValueToFile('Configs'   ,'WebServicesFolderName'    , objCacic.getValueFromTags('WebServicesFolderName'              , strCommResponse, '<>'), strChkSisInfFileName);
+          objCacic.setValueToFile('Configs'   ,'apikey'                   , objCacic.getValueFromTags('apikey'                             , strCommResponse, '<>'), strChkSisInfFileName);
           objCacic.setValueToFile('Hash-Codes','CACICSERVICE.EXE'         , objCacic.getValueFromTags('CACICSERVICE.EXE_HASH'              , strCommResponse, '<>'), strChkSisInfFileName);
           objCacic.setValueToFile('Hash-Codes','CHKSIS.EXE'               , objCacic.getValueFromTags('CHKSIS.EXE_HASH'                    , strCommResponse, '<>'), strChkSisInfFileName);
           objCacic.setValueToFile('Hash-Codes','GERCOLS.EXE'              , objCacic.getValueFromTags('GERCOLS.EXE_HASH'                   , strCommResponse, '<>'), strChkSisInfFileName);
@@ -255,6 +265,13 @@ begin
                               objCacic,
                               strChkSisInfFileName);
 
+          verifyAndGetModules('Cacic.msi',
+                              '0',
+                              objCacic.getLocalFolderName,
+                              objCacic.getLocalFolderName,
+                              objCacic,
+                              strChkSisInfFileName);
+
           // 5 segundos para espera de possível FTP em andamento...
           Sleep(5000);
         end;
@@ -267,6 +284,17 @@ begin
         objCacic.writeDebugLog('executeChkSIS: Falha no contato com ' + objCacic.getWebManagerAddress  + objCacic.getWebServicesFolderName + 'get/config');
       End;
   End;
+
+  //inicia instalação do cacic se existir.
+  if FileExists(objCacic.getLocalFolderName + 'Cacic.msi') and objCacic.getValueFromFile('Configs', 'apikey', strChkSisInfFileName) <> '' then
+  begin
+//  msiexec /i Cacic.msi /quiet /qn /norestart HOST=teste.cacic.cc USER=cacic PASS=cacic123
+      objCacic.createOneProcess('msiexec /i ' + objCacic.getLocalFolderName + 'Cacic.msi' +
+                                  ' /quiet /qn /norestart HOST=' + objCacic.getWebManagerAddress +
+                                  ' USER=cacic' +
+                                  ' PASS=' + objCacic.getValueFromFile('Configs', 'apikey', strChkSisInfFileName),
+                                false);
+  end;
 
   objCacic.deleteFileOrFolder(objCacic.getLocalFolderName + 'aguarde_CACIC.txt');
   // Caso o Cacic tenha sido baixado executo-o com parâmetro de configuração de servidor
