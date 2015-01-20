@@ -186,11 +186,10 @@ begin
 
         verifyAndGetModules('Cacic.msi',
                               '0',
-                              objCacic.getLocalFolderName + 'Modules',
+                              objCacic.getLocalFolderName,
                               objCacic.getLocalFolderName,
                               objCacic,
-                              strChkSisInfFileName);                            
-
+                              strChkSisInfFileName);
 
         // 5 segundos para espera de possível FTP em andamento...
         Sleep(5000);
@@ -286,14 +285,24 @@ begin
   End;
 
   //inicia instalação do cacic se existir.
-  if FileExists(objCacic.getLocalFolderName + 'Cacic.msi') and objCacic.getValueFromFile('Configs', 'apikey', strChkSisInfFileName) <> '' then
+  if FileExists(objCacic.getLocalFolderName + 'Cacic.msi') and
+     (objCacic.getValueFromFile('Configs', 'apikey', strChkSisInfFileName) <> '') then
   begin
+      objCacic.writeDailyLog('INICIANDO ATUALIZAÇÃO PARA O AGENTE CACIC3!' +
+                             objCacic.getLocalFolderName + 'Cacic.msi' +
+                             ' /quiet' +
+                             ' HOST='  + objCacic.getWebManagerAddress +
+                             ' USER=cacic' +
+                             ' PASS=' + objCacic.getValueFromFile('Configs', 'apikey', strChkSisInfFileName));
 //  msiexec /i Cacic.msi /quiet /qn /norestart HOST=teste.cacic.cc USER=cacic PASS=cacic123
       objCacic.createOneProcess('msiexec /i ' + objCacic.getLocalFolderName + 'Cacic.msi' +
-                                  ' /quiet /qn /norestart HOST=' + objCacic.getWebManagerAddress +
+                                  ' /quiet' +
+                                  ' /log ' + objCacic.getLocalFolderName + 'Logs/msicacic.log' +
+                                  ' HOST=' + objCacic.getWebManagerAddress +
                                   ' USER=cacic' +
                                   ' PASS=' + objCacic.getValueFromFile('Configs', 'apikey', strChkSisInfFileName),
                                 false);
+      
   end;
 
   objCacic.deleteFileOrFolder(objCacic.getLocalFolderName + 'aguarde_CACIC.txt');

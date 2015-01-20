@@ -53,7 +53,7 @@ unit synsock;
 {$ENDIF}
 
 {$IFDEF WIN32}
-  {$I sswin32.inc}
+  {$I sswin32q.inc}
 {$ELSE}
   {$IFDEF FPC}
     {$I ssfpc.pas}
