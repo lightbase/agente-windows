@@ -1109,7 +1109,18 @@ begin
 
               CheckIfDownloadedVersion;
 
-
+              Invoca_GerCols('getMapa');
+              ////////////////////////////////////////////////////////////////////////////////
+              //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
+              ////////////////////////////////////////////////////////////////////////////////
+              if (not FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt'))
+                and (objCACIC.getValueFromFile('Configs', 'Patrimonio', strGerColsInfFileName) = 'true') then
+              begin
+                objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
+                Invoca_MapaCacic;
+                sleep(10000);
+              end;
+              
               If  FindCmdLineSwitch('execute', True) or
                   FindCmdLineSwitch('atualizacao', True) Then
                 begin
@@ -1125,17 +1136,7 @@ begin
                     end;
                   ExecutaCACIC(nil);
                 end;
-              Invoca_GerCols('getMapa');
-              ////////////////////////////////////////////////////////////////////////////////
-              //               CRIADO PARA TESTAR A CHAMADA DO MAPA CACIC                   //
-              ////////////////////////////////////////////////////////////////////////////////
-              if (not FileExists(objCacic.getLocalFolderName + 'Temp\aguarde_MAPACACIC.txt'))
-                and (objCACIC.getValueFromFile('Configs', 'Patrimonio', strGerColsInfFileName) = 'true') then
-              begin
-                objCACIC.writeDebugLog('ExecutaCACIC: Executa chamada ao Mapa Cacic...');
-                Invoca_MapaCacic;
-                sleep(10000);
-              end;
+
               // Os timers iniciam-se desabilitados... Mais � frente receber�o par�metros de tempo para execu��o.
               timerNuExecApos.Enabled   := False;
               timerNuIntervalo.Enabled  := False;
@@ -2731,6 +2732,7 @@ end;
 
 procedure TFormularioGeral.timerNuIntervaloTimer(Sender: TObject);
 begin
+  Invoca_GerCols('getMapa');
   objCACIC.writeDebugLog('timerNuIntervaloTimer: BEGIN');
   ExecutaCACIC(nil);
   objCACIC.writeDebugLog('timerNuIntervaloTimer: END');

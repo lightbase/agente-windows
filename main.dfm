@@ -1773,6 +1773,7 @@ object FormularioGeral: TFormularioGeral
   object timerNuIntervalo: TTimer
     Enabled = False
     Interval = 1
+    OnTimer = timerNuIntervaloTimer
     Left = 232
     Top = 568
   end

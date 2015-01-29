@@ -381,6 +381,7 @@ end;
 
 procedure getMapa();
 var strRetorno: string;
+    timeOut: integer;
 Begin
   Try
     strAcaoGerCols := 'Preparando teste de comunicação com Módulo Gerente WEB ('+objCacic.getWebManagerAddress+').';
@@ -402,7 +403,33 @@ Begin
                                     objCacic.getValueFromTags('Mensagem', strRetorno,'<>'),
                                     strGerColsInfFileName);
           End;
-        End;
+        End
+        else
+        begin
+          objCacic.writeDailyLog('getMapa: Falha na comunicação, realizando nova tentativa a cada 5 segundos.');
+          timeOut:= 0;
+          while (timeOut <= 60) do
+          begin
+            sleep(5000);
+            strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/mapa', strFieldsAndValuesToRequest, objCacic.getLocalFolderName, 'Pegando informações do módulo de patrimônio. ('+objCacic.getWebManagerAddress+').');
+            if (strRetorno <> '0') Then
+            Begin
+              objCacic.writeDailyLog('getMapa: Sucesso na comunicação após falha.');
+              objCacic.setBoolCipher(not objCacic.isInDebugMode);
+              if (objCacic.getValueFromTags('Comm_Status', strRetorno,'<>') = 'OK') then
+              Begin
+			          objCacic.setValueToFile('Configs','Patrimonio',
+                                        objCacic.getValueFromTags('Patrimonio', strRetorno, '<>'),
+                                        strGerColsInfFileName);
+                objCacic.setValueToFile('Configs','termos_patrimonio',
+                                        objCacic.getValueFromTags('Mensagem', strRetorno,'<>'),
+                                        strGerColsInfFileName);
+                break;
+              End;
+            End;
+            timeOut:= timeOut+1;
+          end;
+        end;
     except
         on E : Exception do
         Begin

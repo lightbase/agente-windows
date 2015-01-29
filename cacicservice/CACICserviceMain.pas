@@ -478,6 +478,9 @@ begin
 
   ExecutaCACIC;
 
+  if timerToCHKSIS.Interval <> 60000 then
+    timerToCHKSIS.Interval := 60000;
+    
   timerToCHKSIS.Enabled := true;
   g_oCacic.writeDebugLog('Timer_CHKsisTimer: END');
 end;
