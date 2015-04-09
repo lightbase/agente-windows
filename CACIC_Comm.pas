@@ -55,6 +55,7 @@ Begin
 
       strWin32_OperatingSystem             := fetchWmiValues('Win32_OperatingSystem'            ,objCacicCOMM.getLocalFolderName);
       strWin32_ComputerSystem              := fetchWmiValues('Win32_ComputerSystem'             ,objCacicCOMM.getLocalFolderName);
+
       strWin32_NetworkAdapterConfiguration := fetchWmiValues('Win32_NetworkAdapterConfiguration',objCacicCOMM.getLocalFolderName);
       strMac    := getOneValue('Win32_NetworkAdapterConfiguration', 'MACAddress');
       strSubnet := getOneValue('Win32_NetworkAdapterConfiguration', 'IPSubnet');
@@ -215,7 +216,7 @@ begin
     IdFTP1.Username       := pStrUser;
     IdFTP1.Password       := pStrPass;
     IdFTP1.Port           := pIntPort;
-    IdFTP1.Passive        := true;
+    IdFTP1.Passive        := false;
     if (pStrTransferType = 'ASC') then
       IdFTP1.TransferType := ftASCII
     else
