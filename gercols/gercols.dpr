@@ -276,6 +276,8 @@ Begin
     Except
     End;
 
+    objCacic.writeDebugLog('getConfigs: Controle FTP');
+
     strAcaoGerCols := 'Setando TeFilaFTP=0';
     // Setando controle de FTP para 0 (0=tempo de espera para FTP   de algum componente do sistema)
     objCacic.setValueToFile('Configs','TeFilaFTP','0', strGerColsInfFileName);
@@ -284,7 +286,9 @@ Begin
     // Para possível requisição de acesso ao grupo FTP... (Essa medida visa balancear o acesso aos servidores de atualização de versões, principalmente quando é um único S.A.V.)
     strAcaoGerCols := 'Verificando versões de agentes...';
 
+    objCacic.writeDebugLog('getConfigs: Check modules.');
     checkModules;
+    objCacic.writeDebugLog('getConfigs: Check modules ok.');
 
     // Caso tenha sido baixada uma versão deste agente, executo a finalização
     if (FileExists(objCacic.getLocalFolderName + 'Temp\gercols.exe')) then
@@ -323,6 +327,7 @@ Begin
              CloseFile(textfileKeyWord);
              //
              strFieldsAndValuesToRequest := 'te_palavra_chave=' + objCacic.replaceInvalidHTTPChars(objCacic.enCrypt(strAux));
+
              strRetorno := Comm(objCacic.getWebManagerAddress + objCacic.getWebServicesFolderName + 'get/config', strFieldsAndValuesToRequest, objCacic.getLocalFolderName,v_mensagem_log);
              objCacic.setBoolCipher(not objCacic.isInDebugMode);
 
@@ -339,7 +344,6 @@ Begin
              if (strRetorno <> '0') Then
               Begin
                 strAcaoGercols := 'Armazenando em "' + strGerColsInfFileName + '" os valores obtidos.';
-                objCacic.writeDebugLog('getConfigs: ' + strAcaoGerCols);
 
                 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 //Gravação no DatFileName dos valores de REDE, COMPUTADOR e EXECUÇÃO obtidos, para consulta pelos outros módulos...
@@ -368,6 +372,7 @@ Begin
                 objCacic.setValueToFile('Configs'   ,'CsPermitirDesativarSrCacic'     ,objCacic.getValueFromTags('cs_permitir_desativar_srcacic'    , strRetorno, '<>'), strMainProgramInfFileName);
                 objCacic.setValueToFile('Configs'   ,'TeEnderecosMacInvalidos'        ,objCacic.getValueFromTags('te_enderecos_mac_invalidos'       , strRetorno, '<>'), strMainProgramInfFileName);
                 objCacic.setValueToFile('Configs'   ,'timerForcaColeta'               ,objCacic.getValueFromTags('timerForcaColeta'                 , strRetorno, '<>'), strMainProgramInfFileName);
+
               end;
         end;
   Except
